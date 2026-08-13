@@ -1,0 +1,539 @@
+{
+  "schemaVersion": 1,
+  "skillPath": "E:/_ideaProjects/qylEyelib/.opencode/skills/eyelib-hexagonal-gates/SKILL.md",
+  "sourcePath": "E:/_ideaProjects/qylEyelib/.opencode/skills/eyelib-hexagonal-gates/SKILL.md",
+  "contract": {
+    "interface": {
+      "name": "eyelib-hexagonal-gates",
+      "purpose": "验证六边形架构重构批次的完成标准：按 G1→G2→G3 门禁流水线运行 ArchUnit 隔离、spec-based 测试与 RenderDoc 集成检查。子代理和架构师共用。",
+      "triggers": [
+        {
+          "text": "验证六边形架构重构批次 / 验收批次完成标准 / 运行 G1→G2→G3 门禁",
+          "spans": [
+            "Bb0c81d83068a6965"
+          ]
+        }
+      ],
+      "exclusions": [
+        {
+          "text": "非六边形架构重构场景；G3 不适合日常批次（仅最终集成）",
+          "spans": [
+            "Bce12944f4187800d",
+            "Be4be445f76592679"
+          ]
+        }
+      ]
+    },
+    "rules": [
+      {
+        "id": "gate-order",
+        "scope": "root/eyelib-六边形架构验收闸门",
+        "modality": "must",
+        "predicate": "每一批次必须按 G1（编译隔离，ArchUnit+gradle compile）→ G2（行为正确，JUnit spec-based）→ G3（集成不退化，RenderDoc 截帧对比）顺序通过全部闸门；G1/G2 不需要 MC，G3 需要 MC",
+        "spans": [
+          "Bb0c81d83068a6965",
+          "B31fa887b784028d9",
+          "Bf85f1c59ded0fc83"
+        ],
+        "locked": false
+      },
+      {
+        "id": "g1-archunit",
+        "scope": "root/eyelib-六边形架构验收闸门/g1-编译隔离",
+        "modality": "must",
+        "predicate": "domain 模块必须零 MC import：在 domain 模块 test 中添加 ArchUnit 规则验证其不依赖 net.minecraft.. 包",
+        "spans": [
+          "B5b1d985d6ed6b583"
+        ],
+        "locked": false
+      },
+      {
+        "id": "g1-exclusions",
+        "scope": "root/eyelib-六边形架构验收闸门/g1-编译隔离",
+        "modality": "must",
+        "predicate": "ArchUnit 规则必须用 DescribedPredicate 排除 @Mod bootstrap 类和已知 MC 依赖，避免误报",
+        "spans": [
+          "B5b1d985d6ed6b583",
+          "B3811bda5f04c7e7b"
+        ],
+        "locked": false
+      },
+      {
+        "id": "g1-archunit-dep",
+        "scope": "root/eyelib-六边形架构验收闸门/g1-编译隔离",
+        "modality": "must",
+        "predicate": "先在 build.gradle 确认 testImplementation 'com.tngtech.archunit:archunit-junit5' 依赖，否则 ArchUnit 规则无法运行",
+        "spans": [
+          "B1526c7a43bdd1aee"
+        ],
+        "locked": false
+      },
+      {
+        "id": "g1-compile-verdict",
+        "scope": "root/eyelib-六边形架构验收闸门/g1-编译隔离/编译验证",
+        "modality": "must",
+        "predicate": "编译验证判定：exit code 0 且无 import net.minecraft 错误",
+        "spans": [
+          "B1b65588618be97b4"
+        ],
+        "locked": false
+      },
+      {
+        "id": "g2-oracle-external",
+        "scope": "root/eyelib-六边形架构验收闸门/g2-行为正确-spec-based-测试",
+        "modality": "must",
+        "predicate": "spec-based 测试 oracle 必须来自外部规范（Bedrock 文档、.mcpack 数据）",
+        "spans": [
+          "Bbcbc3b52c3a37b3c",
+          "Bb12d15584f034b62"
+        ],
+        "locked": false
+      },
+      {
+        "id": "g2-oracle-not-impl",
+        "scope": "root/eyelib-六边形架构验收闸门/g2-行为正确-spec-based-测试",
+        "modality": "must_not",
+        "predicate": "oracle 不得来自当前代码输出——那不是测试，是 pin 了 bug",
+        "spans": [
+          "Bbcbc3b52c3a37b3c",
+          "Bb12d15584f034b62"
+        ],
+        "locked": false
+      },
+      {
+        "id": "g2-categories",
+        "scope": "root/eyelib-六边形架构验收闸门/g2-行为正确-spec-based-测试",
+        "modality": "must",
+        "predicate": "必须覆盖测试类别：CODEC 往返（JSON→parse→encode→JSON 等值）、继承链（3 层 base→add→sub 最终状态）、状态机（RC transition→new_state）、Molang 求值（对照 .mcpack 真实表达式）、有效边界（空 map、单元素、无 base、无 add）、异常/边界（循环继承、缺失 base、未知状态）",
+        "spans": [
+          "Bc87556b2714d4ff4"
+        ],
+        "locked": false
+      },
+      {
+        "id": "g3-once-only",
+        "scope": "root/eyelib-六边形架构验收闸门/g3-集成不退化",
+        "modality": "must",
+        "predicate": "G3 只在所有 domain 提取完成、最终集成（大接线后）时跑一次，日常批次不跑",
+        "guard": "仅最终集成/大接线后",
+        "spans": [
+          "Bce12944f4187800d",
+          "Be4be445f76592679",
+          "Bf85f1c59ded0fc83"
+        ],
+        "locked": false
+      }
+    ],
+    "workflow": [
+      {
+        "id": "wf-g1-run",
+        "scope": "root/eyelib-六边形架构验收闸门/g1-编译隔离/编译验证",
+        "kind": "action",
+        "action": "G1 编译验证：通过 mcmcp_build 或 bash 跑 gradlew compileJava（ADR-0014 后单 project，无 :eyelib-material: 子项目前缀）",
+        "tool": "mcmcp_build",
+        "next": [
+          "wf-g1-verdict"
+        ],
+        "spans": [
+          "B6f7632b6df85fa68",
+          "B50923e845767396e"
+        ]
+      },
+      {
+        "id": "wf-g1-verdict",
+        "scope": "root/eyelib-六边形架构验收闸门/g1-编译隔离/编译验证",
+        "kind": "decision",
+        "action": "判定 exit code 0 且无 import net.minecraft 错误 → 进入 G2；否则修复后重跑",
+        "next": [
+          "wf-g2-run"
+        ],
+        "spans": [
+          "B1b65588618be97b4"
+        ]
+      },
+      {
+        "id": "wf-g2-run",
+        "scope": "root/eyelib-六边形架构验收闸门/g2-行为正确-spec-based-测试/验证命令",
+        "kind": "action",
+        "action": "G2 测试验证：通过 mcmcp_test 或 bash 跑 gradlew test；指定测试类可加 --tests \"*BrMaterialResolverTest\" 脚本参数",
+        "tool": "mcmcp_test",
+        "next": [
+          "wf-g2-verdict"
+        ],
+        "spans": [
+          "Bf21fc9815a9828ff",
+          "B50923e845767396e"
+        ]
+      },
+      {
+        "id": "wf-g2-verdict",
+        "scope": "root/eyelib-六边形架构验收闸门/g2-行为正确-spec-based-测试/验证命令",
+        "kind": "decision",
+        "action": "判定全部 GREEN；UP-TO-DATE 可接受（源码未变时 Gradle 跳过）→ 所有 domain 提取完成后进入 G3",
+        "next": [
+          "wf-g3-before"
+        ],
+        "spans": [
+          "B70d71356519d3074"
+        ]
+      },
+      {
+        "id": "wf-g3-before",
+        "scope": "root/eyelib-六边形架构验收闸门/g3-集成不退化/renderdoc-截帧对比流程",
+        "kind": "action",
+        "action": "重构前：启动 MC → 进世界 → 召唤测试实体 → 截帧 → before.rdc",
+        "next": [
+          "wf-g3-after"
+        ],
+        "spans": [
+          "B0ad7733cb77c121e"
+        ]
+      },
+      {
+        "id": "wf-g3-after",
+        "scope": "root/eyelib-六边形架构验收闸门/g3-集成不退化/renderdoc-截帧对比流程",
+        "kind": "action",
+        "action": "重构后：同样操作 → after.rdc",
+        "next": [
+          "wf-g3-compare"
+        ],
+        "spans": [
+          "B7ab151eae9c312ec"
+        ]
+      },
+      {
+        "id": "wf-g3-compare",
+        "scope": "root/eyelib-六边形架构验收闸门/g3-集成不退化/renderdoc-截帧对比流程",
+        "kind": "decision",
+        "action": "对比：Draw call 数 ±2，最终 RT 逐像素对比",
+        "next": [
+          "wf-g3-diff"
+        ],
+        "spans": [
+          "B41d8dd0c600061ca"
+        ]
+      },
+      {
+        "id": "wf-g3-diff",
+        "scope": "root/eyelib-六边形架构验收闸门/g3-集成不退化/renderdoc-截帧对比流程",
+        "kind": "fallback",
+        "action": "不一致 → diff_draw_calls() 定位",
+        "tool": "diff_draw_calls",
+        "spans": [
+          "Bd7b79c49cc3f93c7"
+        ]
+      }
+    ],
+    "tools": [
+      {
+        "id": "T1",
+        "name": "mcmcp_build",
+        "observations": [
+          "exit code 0 且无 import net.minecraft 错误即 G1 通过"
+        ],
+        "spans": [
+          "B6f7632b6df85fa68",
+          "B50923e845767396e"
+        ]
+      },
+      {
+        "id": "T2",
+        "name": "mcmcp_test",
+        "required_args": [
+          "可选 --tests 过滤器"
+        ],
+        "observations": [
+          "全部 GREEN 或 UP-TO-DATE 即 G2 通过"
+        ],
+        "spans": [
+          "Bf21fc9815a9828ff",
+          "B50923e845767396e"
+        ]
+      },
+      {
+        "id": "T3",
+        "name": "gradlew compileJava / gradlew test",
+        "preconditions": [
+          "ADR-0014 后单 project，无 :eyelib-material: 子项目前缀"
+        ],
+        "spans": [
+          "B6f7632b6df85fa68",
+          "Bf21fc9815a9828ff"
+        ]
+      },
+      {
+        "id": "T4",
+        "name": "diff_draw_calls",
+        "preconditions": [
+          "before.rdc 与 after.rdc 对比不一致"
+        ],
+        "spans": [
+          "Bd7b79c49cc3f93c7"
+        ]
+      }
+    ],
+    "output": {
+      "fields": [],
+      "type": "gate-verdict",
+      "termination": [
+        "G1→G2→G3 全部通过（G3 仅最终集成时）即批次验收完成"
+      ],
+      "spans": [
+        "Bb0c81d83068a6965"
+      ]
+    },
+    "evidence": [
+      {
+        "id": "E1",
+        "kind": "background",
+        "supports": [
+          "gate-order",
+          "g3-once-only"
+        ],
+        "adds_unique_unit": false,
+        "source_blocks": [
+          "Bf85f1c59ded0fc83"
+        ]
+      }
+    ],
+    "residual": [
+      {
+        "source_block": "B0b5c707ccdcdbb72",
+        "reason": "UNIQUE_EVIDENCE"
+      },
+      {
+        "source_block": "Ba700b426f1055cb4",
+        "reason": "UNIQUE_EVIDENCE"
+      },
+      {
+        "source_block": "B31d7edaf352be481",
+        "reason": "UNIQUE_EVIDENCE"
+      },
+      {
+        "source_block": "Bf21fc9815a9828ff",
+        "reason": "USER_LOCKED"
+      }
+    ]
+  },
+  "scopes": [
+    {
+      "id": "root",
+      "parent": null,
+      "heading": "root",
+      "headingPath": [
+        "root"
+      ],
+      "depth": 0
+    },
+    {
+      "id": "root/eyelib-六边形架构验收闸门",
+      "parent": "root",
+      "heading": "Eyelib 六边形架构验收闸门",
+      "headingPath": [
+        "root",
+        "eyelib-六边形架构验收闸门"
+      ],
+      "depth": 1
+    },
+    {
+      "id": "root/eyelib-六边形架构验收闸门/闸门体系",
+      "parent": "root/eyelib-六边形架构验收闸门",
+      "heading": "闸门体系",
+      "headingPath": [
+        "root",
+        "eyelib-六边形架构验收闸门",
+        "闸门体系"
+      ],
+      "depth": 2
+    },
+    {
+      "id": "root/eyelib-六边形架构验收闸门/g1-编译隔离",
+      "parent": "root/eyelib-六边形架构验收闸门",
+      "heading": "G1：编译隔离",
+      "headingPath": [
+        "root",
+        "eyelib-六边形架构验收闸门",
+        "g1-编译隔离"
+      ],
+      "depth": 2
+    },
+    {
+      "id": "root/eyelib-六边形架构验收闸门/g1-编译隔离/archunit-规则",
+      "parent": "root/eyelib-六边形架构验收闸门/g1-编译隔离",
+      "heading": "ArchUnit 规则",
+      "headingPath": [
+        "root",
+        "eyelib-六边形架构验收闸门",
+        "g1-编译隔离",
+        "archunit-规则"
+      ],
+      "depth": 3
+    },
+    {
+      "id": "root/eyelib-六边形架构验收闸门/g1-编译隔离/编译验证",
+      "parent": "root/eyelib-六边形架构验收闸门/g1-编译隔离",
+      "heading": "编译验证",
+      "headingPath": [
+        "root",
+        "eyelib-六边形架构验收闸门",
+        "g1-编译隔离",
+        "编译验证"
+      ],
+      "depth": 3
+    },
+    {
+      "id": "root/eyelib-六边形架构验收闸门/g2-行为正确-spec-based-测试",
+      "parent": "root/eyelib-六边形架构验收闸门",
+      "heading": "G2：行为正确（Spec-Based 测试）",
+      "headingPath": [
+        "root",
+        "eyelib-六边形架构验收闸门",
+        "g2-行为正确-spec-based-测试"
+      ],
+      "depth": 2
+    },
+    {
+      "id": "root/eyelib-六边形架构验收闸门/g2-行为正确-spec-based-测试/编写规范",
+      "parent": "root/eyelib-六边形架构验收闸门/g2-行为正确-spec-based-测试",
+      "heading": "编写规范",
+      "headingPath": [
+        "root",
+        "eyelib-六边形架构验收闸门",
+        "g2-行为正确-spec-based-测试",
+        "编写规范"
+      ],
+      "depth": 3
+    },
+    {
+      "id": "root/eyelib-六边形架构验收闸门/g2-行为正确-spec-based-测试/必须覆盖的测试类别",
+      "parent": "root/eyelib-六边形架构验收闸门/g2-行为正确-spec-based-测试",
+      "heading": "必须覆盖的测试类别",
+      "headingPath": [
+        "root",
+        "eyelib-六边形架构验收闸门",
+        "g2-行为正确-spec-based-测试",
+        "必须覆盖的测试类别"
+      ],
+      "depth": 3
+    },
+    {
+      "id": "root/eyelib-六边形架构验收闸门/g2-行为正确-spec-based-测试/验证命令",
+      "parent": "root/eyelib-六边形架构验收闸门/g2-行为正确-spec-based-测试",
+      "heading": "验证命令",
+      "headingPath": [
+        "root",
+        "eyelib-六边形架构验收闸门",
+        "g2-行为正确-spec-based-测试",
+        "验证命令"
+      ],
+      "depth": 3
+    },
+    {
+      "id": "root/eyelib-六边形架构验收闸门/g3-集成不退化",
+      "parent": "root/eyelib-六边形架构验收闸门",
+      "heading": "G3：集成不退化",
+      "headingPath": [
+        "root",
+        "eyelib-六边形架构验收闸门",
+        "g3-集成不退化"
+      ],
+      "depth": 2
+    },
+    {
+      "id": "root/eyelib-六边形架构验收闸门/g3-集成不退化/renderdoc-截帧对比流程",
+      "parent": "root/eyelib-六边形架构验收闸门/g3-集成不退化",
+      "heading": "RenderDoc 截帧对比流程",
+      "headingPath": [
+        "root",
+        "eyelib-六边形架构验收闸门",
+        "g3-集成不退化",
+        "renderdoc-截帧对比流程"
+      ],
+      "depth": 3
+    },
+    {
+      "id": "root/eyelib-六边形架构验收闸门/g3-集成不退化/快速验证-eval-替代",
+      "parent": "root/eyelib-六边形架构验收闸门/g3-集成不退化",
+      "heading": "快速验证（/eval 替代）",
+      "headingPath": [
+        "root",
+        "eyelib-六边形架构验收闸门",
+        "g3-集成不退化",
+        "快速验证-eval-替代"
+      ],
+      "depth": 3
+    },
+    {
+      "id": "root/eyelib-六边形架构验收闸门/common-pitfalls",
+      "parent": "root/eyelib-六边形架构验收闸门",
+      "heading": "Common Pitfalls",
+      "headingPath": [
+        "root",
+        "eyelib-六边形架构验收闸门",
+        "common-pitfalls"
+      ],
+      "depth": 2
+    }
+  ],
+  "procedures": [],
+  "sourceBlocks": {
+    "B3de479c3eb4501a9": "Eyelib 六边形架构验收闸门",
+    "Bb0c81d83068a6965": "子代理和架构师共用的完成标准。每一批次必须通过 G1→G2→G3 闸门。",
+    "B40784172ec571718": "闸门体系",
+    "B31fa887b784028d9": "G1: 编译隔离 ──→ G2: 行为正确 ──→ G3: 集成不退化\n   (自动化)        (JUnit)          (RenderDoc)",
+    "Bf85f1c59ded0fc83": "| 闸门 | 验证什么 | 工具 | 需要 MC |\n|------|----------|------|--------|\n| G1 | domain 模块零 MC import | ArchUnit + gradle compile | ❌ |\n| G2 | 行为对照 Bedrock 规范 | JUnit spec-based 测试 | ❌ |\n| G3 | 重构后渲染输出不变 | RenderDoc 截帧对比 | ✅（仅大接线后） |",
+    "B1cf30de72a765299": "G1：编译隔离",
+    "Ba7a8080d785ea53b": "ArchUnit 规则",
+    "B5b1d985d6ed6b583": "在 domain 模块 test 中添加，排除 @Mod bootstrap 类和已知 MC 依赖：",
+    "B0b5c707ccdcdbb72": "class ArchitectureRules {\n    private static final JavaClasses classes = new ClassFileImporter()\n            .importPackages(\"io.github.tt432.eyelib.material\");\n\n    @Test\n    void domainLayerHasNoMcDependency() {\n        noClasses()\n                .that(DescribedPredicate.describe(\"not excluded\",\n                        c -> !(c.getSimpleName().equals(\"EyelibMaterialMod\")\n                                || c.getSimpleName().equals(\"BrShaderMapping\"))))\n                .and().resideInAPackage(\"io.github.tt432.eyelib.material..\")\n                .should().dependOnClassesThat()\n                .resideInAPackage(\"net.minecraft..\")\n                .check(classes);\n    }\n}",
+    "B7b130ca239d5d5e8": "编译验证",
+    "B6f7632b6df85fa68": "通过 `mcmcp_build` 或 bash 跑 `gradlew compileJava`(ADR-0014 后单 project,无 `:eyelib-material:` 子项目前缀)。",
+    "B1b65588618be97b4": "判定：exit code 0 且无 `import net.minecraft` 错误。",
+    "B8fa022bc087af172": "G2：行为正确（Spec-Based 测试）",
+    "B460cc36fbfa508c1": "编写规范",
+    "Bbcbc3b52c3a37b3c": "测试 oracle 必须来自外部规范（Bedrock 文档、.mcpack 数据），不能来自当前代码输出：",
+    "Ba700b426f1055cb4": "// ✅ oracle 来自 Bedrock 文档\n@Test\nvoid inheritOrder_lastWins() {\n    // Bedrock 规范：materials 数组中后面覆盖前面\n    Map<String, BrMaterialEntry> chain = buildChain(\n        \"entity\",          // base\n        \"entity_nocull\",   // +DisableCulling\n        \"entity_alphatest\" // +ALPHA_TEST\n    );\n    ResolvedBrMaterial resolved = BrMaterialResolver.resolve(chain);\n    assertTrue(resolved.hasDefine(\"ALPHA_TEST\"),\n        \"entity_alphatest 加了 ALPHA_TEST，应保留\");\n}",
+    "Bbd6ce86b01437d55": "必须覆盖的测试类别",
+    "Bc87556b2714d4ff4": "| 类别 | 示例 | 适用模块 |\n|------|------|---------|\n| CODEC 往返 | JSON → parse → encode → JSON 等值 | material, behavior, particle |\n| 继承链 | 3 层 base→add→sub 的最终状态 | material |\n| 状态机 | RC 的 transition → new_state 逻辑 | animation |\n| Molang 求值 | 对照 .mcpack 真实表达式验证 | molang |\n| 有效边界 | 空 map、单元素、无 base、无 add | 所有 |\n| 异常/边界 | 循环继承、缺失 base、未知状态 | material, animation |",
+    "B83cba85f3406fe89": "验证命令",
+    "Bf21fc9815a9828ff": "通过 `mcmcp_test` 或 bash 跑 `gradlew test`,若要指定测试类可加 `--tests \"*BrMaterialResolverTest\"` 脚本参数。",
+    "B70d71356519d3074": "判定：全部 GREEN。`UP-TO-DATE` 可接受（源码未变时 Gradle 跳过）。",
+    "Bbc664b053bcca45f": "G3：集成不退化",
+    "Bce12944f4187800d": "只在所有 domain 提取完成后跑一次。",
+    "B773be630e426157e": "RenderDoc 截帧对比流程",
+    "B0ad7733cb77c121e": "重构前：启动 MC → 进世界 → 召唤测试实体 → 截帧 → `before.rdc`",
+    "B7ab151eae9c312ec": "重构后：同样操作 → `after.rdc`",
+    "B41d8dd0c600061ca": "对比：Draw call 数 ±2，最终 RT 逐像素对比",
+    "Bd7b79c49cc3f93c7": "不一致 → `diff_draw_calls()` 定位",
+    "Be9cd4eef2d5b76b1": "快速验证（/eval 替代）",
+    "B31d7edaf352be481": "var target = mc.level.getEntity(250);\nObject cap = RenderData.getComponent(target);\nList comps = (List) cap.getClass().getMethod(\"getModelComponents\").invoke(cap);\n// 验证 comps.size()、RenderType 等",
+    "B6e63cecd52ce8beb": "Common Pitfalls",
+    "B1526c7a43bdd1aee": "**ArchUnit 规则未在 build.gradle 加依赖** — 先确认 `testImplementation 'com.tngtech.archunit:archunit-junit5'`",
+    "B3811bda5f04c7e7b": "**@Mod bootstrap 类触发误报** — 在 ArchUnit 规则中用 `DescribedPredicate` 排除",
+    "B50923e845767396e": "**构建入口** — 通过 `mcmcp_build` / `mcmcp_test` 或 bash 跑 `gradlew`",
+    "Bb12d15584f034b62": "**Spec-based 测试 oracle 来自当前实现** — 这不是测试，是 pin 了 bug。oracle 必须来自规范",
+    "Be4be445f76592679": "**G3 在每批次都跑** — G3 只在最终集成时跑一次，日常不跑"
+  },
+  "stats": {
+    "patches": 2,
+    "repacks": 0,
+    "lastRepackAt": "2026-08-13T08:53:47.488Z",
+    "totalSavedTokens": 0
+  },
+  "transactionLog": [
+    {
+      "ts": "2026-08-13T08:53:47.488Z",
+      "operation": "COMPRESS",
+      "summary": "one-shot: 36 blocks → 3065 chars rendered",
+      "savingTokens": 0
+    },
+    {
+      "ts": "2026-08-13T08:56:38.175Z",
+      "operation": "AUDIT",
+      "summary": "restored 1 missing spans as locked residual",
+      "savingTokens": 0
+    }
+  ],
+  "createdAt": "2026-08-13T08:53:47.488Z",
+  "updatedAt": "2026-08-13T08:56:38.175Z"
+}

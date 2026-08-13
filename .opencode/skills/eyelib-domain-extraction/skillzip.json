@@ -1,0 +1,925 @@
+{
+  "schemaVersion": 1,
+  "skillPath": "E:/_ideaProjects/qylEyelib/.opencode/skills/eyelib-domain-extraction/SKILL.md",
+  "sourcePath": "E:/_ideaProjects/qylEyelib/.opencode/skills/eyelib-domain-extraction/SKILL.md",
+  "contract": {
+    "interface": {
+      "name": "eyelib-domain-extraction",
+      "purpose": "六边形架构重构中从 domain 模块提取一个 Port：定位 MC 接触点 → 创建 Port 接口 → 修改 domain 代码 → 迁移 glue 到 bridge → 更新调用方 → 编译与 ArchUnit 验证。",
+      "triggers": [
+        {
+          "text": "Extract a Port from a domain module in the hexagonal architecture refactoring — locate MC contact points, create Port interfaces, migrate glue code to bridge, and verify with ArchUnit.",
+          "spans": [
+            "B7e120a6a7f6d63e8"
+          ]
+        }
+      ],
+      "exclusions": []
+    },
+    "rules": [
+      {
+        "id": "C1",
+        "scope": "root/eyelib-domain-提取",
+        "modality": "must",
+        "predicate": "子代理每次只提取一个模块的一个 Port；同一 Port 涉及多个模块时按模块拆分多次执行（如 PortStringRepresentable 涉及 3 模块 → 分 3 次）。",
+        "family": "scope-control",
+        "spans": [
+          "B3682e094f765fde2",
+          "B0febe15a0e3d1b94"
+        ],
+        "locked": false
+      },
+      {
+        "id": "C2",
+        "scope": "root/eyelib-domain-提取/前置条件",
+        "modality": "must",
+        "predicate": "开始前已读完 ADR-0010（六边形架构，为什么拆）和 docs/architecture/domain-module-map.md（当前模块需要哪些 Port）。",
+        "spans": [
+          "B11aa547440826056",
+          "B85962c212e49f7ff"
+        ],
+        "locked": false
+      },
+      {
+        "id": "C3",
+        "scope": "root/eyelib-domain-提取/前置条件",
+        "modality": "must",
+        "predicate": "bridge 包已存在（ADR-0014 后为包非子项目）。",
+        "spans": [
+          "B751ec9690cd5587f"
+        ],
+        "locked": false
+      },
+      {
+        "id": "C4",
+        "scope": "root/eyelib-domain-提取",
+        "modality": "must",
+        "predicate": "编译统一用 mcmcp_build 或 bash 跑 gradlew compileJava（ADR-0014 后单 project，无 :eyelib-material: 子项目前缀）。",
+        "family": "build",
+        "spans": [
+          "B6edd6aea79c8c9c4",
+          "B762d5c6ff1ce6299",
+          "B243d894a500873f4"
+        ],
+        "locked": false
+      },
+      {
+        "id": "C5",
+        "scope": "root/eyelib-domain-提取/提取流程/step-2-定位所有-mc-接触点",
+        "modality": "must",
+        "predicate": "用 grep -rn \"import net.minecraft\" 定位全部 MC 接触点并分类映射处理策略：枚举序列化（implements StringRepresentable）→ 改实现 PortStringRepresentable；资源路径（new ResourceLocation(ns, path)）→ 改用 PortResourceLocation；渲染类型（RenderType, RenderStateShard）→ 改用 Port 接口；其他 → 判断新建 Port 或直接迁移 bridge。",
+        "spans": [
+          "Bc106f696b7e82054",
+          "Be91f3f39136340b7",
+          "B0ed3eebd4a35ba93",
+          "B7022680523853a63",
+          "B44414ba1f0eba897",
+          "B34478d23d0684559"
+        ],
+        "locked": false
+      },
+      {
+        "id": "C6",
+        "scope": "root/eyelib-domain-提取",
+        "modality": "must",
+        "predicate": "material 模块 gl/ 与 shared/ 两处同名枚举（BlendFactor、GLStates、DepthFunc）都要改 implements：shared/ 是抽象版（CODEC 用），gl/ 映射 GL 常量，不能漏改。",
+        "family": "duplicate-enum",
+        "spans": [
+          "B07fcdb1606e46534",
+          "Bf11ab581ea4d46e3"
+        ],
+        "locked": false
+      },
+      {
+        "id": "C7",
+        "scope": "root/eyelib-domain-提取/提取流程/step-3-创建-port-接口",
+        "modality": "must",
+        "predicate": "在目标模块 src/main/java/io/github/tt432/<模块包>/port/ 下创建 Port 接口。",
+        "spans": [
+          "B6e3920d957f3b10b"
+        ],
+        "locked": false
+      },
+      {
+        "id": "C8",
+        "scope": "root/eyelib-domain-提取/提取流程/step-3-创建-port-接口",
+        "modality": "must_not",
+        "predicate": "Port 接口不加 public 修饰符。",
+        "spans": [
+          "B5813ce23caf78a79"
+        ],
+        "locked": false
+      },
+      {
+        "id": "C9",
+        "scope": "root/eyelib-domain-提取/提取流程/step-3-创建-port-接口",
+        "modality": "must_not",
+        "predicate": "Port 接口不加类级 @NullMarked（依赖包的 package-info.java）。",
+        "spans": [
+          "B2dfed53bf44e54cd"
+        ],
+        "locked": false
+      },
+      {
+        "id": "C10",
+        "scope": "root/eyelib-domain-提取",
+        "modality": "must_not",
+        "predicate": "Port 接口不得 import 任何 net.minecraft.*；用 grep \"import net.minecraft\" 验证。",
+        "family": "no-mc-import",
+        "spans": [
+          "B4ad749464c3ac8e8",
+          "B96e96b8a7d038dec",
+          "B50341b3e44e306b0"
+        ],
+        "locked": false
+      },
+      {
+        "id": "C11",
+        "scope": "root/eyelib-domain-提取/提取流程/step-4-修改-domain-代码",
+        "modality": "must",
+        "predicate": "枚举类 implements StringRepresentable 改为 implements PortStringRepresentable。",
+        "spans": [
+          "Bd0114baa82d7b54c",
+          "B49a3d6b4e73d24b6"
+        ],
+        "locked": false
+      },
+      {
+        "id": "C12",
+        "scope": "root/eyelib-domain-提取/提取流程/step-4-修改-domain-代码",
+        "modality": "must",
+        "predicate": "new ResourceLocation(...) 改为 PortResourceLocation.of(ns, path)。",
+        "spans": [
+          "B75423dc69bb184e4",
+          "B5ae0fff37f8aac2d"
+        ],
+        "locked": false
+      },
+      {
+        "id": "C13",
+        "scope": "root/eyelib-domain-提取/提取流程/step-4-修改-domain-代码",
+        "modality": "must",
+        "predicate": "RenderType → 语义 Port：domain 输出 Port 语义（如 PortRenderPass），不输出 MC 类型。",
+        "spans": [
+          "B44500586e93d8b90"
+        ],
+        "locked": false
+      },
+      {
+        "id": "C14",
+        "scope": "root/eyelib-domain-提取/提取流程/step-5-编译验证",
+        "modality": "must",
+        "predicate": "编译零错误，警告也要修。",
+        "spans": [
+          "B7a1231599a65faf3"
+        ],
+        "locked": false
+      },
+      {
+        "id": "C15",
+        "scope": "root/eyelib-domain-提取/提取流程/step-6-archunit-如已配置",
+        "modality": "must",
+        "predicate": "ArchUnit 已配置时通过 mcmcp_test 或 bash 跑 gradlew test 验证隔离，可加 --tests \"*ArchUnit*\" 指定测试类。",
+        "guard": "ADR-0015 ArchUnit freeze 模式骨架落地后才执行本步骤；骨架未恢复则跳过。",
+        "spans": [
+          "B8bac6455850c4bf7",
+          "Bb84e4040f5e91762"
+        ],
+        "locked": false
+      },
+      {
+        "id": "C16",
+        "scope": "root/eyelib-domain-提取/提取流程/step-7-迁移胶水代码到-bridge",
+        "modality": "must",
+        "predicate": "纯 Port 替换（如 PortStringRepresentable 只改 implements）不需要迁移 glue；仅当 domain 调用了 MC 类具体方法（如 RenderType.m_...()）或创建了 MC 类型实例（如 new BufferBuilder(...)）时才迁移到 bridge。",
+        "spans": [
+          "Bd6093c4ac2b7eca0",
+          "B9a5d04fd52e81ccb",
+          "B285ab4ee40118508"
+        ],
+        "locked": false
+      },
+      {
+        "id": "C17",
+        "scope": "root/eyelib-domain-提取/提取流程/step-7-迁移胶水代码到-bridge",
+        "modality": "must",
+        "predicate": "bridge 中实现类实现 domain 的 Port 接口，内部可自由 import MC 类型。",
+        "spans": [
+          "B270bc4471e1d1f21"
+        ],
+        "locked": false
+      },
+      {
+        "id": "C18",
+        "scope": "root/eyelib-domain-提取/提取流程/step-8-更新调用方",
+        "modality": "must",
+        "predicate": "更新调用方 import：Port 接口引用保持不变（在 domain 模块中）；MC 实现引用改为 bridge 中 Adapter 类。",
+        "spans": [
+          "B0a435e1a81ce7874",
+          "B5dfee33d3932b77f",
+          "B243ea99cabb4970a"
+        ],
+        "locked": false
+      },
+      {
+        "id": "C19",
+        "scope": "root/eyelib-domain-提取/port-设计规范/粒度假说",
+        "modality": "must",
+        "predicate": "Port 只在被至少两个 MC 代码路径调用时才创建；单一 use case 直接暴露具体类型给 bridge。",
+        "spans": [
+          "Baec88f8ed6c820b4"
+        ],
+        "locked": false
+      },
+      {
+        "id": "C20",
+        "scope": "root/eyelib-domain-提取/port-设计规范/语义驱动",
+        "modality": "must",
+        "predicate": "Port 表达 domain 的需求语义，不是 MC API 镜像；按语义分组，不是每个 MC 类建一个 Port。",
+        "family": "semantic-driven",
+        "spans": [
+          "Bf495b6a7fab44fcd",
+          "Be125b869bdcba0ab",
+          "B50341b3e44e306b0"
+        ],
+        "locked": false
+      },
+      {
+        "id": "C21",
+        "scope": "root/eyelib-domain-提取/port-设计规范/返回值类型",
+        "modality": "must",
+        "predicate": "Port 方法返回值只能用 Java 标准库、util 包类型或同 domain 模块类型；禁止返回 Object，用 sealed 类型或泛型替代。",
+        "family": "return-type",
+        "spans": [
+          "B4ab0a594dda394ca",
+          "B50341b3e44e306b0"
+        ],
+        "locked": false
+      },
+      {
+        "id": "C22",
+        "scope": "root/eyelib-domain-提取/port-设计规范/命名规范",
+        "modality": "must",
+        "predicate": "命名约定：包路径 <模块>/port/；接口名 Port<语义>（如 PortRenderPass, PortEntity）；实现类 <语义>Adapter（如 RenderPassAdapter，在 bridge）。",
+        "spans": [
+          "B2540ba8b9ec5db65"
+        ],
+        "locked": false
+      },
+      {
+        "id": "C23",
+        "scope": "root/eyelib-domain-提取/port-设计规范/fromenum-辅助方法",
+        "modality": "must",
+        "predicate": "Port 替代 StringRepresentable 时必须提供 fromEnum() 辅助方法。",
+        "spans": [
+          "B6bcc9f0be50bdcf1"
+        ],
+        "locked": false
+      },
+      {
+        "id": "C24",
+        "scope": "root/eyelib-domain-提取/port-设计规范/禁止项",
+        "modality": "must_not",
+        "predicate": "Port 不得放在 bridge 模块；Port 由 domain 定义。",
+        "family": "port-ownership",
+        "spans": [
+          "B50341b3e44e306b0"
+        ],
+        "locked": false
+      },
+      {
+        "id": "C25",
+        "scope": "root/eyelib-domain-提取/port-设计规范/禁止项",
+        "modality": "must_not",
+        "predicate": "一个 Port 不得超过 10 个方法；超出拆成多个窄接口。",
+        "family": "interface-width",
+        "spans": [
+          "B50341b3e44e306b0"
+        ],
+        "locked": false
+      },
+      {
+        "id": "C26",
+        "scope": "root/eyelib-domain-提取/common-pitfalls",
+        "modality": "must",
+        "predicate": "枚举改了 implements 必须同步改 codec：StringRepresentable.fromEnum() → PortStringRepresentable.fromEnum()。",
+        "spans": [
+          "B635e2f07dd590dd5"
+        ],
+        "locked": false
+      },
+      {
+        "id": "C27",
+        "scope": "root/eyelib-domain-提取/common-pitfalls",
+        "modality": "must_not",
+        "predicate": "bridge 中不得重新发明 Port：bridge 只能实现 domain 已有 Port，不能定义新的。",
+        "spans": [
+          "Bd6a6b57633705270"
+        ],
+        "locked": false
+      }
+    ],
+    "workflow": [
+      {
+        "id": "step1",
+        "scope": "root/eyelib-domain-提取/提取流程/step-1-确认目标任务",
+        "kind": "action",
+        "action": "从 domain-module-map.md 取出待处理 Port，确认目标任务（例：为 material 模块创建 PortStringRepresentable，替换所有 net.minecraft.util.StringRepresentable）。",
+        "next": [
+          "step2"
+        ],
+        "spans": [
+          "B4e469cde721b2500",
+          "B3544e58b1e052dc5"
+        ]
+      },
+      {
+        "id": "step2",
+        "scope": "root/eyelib-domain-提取/提取流程/step-2-定位所有-mc-接触点",
+        "kind": "action",
+        "action": "grep 定位所有 MC 接触点，按枚举序列化/资源路径/渲染类型/其他分类映射处理策略，并做重复枚举检查。",
+        "tool": "bash",
+        "required_args": [
+          "grep -rn \"import net.minecraft\" src/main/java/ --include=\"*.java\""
+        ],
+        "next": [
+          "step3"
+        ],
+        "spans": [
+          "B73ce1e185a5552ea",
+          "Bc106f696b7e82054",
+          "Be91f3f39136340b7",
+          "B0ed3eebd4a35ba93",
+          "B7022680523853a63",
+          "B44414ba1f0eba897",
+          "B34478d23d0684559",
+          "B07fcdb1606e46534"
+        ]
+      },
+      {
+        "id": "step3",
+        "scope": "root/eyelib-domain-提取/提取流程/step-3-创建-port-接口",
+        "kind": "action",
+        "action": "在目标模块 <模块包>/port/ 下创建 Port 接口（不加 public、不加类级 @NullMarked、不 import net.minecraft.*）。",
+        "next": [
+          "step4"
+        ],
+        "spans": [
+          "Be17ef8189f4a4772",
+          "B6e3920d957f3b10b",
+          "B0e54ecd6ed11a654",
+          "B5813ce23caf78a79",
+          "B2dfed53bf44e54cd",
+          "B4ad749464c3ac8e8"
+        ]
+      },
+      {
+        "id": "step4",
+        "scope": "root/eyelib-domain-提取/提取流程/step-4-修改-domain-代码",
+        "kind": "action",
+        "action": "修改 domain 代码：枚举改 implements PortStringRepresentable；ResourceLocation 改 PortResourceLocation.of；RenderType 改输出语义 Port。",
+        "next": [
+          "step5"
+        ],
+        "spans": [
+          "B342aa54c088d7f6e",
+          "Bd0114baa82d7b54c",
+          "B49a3d6b4e73d24b6",
+          "B75423dc69bb184e4",
+          "B5ae0fff37f8aac2d",
+          "B44500586e93d8b90",
+          "Bca02e3c9fb971edb"
+        ]
+      },
+      {
+        "id": "step5",
+        "scope": "root/eyelib-domain-提取/提取流程/step-5-编译验证",
+        "kind": "action",
+        "action": "编译验证：零错误，警告也要修。",
+        "tool": "mcmcp_build",
+        "next": [
+          "step6"
+        ],
+        "spans": [
+          "B8177cf7e8e7b4ef0",
+          "B762d5c6ff1ce6299",
+          "B7a1231599a65faf3"
+        ]
+      },
+      {
+        "id": "step6",
+        "scope": "root/eyelib-domain-提取/提取流程/step-6-archunit-如已配置",
+        "kind": "decision",
+        "action": "ArchUnit 骨架已配置（ADR-0015 freeze 骨架落地）则跑隔离测试；未落地则跳过本步。",
+        "tool": "mcmcp_test",
+        "required_args": [
+          "--tests \"*ArchUnit*\"（可选）"
+        ],
+        "next": [
+          "step7"
+        ],
+        "spans": [
+          "Bffbe0880fef7775e",
+          "B8bac6455850c4bf7",
+          "Bb84e4040f5e91762"
+        ]
+      },
+      {
+        "id": "step7",
+        "scope": "root/eyelib-domain-提取/提取流程/step-7-迁移胶水代码到-bridge",
+        "kind": "decision",
+        "action": "判断是否迁移 glue：纯 Port 替换不迁移；domain 调 MC 具体方法或创建 MC 实例时在 bridge 写实现 domain Port 接口的 Adapter（内部可自由 import MC 类型）。",
+        "next": [
+          "step8"
+        ],
+        "spans": [
+          "B973f7741afc64193",
+          "Bd6093c4ac2b7eca0",
+          "B9a5d04fd52e81ccb",
+          "B285ab4ee40118508",
+          "B270bc4471e1d1f21"
+        ]
+      },
+      {
+        "id": "step8",
+        "scope": "root/eyelib-domain-提取/提取流程/step-8-更新调用方",
+        "kind": "action",
+        "action": "更新调用方 import：Port 接口引用不变，MC 实现引用改为 bridge 中 Adapter 类。",
+        "next": [
+          "step9"
+        ],
+        "spans": [
+          "B46255b0201f43ae4",
+          "B0a435e1a81ce7874",
+          "B5dfee33d3932b77f",
+          "B243ea99cabb4970a"
+        ]
+      },
+      {
+        "id": "step9",
+        "scope": "root/eyelib-domain-提取/提取流程/step-9-全局编译",
+        "kind": "stop",
+        "action": "全局编译通过即完成本次提取。",
+        "tool": "mcmcp_build",
+        "spans": [
+          "Bcd3f0ad651da6278",
+          "B243d894a500873f4"
+        ]
+      }
+    ],
+    "tools": [
+      {
+        "id": "T1",
+        "name": "mcmcp_build",
+        "spans": [
+          "B6edd6aea79c8c9c4",
+          "B762d5c6ff1ce6299",
+          "B243d894a500873f4"
+        ]
+      },
+      {
+        "id": "T2",
+        "name": "mcmcp_test",
+        "required_args": [
+          "--tests \"*ArchUnit*\"（可选）"
+        ],
+        "spans": [
+          "B8bac6455850c4bf7"
+        ]
+      },
+      {
+        "id": "T3",
+        "name": "bash",
+        "required_args": [
+          "gradlew compileJava",
+          "gradlew test --tests \"*ArchUnit*\"",
+          "grep -rn \"import net.minecraft\" src/main/java/ --include=\"*.java\""
+        ],
+        "spans": [
+          "Bc106f696b7e82054",
+          "B6edd6aea79c8c9c4",
+          "B762d5c6ff1ce6299",
+          "B8bac6455850c4bf7",
+          "B243d894a500873f4"
+        ]
+      }
+    ],
+    "output": {
+      "fields": [
+        {
+          "name": "compile_clean",
+          "required": true,
+          "validation": "零错误，警告也要修",
+          "spans": [
+            "B7a1231599a65faf3"
+          ]
+        },
+        {
+          "name": "archunit_passed",
+          "required": false,
+          "validation": "ADR-0015 骨架落地后隔离测试通过",
+          "spans": [
+            "B8bac6455850c4bf7",
+            "Bb84e4040f5e91762"
+          ]
+        }
+      ],
+      "termination": [
+        "Step 9 全局编译通过后结束本次提取。"
+      ],
+      "spans": [
+        "Bcd3f0ad651da6278",
+        "B243d894a500873f4"
+      ]
+    },
+    "evidence": [],
+    "residual": [
+      {
+        "source_block": "Bca02e3c9fb971edb",
+        "reason": "UNIQUE_EVIDENCE"
+      },
+      {
+        "source_block": "B314393863287e960",
+        "reason": "UNIQUE_EVIDENCE"
+      },
+      {
+        "source_block": "B8c89fbfe3205d304",
+        "reason": "UNIQUE_EVIDENCE"
+      },
+      {
+        "source_block": "Bc0db1d16c6e99c3c",
+        "reason": "AMBIGUOUS"
+      },
+      {
+        "source_block": "Be91f3f39136340b7",
+        "reason": "USER_LOCKED"
+      },
+      {
+        "source_block": "Bffbe0880fef7775e",
+        "reason": "USER_LOCKED"
+      },
+      {
+        "source_block": "B7a1231599a65faf3",
+        "reason": "USER_LOCKED"
+      },
+      {
+        "source_block": "Bb84e4040f5e91762",
+        "reason": "USER_LOCKED"
+      }
+    ]
+  },
+  "scopes": [
+    {
+      "id": "root",
+      "parent": null,
+      "heading": "root",
+      "headingPath": [
+        "root"
+      ],
+      "depth": 0
+    },
+    {
+      "id": "root/eyelib-domain-提取",
+      "parent": "root",
+      "heading": "Eyelib Domain 提取",
+      "headingPath": [
+        "root",
+        "eyelib-domain-提取"
+      ],
+      "depth": 1
+    },
+    {
+      "id": "root/eyelib-domain-提取/前置条件",
+      "parent": "root/eyelib-domain-提取",
+      "heading": "前置条件",
+      "headingPath": [
+        "root",
+        "eyelib-domain-提取",
+        "前置条件"
+      ],
+      "depth": 2
+    },
+    {
+      "id": "root/eyelib-domain-提取/提取流程",
+      "parent": "root/eyelib-domain-提取",
+      "heading": "提取流程",
+      "headingPath": [
+        "root",
+        "eyelib-domain-提取",
+        "提取流程"
+      ],
+      "depth": 2
+    },
+    {
+      "id": "root/eyelib-domain-提取/提取流程/step-1-确认目标任务",
+      "parent": "root/eyelib-domain-提取/提取流程",
+      "heading": "Step 1：确认目标任务",
+      "headingPath": [
+        "root",
+        "eyelib-domain-提取",
+        "提取流程",
+        "step-1-确认目标任务"
+      ],
+      "depth": 3
+    },
+    {
+      "id": "root/eyelib-domain-提取/提取流程/step-2-定位所有-mc-接触点",
+      "parent": "root/eyelib-domain-提取/提取流程",
+      "heading": "Step 2：定位所有 MC 接触点",
+      "headingPath": [
+        "root",
+        "eyelib-domain-提取",
+        "提取流程",
+        "step-2-定位所有-mc-接触点"
+      ],
+      "depth": 3
+    },
+    {
+      "id": "root/eyelib-domain-提取/提取流程/step-3-创建-port-接口",
+      "parent": "root/eyelib-domain-提取/提取流程",
+      "heading": "Step 3：创建 Port 接口",
+      "headingPath": [
+        "root",
+        "eyelib-domain-提取",
+        "提取流程",
+        "step-3-创建-port-接口"
+      ],
+      "depth": 3
+    },
+    {
+      "id": "root/eyelib-domain-提取/提取流程/step-4-修改-domain-代码",
+      "parent": "root/eyelib-domain-提取/提取流程",
+      "heading": "Step 4：修改 domain 代码",
+      "headingPath": [
+        "root",
+        "eyelib-domain-提取",
+        "提取流程",
+        "step-4-修改-domain-代码"
+      ],
+      "depth": 3
+    },
+    {
+      "id": "root/eyelib-domain-提取/提取流程/step-5-编译验证",
+      "parent": "root/eyelib-domain-提取/提取流程",
+      "heading": "Step 5：编译验证",
+      "headingPath": [
+        "root",
+        "eyelib-domain-提取",
+        "提取流程",
+        "step-5-编译验证"
+      ],
+      "depth": 3
+    },
+    {
+      "id": "root/eyelib-domain-提取/提取流程/step-6-archunit-如已配置",
+      "parent": "root/eyelib-domain-提取/提取流程",
+      "heading": "Step 6：ArchUnit（如已配置）",
+      "headingPath": [
+        "root",
+        "eyelib-domain-提取",
+        "提取流程",
+        "step-6-archunit-如已配置"
+      ],
+      "depth": 3
+    },
+    {
+      "id": "root/eyelib-domain-提取/提取流程/step-7-迁移胶水代码到-bridge",
+      "parent": "root/eyelib-domain-提取/提取流程",
+      "heading": "Step 7：迁移胶水代码到 bridge",
+      "headingPath": [
+        "root",
+        "eyelib-domain-提取",
+        "提取流程",
+        "step-7-迁移胶水代码到-bridge"
+      ],
+      "depth": 3
+    },
+    {
+      "id": "root/eyelib-domain-提取/提取流程/step-8-更新调用方",
+      "parent": "root/eyelib-domain-提取/提取流程",
+      "heading": "Step 8：更新调用方",
+      "headingPath": [
+        "root",
+        "eyelib-domain-提取",
+        "提取流程",
+        "step-8-更新调用方"
+      ],
+      "depth": 3
+    },
+    {
+      "id": "root/eyelib-domain-提取/提取流程/step-9-全局编译",
+      "parent": "root/eyelib-domain-提取/提取流程",
+      "heading": "Step 9：全局编译",
+      "headingPath": [
+        "root",
+        "eyelib-domain-提取",
+        "提取流程",
+        "step-9-全局编译"
+      ],
+      "depth": 3
+    },
+    {
+      "id": "root/eyelib-domain-提取/port-设计规范",
+      "parent": "root/eyelib-domain-提取",
+      "heading": "Port 设计规范",
+      "headingPath": [
+        "root",
+        "eyelib-domain-提取",
+        "port-设计规范"
+      ],
+      "depth": 2
+    },
+    {
+      "id": "root/eyelib-domain-提取/port-设计规范/粒度假说",
+      "parent": "root/eyelib-domain-提取/port-设计规范",
+      "heading": "粒度假说",
+      "headingPath": [
+        "root",
+        "eyelib-domain-提取",
+        "port-设计规范",
+        "粒度假说"
+      ],
+      "depth": 3
+    },
+    {
+      "id": "root/eyelib-domain-提取/port-设计规范/语义驱动",
+      "parent": "root/eyelib-domain-提取/port-设计规范",
+      "heading": "语义驱动",
+      "headingPath": [
+        "root",
+        "eyelib-domain-提取",
+        "port-设计规范",
+        "语义驱动"
+      ],
+      "depth": 3
+    },
+    {
+      "id": "root/eyelib-domain-提取/port-设计规范/返回值类型",
+      "parent": "root/eyelib-domain-提取/port-设计规范",
+      "heading": "返回值类型",
+      "headingPath": [
+        "root",
+        "eyelib-domain-提取",
+        "port-设计规范",
+        "返回值类型"
+      ],
+      "depth": 3
+    },
+    {
+      "id": "root/eyelib-domain-提取/port-设计规范/命名规范",
+      "parent": "root/eyelib-domain-提取/port-设计规范",
+      "heading": "命名规范",
+      "headingPath": [
+        "root",
+        "eyelib-domain-提取",
+        "port-设计规范",
+        "命名规范"
+      ],
+      "depth": 3
+    },
+    {
+      "id": "root/eyelib-domain-提取/port-设计规范/接口模板",
+      "parent": "root/eyelib-domain-提取/port-设计规范",
+      "heading": "接口模板",
+      "headingPath": [
+        "root",
+        "eyelib-domain-提取",
+        "port-设计规范",
+        "接口模板"
+      ],
+      "depth": 3
+    },
+    {
+      "id": "root/eyelib-domain-提取/port-设计规范/fromenum-辅助方法",
+      "parent": "root/eyelib-domain-提取/port-设计规范",
+      "heading": "fromEnum() 辅助方法",
+      "headingPath": [
+        "root",
+        "eyelib-domain-提取",
+        "port-设计规范",
+        "fromenum-辅助方法"
+      ],
+      "depth": 3
+    },
+    {
+      "id": "root/eyelib-domain-提取/port-设计规范/禁止项",
+      "parent": "root/eyelib-domain-提取/port-设计规范",
+      "heading": "禁止项",
+      "headingPath": [
+        "root",
+        "eyelib-domain-提取",
+        "port-设计规范",
+        "禁止项"
+      ],
+      "depth": 3
+    },
+    {
+      "id": "root/eyelib-domain-提取/common-pitfalls",
+      "parent": "root/eyelib-domain-提取",
+      "heading": "Common Pitfalls",
+      "headingPath": [
+        "root",
+        "eyelib-domain-提取",
+        "common-pitfalls"
+      ],
+      "depth": 2
+    }
+  ],
+  "procedures": [],
+  "sourceBlocks": {
+    "B7e120a6a7f6d63e8": "Eyelib Domain 提取",
+    "B3682e094f765fde2": "子代理专用。每次提取一个模块的一个 Port，按本文流程操作。",
+    "Bd905c71fa9059d9d": "前置条件",
+    "B11aa547440826056": "已读完 ADR-0010（六边形架构，为什么拆）",
+    "B85962c212e49f7ff": "已读完 `docs/architecture/domain-module-map.md`（当前模块需要哪些 Port）",
+    "B751ec9690cd5587f": "`bridge` 包已存在（ADR-0014 后为包非子项目）",
+    "B6edd6aea79c8c9c4": "编译用 `mcmcp_build` 或 bash 跑 `gradlew`",
+    "Bf746d687e01a66cd": "提取流程",
+    "B4e469cde721b2500": "Step 1：确认目标任务",
+    "B3544e58b1e052dc5": "从 `domain-module-map.md` 取出待处理 Port。例：\n> 任务：为 `material` 模块创建 `PortStringRepresentable`，替换所有 `net.minecraft.util.StringRepresentable`",
+    "B73ce1e185a5552ea": "Step 2：定位所有 MC 接触点",
+    "Bc106f696b7e82054": "grep -rn \"import net.minecraft\" src/main/java/ --include=\"*.java\"",
+    "Be91f3f39136340b7": "分类：",
+    "B0ed3eebd4a35ba93": "**枚举序列化**（`implements StringRepresentable`）→ 改实现 `PortStringRepresentable`",
+    "B7022680523853a63": "**资源路径**（`new ResourceLocation(ns, path)`）→ 改用 `PortResourceLocation`",
+    "B44414ba1f0eba897": "**渲染类型**（`RenderType`, `RenderStateShard`）→ 改用 Port 接口",
+    "B34478d23d0684559": "其他 → 判断是否新建 Port 或直接迁移到 bridge",
+    "B07fcdb1606e46534": "**重复枚举检查：** material 模块的 `gl/` 和 `shared/` 两处有同名枚举（BlendFactor、GLStates、DepthFunc）。`shared/` 是抽象版（CODEC 用），`gl/` 映射 GL 常量。两处都需要改 implements。",
+    "Be17ef8189f4a4772": "Step 3：创建 Port 接口",
+    "B6e3920d957f3b10b": "在目标模块 `src/main/java/io/github/tt432/<模块包>/port/` 下创建。",
+    "B0e54ecd6ed11a654": "必须遵守：",
+    "B5813ce23caf78a79": "接口不加 `public` 修饰符",
+    "B2dfed53bf44e54cd": "不加类级 `@NullMarked`（依赖包的 `package-info.java`）",
+    "B4ad749464c3ac8e8": "不能 import 任何 `net.minecraft.*`",
+    "B342aa54c088d7f6e": "Step 4：修改 domain 代码",
+    "Bd0114baa82d7b54c": "**枚举类：**",
+    "B49a3d6b4e73d24b6": "// 改前\npublic enum BlendFactor implements StringRepresentable {\n// 改后\npublic enum BlendFactor implements PortStringRepresentable {",
+    "B75423dc69bb184e4": "**ResourceLocation：**",
+    "B5ae0fff37f8aac2d": "// 改前\nnew ResourceLocation(\"eyelib:models/entity\")\n// 改后\nPortResourceLocation.of(\"eyelib\", \"models/entity\")",
+    "B44500586e93d8b90": "**RenderType → 语义 Port：**",
+    "Bca02e3c9fb971edb": "// 改后：domain 输出 Port 语义，不输出 MC 类型\npublic PortRenderPass getRenderPass() {\n    return new PortRenderPass() {\n        public boolean requiresAlphaTest() { return hasDefine(\"ALPHA_TEST\"); }\n        public boolean requiresBlending() { return hasBlending(); }\n        public boolean requiresCulling() { return !hasDefine(\"DISABLE_CULLING\"); }\n    };\n}",
+    "B8177cf7e8e7b4ef0": "Step 5：编译验证",
+    "B762d5c6ff1ce6299": "通过 `mcmcp_build` 或 bash 跑 `gradlew compileJava`(ADR-0014 后单 project,无 `:eyelib-material:` 子项目前缀)。",
+    "B7a1231599a65faf3": "零错误，警告也要修。",
+    "Bffbe0880fef7775e": "Step 6：ArchUnit（如已配置）",
+    "B8bac6455850c4bf7": "通过 `mcmcp_test` 或 bash 跑 `gradlew test`,若要指定测试类可加 `--tests \"*ArchUnit*\"` 脚本参数。",
+    "Bb84e4040f5e91762": "> 注: ADR-0015 ArchUnit freeze 模式骨架尚未落地,本步骤在骨架恢复后才执行。",
+    "B973f7741afc64193": "Step 7：迁移胶水代码到 bridge",
+    "Bd6093c4ac2b7eca0": "**纯 Port 替换不需要迁移。** 像 `PortStringRepresentable` 替换——只在 domain 侧改 implements，不产生 bridge 代码。只有以下情况才迁移：",
+    "B9a5d04fd52e81ccb": "domain 调用了 MC 类的具体方法（如 `RenderType.m_...()`）",
+    "B285ab4ee40118508": "domain 创建了 MC 类型实例（如 `new BufferBuilder(...)`）",
+    "B270bc4471e1d1f21": "bridge 中实现类实现 domain 的 Port 接口，内部可自由 import MC 类型。",
+    "B46255b0201f43ae4": "Step 8：更新调用方",
+    "B0a435e1a81ce7874": "root 或其他模块中被迁移类的引用改 import：",
+    "B5dfee33d3932b77f": "Port 接口引用保持不变（在 domain 模块中）",
+    "B243ea99cabb4970a": "MC 实现引用改为 bridge 中 Adapter 类",
+    "Bcd3f0ad651da6278": "Step 9：全局编译",
+    "B243d894a500873f4": "通过 `mcmcp_build` 或 bash 跑 `gradlew compileJava`。",
+    "Bdff20b801cb8c54e": "Port 设计规范",
+    "B64306d34601b6e96": "粒度假说",
+    "Baec88f8ed6c820b4": "Port 只在被至少两个 MC 代码路径调用时才创建。单一 use case → 直接暴露具体类型给 bridge。",
+    "B65b3b83c2fbe8a4e": "语义驱动",
+    "Bf495b6a7fab44fcd": "Port 表达 domain 的需求语义，不是 MC API 镜像：",
+    "Be125b869bdcba0ab": "// ❌ 机械翻译\npublic interface PortMinecraft { Level getLevel(); Camera getCamera(); }\n// ✅ 语义表达\npublic interface PortRenderContext { long dayTime(); long gameTime(); float cameraYaw(); }",
+    "Bba268256060d7730": "返回值类型",
+    "B4ab0a594dda394ca": "只能用 Java 标准库、`util` 包类型、或同 domain 模块类型。禁止 `Object`。",
+    "B62672d6c69ec1cb6": "命名规范",
+    "B2540ba8b9ec5db65": "| 位置 | 格式 | 示例 |\n|------|------|------|\n| 包路径 | `<模块>/port/` | `src/main/java/io/github/tt432/eyelib/material/port/` |\n| 接口名 | `Port<语义>` | `PortRenderPass`, `PortEntity` |\n| 实现类 | `<语义>Adapter` | `RenderPassAdapter`（在 bridge） |",
+    "Bba1e4146f50bc860": "接口模板",
+    "B314393863287e960": "/** @author TT432 */\ninterface PortXxx {\n    ReturnType someProperty();\n    @Nullable ReturnType optionalProperty();\n    void doSomething(InputType input);\n    static PortXxx of(Args args) { ... }\n}",
+    "Be663b6e442c6086e": "fromEnum() 辅助方法",
+    "B6bcc9f0be50bdcf1": "Port 替代 `StringRepresentable` 时必须提供：",
+    "B8c89fbfe3205d304": "public interface PortStringRepresentable {\n    String getSerializedName();\n\n    static <T extends Enum<T> & PortStringRepresentable> Codec<T> fromEnum(Supplier<T[]> values) {\n        return Codec.STRING.xmap(\n                name -> Arrays.stream(values.get())\n                        .filter(e -> e.getSerializedName().equals(name))\n                        .findFirst()\n                        .orElseThrow(() -> new IllegalArgumentException(\"Unknown: \" + name)),\n                PortStringRepresentable::getSerializedName\n        );\n    }\n}",
+    "Bf89507e62babe370": "禁止项",
+    "B50341b3e44e306b0": "| 禁止 | 正确做法 |\n|------|----------|\n| Port import `net.minecraft.*` | Java 标准库或 domain 自有类型 |\n| Port 方法返回 `Object` | sealed 类型或泛型 |\n| Port 放 bridge 模块 | Port 由 domain 定义 |\n| 一个 Port 超 10 方法 | 拆成多个窄接口 |\n| 每个 MC 类建一个 Port | 按语义分组 |",
+    "Bfa7d86ac7ad1c06a": "Common Pitfalls",
+    "B96e96b8a7d038dec": "**Port 接口 import 了 MC 类型** — `grep \"import net.minecraft\"` 验证",
+    "B635e2f07dd590dd5": "**枚举改了 implements 忘了改 codec** — `StringRepresentable.fromEnum()` → `PortStringRepresentable.fromEnum()`",
+    "Bc0db1d16c6e99c3c": "~~**bridge 的 build.gradle 缺 domain 依赖** — `implementation project(':eyelib-material')`~~（ADR-0014 前子项目时代踩坑，当前单 project 无此问题）",
+    "Bd6a6b57633705270": "**bridge 中重新发明 Port** — bridge 只能实现 domain 已有 Port，不能定义新的",
+    "B0febe15a0e3d1b94": "**一次改太多模块** — 每次只改一个模块的一个 Port。PortStringRepresentable 涉及 3 模块 → 分 3 次",
+    "Bf11ab581ea4d46e3": "**忘了重复枚举** — material 的 `gl/` 和 `shared/` 同名枚举两处都要改"
+  },
+  "stats": {
+    "patches": 2,
+    "repacks": 0,
+    "lastRepackAt": "2026-08-13T08:58:58.920Z",
+    "totalSavedTokens": 0
+  },
+  "transactionLog": [
+    {
+      "ts": "2026-08-13T08:58:58.920Z",
+      "operation": "COMPRESS",
+      "summary": "one-shot: 72 blocks → 4986 chars rendered",
+      "savingTokens": 0
+    },
+    {
+      "ts": "2026-08-13T09:06:35.433Z",
+      "operation": "AUDIT",
+      "summary": "restored 4 missing spans as locked residual",
+      "savingTokens": 0
+    }
+  ],
+  "createdAt": "2026-08-13T08:58:58.920Z",
+  "updatedAt": "2026-08-13T09:06:35.433Z"
+}

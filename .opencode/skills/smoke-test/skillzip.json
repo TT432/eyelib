@@ -1,0 +1,535 @@
+{
+  "schemaVersion": 1,
+  "skillPath": "E:/_ideaProjects/qylEyelib/.opencode/skills/smoke-test/SKILL.md",
+  "sourcePath": "E:/_ideaProjects/qylEyelib/.opencode/skills/smoke-test/SKILL.md",
+  "contract": {
+    "interface": {
+      "name": "smoke-test",
+      "purpose": "Write and run ClientSmoke tests that verify visual behavior in a real Minecraft client (render output, GL state, texture correctness, full-lifecycle integration).",
+      "triggers": [
+        {
+          "text": "Visual correctness: does the rendered output have the right pixel colors?",
+          "spans": [
+            "Ba9d146e3b019ecf9"
+          ]
+        },
+        {
+          "text": "Full-lifecycle: does the mod work from load through world join to render?",
+          "spans": [
+            "B24c7fc18c25e3bee"
+          ]
+        },
+        {
+          "text": "GL state: are shaders compiling and applying correctly?",
+          "spans": [
+            "B99b5164dcc8555eb"
+          ]
+        },
+        {
+          "text": "Integration: does component A correctly feed into component B during a real tick?",
+          "spans": [
+            "B11abb4e3f57486f1"
+          ]
+        }
+      ],
+      "exclusions": [
+        {
+          "text": "Structural invariants — use unit tests instead",
+          "spans": [
+            "Ba967676da41506b3"
+          ]
+        },
+        {
+          "text": "Quick runtime checks — use progressive exploration instead",
+          "spans": [
+            "Ba967676da41506b3"
+          ]
+        }
+      ]
+    },
+    "rules": [
+      {
+        "id": "C1",
+        "scope": "root/what-clientsmoke-is",
+        "modality": "must",
+        "predicate": "ClientSmoke is a standalone framework that discovers @ClientSmoke-annotated classes via ASM scanning, creates a deterministic superflat world, executes test constructors in priority order, captures screenshots, runs pixel assertions via visual hooks, and produces JSON + JUnit XML reports.",
+        "spans": [
+          "Bfac91744fc48d222"
+        ],
+        "locked": false
+      },
+      {
+        "id": "C2",
+        "scope": "root",
+        "modality": "must_not",
+        "predicate": "write smoke tests as JUnit or rely on any base class, interface, or method contract — the no-arg constructor body IS the test",
+        "spans": [
+          "B2669053763d61e11",
+          "B5b710f2323f130f5",
+          "B80ed8df6a929a034"
+        ],
+        "locked": false
+      },
+      {
+        "id": "C3",
+        "scope": "root",
+        "modality": "must",
+        "predicate": "give the test class a public no-arg constructor whose body performs the assertions",
+        "spans": [
+          "Be9f89117122f7b3d",
+          "Bd29bd154f36f8d42"
+        ],
+        "locked": false
+      },
+      {
+        "id": "C4",
+        "scope": "root",
+        "modality": "must",
+        "predicate": "annotate the test class with @ClientSmoke",
+        "spans": [
+          "B941e0276f464abe4",
+          "B80ed8df6a929a034"
+        ],
+        "locked": false
+      },
+      {
+        "id": "C5",
+        "scope": "root/constructor-as-test-pattern",
+        "modality": "must",
+        "predicate": "access Minecraft singletons via Minecraft.getInstance()",
+        "spans": [
+          "B4bf1f27f0527ee09"
+        ],
+        "locked": false
+      },
+      {
+        "id": "C6",
+        "scope": "root/annotation-api",
+        "modality": "must",
+        "predicate": "treat @ClientSmoke as RetentionPolicy.CLASS: ASM-visible but not reflectively accessible at runtime, which prevents accidental class loading during discovery",
+        "spans": [
+          "B34ced1278a4f3375"
+        ],
+        "locked": false
+      },
+      {
+        "id": "C7",
+        "scope": "root",
+        "modality": "prefer",
+        "predicate": "register visual hooks in the constructor for per-test render verification",
+        "spans": [
+          "Bcba7df37f0738a61",
+          "Bf798708190cf2dbf"
+        ],
+        "locked": false
+      },
+      {
+        "id": "C8",
+        "scope": "root/visual-hooks",
+        "modality": "must",
+        "predicate": "RenderHook fires before framebuffer capture and can draw debug geometry",
+        "spans": [
+          "B37d373a21d9283e4"
+        ],
+        "locked": false
+      },
+      {
+        "id": "C9",
+        "scope": "root/visual-hooks",
+        "modality": "must",
+        "predicate": "CaptureVerifier fires after capture and receives a NativeImage for pixel-level assertions",
+        "spans": [
+          "B0e9d3b629cf166ac"
+        ],
+        "locked": false
+      },
+      {
+        "id": "C10",
+        "scope": "root/visual-hooks",
+        "modality": "must",
+        "predicate": "treat hooks as one-shot: they are cleared after each test",
+        "spans": [
+          "B2201445141b00573"
+        ],
+        "locked": false
+      },
+      {
+        "id": "C11",
+        "scope": "root/execution-flow",
+        "modality": "must",
+        "predicate": "the framework runs as a tick-driven state machine on ClientTickEvent",
+        "spans": [
+          "B4eb13a6aae69bc8c"
+        ],
+        "locked": false
+      },
+      {
+        "id": "C12",
+        "scope": "root/execution-flow",
+        "modality": "must",
+        "predicate": "tests run in a deterministic creative superflat world (ClientSmokeTest, seed 12345L)",
+        "spans": [
+          "B4e4cfb2b4fd75f3d"
+        ],
+        "locked": false
+      },
+      {
+        "id": "C13",
+        "scope": "root/adding-a-smoke-test",
+        "modality": "must",
+        "predicate": "place the test in a Gradle module that depends on the annotation via compileOnly; the annotation is discovered from any mod on the classpath",
+        "spans": [
+          "B4f085a53fd5f9ea1"
+        ],
+        "locked": false
+      },
+      {
+        "id": "C14",
+        "scope": "root/running-smoke-tests",
+        "modality": "must",
+        "predicate": "use the dedicated clientSmoke Gradle run configuration; the smoke client uses a separate game directory (run/clientsmoke/) and auto-exits, so it does not block",
+        "spans": [
+          "B4393676bd0209551",
+          "B134b05b70a7f415d"
+        ],
+        "locked": false
+      }
+    ],
+    "workflow": [
+      {
+        "id": "add-create-class",
+        "scope": "root/adding-a-smoke-test",
+        "kind": "action",
+        "action": "Create a class in the relevant module's src/main/java/ under a smoke/ package",
+        "next": [
+          "add-annotate"
+        ],
+        "spans": [
+          "B222251fb33f21f41"
+        ]
+      },
+      {
+        "id": "add-annotate",
+        "scope": "root/adding-a-smoke-test",
+        "kind": "action",
+        "action": "Annotate with @ClientSmoke (no JUnit — just the annotation)",
+        "next": [
+          "add-constructor"
+        ],
+        "spans": [
+          "B80ed8df6a929a034"
+        ]
+      },
+      {
+        "id": "add-constructor",
+        "scope": "root/adding-a-smoke-test",
+        "kind": "action",
+        "action": "Implement a no-arg constructor that performs assertions",
+        "next": [
+          "add-hooks"
+        ],
+        "spans": [
+          "Bd29bd154f36f8d42"
+        ]
+      },
+      {
+        "id": "add-hooks",
+        "scope": "root/adding-a-smoke-test",
+        "kind": "action",
+        "action": "Register visual hooks if needed",
+        "spans": [
+          "Bf798708190cf2dbf"
+        ]
+      },
+      {
+        "id": "run-sync",
+        "scope": "root/running-smoke-tests",
+        "kind": "action",
+        "action": "Sync the Gradle project if dependencies changed",
+        "next": [
+          "run-build"
+        ],
+        "spans": [
+          "Bdf70874957ab39ab"
+        ]
+      },
+      {
+        "id": "run-build",
+        "scope": "root/running-smoke-tests",
+        "kind": "action",
+        "action": "Build the project",
+        "next": [
+          "run-execute"
+        ],
+        "spans": [
+          "B0cc53b2d1abe5a17"
+        ]
+      },
+      {
+        "id": "run-execute",
+        "scope": "root/running-smoke-tests",
+        "kind": "action",
+        "action": "Run the smoke tests",
+        "tool": "mcmcp_clientsmoke",
+        "next": [
+          "run-check"
+        ],
+        "spans": [
+          "B7073e7c33b7abfcd"
+        ]
+      },
+      {
+        "id": "run-check",
+        "scope": "root/running-smoke-tests",
+        "kind": "action",
+        "action": "Check run/clientsmoke/clientsmoke-reports/ for results",
+        "spans": [
+          "B6f925318d0c249fa"
+        ]
+      }
+    ],
+    "tools": [
+      {
+        "id": "T1",
+        "name": "mcmcp_clientsmoke",
+        "preconditions": [
+          "Gradle project synced if dependencies changed",
+          "project built"
+        ],
+        "observations": [
+          "smoke client uses a separate game directory run/clientsmoke/ and auto-exits, so it does not block",
+          "results appear under run/clientsmoke/clientsmoke-reports/"
+        ],
+        "spans": [
+          "B7073e7c33b7abfcd",
+          "B134b05b70a7f415d"
+        ]
+      }
+    ],
+    "output": {
+      "fields": [
+        {
+          "name": "screenshots",
+          "required": true,
+          "validation": "written to run/clientsmoke/clientsmoke-reports/screenshots/",
+          "spans": [
+            "Bf5b54b58f38999a2"
+          ]
+        },
+        {
+          "name": "json-report",
+          "required": true,
+          "validation": "report-{timestamp}.json",
+          "spans": [
+            "Bb44cee6549990873"
+          ]
+        },
+        {
+          "name": "junit-xml",
+          "required": true,
+          "validation": "junit-{timestamp}.xml",
+          "spans": [
+            "Bb44cee6549990873"
+          ]
+        }
+      ],
+      "type": "clientsmoke-report",
+      "termination": [
+        "mc.stop() then 60-tick grace, then Runtime.halt(0) on all-pass, halt(1) on failure"
+      ],
+      "spans": [
+        "Bf5b54b58f38999a2",
+        "Bb44cee6549990873",
+        "B38ac96b4fceadcae"
+      ]
+    },
+    "evidence": [],
+    "residual": [
+      {
+        "source_block": "Bee8e0fa87106b322",
+        "reason": "UNIQUE_EVIDENCE"
+      },
+      {
+        "source_block": "B35e52565f8f624d3",
+        "reason": "UNIQUE_EVIDENCE"
+      },
+      {
+        "source_block": "Bf5514ce74e00e539",
+        "reason": "UNIQUE_EVIDENCE"
+      },
+      {
+        "source_block": "B544e96fc7b89dc92",
+        "reason": "UNIQUE_EVIDENCE"
+      },
+      {
+        "source_block": "Bf5b54b58f38999a2",
+        "reason": "USER_LOCKED"
+      },
+      {
+        "source_block": "Bb44cee6549990873",
+        "reason": "USER_LOCKED"
+      }
+    ]
+  },
+  "scopes": [
+    {
+      "id": "root",
+      "parent": null,
+      "heading": "root",
+      "headingPath": [
+        "root"
+      ],
+      "depth": 0
+    },
+    {
+      "id": "root/what-clientsmoke-is",
+      "parent": "root",
+      "heading": "What ClientSmoke Is",
+      "headingPath": [
+        "root",
+        "what-clientsmoke-is"
+      ],
+      "depth": 1
+    },
+    {
+      "id": "root/annotation-api",
+      "parent": "root",
+      "heading": "Annotation API",
+      "headingPath": [
+        "root",
+        "annotation-api"
+      ],
+      "depth": 1
+    },
+    {
+      "id": "root/constructor-as-test-pattern",
+      "parent": "root",
+      "heading": "Constructor-as-Test Pattern",
+      "headingPath": [
+        "root",
+        "constructor-as-test-pattern"
+      ],
+      "depth": 1
+    },
+    {
+      "id": "root/visual-hooks",
+      "parent": "root",
+      "heading": "Visual Hooks",
+      "headingPath": [
+        "root",
+        "visual-hooks"
+      ],
+      "depth": 1
+    },
+    {
+      "id": "root/execution-flow",
+      "parent": "root",
+      "heading": "Execution Flow",
+      "headingPath": [
+        "root",
+        "execution-flow"
+      ],
+      "depth": 1
+    },
+    {
+      "id": "root/adding-a-smoke-test",
+      "parent": "root",
+      "heading": "Adding a Smoke Test",
+      "headingPath": [
+        "root",
+        "adding-a-smoke-test"
+      ],
+      "depth": 1
+    },
+    {
+      "id": "root/running-smoke-tests",
+      "parent": "root",
+      "heading": "Running Smoke Tests",
+      "headingPath": [
+        "root",
+        "running-smoke-tests"
+      ],
+      "depth": 1
+    },
+    {
+      "id": "root/when-to-use",
+      "parent": "root",
+      "heading": "When to Use",
+      "headingPath": [
+        "root",
+        "when-to-use"
+      ],
+      "depth": 1
+    }
+  ],
+  "procedures": [],
+  "sourceBlocks": {
+    "B106d6648b4b88ee6": "What ClientSmoke Is",
+    "Bfac91744fc48d222": "A standalone framework that discovers `@ClientSmoke`-annotated classes via ASM scanning, creates a deterministic superflat world, executes test constructors in priority order, captures screenshots, runs pixel assertions via visual hooks, and produces JSON + JUnit XML reports.",
+    "B2669053763d61e11": "Tests are NOT JUnit — they run inside a real Minecraft client instance.",
+    "Bd36370617c453d57": "Annotation API",
+    "Bee8e0fa87106b322": "@Retention(RetentionPolicy.CLASS)\n@Target(ElementType.TYPE)\npublic @interface ClientSmoke {\n    String description() default \"\";  // human-readable, appears in reports\n    int priority() default 0;         // lower = executes first\n    String modId() default \"\";        // optional namespace gating\n}",
+    "B34ced1278a4f3375": "`RetentionPolicy.CLASS` means the annotation is ASM-visible but not reflectively accessible at runtime. This prevents accidental class loading during discovery.",
+    "Bb9c3c3095f678b17": "Constructor-as-Test Pattern",
+    "B5b710f2323f130f5": "There is **no base class, no interface, no method contract**. The no-arg constructor body IS the test:",
+    "B35e52565f8f624d3": "@ClientSmoke(description = \"Validates login screen renders\", priority = 0)\npublic class LoginScreenTest {\n    public LoginScreenTest() {\n        Minecraft mc = Minecraft.getInstance();\n        if (mc.screen == null)\n            throw new AssertionError(\"Expected a screen to be open\");\n    }\n}",
+    "Bbb1b451e365dbc08": "The only requirements:",
+    "Be9f89117122f7b3d": "A public no-arg constructor",
+    "B941e0276f464abe4": "`@ClientSmoke` annotation on the class",
+    "B4bf1f27f0527ee09": "Access Minecraft singletons via `Minecraft.getInstance()`",
+    "B8da50ff3392fb981": "Visual Hooks",
+    "Bcba7df37f0738a61": "For per-test render verification, set hooks in the constructor:",
+    "Bf5514ce74e00e539": "public MaterialPipelineSmoke() {\n    // Register render hook: draws custom geometry before screenshot\n    ClientSmokeVisualHooks.set(\n        mc -> { /* draw custom GL */ },       // RenderHook\n        image -> { /* assert pixel colors */ } // CaptureVerifier\n    );\n}",
+    "B37d373a21d9283e4": "`RenderHook`: fires before framebuffer capture. Can draw debug geometry.",
+    "B0e9d3b629cf166ac": "`CaptureVerifier`: fires after capture. Receives a `NativeImage` for pixel-level assertions.",
+    "B2201445141b00573": "Hooks are one-shot: cleared after each test.",
+    "B586a69ed9f37560b": "Execution Flow",
+    "B4eb13a6aae69bc8c": "The framework runs as a tick-driven state machine on `ClientTickEvent`:",
+    "B544e96fc7b89dc92": "INIT → CONFIG_LOAD → SCAN → WORLD_CREATE → WORLD_WAIT → STABILIZE\n  → TEST_EXEC (foreach test by priority) → HUD_HIDE → SCREENSHOT\n  → REPORT → EXIT",
+    "B4e4cfb2b4fd75f3d": "World: deterministic creative superflat (`ClientSmokeTest`, seed `12345L`)",
+    "Bf5b54b58f38999a2": "Screenshots: written to `run/clientsmoke/clientsmoke-reports/screenshots/`",
+    "Bb44cee6549990873": "Reports: JSON (`report-{timestamp}.json`) + JUnit XML (`junit-{timestamp}.xml`)",
+    "B38ac96b4fceadcae": "Exit: `mc.stop()` → 60-tick grace → `Runtime.halt(0)` on all-pass, `halt(1)` on failure",
+    "Ba89093e3e3d4ba29": "Adding a Smoke Test",
+    "B222251fb33f21f41": "Create a class in the relevant module's `src/main/java/` under a `smoke/` package",
+    "B80ed8df6a929a034": "Annotate with `@ClientSmoke` (no JUnit — just the annotation)",
+    "Bd29bd154f36f8d42": "Implement a no-arg constructor that performs assertions",
+    "Bf798708190cf2dbf": "Register visual hooks if needed",
+    "B4f085a53fd5f9ea1": "The test must go in a Gradle module that depends on the annotation (via `compileOnly`). The annotation is discovered from any mod on the classpath.",
+    "B0ecf4accc080345a": "Running Smoke Tests",
+    "B4393676bd0209551": "There is a dedicated `clientSmoke` Gradle run configuration. To execute:",
+    "Bdf70874957ab39ab": "Sync the Gradle project if dependencies changed",
+    "B0cc53b2d1abe5a17": "Build the project",
+    "B7073e7c33b7abfcd": "Run via `mcmcp_clientsmoke`",
+    "B6f925318d0c249fa": "Check `run/clientsmoke/clientsmoke-reports/` for results",
+    "B134b05b70a7f415d": "The smoke client uses a separate game directory (`run/clientsmoke/`) and auto-exits, so it doesn't block.",
+    "B51b3fffa3661dbc0": "When to Use",
+    "Ba9d146e3b019ecf9": "Visual correctness: does the rendered output have the right pixel colors?",
+    "B24c7fc18c25e3bee": "Full-lifecycle: does the mod work from load through world join to render?",
+    "B99b5164dcc8555eb": "GL state: are shaders compiling and applying correctly?",
+    "B11abb4e3f57486f1": "Integration: does component A correctly feed into component B during a real tick?",
+    "Ba967676da41506b3": "Not for: structural invariants (use unit tests), quick runtime checks (use progressive exploration)."
+  },
+  "stats": {
+    "patches": 2,
+    "repacks": 0,
+    "lastRepackAt": "2026-08-13T08:53:49.078Z",
+    "totalSavedTokens": 0
+  },
+  "transactionLog": [
+    {
+      "ts": "2026-08-13T08:53:49.078Z",
+      "operation": "COMPRESS",
+      "summary": "one-shot: 45 blocks → 3972 chars rendered",
+      "savingTokens": 0
+    },
+    {
+      "ts": "2026-08-13T09:01:48.399Z",
+      "operation": "AUDIT",
+      "summary": "restored 3 missing spans as locked residual",
+      "savingTokens": 0
+    }
+  ],
+  "createdAt": "2026-08-13T08:53:49.078Z",
+  "updatedAt": "2026-08-13T09:01:48.399Z"
+}

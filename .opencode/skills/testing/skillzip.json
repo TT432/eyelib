@@ -1,0 +1,397 @@
+{
+  "schemaVersion": 1,
+  "skillPath": "E:/_ideaProjects/qylEyelib/.opencode/skills/testing/SKILL.md",
+  "sourcePath": "E:/_ideaProjects/qylEyelib/.opencode/skills/testing/SKILL.md",
+  "contract": {
+    "interface": {
+      "name": "testing",
+      "purpose": "Decision framework for choosing between progressive exploration, unit tests, and smoke tests. Does NOT describe how to write them — see progressive-exploration, unit-test, smoke-test skills for that.",
+      "triggers": [
+        {
+          "text": "When you encounter a problem or need to verify something in this project and must choose a verification method",
+          "spans": [
+            "Bf9a6846ef11bf968"
+          ]
+        }
+      ],
+      "exclusions": [
+        {
+          "text": "Does not describe how to write explorations or tests — see progressive-exploration, unit-test, smoke-test skills",
+          "spans": []
+        }
+      ]
+    },
+    "rules": [
+      {
+        "id": "layer-exploration",
+        "scope": "root/the-three-verification-layers",
+        "modality": "must",
+        "predicate": "Use progressive exploration (AI debug HTTP endpoint) interactively, step by step, to catch unknown runtime state, unexpected screens, and \"what actually happens?\" questions",
+        "family": "verification-layers",
+        "spans": [
+          "B6483b48f45ba1dc1"
+        ],
+        "locked": false
+      },
+      {
+        "id": "layer-unit",
+        "scope": "root/the-three-verification-layers",
+        "modality": "must",
+        "predicate": "Use unit tests (JUnit 5 + Gradle, run in CI / pre-commit / on-demand) to catch structural invariants, boundary ownership, codec round-trips, and null safety",
+        "family": "verification-layers",
+        "spans": [
+          "B6483b48f45ba1dc1"
+        ],
+        "locked": false
+      },
+      {
+        "id": "layer-smoke",
+        "scope": "root/the-three-verification-layers",
+        "modality": "must",
+        "predicate": "Use smoke tests (ClientSmoke framework, Gradle run configuration) to catch visual correctness, full lifecycle integration, and render output verification",
+        "family": "verification-layers",
+        "spans": [
+          "B6483b48f45ba1dc1"
+        ],
+        "locked": false
+      },
+      {
+        "id": "funnel-model",
+        "scope": "root/the-funnel-model",
+        "modality": "prefer",
+        "predicate": "Treat the three layers as a funnel, not a pyramid: exploration is broadest (any question), unit tests are narrowest (specific assertions), smoke tests are deepest (real client rendering)",
+        "spans": [
+          "B931c237afb9dc17c",
+          "B35f898e45db2308e"
+        ],
+        "locked": false
+      },
+      {
+        "id": "why-unit-alone",
+        "scope": "root/why-all-three-matter",
+        "modality": "must_not",
+        "predicate": "Rely on unit tests alone: they tell you code is structurally correct, but not whether runtime state matches expectations (a Mixin may apply but produce wrong behavior)",
+        "family": "single-layer-sufficiency",
+        "spans": [
+          "B76e7deddd886b17b"
+        ],
+        "locked": false
+      },
+      {
+        "id": "why-smoke-alone",
+        "scope": "root/why-all-three-matter",
+        "modality": "must_not",
+        "predicate": "Rely on smoke tests alone: they verify integration but are slow and give binary pass/fail — they don't help explore why something broke",
+        "family": "single-layer-sufficiency",
+        "spans": [
+          "B42acdd3f86226edd"
+        ],
+        "locked": false
+      },
+      {
+        "id": "why-exploration-alone",
+        "scope": "root/why-all-three-matter",
+        "modality": "must_not",
+        "predicate": "Rely on exploration alone: it is ephemeral and can't regression-test yesterday's discovery",
+        "family": "single-layer-sufficiency",
+        "spans": [
+          "Bfc9a4abc49c8fd5a"
+        ],
+        "locked": false
+      },
+      {
+        "id": "all-three-for-bug",
+        "scope": "root/why-all-three-matter",
+        "modality": "prefer",
+        "predicate": "For a single bug, use all three: explore to find the problem → unit test to lock it → smoke test to verify visually",
+        "spans": [
+          "Bf79bb83c95316ad2"
+        ],
+        "locked": false
+      },
+      {
+        "id": "ap-run-client",
+        "scope": "root/anti-patterns",
+        "modality": "must_not",
+        "predicate": "Run the client to answer a question that reading the source code can answer",
+        "spans": [
+          "Bac343fbff991a8ad"
+        ],
+        "locked": false
+      },
+      {
+        "id": "ap-smoke-over-unit",
+        "scope": "root/anti-patterns",
+        "modality": "must_not",
+        "predicate": "Write a smoke test for something a unit test can catch",
+        "spans": [
+          "B29c8168906649a27"
+        ],
+        "locked": false
+      },
+      {
+        "id": "ap-guess-runtime",
+        "scope": "root/anti-patterns",
+        "modality": "must_not",
+        "predicate": "Guess runtime state instead of probing it with the debug endpoint",
+        "spans": [
+          "B0c9e7ab4d63b52e2"
+        ],
+        "locked": false
+      },
+      {
+        "id": "ap-undocumented",
+        "scope": "root/anti-patterns",
+        "modality": "must_not",
+        "predicate": "Leave a runtime discovery undocumented (no follow-up unit test)",
+        "spans": [
+          "B3bc6dd8bdf229c59"
+        ],
+        "locked": false
+      },
+      {
+        "id": "gradle-cache-gate",
+        "scope": "root/anti-patterns",
+        "modality": "must",
+        "predicate": "Accept Gradle FROM-CACHE / UP-TO-DATE results: Gradle input tracking is reliable, and a cache hit means identical inputs previously succeeded",
+        "guard": "验证目标是回归门禁（“当前输入下测试通过”）",
+        "family": "gradle-cache",
+        "spans": [
+          "Be6824a65d8ab8f83"
+        ],
+        "locked": false
+      },
+      {
+        "id": "gradle-cache-evidence",
+        "scope": "root/anti-patterns",
+        "modality": "must_not",
+        "predicate": "Accept test-task FROM-CACHE/UP-TO-DATE or a report showing 0 tests as behavior evidence — it means no test executed this run; instead clear the affected module's build/ directory and the configuration cache (.gradle/configuration-cache), rerun, and cite real execution output",
+        "guard": "验证目标是行为证据（“本次改动被执行/测量过”，如新测试首次验证、性能测量、运行时诊断）",
+        "family": "gradle-cache",
+        "spans": [
+          "Be6824a65d8ab8f83"
+        ],
+        "locked": false
+      },
+      {
+        "id": "no-build-cache-flag",
+        "scope": "root/anti-patterns",
+        "modality": "must_not",
+        "predicate": "Pass --no-build-cache to Gradle: it forces a full rebuild of MC Forge artifacts taking 30+ minutes; instead clear only the affected module's build/ directory and the configuration cache (.gradle/configuration-cache)",
+        "spans": [
+          "B79c8a92e0b70dd18"
+        ],
+        "locked": false
+      }
+    ],
+    "workflow": [
+      {
+        "id": "wf-read-code",
+        "scope": "root/decision-flow",
+        "kind": "decision",
+        "action": "Is the answer already in code? → Read it. Don't run anything.",
+        "next": [
+          "wf-runtime-state"
+        ],
+        "spans": [
+          "Bc4d09c5da758c1cf"
+        ]
+      },
+      {
+        "id": "wf-runtime-state",
+        "scope": "root/decision-flow",
+        "kind": "decision",
+        "action": "Is the answer about runtime state or behavior? → Progressive exploration first. Don't guess.",
+        "tool": "AI debug HTTP endpoint",
+        "next": [
+          "wf-unit-test"
+        ],
+        "spans": [
+          "Bc978424bec3f7f81"
+        ]
+      },
+      {
+        "id": "wf-unit-test",
+        "scope": "root/decision-flow",
+        "kind": "decision",
+        "action": "Now you have a reproducible invariant. → Write a unit test to lock it in.",
+        "tool": "JUnit 5 + Gradle",
+        "next": [
+          "wf-smoke-test"
+        ],
+        "spans": [
+          "B76396791e86e6b0b"
+        ]
+      },
+      {
+        "id": "wf-smoke-test",
+        "scope": "root/decision-flow",
+        "kind": "decision",
+        "action": "Does it involve visual output or full client lifecycle? → Add a clientSmoke test.",
+        "tool": "ClientSmoke framework",
+        "spans": [
+          "B05031f6d6445ba97"
+        ]
+      }
+    ],
+    "tools": [
+      {
+        "id": "T1",
+        "name": "AI debug HTTP endpoint",
+        "observations": [
+          "unknown runtime state",
+          "unexpected screens",
+          "what actually happens at runtime"
+        ],
+        "spans": [
+          "B6483b48f45ba1dc1"
+        ]
+      },
+      {
+        "id": "T2",
+        "name": "JUnit 5 + Gradle",
+        "observations": [
+          "structural invariants",
+          "boundary ownership",
+          "codec round-trips",
+          "null safety"
+        ],
+        "spans": [
+          "B6483b48f45ba1dc1"
+        ]
+      },
+      {
+        "id": "T3",
+        "name": "ClientSmoke framework",
+        "observations": [
+          "visual correctness",
+          "full lifecycle integration",
+          "render output verification"
+        ],
+        "spans": [
+          "B6483b48f45ba1dc1"
+        ]
+      }
+    ],
+    "output": {
+      "fields": []
+    },
+    "evidence": [
+      {
+        "id": "ev-funnel-diagram",
+        "kind": "background",
+        "supports": [
+          "funnel-model"
+        ],
+        "adds_unique_unit": false,
+        "source_blocks": [
+          "B35f898e45db2308e"
+        ]
+      }
+    ],
+    "residual": []
+  },
+  "scopes": [
+    {
+      "id": "root",
+      "parent": null,
+      "heading": "root",
+      "headingPath": [
+        "root"
+      ],
+      "depth": 0
+    },
+    {
+      "id": "root/the-three-verification-layers",
+      "parent": "root",
+      "heading": "The Three Verification Layers",
+      "headingPath": [
+        "root",
+        "the-three-verification-layers"
+      ],
+      "depth": 1
+    },
+    {
+      "id": "root/the-funnel-model",
+      "parent": "root",
+      "heading": "The Funnel Model",
+      "headingPath": [
+        "root",
+        "the-funnel-model"
+      ],
+      "depth": 1
+    },
+    {
+      "id": "root/decision-flow",
+      "parent": "root",
+      "heading": "Decision Flow",
+      "headingPath": [
+        "root",
+        "decision-flow"
+      ],
+      "depth": 1
+    },
+    {
+      "id": "root/why-all-three-matter",
+      "parent": "root",
+      "heading": "Why All Three Matter",
+      "headingPath": [
+        "root",
+        "why-all-three-matter"
+      ],
+      "depth": 1
+    },
+    {
+      "id": "root/anti-patterns",
+      "parent": "root",
+      "heading": "Anti-patterns",
+      "headingPath": [
+        "root",
+        "anti-patterns"
+      ],
+      "depth": 1
+    }
+  ],
+  "procedures": [],
+  "sourceBlocks": {
+    "Baa501ba7107d2995": "The Three Verification Layers",
+    "B6483b48f45ba1dc1": "| Layer | Tool | Trigger | What it catches |\n|-------|------|---------|-----------------|\n| **Progressive exploration** | AI debug HTTP endpoint | Interactive, step by step | Unknown runtime state, unexpected screens, \"what actually happens?\" |\n| **Unit tests** | JUnit 5 + Gradle | CI / pre-commit / on-demand | Structural invariants, boundary ownership, codec round-trips, null safety |\n| **Smoke tests** | ClientSmoke framework | Gradle run configuration | Visual correctness, full lifecycle integration, render output verification |",
+    "B931c237afb9dc17c": "They form a **funnel, not a pyramid**: exploration is broadest (any question), unit tests are narrowest (specific assertions), smoke tests are deepest (real client rendering).",
+    "B52003b7e5edecc64": "The Funnel Model",
+    "B35f898e45db2308e": "         ┌──────────────────────────────┐\n         │   Progressive Exploration    │  ← widest: ask anything at runtime\n         │   \"Is this screen even open?\"│\n         └──────────────┬───────────────┘\n                        │ narrows to a specific invariant\n         ┌──────────────▼───────────────┐\n         │      Unit Tests              │  ← narrowest: assert one thing, fast\n         │   \"This import must not exist\"│\n         └──────────────┬───────────────┘\n                        │ narrows to visual behavior\n         ┌──────────────▼───────────────┐\n         │      Smoke Tests             │  ← deepest: real rendering, slow\n         │   \"This region has the right  │\n         │    pixel color\"               │\n         └──────────────────────────────┘",
+    "B0a464a5b1cc49a59": "Decision Flow",
+    "Bf9a6846ef11bf968": "When you encounter a problem or need to verify something:",
+    "Bc4d09c5da758c1cf": "**Is the answer already in code?** → Read it. Don't run anything.",
+    "Bc978424bec3f7f81": "**Is the answer about runtime state or behavior?** → Progressive exploration first. Don't guess.",
+    "B76396791e86e6b0b": "**Now you have a reproducible invariant.** → Write a unit test to lock it in.",
+    "B05031f6d6445ba97": "**Does it involve visual output or full client lifecycle?** → Add a clientSmoke test.",
+    "B63af7c4ddbf60443": "Why All Three Matter",
+    "B76e7deddd886b17b": "**Unit tests alone** tell you code is structurally correct, but not whether runtime state matches expectations. A Mixin may apply but produce wrong behavior.",
+    "B42acdd3f86226edd": "**Smoke tests alone** verify integration but are slow and give binary pass/fail — they don't help explore *why* something broke.",
+    "Bfc9a4abc49c8fd5a": "**Exploration alone** is ephemeral — it can't regression-test yesterday's discovery.",
+    "Bf79bb83c95316ad2": "A single bug typically requires all three: explore to find the problem → unit test to lock it → smoke test to verify visually.",
+    "B2f03c60c65dd2b7a": "Anti-patterns",
+    "Bac343fbff991a8ad": "Running the client to answer a question that reading the source code can answer",
+    "B29c8168906649a27": "Writing a smoke test for something a unit test can catch",
+    "B0c9e7ab4d63b52e2": "Guessing runtime state instead of probing it with the debug endpoint",
+    "B3bc6dd8bdf229c59": "Leaving a runtime discovery undocumented (no follow-up unit test)",
+    "Be6824a65d8ab8f83": "**不区分验证目标地对待 Gradle `FROM-CACHE` / `UP-TO-DATE`** — 是否可接受取决于验证目标：回归门禁（“当前输入下测试通过”）可接受，Gradle 输入跟踪可靠，缓存命中意味着相同输入此前已成功；行为证据（“本次改动被执行/测量过”，如新测试首次验证、性能测量、运行时诊断）不可接受——test 任务 `FROM-CACHE`/`UP-TO-DATE` 或报告显示 0 tests 表示本次没有执行任何测试，清掉对应模块的 `build/` 目录和配置缓存（`.gradle/configuration-cache`）后重跑，并引用真实执行输出。",
+    "B79c8a92e0b70dd18": "**Using `--no-build-cache`** — never pass this to Gradle. It forces a full rebuild of MC Forge artifacts taking 30+ minutes. Clear only the affected module's `build/` directory and the configuration cache (`.gradle/configuration-cache`)."
+  },
+  "stats": {
+    "patches": 1,
+    "repacks": 0,
+    "lastRepackAt": "2026-08-13T09:00:18.313Z",
+    "totalSavedTokens": 0
+  },
+  "transactionLog": [
+    {
+      "ts": "2026-08-13T09:00:18.313Z",
+      "operation": "COMPRESS",
+      "summary": "one-shot: 23 blocks → 3119 chars rendered",
+      "savingTokens": 0
+    }
+  ],
+  "createdAt": "2026-08-13T09:00:18.313Z",
+  "updatedAt": "2026-08-13T09:00:18.327Z"
+}

@@ -1,0 +1,544 @@
+{
+  "schemaVersion": 1,
+  "skillPath": "E:/_ideaProjects/qylEyelib/.opencode/skills/eyelib-renderdoc/SKILL.md",
+  "sourcePath": "E:/_ideaProjects/qylEyelib/.opencode/skills/eyelib-renderdoc/SKILL.md",
+  "contract": {
+    "interface": {
+      "name": "eyelib-renderdoc",
+      "purpose": "Eyelib GPU 调试——RenderDoc 截帧、headless 回放、Windows Python replay、renderdoc-mcp 分析",
+      "triggers": [
+        {
+          "text": "需要用 RenderDoc 截帧或分析 .rdc 帧（draw call、shader、pipeline state、uniform、mesh、texture）",
+          "spans": [
+            "Baa6d71b28c8d8408"
+          ]
+        }
+      ],
+      "exclusions": [
+        {
+          "text": "普通客户端调试启动（非截帧）走 mcmcp_launch，不属于本技能",
+          "spans": [
+            "B4502b41c5a3e6cca"
+          ]
+        }
+      ]
+    },
+    "rules": [
+      {
+        "id": "C1",
+        "scope": "root/eyelib-gpu-调试-renderdoc/renderdoccmd-cli-限制",
+        "modality": "must_not",
+        "predicate": "用 renderdoccmd CLI 分析帧内内容（draw call、shader、pipeline state、uniform 值）；CLI 只能操作嵌入式数据段（thumb、extract、convert）",
+        "spans": [
+          "B3e01802e96980f1c"
+        ],
+        "locked": false
+      },
+      {
+        "id": "C2",
+        "scope": "root/eyelib-gpu-调试-renderdoc/renderdoccmd-cli-限制",
+        "modality": "must",
+        "predicate": "截帧后的深度分析必须用 RenderDoc Python 重放 API（或 renderdoc-mcp headless 工具）",
+        "spans": [
+          "B3e01802e96980f1c",
+          "B3709c1c7d014e6a1"
+        ],
+        "locked": false
+      },
+      {
+        "id": "C3",
+        "scope": "root/eyelib-gpu-调试-renderdoc/renderdoc-python-replay-windows-方案-已验证",
+        "modality": "must",
+        "predicate": "GLES 3.x 抓帧的回放只能走 Windows 侧 Python；WSL 下不支持 replay",
+        "spans": [
+          "B88562004fe4a8032",
+          "B36eecaede42e7527"
+        ],
+        "locked": false
+      },
+      {
+        "id": "C4",
+        "scope": "root/eyelib-gpu-调试-renderdoc/capture-模式启动",
+        "modality": "must",
+        "predicate": "capture 启动前 runClient.cmd 必须先由 createClientLaunchScript 生成（经 mcmcp_build）",
+        "guard": "使用 renderdoccmd capture 模式启动客户端时",
+        "spans": [
+          "B27a96361da230f1f"
+        ],
+        "locked": false
+      },
+      {
+        "id": "C5",
+        "scope": "root/eyelib-gpu-调试-renderdoc/capture-模式启动",
+        "modality": "must",
+        "predicate": "capture 前向 versions/<node>/build/moddev/clientRunVmArgs.txt 追加 -Dai_debug_port=<port>，因为 AIDebugServer 默认不开启",
+        "guard": "截帧同时需要 AIDebugServer 调试端口时",
+        "spans": [
+          "Bdbae3fd967e94a9b"
+        ],
+        "locked": false
+      },
+      {
+        "id": "C6",
+        "scope": "root/eyelib-gpu-调试-renderdoc/capture-模式启动",
+        "modality": "prefer",
+        "predicate": "普通调试启动用 mcmcp_launch()，自动经环境变量注入调试端口",
+        "guard": "非 RenderDoc 截帧的普通调试启动",
+        "spans": [
+          "B4502b41c5a3e6cca"
+        ],
+        "locked": false
+      },
+      {
+        "id": "C7",
+        "scope": "root/eyelib-gpu-调试-renderdoc/renderdoc-python-replay-windows-方案-已验证",
+        "modality": "must",
+        "predicate": "先用 write_file 把 Python 脚本写到磁盘再调用，避免 shell 转义",
+        "spans": [
+          "Bd6efd3e53d7daa4b"
+        ],
+        "locked": false
+      },
+      {
+        "id": "C8",
+        "scope": "root/eyelib-gpu-调试-renderdoc/renderdoc-mcp-headless-rdc-分析",
+        "modality": "prefer",
+        "predicate": "headless .rdc 分析优先用已配置的 mcp_renderdoc_* 工具（opencode mcp_servers.renderdoc，无需 GUI）",
+        "spans": [
+          "B5a313dce19ac8380",
+          "B1ea7fab6c1ca545c"
+        ],
+        "locked": false
+      }
+    ],
+    "workflow": [
+      {
+        "id": "wf-build",
+        "scope": "root/eyelib-gpu-调试-renderdoc/capture-模式启动",
+        "kind": "action",
+        "action": "运行 mcmcp_build 生成 versions/<node>/build/moddev/runClient.cmd（createClientLaunchScript）",
+        "tool": "mcmcp_build",
+        "next": [
+          "wf-vmargs"
+        ],
+        "spans": [
+          "B27a96361da230f1f"
+        ]
+      },
+      {
+        "id": "wf-vmargs",
+        "scope": "root/eyelib-gpu-调试-renderdoc/capture-模式启动",
+        "kind": "action",
+        "action": "向 versions/<node>/build/moddev/clientRunVmArgs.txt 追加 -Dai_debug_port=<port>",
+        "next": [
+          "wf-capture-launch"
+        ],
+        "spans": [
+          "Bdbae3fd967e94a9b"
+        ]
+      },
+      {
+        "id": "wf-capture-launch",
+        "scope": "root/eyelib-gpu-调试-renderdoc/capture-模式启动",
+        "kind": "action",
+        "action": "renderdoccmd capture -c eyelib_capture --opt-hook-children 启动 runClient.cmd",
+        "tool": "renderdoccmd",
+        "required_args": [
+          "capture",
+          "-c",
+          "--opt-hook-children"
+        ],
+        "next": [
+          "wf-trigger"
+        ],
+        "spans": [
+          "Bdbae3fd967e94a9b"
+        ]
+      },
+      {
+        "id": "wf-trigger",
+        "scope": "root/eyelib-gpu-调试-renderdoc/renderdoccapturer-api",
+        "kind": "action",
+        "action": "经 /eval 调用 RenderDocCapturer.setCaptureFilePathTemplate + startCapture/endCapture 程序化触发截帧",
+        "tool": "RenderDocCapturer",
+        "next": [
+          "wf-analysis-choice"
+        ],
+        "spans": [
+          "B012a25654542b53f",
+          "B44cffbb21e218108"
+        ]
+      },
+      {
+        "id": "wf-analysis-choice",
+        "scope": "root/eyelib-gpu-调试-renderdoc/renderdoccmd-cli-限制",
+        "kind": "decision",
+        "action": "只需预览缩略图→renderdoccmd thumb（仅预览，无 alpha）；需要帧内深度分析→headless 回放分析",
+        "tool": "renderdoccmd",
+        "next": [
+          "wf-mcp-analysis",
+          "wf-python-replay"
+        ],
+        "spans": [
+          "B3e01802e96980f1c",
+          "B0c4ef6a4f80bca02",
+          "Bb5be07bce81b083e"
+        ]
+      },
+      {
+        "id": "wf-mcp-analysis",
+        "scope": "root/eyelib-gpu-调试-renderdoc/renderdoc-mcp-headless-rdc-分析",
+        "kind": "action",
+        "action": "用 mcp_renderdoc_* headless 工具分析 .rdc：open_capture → get_frame_overview → list_actions/find_draws → get_draw_call_state/get_pipeline_state/disassemble_shader/save_texture/export_mesh/pixel_history",
+        "tool": "renderdoc-mcp",
+        "required_args": [
+          "open_capture"
+        ],
+        "spans": [
+          "B1ea7fab6c1ca545c",
+          "B5a313dce19ac8380",
+          "B3709c1c7d014e6a1"
+        ]
+      },
+      {
+        "id": "wf-python-replay",
+        "scope": "root/eyelib-gpu-调试-renderdoc/renderdoc-python-replay-windows-方案-已验证",
+        "kind": "fallback",
+        "action": "write_file 写 Python replay 脚本（sys.path 指向 renderdoc_mcp/lib 导入 renderdoc.pyd），再用 Windows 侧 Python313 调用；注意 renderdoc-mcp 0.2.7 与原生 API 差异",
+        "tool": "python",
+        "required_args": [
+          "script_path"
+        ],
+        "spans": [
+          "Ba19f14b46a18cc16",
+          "B72f28fa113b5e4d7",
+          "Bc3aa66ad13deac13",
+          "B2c11608df8531403",
+          "Bd6efd3e53d7daa4b"
+        ]
+      }
+    ],
+    "tools": [
+      {
+        "id": "T1",
+        "name": "renderdoccmd",
+        "required_args": [
+          "capture|thumb|extract|convert"
+        ],
+        "preconditions": [
+          "RenderDoc v1.44 位于 E:\\RenderDoc\\renderdoccmd.exe"
+        ],
+        "observations": [
+          "CLI 只能操作嵌入式数据段，不能分析帧内 draw call/shader/pipeline state/uniform",
+          "thumb 仅预览，无 alpha"
+        ],
+        "errors": [
+          "renderdoccmd capture gradlew.bat：Gradle 代理丢失，TLS 握手失败",
+          "renderdoccmd inject --PID：DLL 加载但 endCapture() 失败"
+        ],
+        "spans": [
+          "Bb12092aaf837d94c",
+          "Bb5be07bce81b083e",
+          "Bf9c784fd412ded57"
+        ]
+      },
+      {
+        "id": "T2",
+        "name": "mcmcp_build",
+        "observations": [
+          "生成 runClient.cmd（createClientLaunchScript），是 capture 模式启动的前置"
+        ],
+        "spans": [
+          "B27a96361da230f1f"
+        ]
+      },
+      {
+        "id": "T3",
+        "name": "mcmcp_launch",
+        "observations": [
+          "普通调试启动；自动经环境变量注入调试端口"
+        ],
+        "spans": [
+          "B4502b41c5a3e6cca"
+        ]
+      },
+      {
+        "id": "T4",
+        "name": "RenderDocCapturer",
+        "required_args": [
+          "setCaptureFilePathTemplate",
+          "startCapture",
+          "endCapture"
+        ],
+        "preconditions": [
+          "io.github.tt432.clientsmoke.debug.RenderDocCapturer，clientsmoke mod 内，经 /eval 调用"
+        ],
+        "observations": [
+          "isAvailable() 返回 boolean；endCapture() 返回 boolean；程序化触发已验证 startCapture()+endCapture() 返回 true"
+        ],
+        "spans": [
+          "B012a25654542b53f",
+          "B44cffbb21e218108"
+        ]
+      },
+      {
+        "id": "T5",
+        "name": "renderdoc-mcp",
+        "required_args": [
+          "open_capture"
+        ],
+        "preconditions": [
+          "已在 opencode mcp_servers.renderdoc 配置，工具以 mcp_renderdoc_* 前缀注册"
+        ],
+        "observations": [
+          "捆绑 renderdoc.so，经 MCP 协议提供 42 个 headless 分析工具，无需 GUI"
+        ],
+        "spans": [
+          "B1ea7fab6c1ca545c",
+          "B5a313dce19ac8380",
+          "B3709c1c7d014e6a1"
+        ]
+      }
+    ],
+    "output": {
+      "fields": []
+    },
+    "evidence": [
+      {
+        "id": "E1",
+        "kind": "background",
+        "supports": [
+          "wf-python-replay"
+        ],
+        "adds_unique_unit": true,
+        "source_blocks": [
+          "Bdf2a8433f6afd70d",
+          "B727eff17d55b5f85",
+          "B3057ea3df8da803b",
+          "B2ec399f280b4c81c",
+          "B4681bad6848a25cc"
+        ]
+      },
+      {
+        "id": "E2",
+        "kind": "rationale",
+        "supports": [
+          "wf-capture-launch"
+        ],
+        "adds_unique_unit": true,
+        "source_blocks": [
+          "Bf9c784fd412ded57"
+        ]
+      }
+    ],
+    "residual": [
+      {
+        "source_block": "Bb12092aaf837d94c",
+        "reason": "UNIQUE_EVIDENCE"
+      },
+      {
+        "source_block": "Bf9c784fd412ded57",
+        "reason": "UNIQUE_EVIDENCE"
+      },
+      {
+        "source_block": "Bdbae3fd967e94a9b",
+        "reason": "UNIQUE_EVIDENCE"
+      },
+      {
+        "source_block": "Bb5be07bce81b083e",
+        "reason": "UNIQUE_EVIDENCE"
+      },
+      {
+        "source_block": "Ba19f14b46a18cc16",
+        "reason": "UNIQUE_EVIDENCE"
+      },
+      {
+        "source_block": "B72f28fa113b5e4d7",
+        "reason": "UNIQUE_EVIDENCE"
+      },
+      {
+        "source_block": "Bc3aa66ad13deac13",
+        "reason": "UNIQUE_EVIDENCE"
+      },
+      {
+        "source_block": "Bdf2a8433f6afd70d",
+        "reason": "UNIQUE_EVIDENCE"
+      },
+      {
+        "source_block": "B727eff17d55b5f85",
+        "reason": "UNIQUE_EVIDENCE"
+      },
+      {
+        "source_block": "B3057ea3df8da803b",
+        "reason": "UNIQUE_EVIDENCE"
+      },
+      {
+        "source_block": "B2ec399f280b4c81c",
+        "reason": "UNIQUE_EVIDENCE"
+      },
+      {
+        "source_block": "B4681bad6848a25cc",
+        "reason": "UNIQUE_EVIDENCE"
+      },
+      {
+        "source_block": "B2c11608df8531403",
+        "reason": "UNIQUE_EVIDENCE"
+      },
+      {
+        "source_block": "B3709c1c7d014e6a1",
+        "reason": "UNIQUE_EVIDENCE"
+      },
+      {
+        "source_block": "B012a25654542b53f",
+        "reason": "UNIQUE_EVIDENCE"
+      },
+      {
+        "source_block": "B44cffbb21e218108",
+        "reason": "UNIQUE_EVIDENCE"
+      },
+      {
+        "source_block": "B0c4ef6a4f80bca02",
+        "reason": "AMBIGUOUS"
+      }
+    ]
+  },
+  "scopes": [
+    {
+      "id": "root",
+      "parent": null,
+      "heading": "root",
+      "headingPath": [
+        "root"
+      ],
+      "depth": 0
+    },
+    {
+      "id": "root/eyelib-gpu-调试-renderdoc",
+      "parent": "root",
+      "heading": "Eyelib GPU 调试 (RenderDoc)",
+      "headingPath": [
+        "root",
+        "eyelib-gpu-调试-renderdoc"
+      ],
+      "depth": 1
+    },
+    {
+      "id": "root/eyelib-gpu-调试-renderdoc/已知可用路径",
+      "parent": "root/eyelib-gpu-调试-renderdoc",
+      "heading": "已知可用路径",
+      "headingPath": [
+        "root",
+        "eyelib-gpu-调试-renderdoc",
+        "已知可用路径"
+      ],
+      "depth": 2
+    },
+    {
+      "id": "root/eyelib-gpu-调试-renderdoc/capture-模式启动",
+      "parent": "root/eyelib-gpu-调试-renderdoc",
+      "heading": "capture 模式启动",
+      "headingPath": [
+        "root",
+        "eyelib-gpu-调试-renderdoc",
+        "capture-模式启动"
+      ],
+      "depth": 2
+    },
+    {
+      "id": "root/eyelib-gpu-调试-renderdoc/renderdoccmd-cli-限制",
+      "parent": "root/eyelib-gpu-调试-renderdoc",
+      "heading": "renderdoccmd CLI 限制",
+      "headingPath": [
+        "root",
+        "eyelib-gpu-调试-renderdoc",
+        "renderdoccmd-cli-限制"
+      ],
+      "depth": 2
+    },
+    {
+      "id": "root/eyelib-gpu-调试-renderdoc/renderdoc-python-replay-windows-方案-已验证",
+      "parent": "root/eyelib-gpu-调试-renderdoc",
+      "heading": "RenderDoc Python replay — Windows 方案（已验证）",
+      "headingPath": [
+        "root",
+        "eyelib-gpu-调试-renderdoc",
+        "renderdoc-python-replay-windows-方案-已验证"
+      ],
+      "depth": 2
+    },
+    {
+      "id": "root/eyelib-gpu-调试-renderdoc/renderdoc-mcp-headless-rdc-分析",
+      "parent": "root/eyelib-gpu-调试-renderdoc",
+      "heading": "renderdoc-mcp：Headless .rdc 分析",
+      "headingPath": [
+        "root",
+        "eyelib-gpu-调试-renderdoc",
+        "renderdoc-mcp-headless-rdc-分析"
+      ],
+      "depth": 2
+    },
+    {
+      "id": "root/eyelib-gpu-调试-renderdoc/renderdoccapturer-api",
+      "parent": "root/eyelib-gpu-调试-renderdoc",
+      "heading": "RenderDocCapturer API",
+      "headingPath": [
+        "root",
+        "eyelib-gpu-调试-renderdoc",
+        "renderdoccapturer-api"
+      ],
+      "depth": 2
+    }
+  ],
+  "procedures": [],
+  "sourceBlocks": {
+    "Baa6d71b28c8d8408": "Eyelib GPU 调试 (RenderDoc)",
+    "Bb12092aaf837d94c": "RenderDoc v1.44，路径 `E:\\RenderDoc\\renderdoccmd.exe`。",
+    "B3f22c2d8bd22a412": "已知可用路径",
+    "Bf9c784fd412ded57": "| 路径 | 状态 |\n|---|---|\n| `renderdoccmd capture gradlew.bat` | ❌ Gradle 代理丢失，TLS 握手失败 |\n| `renderdoccmd capture runClient.cmd` | ✅ 全链路验证通过 |\n| `renderdoccmd inject --PID=<pid>` | ❌ DLL 加载但 endCapture() 失败 |\n| `RenderDocCapturer` 程序化触发 | ✅ startCapture() + endCapture() 返回 true |",
+    "B7081939928f98feb": "capture 模式启动",
+    "Bdbae3fd967e94a9b": "Set-Location E:\\_ideaProjects\\qylEyelib\n# AIDebugServer 默认不开启：capture 前向 VM 参数文件追加调试端口\nAdd-Content versions\\1.20.1\\build\\moddev\\clientRunVmArgs.txt \"`n-Dai_debug_port=25999\"\n& \"E:\\RenderDoc\\renderdoccmd.exe\" capture `\n    -c eyelib_capture --opt-hook-children `\n    \"E:\\_ideaProjects\\qylEyelib\\versions\\1.20.1\\build\\moddev\\runClient.cmd\"",
+    "B27a96361da230f1f": "**前置**: `versions/<node>/build/moddev/runClient.cmd` 需先由 `createClientLaunchScript` 生成(经 `mcmcp_build`)。",
+    "B4502b41c5a3e6cca": "普通调试启动用 `mcmcp_launch()`（omp 拓展工具），自动经环境变量注入调试端口。",
+    "B3d3955ce6d566ef8": "renderdoccmd CLI 限制",
+    "B3e01802e96980f1c": "`renderdoccmd` CLI 只能操作嵌入式数据段（thumb、extract、convert）——**不能分析帧内的 draw call、shader、pipeline state、uniform 值**。截帧后必须用 RenderDoc Python 重放 API 才能做深度分析。",
+    "B0c4ef6a4f80bca02": "缩略图（仅预览，无 alpha）:",
+    "Bb5be07bce81b083e": "& \"E:\\RenderDoc\\renderdoccmd.exe\" thumb --out snapshot.png --format png capture.rdc",
+    "B6a81dcb63bb18a04": "RenderDoc Python replay — Windows 方案（已验证）",
+    "B88562004fe4a8032": "唯一可行路径: Windows 侧 Python(WSL 下 GLES 3.x 不支持 replay)。",
+    "Ba19f14b46a18cc16": "安装 Python 3.13：`winget install Python.Python.3.13`",
+    "B72f28fa113b5e4d7": "安装 renderdoc-mcp：`C:\\Users\\<user>\\AppData\\Local\\Programs\\Python\\Python313\\python.exe -m pip install renderdoc-mcp`",
+    "B08c3fb29d96cac8f": "renderdoc-mcp 的 lib 目录下有 `renderdoc.pyd`，导入路径：",
+    "Bc3aa66ad13deac13": "import sys\nsys.path.insert(0, r\"C:\\Users\\<user>\\AppData\\Local\\Programs\\Python\\Python313\\Lib\\site-packages\\renderdoc_mcp\\lib\")\nimport renderdoc as rd",
+    "Bdf2a8433f6afd70d": "API 差异（renderdoc-mcp 0.2.7 vs RenderDoc 原生）：",
+    "B727eff17d55b5f85": "`cap.OpenCapture(opts, None)` 返回 `(result, controller)` 元组",
+    "B3057ea3df8da803b": "controller 方法：`GetRootActions()`, `GetPostVSData()`, `SetFrameEvent()`, `GetFrameInfo()`",
+    "B2ec399f280b4c81c": "Action 属性：`eventId`, `flags`, `children`, `numIndices`, `numInstances`",
+    "B4681bad6848a25cc": "Vertex data 通过 `ctrl.GetPostVSData(0, 0, rd.MeshDataStage.VSOut)` 获取",
+    "B2c11608df8531403": "调用 Python 脚本: `& \"C:\\Users\\<user>\\AppData\\Local\\Programs\\Python\\Python313\\python.exe\" E:\\path\\to\\script.py`",
+    "Bd6efd3e53d7daa4b": "先 `write_file` 写 Python 脚本再调用,避免 shell 转义",
+    "B7bcc05cf714a53fd": "renderdoc-mcp：Headless .rdc 分析",
+    "B1ea7fab6c1ca545c": "[renderdoc-mcp](https://pypi.org/project/renderdoc-mcp/) 捆绑 renderdoc.so，通过 MCP 协议提供 42 个 headless 分析工具，无需 GUI。",
+    "B5a313dce19ac8380": "已在 opencode 的 `mcp_servers.renderdoc` 中配置，工具以 `mcp_renderdoc_*` 前缀注册。",
+    "B3709c1c7d014e6a1": "核心工具：`open_capture`、`get_frame_overview`、`list_actions`、`find_draws`、`get_draw_call_state`、`get_pipeline_state`、`disassemble_shader`、`save_texture`、`export_mesh`、`pixel_history`。",
+    "B36eecaede42e7527": "⚠️ **WSL 下 GLES 3.x 抓帧无法回放**。唯一可行路径：Windows 侧 Python replay。",
+    "B94421e5f9fa7d621": "RenderDocCapturer API",
+    "B012a25654542b53f": "`io.github.tt432.clientsmoke.debug.RenderDocCapturer`（clientsmoke mod 内，经 /eval 调用）：",
+    "B44cffbb21e218108": "RenderDocCapturer.isAvailable()          // boolean\nRenderDocCapturer.setCaptureFilePathTemplate(\"E:\\\\...\\\\run\\\\frame\")\nRenderDocCapturer.startCapture()         // void\nRenderDocCapturer.endCapture()           // boolean"
+  },
+  "stats": {
+    "patches": 1,
+    "repacks": 0,
+    "lastRepackAt": "2026-08-13T08:55:00.384Z",
+    "totalSavedTokens": 0
+  },
+  "transactionLog": [
+    {
+      "ts": "2026-08-13T08:55:00.384Z",
+      "operation": "COMPRESS",
+      "summary": "one-shot: 33 blocks → 4704 chars rendered",
+      "savingTokens": 0
+    }
+  ],
+  "createdAt": "2026-08-13T08:55:00.384Z",
+  "updatedAt": "2026-08-13T08:55:00.437Z"
+}

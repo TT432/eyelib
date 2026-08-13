@@ -1,0 +1,257 @@
+{
+  "schemaVersion": 1,
+  "skillPath": ".opencode/skills/molang-refactor-supervisor/SKILL.md",
+  "sourcePath": "E:\\_ideaProjects\\qylEyelib\\.opencode\\skills\\molang-refactor-supervisor\\SKILL.md",
+  "contract": {
+    "interface": {
+      "name": "molang-refactor-supervisor",
+      "purpose": "Coordinate eyelib `molang` package refactor slices through subagent design, implementation, review, roadmap alignment, and Gradle verification without directly editing business logic.",
+      "triggers": [
+        {
+          "text": "supervising `io.github.tt432.eyelib.molang` package refactor work that must be split into reviewable subagent tasks",
+          "spans": [
+            "B024030bccfdcbd82"
+          ]
+        }
+      ],
+      "exclusions": []
+    },
+    "rules": [
+      {
+        "id": "C1",
+        "scope": "root/protocol",
+        "modality": "must",
+        "predicate": "Read `docs/molang/ROADMAP.md`, `docs/molang/refactor-plan/README.md`, the relevant phase plan, and `MODULES.md` before assigning a slice.",
+        "spans": [
+          "B416407ad369cce3f"
+        ],
+        "locked": false
+      },
+      {
+        "id": "C2",
+        "scope": "root/protocol",
+        "modality": "must",
+        "predicate": "Split work into design, implementation, and review subtasks; use separate fresh subagents.",
+        "exception": "unless continuity is required",
+        "spans": [
+          "B7a69ebb7b89ff945"
+        ],
+        "locked": false
+      },
+      {
+        "id": "C3",
+        "scope": "root/protocol",
+        "modality": "must_not",
+        "predicate": "Revive the ANTLR path when refactoring (ANTLR generated code was fully removed on 2026-06-09, ADR-0004 Superseded; the handwritten recursive-descent parser under `src/main/java/io/github/tt432/eyelib/molang/compiler/` is the only frontend).",
+        "spans": [
+          "B9149a008f7826296"
+        ],
+        "locked": false
+      },
+      {
+        "id": "C4",
+        "scope": "root/protocol",
+        "modality": "must",
+        "predicate": "Require tests before implementation when semantics change, and require `mcmcp_test` for phase 1-4 slices.",
+        "guard": "when semantics change / for phase 1-4 slices",
+        "spans": [
+          "B2a4806ca74f89c34"
+        ],
+        "locked": false
+      },
+      {
+        "id": "C5",
+        "scope": "root/protocol",
+        "modality": "must",
+        "predicate": "Update `docs/molang/ROADMAP.md` in the same slice.",
+        "guard": "when phase status, gates, evidence, ownership, or verification posture changes",
+        "spans": [
+          "Bbede265d9126eb83"
+        ],
+        "locked": false
+      },
+      {
+        "id": "C6",
+        "scope": "root/protocol",
+        "modality": "must",
+        "predicate": "Edit the corresponding `package-info.java` (e.g. `src/main/java/io/github/tt432/eyelib/molang/package-info.java`), then run `:generateModulesMd` to regenerate `MODULES.md`.",
+        "guard": "when module responsibilities change",
+        "spans": [
+          "B925b4d1bd3f92c75"
+        ],
+        "locked": false
+      },
+      {
+        "id": "C7",
+        "scope": "root/protocol",
+        "modality": "must_not",
+        "predicate": "Hand-edit `MODULES.md` (AGENTS.md Editing Rules).",
+        "spans": [
+          "B925b4d1bd3f92c75"
+        ],
+        "locked": false
+      },
+      {
+        "id": "C8",
+        "scope": "root/handoff-shape",
+        "modality": "prefer",
+        "predicate": "Each subagent task should include affected paths, pass/fail acceptance criteria, must-not-touch paths, verification commands, and documentation impact.",
+        "spans": [
+          "B9c839aa153d7858f"
+        ],
+        "locked": false
+      }
+    ],
+    "workflow": [
+      {
+        "id": "W1",
+        "scope": "root/protocol",
+        "kind": "action",
+        "action": "Read roadmap, refactor-plan README, relevant phase plan, and MODULES.md before assigning a slice",
+        "spans": [
+          "B416407ad369cce3f"
+        ]
+      },
+      {
+        "id": "W2",
+        "scope": "root/protocol",
+        "kind": "action",
+        "action": "Split work into design, implementation, and review subtasks assigned to separate fresh subagents",
+        "spans": [
+          "B7a69ebb7b89ff945"
+        ]
+      },
+      {
+        "id": "W3",
+        "scope": "root/protocol",
+        "kind": "action",
+        "action": "Require tests before implementation when semantics change; require mcmcp_test for phase 1-4 slices",
+        "tool": "mcmcp_test",
+        "spans": [
+          "B2a4806ca74f89c34"
+        ]
+      },
+      {
+        "id": "W4",
+        "scope": "root/protocol",
+        "kind": "action",
+        "action": "Update ROADMAP.md in the same slice on posture changes; on module responsibility changes edit package-info.java and run :generateModulesMd to regenerate MODULES.md",
+        "tool": ":generateModulesMd",
+        "spans": [
+          "Bbede265d9126eb83",
+          "B925b4d1bd3f92c75"
+        ]
+      },
+      {
+        "id": "W5",
+        "scope": "root/handoff-shape",
+        "kind": "action",
+        "action": "Shape each subagent handoff with affected paths, acceptance criteria, must-not-touch paths, verification commands, and documentation impact",
+        "spans": [
+          "B9c839aa153d7858f"
+        ]
+      }
+    ],
+    "tools": [
+      {
+        "id": "T1",
+        "name": "mcmcp_test",
+        "spans": [
+          "B2a4806ca74f89c34"
+        ]
+      },
+      {
+        "id": "T2",
+        "name": ":generateModulesMd",
+        "spans": [
+          "B925b4d1bd3f92c75"
+        ]
+      }
+    ],
+    "output": {
+      "fields": [],
+      "termination": [
+        "all assigned refactor slices verified and documented"
+      ],
+      "spans": []
+    },
+    "evidence": [],
+    "residual": [
+      {
+        "source_block": "B9149a008f7826296",
+        "reason": "UNIQUE_EVIDENCE"
+      }
+    ]
+  },
+  "scopes": [
+    {
+      "id": "root",
+      "parent": null,
+      "heading": "root",
+      "headingPath": [
+        "root"
+      ],
+      "depth": 0
+    },
+    {
+      "id": "root/when-to-use",
+      "parent": "root",
+      "heading": "When to use",
+      "headingPath": [
+        "root",
+        "when-to-use"
+      ],
+      "depth": 1
+    },
+    {
+      "id": "root/protocol",
+      "parent": "root",
+      "heading": "Protocol",
+      "headingPath": [
+        "root",
+        "protocol"
+      ],
+      "depth": 1
+    },
+    {
+      "id": "root/handoff-shape",
+      "parent": "root",
+      "heading": "Handoff shape",
+      "headingPath": [
+        "root",
+        "handoff-shape"
+      ],
+      "depth": 1
+    }
+  ],
+  "procedures": [],
+  "sourceBlocks": {
+    "Bef29685ad15cdb20": "When to use",
+    "B024030bccfdcbd82": "Use this skill when supervising `io.github.tt432.eyelib.molang` package refactor work that must be split into reviewable subagent tasks.",
+    "Be6a227345996b132": "Protocol",
+    "B416407ad369cce3f": "Read `docs/molang/ROADMAP.md`, `docs/molang/refactor-plan/README.md`, the relevant phase plan, and `MODULES.md` before assigning a slice.",
+    "B7a69ebb7b89ff945": "Split work into design, implementation, and review subtasks. Use separate fresh subagents unless continuity is required.",
+    "B9149a008f7826296": "ANTLR 生成代码已于 2026-06-09 整体移除(见 ADR-0004 Superseded)。当前手写 recursive-descent parser 是唯一前端,在 `src/main/java/io/github/tt432/eyelib/molang/compiler/` 下。重构时不要复活 ANTLR 路径。",
+    "B2a4806ca74f89c34": "Require tests before implementation when semantics change, and require `mcmcp_test` for phase 1-4 slices.",
+    "Bbede265d9126eb83": "Update `docs/molang/ROADMAP.md` in the same slice when phase status, gates, evidence, ownership, or verification posture changes.",
+    "B925b4d1bd3f92c75": "模块职责变化时改对应 `package-info.java`(在 `src/main/java/io/github/tt432/eyelib/molang/package-info.java` 等),然后跑 `:generateModulesMd` 重生成 `MODULES.md`。**禁止手编 MODULES.md**(AGENTS.md Editing Rules)。",
+    "B6e303151021ed5ef": "Handoff shape",
+    "B9c839aa153d7858f": "Each subagent task should include affected paths, pass/fail acceptance criteria, must-not-touch paths, verification commands, and documentation impact."
+  },
+  "stats": {
+    "patches": 1,
+    "repacks": 0,
+    "lastRepackAt": "2026-08-13T08:52:47.058Z",
+    "totalSavedTokens": 0
+  },
+  "transactionLog": [
+    {
+      "ts": "2026-08-13T08:52:47.058Z",
+      "operation": "COMPRESS",
+      "summary": "one-shot: 11 blocks → 2494 chars rendered",
+      "savingTokens": 0
+    }
+  ],
+  "createdAt": "2026-08-13T08:52:47.058Z",
+  "updatedAt": "2026-08-13T08:52:47.066Z"
+}

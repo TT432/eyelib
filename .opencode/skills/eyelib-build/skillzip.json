@@ -1,0 +1,753 @@
+{
+  "schemaVersion": 1,
+  "skillPath": "E:/_ideaProjects/qylEyelib/.opencode/skills/eyelib-build/SKILL.md",
+  "sourcePath": "E:/_ideaProjects/qylEyelib/.opencode/skills/eyelib-build/SKILL.md",
+  "contract": {
+    "interface": {
+      "name": "eyelib-build",
+      "purpose": "Eyelib 项目的 Gradle（Stonecutter 多版本）+ mcmcp omp 拓展构建、测试、环境 SOP：构建命令、IDE 约束、Windows/Stonecutter/MDG 实战坑与规避。",
+      "triggers": [
+        {
+          "text": "为 eyelib 项目编译、测试、跑 NullAway/clientsmoke、启停客户端",
+          "spans": [
+            "B768cabb3277252c9",
+            "B37a8e26b6d7b34d9"
+          ]
+        },
+        {
+          "text": "排查 eyelib Gradle 构建失败、IDE 不同步、依赖或资源路径问题",
+          "spans": [
+            "B01e0253d8e2c933b"
+          ]
+        },
+        {
+          "text": "切换 Stonecutter active version 或修改 build.gradle/settings.gradle/stonecutter.gradle",
+          "spans": [
+            "B76c56b34b4f1364e",
+            "Bae4ca030ae1bc19a"
+          ]
+        }
+      ],
+      "exclusions": [
+        {
+          "text": "MC 客户端调试端口与 /eval 运行时操作细节（属 mcmcp、eyelib-debug 技能）",
+          "spans": [
+            "Bd52d1f88c3e15e12"
+          ]
+        }
+      ]
+    },
+    "rules": [
+      {
+        "id": "r-toolchain",
+        "scope": "root/eyelib-构建与测试/工具链与硬约束",
+        "modality": "must",
+        "predicate": "编译/测试/NullAway/clientsmoke/启停客户端统一走 mcmcp omp 拓展（mcmcp_build、mcmcp_test、mcmcp_nullaway、mcmcp_clientsmoke、mcmcp_launch、mcmcp_close）；其它任意 Gradle task（generateModulesMd、compileJava、各 node test、Gradle sync）通过 bash 跑 gradlew。",
+        "spans": [
+          "B37a8e26b6d7b34d9"
+        ],
+        "locked": false
+      },
+      {
+        "id": "r-ide",
+        "scope": "root/eyelib-构建与测试/工具链与硬约束",
+        "modality": "must",
+        "predicate": "唯一允许的 IDE 是 IntelliJ IDEA；JDTLS / VS Code / Eclipse 全部禁用。",
+        "spans": [
+          "B0fb620947b94eaea"
+        ],
+        "locked": false
+      },
+      {
+        "id": "r-central",
+        "scope": "root/eyelib-构建与测试/工具链与硬约束",
+        "modality": "must",
+        "predicate": "build.gradle 是 Stonecutter centralScript，每个 version node（:1.20.1、:1.21.1、:26.1.2）都跑一次；版本特定代码用 //? 注释切分，放在 versions/<mc-version>/ 下。",
+        "spans": [
+          "Be3816d3e777bf5ec"
+        ],
+        "locked": false
+      },
+      {
+        "id": "r-nodeprefix",
+        "scope": "root/eyelib-构建与测试/工具链与硬约束",
+        "modality": "must",
+        "predicate": "active version 在 stonecutter.gradle 里（stonecutter.active '1.20.1'）；跑 task 用 node 前缀，如 :1.20.1:test、:1.20.1:generateModulesMd。",
+        "spans": [
+          "B548358a326de58c9"
+        ],
+        "locked": false
+      },
+      {
+        "id": "r-sync-active",
+        "scope": "root/eyelib-构建与测试",
+        "modality": "must",
+        "predicate": "切 stonecutter.active 后必须在 IDEA 里 Gradle sync（reimport）并等同步完成再读 source，否则 IDE source set 还是上次的、显示错位。",
+        "guard": "修改了 stonecutter.gradle 的 active version",
+        "spans": [
+          "B76c56b34b4f1364e",
+          "B34e1b2c73e2b0d05",
+          "B8a521292b5364160",
+          "Bb6d7fdd2ce320108",
+          "Bd34c4f633b818235",
+          "B6c0d9860a9c77c8a"
+        ],
+        "locked": false
+      },
+      {
+        "id": "r-sync-scripts",
+        "scope": "root/eyelib-构建与测试",
+        "modality": "must",
+        "predicate": "build.gradle / settings.gradle / stonecutter.gradle 改动后必须在 IDEA 里手动 Gradle sync（reimport），否则 IDE 显示的依赖图、source set、模块结构都是旧的。",
+        "guard": "修改了构建脚本",
+        "spans": [
+          "Bae4ca030ae1bc19a",
+          "B722e077492c0bb62",
+          "B3e8847034cfda541"
+        ],
+        "locked": false
+      },
+      {
+        "id": "r-cache",
+        "scope": "root/eyelib-构建与测试/关键约束",
+        "modality": "must",
+        "predicate": "FROM-CACHE / UP-TO-DATE 是否可接受取决于验证目标：回归门禁（当前输入下测试通过）可接受，Gradle 输入跟踪可靠；行为证据（新测试首次验证、性能测量、运行时诊断）不可接受——test 任务 FROM-CACHE/UP-TO-DATE 表示本次没有执行任何测试，须清掉对应模块的 build/ 目录再跑并引用真实执行输出。",
+        "spans": [
+          "B4e2f9695d0844e9f"
+        ],
+        "locked": false
+      },
+      {
+        "id": "r-nobuildcache",
+        "scope": "root/eyelib-构建与测试/关键约束",
+        "modality": "must_not",
+        "predicate": "禁止 --no-build-cache：会强制 MC Forge artifacts 全量重建；需要清缓存时只清相关模块的 build/。",
+        "spans": [
+          "B3833a6105923a7a6"
+        ],
+        "locked": false
+      },
+      {
+        "id": "r-build-gate",
+        "scope": "root/eyelib-构建与测试/关键约束",
+        "modality": "must",
+        "predicate": "结构/代码改动完成后必须 mcmcp_build 且 exit code = 0 才算完成。",
+        "spans": [
+          "Bc8a56a2a9ac19968"
+        ],
+        "locked": false
+      },
+      {
+        "id": "r-runtime-smoke",
+        "scope": "root/eyelib-构建与测试/关键约束",
+        "modality": "must",
+        "predicate": "runtime-sensitive 改动先编译，再用 dev client（eyelib-debug）做 smoke check。",
+        "spans": [
+          "B7ff627aebcce04b8"
+        ],
+        "locked": false
+      },
+      {
+        "id": "r-task-map",
+        "scope": "root/eyelib-构建与测试/常用任务",
+        "modality": "must",
+        "predicate": "任务调用对照：编译 active node 用 mcmcp_build（或 bash gradlew compileJava）；编译指定 node 用 bash gradlew :1.21.1:compileJava；测试 active node 用 mcmcp_test（等同 :1.20.1:test）；重生成模块清单用 bash gradlew :1.20.1:generateModulesMd；启动客户端用 mcmcp_launch；NullAway 检查用 mcmcp_nullaway。",
+        "spans": [
+          "Bd52d1f88c3e15e12"
+        ],
+        "locked": false
+      },
+      {
+        "id": "r-launch-port",
+        "scope": "root/eyelib-构建与测试/常用任务",
+        "modality": "must",
+        "predicate": "mcmcp_launch 启动客户端前必须确认调试端口未被占用（见 mcmcp 技能）。",
+        "spans": [
+          "Bd52d1f88c3e15e12"
+        ],
+        "locked": false
+      },
+      {
+        "id": "r-no-kill",
+        "scope": "root/eyelib-构建与测试/常用任务",
+        "modality": "must_not",
+        "predicate": "禁止从 shell kill java 进程关停客户端；用 mcmcp_close，或 /eval → minecraft.stop()。",
+        "spans": [
+          "Bd52d1f88c3e15e12"
+        ],
+        "locked": false
+      },
+      {
+        "id": "r-runtime-cp",
+        "scope": "root/eyelib-构建与测试/common-pitfalls/非-mod-库运行时-classnotfoundexception",
+        "modality": "must",
+        "predicate": "implementation 'group:artifact:version' 添加的第三方库仅加入编译 classpath，Forge 运行时 classpath 机制不同，运行时会 ClassNotFoundException；正确做法是同时加入编译和运行时 classpath：additionalRuntimeClasspath(implementation('group:artifact:version'))；缺了里层 implementation() 只能上运行时 classpath，编译报包不存在。",
+        "spans": [
+          "B51af589754865725",
+          "B7f80ac8d2e80f11f",
+          "Bdbf27393518f2d65"
+        ],
+        "locked": false
+      },
+      {
+        "id": "r-res-path",
+        "scope": "root/eyelib-构建与测试/common-pitfalls/资源路径硬编码-eyelib-前缀",
+        "modality": "must",
+        "predicate": "BrResourcesLoader 构造函数硬编码 \"eyelib/\" 前缀，资源必须放在 assets/<namespace>/eyelib/<type>/ 路径下（模板 assets/<namespace>/eyelib/<resource_type>/<filename>.json）；本 mod 内部资源放 assets/eyelib/eyelib/<type>/，外部资源放 assets/<your-namespace>/eyelib/<type>/。",
+        "spans": [
+          "Be311578824233516",
+          "B8b35bd8dd27201e7"
+        ],
+        "locked": false
+      },
+      {
+        "id": "r-build-log",
+        "scope": "root/eyelib-构建与测试/common-pitfalls/mcmcp-build-报错被截断拿不到编译错误",
+        "modality": "must",
+        "predicate": "mcmcp_build 失败时只返回状态且错误行被截断到 20 行、按字符串匹配 error: 过滤，中文/非标准输出会漏掉；完整 Gradle 输出每次 build 落盘覆盖到 build/_mcp_gradle_out.txt（stdout：任务日志+编译错误）、build/_mcp_gradle_err.txt（stderr：JVM warning+错误回显）、build/_mcp_gradle.log（mcmcp 拓展运行日志）；build 失败时直接 read 这些文件拿完整错误（mcmcp 拓展 runGradle 写盘实现细节）。",
+        "spans": [
+          "B983454a409528b16",
+          "B0b096b3326f9bc4d",
+          "B241de538986d6a2a",
+          "B5c883d2efe382dd4",
+          "Bb86b515f5f42f62d",
+          "Beed597625d2216f4",
+          "B4f1c653fa7025ead"
+        ],
+        "locked": false
+      },
+      {
+        "id": "r-gradlew-nofile",
+        "scope": "root/eyelib-构建与测试/common-pitfalls/mcmcp-build-报错被截断拿不到编译错误",
+        "modality": "must",
+        "predicate": "若用 bash 跑 gradlew，输出直接在终端，不会落盘到 _mcp_gradle_*.txt 文件——两者执行链路不同。",
+        "spans": [
+          "Be39a2e4381f4f85d"
+        ],
+        "locked": false
+      },
+      {
+        "id": "r-sc-close",
+        "scope": "root/eyelib-构建与测试/common-pitfalls/stonecutter-注释语法踩坑",
+        "modality": "must",
+        "predicate": "//? 块条件的闭合标记必须 //?}（如 //? if <1.20.6 { ... //?} else { ... //?}），不能用 //}。",
+        "spans": [
+          "Ba6cb9f3350177dcd"
+        ],
+        "locked": false
+      },
+      {
+        "id": "r-sc-lineelse",
+        "scope": "root/eyelib-构建与测试/common-pitfalls/stonecutter-注释语法踩坑",
+        "modality": "must",
+        "predicate": "//? 行条件不支持 else（//? if <1.20.6 后换行再 //?} else 是错误语法），需要 else 时必须用块条件。",
+        "spans": [
+          "Bb9c37c4dd21569ef"
+        ],
+        "locked": false
+      },
+      {
+        "id": "r-sc-nocomment",
+        "scope": "root/eyelib-构建与测试/common-pitfalls/stonecutter-注释语法踩坑",
+        "modality": "must_not",
+        "predicate": "//? 块内禁放纯注释：else 分支激活时 Stonecutter 会剥离注释包裹，纯注释变成裸文本导致编译错误；块内需要占位时用 throw new UnsupportedOperationException(\"...\")。",
+        "spans": [
+          "Ba3eab4ba46fba9bc"
+        ],
+        "locked": false
+      },
+      {
+        "id": "r-sc-sourceset",
+        "scope": "root/eyelib-构建与测试/common-pitfalls/stonecutter-注释语法踩坑",
+        "modality": "must",
+        "predicate": "Stonecutter 0.7.x centralScript 不自动替换 sourceSet，需在 build.gradle 手动 sourceSets.main.java.srcDirs = [stonecutterGenerated]。",
+        "spans": [
+          "B67fd13e34ff40375"
+        ],
+        "locked": false
+      },
+      {
+        "id": "r-tests-quote",
+        "scope": "root/eyelib-构建与测试/common-pitfalls/直跑-gradlew-tests-带引号-pattern-报-no-tests-found",
+        "modality": "must",
+        "predicate": "git-bash 里 cmd /c 'gradlew.bat :26.1.2:test --tests \"*Foo*\"' 时 cmd 不剥离双引号，Gradle 收到带字面引号的 pattern 报 No tests found，极易误判为测试发现机制损坏；规避：用 mcmcp_test（内部传不带引号的 pattern），或直跑时写 --tests *Foo* 不带引号。",
+        "spans": [
+          "B5d3eab76c19f4c3c",
+          "B147958ce6eed69a8"
+        ],
+        "locked": false
+      },
+      {
+        "id": "r-mdg-nofiles",
+        "scope": "root/eyelib-构建与测试/common-pitfalls/本地-jar-依赖-mdg-remap-配置不收-files-mavenlocal-同名替换不生",
+        "modality": "must_not",
+        "predicate": "给 modLdlibCompile/modLocalRuntime 这类 MDG createRemappingConfiguration 生成的配置加本地 jar 时不要用 files(...) 记法——直接报「Cannot convert the provided notation ... DependencyConstraint」，该链只接受字符串/map 坐标。",
+        "spans": [
+          "B77d89d4088e261e6",
+          "B1145c045d1b49d83"
+        ],
+        "locked": false
+      },
+      {
+        "id": "r-m2-install",
+        "scope": "root/eyelib-构建与测试/common-pitfalls/本地-jar-依赖-mdg-remap-配置不收-files-mavenlocal-同名替换不生",
+        "modality": "must",
+        "predicate": "本地 jar 正确路径：手动装进 ~/.m2/repository/<group>/<name>/<version>/（jar + 最小 pom），用坐标引用；注意 exclusiveContent 组过滤，别用被占用的 group。",
+        "spans": [
+          "Bf4483c8ea44cdae4"
+        ],
+        "locked": false
+      },
+      {
+        "id": "r-m2-bump",
+        "scope": "root/eyelib-构建与测试/common-pitfalls/本地-jar-依赖-mdg-remap-配置不收-files-mavenlocal-同名替换不生",
+        "modality": "must",
+        "predicate": "同名同版本替换 mavenLocal 里的 jar 内容不会生效：Gradle transform 缓存按输入哈希命中，--refresh-dependencies 也不重算（2026-08-06 实证）；必须换版本号（如 -patched1）再改依赖坐标。",
+        "spans": [
+          "Bce3c4f6c3ece5436"
+        ],
+        "locked": false
+      },
+      {
+        "id": "r-launchscript",
+        "scope": "root/eyelib-构建与测试/common-pitfalls/本地-jar-依赖-mdg-remap-配置不收-files-mavenlocal-同名替换不生",
+        "modality": "must",
+        "predicate": "改完坐标后 :<node>:createClientLaunchScript 可能 UP-TO-DATE 不重生成，须确认 versions/<node>/build/moddev/clientRunClasspath.txt 里的 jar 路径已更新，必要时 --rerun-tasks。",
+        "spans": [
+          "Baf3658cb2bb6a81d"
+        ],
+        "locked": false
+      }
+    ],
+    "workflow": [
+      {
+        "id": "w-build",
+        "scope": "root/eyelib-构建与测试/常用任务",
+        "kind": "action",
+        "action": "编译 active node：mcmcp_build（或 bash gradlew compileJava）；编译指定 node：bash gradlew :<node>:compileJava。",
+        "tool": "mcmcp_build",
+        "next": [
+          "w-build-fallback",
+          "w-stop"
+        ],
+        "spans": [
+          "Bd52d1f88c3e15e12"
+        ]
+      },
+      {
+        "id": "w-build-fallback",
+        "scope": "root/eyelib-构建与测试/common-pitfalls/mcmcp-build-报错被截断拿不到编译错误",
+        "kind": "fallback",
+        "action": "mcmcp_build 失败且错误被截断时，直接 read build/_mcp_gradle_out.txt 与 build/_mcp_gradle_err.txt（必要时 build/_mcp_gradle.log）拿完整编译错误。",
+        "next": [
+          "w-stop"
+        ],
+        "spans": [
+          "Beed597625d2216f4",
+          "B983454a409528b16"
+        ]
+      },
+      {
+        "id": "w-test",
+        "scope": "root/eyelib-构建与测试/常用任务",
+        "kind": "action",
+        "action": "测试 active node：mcmcp_test（等同 :1.20.1:test）；NullAway：mcmcp_nullaway；重生成模块清单：bash gradlew :1.20.1:generateModulesMd。",
+        "tool": "mcmcp_test",
+        "next": [
+          "w-stop"
+        ],
+        "spans": [
+          "Bd52d1f88c3e15e12"
+        ]
+      },
+      {
+        "id": "w-switch-active",
+        "scope": "root/eyelib-构建与测试/common-pitfalls/切-stonecutter-active-version-后看不到新源码",
+        "kind": "action",
+        "action": "切 active version 流程：1) 改 stonecutter.gradle 里的 active；2) 在 IDEA 里 Gradle sync（reimport）；3) 等同步完成再读 source。",
+        "next": [],
+        "spans": [
+          "B8a521292b5364160",
+          "Bb6d7fdd2ce320108",
+          "Bd34c4f633b818235"
+        ]
+      },
+      {
+        "id": "w-stop",
+        "scope": "root/eyelib-构建与测试/关键约束",
+        "kind": "stop",
+        "action": "结构/代码改动的完成判定：mcmcp_build exit code = 0；runtime-sensitive 改动另需 dev client smoke check 通过。",
+        "next": [],
+        "spans": [
+          "Bc8a56a2a9ac19968",
+          "B7ff627aebcce04b8"
+        ]
+      }
+    ],
+    "tools": [
+      {
+        "id": "T1",
+        "name": "mcmcp_build",
+        "errors": [
+          "失败时输出被截断，完整日志在 build/_mcp_gradle_out.txt / _mcp_gradle_err.txt"
+        ],
+        "spans": [
+          "B37a8e26b6d7b34d9",
+          "Bd52d1f88c3e15e12"
+        ]
+      },
+      {
+        "id": "T2",
+        "name": "mcmcp_test",
+        "spans": [
+          "B37a8e26b6d7b34d9",
+          "Bd52d1f88c3e15e12",
+          "B5d3eab76c19f4c3c"
+        ]
+      },
+      {
+        "id": "T3",
+        "name": "mcmcp_nullaway",
+        "spans": [
+          "B37a8e26b6d7b34d9",
+          "Bd52d1f88c3e15e12"
+        ]
+      },
+      {
+        "id": "T4",
+        "name": "mcmcp_clientsmoke",
+        "spans": [
+          "B37a8e26b6d7b34d9"
+        ]
+      },
+      {
+        "id": "T5",
+        "name": "mcmcp_launch",
+        "preconditions": [
+          "启动前确认调试端口未被占用"
+        ],
+        "spans": [
+          "B37a8e26b6d7b34d9",
+          "Bd52d1f88c3e15e12"
+        ]
+      },
+      {
+        "id": "T6",
+        "name": "mcmcp_close",
+        "spans": [
+          "B37a8e26b6d7b34d9",
+          "Bd52d1f88c3e15e12"
+        ]
+      },
+      {
+        "id": "T7",
+        "name": "gradlew",
+        "required_args": [
+          "task 路径（可带 node 前缀，如 :1.21.1:compileJava）"
+        ],
+        "spans": [
+          "B37a8e26b6d7b34d9",
+          "Bd52d1f88c3e15e12",
+          "B5d3eab76c19f4c3c"
+        ]
+      }
+    ],
+    "output": {
+      "fields": [
+        {
+          "name": "build 结果",
+          "required": true,
+          "validation": "mcmcp_build exit code = 0 为结构/代码改动完成的必要条件",
+          "spans": [
+            "Bc8a56a2a9ac19968"
+          ]
+        }
+      ],
+      "termination": [
+        "结构/代码改动以 mcmcp_build exit 0 收尾；runtime-sensitive 改动以 dev client smoke check 通过收尾。"
+      ],
+      "spans": [
+        "Bc8a56a2a9ac19968",
+        "B7ff627aebcce04b8"
+      ]
+    },
+    "evidence": [
+      {
+        "id": "e-layout",
+        "kind": "background",
+        "supports": [
+          "r-central",
+          "r-nodeprefix"
+        ],
+        "adds_unique_unit": true,
+        "source_blocks": [
+          "B4a929310017ddbf6"
+        ]
+      },
+      {
+        "id": "e-sc-fieldnotes",
+        "kind": "rationale",
+        "supports": [
+          "r-sc-close",
+          "r-sc-lineelse",
+          "r-sc-nocomment",
+          "r-sc-sourceset"
+        ],
+        "adds_unique_unit": false,
+        "source_blocks": [
+          "B01b867a2f8d70078",
+          "B02a48c96881616d4"
+        ]
+      }
+    ],
+    "residual": [
+      {
+        "source_block": "B84ecf4dd4696525b",
+        "reason": "UNIQUE_EVIDENCE"
+      },
+      {
+        "source_block": "Bc8a56a2a9ac19968",
+        "reason": "USER_LOCKED"
+      }
+    ]
+  },
+  "scopes": [
+    {
+      "id": "root",
+      "parent": null,
+      "heading": "root",
+      "headingPath": [
+        "root"
+      ],
+      "depth": 0
+    },
+    {
+      "id": "root/eyelib-构建与测试",
+      "parent": "root",
+      "heading": "Eyelib 构建与测试",
+      "headingPath": [
+        "root",
+        "eyelib-构建与测试"
+      ],
+      "depth": 1
+    },
+    {
+      "id": "root/eyelib-构建与测试/工具链与硬约束",
+      "parent": "root/eyelib-构建与测试",
+      "heading": "工具链与硬约束",
+      "headingPath": [
+        "root",
+        "eyelib-构建与测试",
+        "工具链与硬约束"
+      ],
+      "depth": 2
+    },
+    {
+      "id": "root/eyelib-构建与测试/常用任务",
+      "parent": "root/eyelib-构建与测试",
+      "heading": "常用任务",
+      "headingPath": [
+        "root",
+        "eyelib-构建与测试",
+        "常用任务"
+      ],
+      "depth": 2
+    },
+    {
+      "id": "root/eyelib-构建与测试/关键约束",
+      "parent": "root/eyelib-构建与测试",
+      "heading": "关键约束",
+      "headingPath": [
+        "root",
+        "eyelib-构建与测试",
+        "关键约束"
+      ],
+      "depth": 2
+    },
+    {
+      "id": "root/eyelib-构建与测试/common-pitfalls",
+      "parent": "root/eyelib-构建与测试",
+      "heading": "Common Pitfalls",
+      "headingPath": [
+        "root",
+        "eyelib-构建与测试",
+        "common-pitfalls"
+      ],
+      "depth": 2
+    },
+    {
+      "id": "root/eyelib-构建与测试/common-pitfalls/修改-build-gradle-后-ide-不感知",
+      "parent": "root/eyelib-构建与测试/common-pitfalls",
+      "heading": "修改 build.gradle 后 IDE 不感知",
+      "headingPath": [
+        "root",
+        "eyelib-构建与测试",
+        "common-pitfalls",
+        "修改-build-gradle-后-ide-不感知"
+      ],
+      "depth": 3
+    },
+    {
+      "id": "root/eyelib-构建与测试/common-pitfalls/切-stonecutter-active-version-后看不到新源码",
+      "parent": "root/eyelib-构建与测试/common-pitfalls",
+      "heading": "切 Stonecutter active version 后看不到新源码",
+      "headingPath": [
+        "root",
+        "eyelib-构建与测试",
+        "common-pitfalls",
+        "切-stonecutter-active-version-后看不到新源码"
+      ],
+      "depth": 3
+    },
+    {
+      "id": "root/eyelib-构建与测试/common-pitfalls/非-mod-库运行时-classnotfoundexception",
+      "parent": "root/eyelib-构建与测试/common-pitfalls",
+      "heading": "非 Mod 库运行时 ClassNotFoundException",
+      "headingPath": [
+        "root",
+        "eyelib-构建与测试",
+        "common-pitfalls",
+        "非-mod-库运行时-classnotfoundexception"
+      ],
+      "depth": 3
+    },
+    {
+      "id": "root/eyelib-构建与测试/common-pitfalls/资源路径硬编码-eyelib-前缀",
+      "parent": "root/eyelib-构建与测试/common-pitfalls",
+      "heading": "资源路径硬编码 \"eyelib/\" 前缀",
+      "headingPath": [
+        "root",
+        "eyelib-构建与测试",
+        "common-pitfalls",
+        "资源路径硬编码-eyelib-前缀"
+      ],
+      "depth": 3
+    },
+    {
+      "id": "root/eyelib-构建与测试/common-pitfalls/mcmcp-build-报错被截断拿不到编译错误",
+      "parent": "root/eyelib-构建与测试/common-pitfalls",
+      "heading": "mcmcp_build 报错被截断拿不到编译错误",
+      "headingPath": [
+        "root",
+        "eyelib-构建与测试",
+        "common-pitfalls",
+        "mcmcp-build-报错被截断拿不到编译错误"
+      ],
+      "depth": 3
+    },
+    {
+      "id": "root/eyelib-构建与测试/common-pitfalls/stonecutter-注释语法踩坑",
+      "parent": "root/eyelib-构建与测试/common-pitfalls",
+      "heading": "Stonecutter `//?` 注释语法踩坑",
+      "headingPath": [
+        "root",
+        "eyelib-构建与测试",
+        "common-pitfalls",
+        "stonecutter-注释语法踩坑"
+      ],
+      "depth": 3
+    },
+    {
+      "id": "root/eyelib-构建与测试/common-pitfalls/直跑-gradlew-tests-带引号-pattern-报-no-tests-found",
+      "parent": "root/eyelib-构建与测试/common-pitfalls",
+      "heading": "直跑 gradlew --tests 带引号 pattern 报 No tests found",
+      "headingPath": [
+        "root",
+        "eyelib-构建与测试",
+        "common-pitfalls",
+        "直跑-gradlew-tests-带引号-pattern-报-no-tests-found"
+      ],
+      "depth": 3
+    },
+    {
+      "id": "root/eyelib-构建与测试/common-pitfalls/本地-jar-依赖-mdg-remap-配置不收-files-mavenlocal-同名替换不生",
+      "parent": "root/eyelib-构建与测试/common-pitfalls",
+      "heading": "本地 jar 依赖：MDG remap 配置不收 files()，mavenLocal 同名替换不生效",
+      "headingPath": [
+        "root",
+        "eyelib-构建与测试",
+        "common-pitfalls",
+        "本地-jar-依赖-mdg-remap-配置不收-files-mavenlocal-同名替换不生"
+      ],
+      "depth": 3
+    }
+  ],
+  "procedures": [],
+  "sourceBlocks": {
+    "B768cabb3277252c9": "Eyelib 构建与测试",
+    "B4a929310017ddbf6": "项目根 `E:\\_ideaProjects\\qylEyelib`。单 Gradle project(ADR-0014 flat-merge),Stonecutter 0.9.6 多版本(节点 `1.20.1`/`1.21.1`/`26.1.2`),active = `1.20.1`(legacyforge,Java 17)。node `1.21.1`/`26.1.2` 用 NeoForge 21.1.x / 26.1.2.x。",
+    "Bc6b6c58299576368": "工具链与硬约束",
+    "B37a8e26b6d7b34d9": "**Gradle 调用方式**: 编译/测试/NullAway/clientsmoke/启停客户端统一走 `mcmcp` omp 拓展(`mcmcp_build`、`mcmcp_test`、`mcmcp_nullaway`、`mcmcp_clientsmoke`、`mcmcp_launch`、`mcmcp_close`)；任意其它 Gradle task(generateModulesMd、compileJava、各 node test、Gradle sync)通过 bash 跑 `gradlew`。",
+    "B0fb620947b94eaea": "**唯一允许的 IDE**: IntelliJ IDEA。JDTLS / VS Code / Eclipse 全部禁用。",
+    "Bea6829bdf6be9857": "**Stonecutter 多版本**:",
+    "Be3816d3e777bf5ec": "`build.gradle` 是 `centralScript`,每个 version node(`:1.20.1`、`:1.21.1`、`:26.1.2`)都跑一次。版本特定代码用 `//?` 注释切分,放在 `versions/<mc-version>/` 下。",
+    "B548358a326de58c9": "active version 在 `stonecutter.gradle` 里(`stonecutter.active '1.20.1'`)。跑 task 用 node 前缀:`:1.20.1:test`、`:1.20.1:generateModulesMd` 等。",
+    "B76c56b34b4f1364e": "**切 active version 后必须在 IDEA 里 Gradle sync(reimport)**,否则 source set 显示错位。",
+    "Bb7a3292a43834f10": "常用任务",
+    "Bd52d1f88c3e15e12": "| 任务 | 调用 |\n|---|---|\n| 编译 active node | `mcmcp_build`(或 bash `gradlew compileJava`) |\n| 编译指定 node | bash `gradlew :1.21.1:compileJava` |\n| 测试 active node | `mcmcp_test`(等同 `:1.20.1:test`) |\n| 重生成模块清单 | bash `gradlew :1.20.1:generateModulesMd`(详见 AGENTS.md 文档同步规则) |\n| 启动客户端 | `mcmcp_launch` —— **启动前必须确认调试端口未被占用**(mcmcp SKILL) |\n| 关停客户端 | `mcmcp_close`,或 `/eval` → `minecraft.stop()`。**禁止从 shell `kill` java 进程** |\n| NullAway 检查 | `mcmcp_nullaway` |",
+    "Bc0f5498ae575ceb0": "关键约束",
+    "B4e2f9695d0844e9f": "**`FROM-CACHE` / `UP-TO-DATE` 是否可接受取决于验证目标**: 回归门禁（“当前输入下测试通过”）可接受——Gradle 输入跟踪可靠，缓存命中意味着相同输入此前已成功。行为证据（新测试首次验证、性能测量、运行时诊断）不可接受——test 任务 `FROM-CACHE`/`UP-TO-DATE` 表示本次没有执行任何测试，清掉对应模块的 `build/` 目录再跑，并引用真实执行输出。",
+    "B3833a6105923a7a6": "**禁止 `--no-build-cache`**: 会强制 MC Forge artifacts 全量重建。需要清缓存时只清相关模块的 `build/`。",
+    "Bc8a56a2a9ac19968": "**结构/代码改动**: 完成后必须 `mcmcp_build`,exit code = 0 才算完成。",
+    "B7ff627aebcce04b8": "**runtime-sensitive 改动**: 先编译,再用 dev client(eyelib-debug)做 smoke check。",
+    "Bae4ca030ae1bc19a": "**`build.gradle` 改动后**: 必须在 IDEA 里 Gradle sync(reimport) 让 IDE 重新感知。",
+    "B01e0253d8e2c933b": "Common Pitfalls",
+    "B3e8847034cfda541": "修改 build.gradle 后 IDE 不感知",
+    "B722e077492c0bb62": "`build.gradle` / `settings.gradle` / `stonecutter.gradle` 改动后,IDE 不会自动重读。必须在 IDEA 里手动 Gradle sync(reimport),否则 IDE 显示的依赖图、source set、模块结构都是旧的。",
+    "B6c0d9860a9c77c8a": "切 Stonecutter active version 后看不到新源码",
+    "B34e1b2c73e2b0d05": "`stonecutter.active` 改了之后,IDE source set 还是上次的。流程:",
+    "B8a521292b5364160": "改 `stonecutter.gradle` 里的 active。",
+    "Bb6d7fdd2ce320108": "在 IDEA 里 Gradle sync(reimport)。",
+    "Bd34c4f633b818235": "等同步完成再读 source。",
+    "Bdbf27393518f2d65": "非 Mod 库运行时 ClassNotFoundException",
+    "B51af589754865725": "`implementation 'group:artifact:version'` 添加的第三方库编译通过但运行时找不到。Forge 运行时 classpath 机制不同,`implementation` 仅加入编译 classpath。",
+    "B84ecf4dd4696525b": "// 正确做法:同时加入编译和运行时 classpath\nadditionalRuntimeClasspath(implementation('group:artifact:version'))",
+    "B7f80ac8d2e80f11f": "缺了里层 `implementation()` 只能上运行时 classpath,编译报包不存在。参考 `build.gradle` dependencies 段。",
+    "B8b35bd8dd27201e7": "资源路径硬编码 \"eyelib/\" 前缀",
+    "Be311578824233516": "`BrResourcesLoader` 构造函数硬编码 `\"eyelib/\"` 前缀,导致资源必须放在 `assets/<namespace>/eyelib/<type>/` 路径下。路径模板 `assets/<namespace>/eyelib/<resource_type>/<filename>.json`。本 mod 内部资源放 `assets/eyelib/eyelib/<type>/`,外部资源放 `assets/<your-namespace>/eyelib/<type>/`。",
+    "B4f1c653fa7025ead": "mcmcp_build 报错被截断拿不到编译错误",
+    "B983454a409528b16": "`mcmcp_build` 工具失败时只返回状态(如 \"BUILD FAILED in 6m 6s\"),错误行被截断到 20 行且按字符串匹配 `error:` 过滤,中文/非标准输出会漏掉。",
+    "B0b096b3326f9bc4d": "实际完整 Gradle 输出已落盘到三处(每次 build 覆盖):",
+    "B241de538986d6a2a": "`build/_mcp_gradle_out.txt` — Gradle stdout(任务执行日志 + 编译错误)",
+    "B5c883d2efe382dd4": "`build/_mcp_gradle_err.txt` — Gradle stderr(JVM warning + 编译错误回显)",
+    "Bb86b515f5f42f62d": "`build/_mcp_gradle.log` — mcmcp 拓展的运行日志(每次调用的 task 列表 + 耗时)",
+    "Beed597625d2216f4": "`build` 失败时直接 `read` 这两个文件即可拿到完整错误。这是 mcmcp 拓展(`~/.omp/agent/extensions/mcmcp/index.ts` `runGradle`)写盘的实现细节。",
+    "Be39a2e4381f4f85d": "> 若用 bash 跑 `gradlew`,输出直接在终端,不会落盘到上述文件——两者执行链路不同。",
+    "B02a48c96881616d4": "Stonecutter `//?` 注释语法踩坑",
+    "B01b867a2f8d70078": "centralScript 模式下 `//?` 版本条件注释的实战限制(官方语法文档未明确):",
+    "Ba6cb9f3350177dcd": "**闭合标记必须 `//?}`**:块条件 `//? if <1.20.6 { ... //?} else { ... //?}`,闭合不能用 `//}`。",
+    "Bb9c37c4dd21569ef": "**行条件不支持 else**:`//? if <1.20.6\\n<代码>\\n//?} else` 是错误语法,需要 else 时必须用块条件。",
+    "Ba3eab4ba46fba9bc": "**`//?` 块内禁放纯注释**:Stonecutter 在 else 分支激活时会剥离注释包裹,纯注释变成裸文本导致编译错误。块内需要占位时用 `throw new UnsupportedOperationException(\"...\")`。",
+    "B67fd13e34ff40375": "**sourceSet 需手动替换**:Stonecutter 0.7.x centralScript 不自动替换 sourceSet,需在 `build.gradle` 手动 `sourceSets.main.java.srcDirs = [stonecutterGenerated]`。",
+    "B147958ce6eed69a8": "直跑 gradlew --tests 带引号 pattern 报 No tests found",
+    "B5d3eab76c19f4c3c": "在 git-bash 里 `cmd /c 'gradlew.bat :26.1.2:test --tests \"*Foo*\"'`,cmd 不剥离双引号,Gradle 收到带字面引号的 pattern → `No tests found for given includes: [\"*Foo*\"]`,极易误判为测试发现机制损坏。规避:用 `mcmcp_test`(内部传不带引号的 pattern),或直跑时写 `--tests *Foo*` 不带引号。",
+    "B6df34e837f68e1ed": "本地 jar 依赖：MDG remap 配置不收 files()，mavenLocal 同名替换不生效",
+    "B1145c045d1b49d83": "给 `modLdlibCompile`/`modLocalRuntime` 这类 MDG `createRemappingConfiguration` 生成的配置加本地 jar 时：",
+    "B77d89d4088e261e6": "`files(...)` 记法直接报「Cannot convert the provided notation ... DependencyConstraint」——该链只接受字符串/map 坐标。",
+    "Bf4483c8ea44cdae4": "正确路径：把 jar 手动装进 `~/.m2/repository/<group>/<name>/<version>/`（jar + 最小 pom），用坐标引用（注意 exclusiveContent 组过滤，别用被占用的 group）。",
+    "Bce3c4f6c3ece5436": "**同名同版本替换 mavenLocal 里的 jar 内容不会生效**：Gradle transform 缓存（`caches/<ver>/transforms/<hash>/`）按输入哈希命中，`--refresh-dependencies` 也不重算（2026-08-06 实证，clientRunClasspath 仍指旧变换产物）。必须**换版本号**（如 `-patched1`）再改依赖坐标。",
+    "Baf3658cb2bb6a81d": "改完坐标后 `:​<node>:createClientLaunchScript` 可能 UP-TO-DATE 不重生成，确认 `versions/<node>/build/moddev/clientRunClasspath.txt` 里的 jar 路径已更新，必要时 `--rerun-tasks`。"
+  },
+  "stats": {
+    "patches": 2,
+    "repacks": 0,
+    "lastRepackAt": "2026-08-13T08:58:32.140Z",
+    "totalSavedTokens": 0
+  },
+  "transactionLog": [
+    {
+      "ts": "2026-08-13T08:58:32.140Z",
+      "operation": "COMPRESS",
+      "summary": "one-shot: 53 blocks → 5521 chars rendered",
+      "savingTokens": 0
+    },
+    {
+      "ts": "2026-08-13T09:08:19.244Z",
+      "operation": "AUDIT",
+      "summary": "restored 1 missing spans as locked residual",
+      "savingTokens": 0
+    }
+  ],
+  "createdAt": "2026-08-13T08:58:32.140Z",
+  "updatedAt": "2026-08-13T09:08:19.245Z"
+}

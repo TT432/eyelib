@@ -8,57 +8,47 @@ metadata:
   version: "1.0.0"
 ---
 
+# progressive-exploration
+
+Interactive runtime state exploration via the AI debug HTTP server (AIDebugServer in clientsmoke mod) in a running Minecraft client: probe screens, inspect game state, navigate UI, test hypotheses before writing code.
+
 ## When to use
+- 需要知道游戏当前实际处于哪个 screen/state
+- 调试运行时问题（实体不渲染、attachment 缺失、粒子不生成）
+- 推理 MC/Forge UI 流程
+- 检查 manager、entity capability 或粒子状态
+- 写生产代码前验证假设
+- Do NOT use when: 断点调试：jetbrain_xdebug_* MCP 工具已废弃，断点只能在 IDEA 中手动操作；需要运行时数据时用 /eval 替代
 
-- You need to know what screen/state the game is actually in
-- You're debugging a runtime issue (entity not rendering, attachment missing, particle not spawning)
-- You're reasoning about MC/Forge UI flow
-- You want to inspect managers, entity capabilities, or particle states
-- You need to verify a hypothesis before writing production code
+## Rules
+- NEVER 退回“猜 → 改代码 → 重建 → 重启”循环而跳过运行时验证；/eval 探测等价于一次可编程断点检视，能证明代码路径到达并给出真实数据
+- PREFER AIDebugServer 用 JDK 内置编译器（非 Janino），支持完整 Java 语法：var、lambda、Map.of()、records、switch 表达式、多行 if/return 块
+- 代码在 MC 渲染线程执行且有 10 秒超时；世界生成等重操作会使 HTTP 响应超时但可能仍异步完成
+- 所有 MC API 调用经 Minecraft.tell() 在渲染线程执行；长时间运行的代码会阻塞渲染循环
+- 调试 HTTP 服务器（clientsmoke mod 内 io.github.tt432.clientsmoke.debug.AIDebugServer）仅在配置 ai_debug_port（JVM 系统属性，fallback 环境变量 AI_DEBUG_PORT）时开启；默认端口 25999，mcmcp_launch 自动注入
+- When 1. Probe current state:
+  - 探测从宽泛查询开始，根据响应逐步收窄；/eval 代码在模板中运行，自动注入 minecraft/player/level（不在世界中时可能为 null）
+- When 2. Act on findings:
+  - NEVER 预先写好整套脚本；必须由每个响应决定下一个查询
+- When 3. Assert and document:
+  - 确认行为后写单元测试或更新文档，不让发现停留在临时状态
+- When Class name resolution:
+  - 写 eval 前用 glob/grep 核实类路径，不要猜包名；模板仅自动导入 Minecraft、LocalPlayer、ClientLevel，其余类必须用全限定名
+- When 等待游戏加载完成:
+  - 启动后必须等待 /loaded 返回 true 才能开始调试操作（资源加载阶段 minecraft.screen 与 minecraft.player 均为 null）
+- When Session verification:
+  - 游戏启动后通过游戏内日志时间戳与进程启动时间匹配来确认 debug server 属于本次启动；/eval 结果异常（错误世界/屏幕/坐标）时怀疑 stale session
+- When Startup guard:
+  - 启动客户端前先 GET /ping 检查调试端口（默认 25999）：返回 ok 说明旧实例仍在运行，须先通过 /eval 执行 minecraft.stop() 关闭并等端口释放；connection refused 才可启动新客户端
+  - NEVER 从 shell 杀掉 java 进程
 
-## Prerequisites
+## Workflow
+1. 启动前 GET /ping：ok → 先 /eval minecraft.stop() 关旧实例并等端口释放；refused → 启动新客户端 [decision]
+2. 轮询 GET /loaded（间隔 3 秒）直到返回 true，再开始调试 [loop]
+3. 用 /eval 宽泛探测当前状态（屏幕、UI 元素、管理器、实体状态），根据每次响应收窄并决定下一个查询，循环直至假设被证实或证伪 [loop]
+4. 确认行为后写单元测试或更新文档固化发现 [stop]
 
-调试 HTTP 服务器是 clientsmoke mod 内的 AIDebugServer（`io.github.tt432.clientsmoke.debug`），仅在配置 `ai_debug_port`（JVM 系统属性，fallback 环境变量 `AI_DEBUG_PORT`）时开启。默认端口 `25999`（`mcmcp_launch` 会自动注入）。
-
-### Startup guard
-
-Before starting the client, always check the debug port (default 25999):
-
-```
-GET /ping → {"status": "ok"}  → old instance still running → minecraft.stop() first
-GET /ping → connection refused → port free, safe to start
-```
-
-If an old instance is running, close it via `/eval`:
-```java
-minecraft.stop();
-```
-Wait for port to be freed before launching the new client. **Never kill java processes from shell.**
-
-### 等待游戏加载完成
-
-客户端启动后需要经历资源加载阶段，此阶段 `minecraft.screen` 和 `minecraft.player` 均为 null。**启动后必须等待 `/loaded` 返回 `true` 才能开始调试操作。**
-
-```
-GET /loaded → {"loaded": true}  → 游戏已就绪（标题画面或世界中）
-GET /loaded → {"loaded": false} → 仍在加载资源，继续等待
-```
-
-等待示例（轮询间隔 3 秒）：
-```
-while /loaded == false → sleep 3s → retry
-```
-
-### Session verification
-
-After game startup, confirm the debug server belongs to the current launch by checking the in-game log timestamp matches the process start time. If `/eval` gives unexpected results (wrong world, wrong screen, different position), suspect a stale session.
-
-## Core Workflow
-
-### 1. Probe current state
-
-Start broad, narrow down based on the response. The code runs inside a template that auto-injects `minecraft`, `player`, `level`. They may be null if not in a world.
-
+<!-- locked residual (verbatim, do not edit) -->
 ```java
 // Where are we?
 return minecraft.screen == null ? "in world" : minecraft.screen.getClass().getName();
@@ -74,19 +64,6 @@ for (Object child : minecraft.screen.children()) {
 }
 return sb.toString();
 ```
-
-### 2. Act on findings
-
-Each response guides the next query. Don't write a script upfront — let the runtime state decide.
-
-### 3. Assert and document
-
-Once you confirm the behavior, write a unit test or update documentation. Don't leave findings ephemeral.
-
-## Practical Patterns
-
-### Navigate MC UI
-
 ```java
 // Click a button by its text label
 for (Object child : minecraft.screen.children()) {
@@ -104,9 +81,6 @@ for (Object child : minecraft.screen.children()) {
     }
 }
 ```
-
-### Inspect eyelib runtime state
-
 ```java
 // Dump registered particle definitions
 return io.github.tt432.eyelib.particle.runtime.ParticleDefinitionRegistry
@@ -115,9 +89,6 @@ return io.github.tt432.eyelib.particle.runtime.ParticleDefinitionRegistry
 // Check an entity's current animation
 // (use fully qualified names for project types)
 ```
-
-### Modify game state
-
 ```java
 // Teleport
 player.setPos(100, 70, 100);
@@ -125,9 +96,6 @@ player.setPos(100, 70, 100);
 // Change time
 player.level().setDayTime(0);
 ```
-
-### Error recovery
-
 ```java
 // If stuck on LoadingErrorScreen, find the skip button
 for (Object child : minecraft.screen.children()) {
@@ -138,29 +106,4 @@ for (Object child : minecraft.screen.children()) {
     }
 }
 ```
-
-### Shutdown
-
-```java
-// Close the game properly — never kill java processes from shell
-minecraft.stop();
-```
-
-## Debugger Workflow
-
-> **`jetbrain_xdebug_*` MCP 工具已废弃**，当前 session 无断点调试 MCP 能力。断点调试只能在 IDEA 中手动操作（agent 无法直接设断点）。需要运行时数据时，用 progressive exploration 的 `/eval`（`mcmcp_execute`）作为替代。
-
 `/eval` 一次就能拿到真实的运行时数据：在可疑代码路径上调用方法、读字段、打印状态，验证假设后再改代码。不要退回"猜 → 改代码 → 重建 → 重启"的循环——`/eval` 等价于一次可编程的断点检视。
-
-Never skip runtime verification in favor of "guess → change code → rebuild → restart". An `/eval` probe proves the code path is reached and shows real data.
-
-### Class name resolution
-
-The `/eval` template auto-injects `Minecraft`, `LocalPlayer`, `ClientLevel` via the JDK's built-in compiler (not Janino). All other classes need fully qualified names. **Before writing an eval, verify the class path** — don't guess package names. Use `glob`/`grep` 查找类路径。
-
-## Limitations
-
-- **Compiler**: AIDebugServer uses the JDK's built-in compiler (not Janino). Full Java syntax is supported: `var`, lambda, `Map.of()`, records, switch expressions, multi-line `if/return` blocks.
-- **Auto-imports**: only `Minecraft`, `LocalPlayer`, `ClientLevel` are imported. Other classes need fully qualified names.
-- **Timeout**: code runs on the MC render thread with a 10-second timeout. World generation and heavy operations will time out the HTTP response but may still complete asynchronously.
-- **Thread safety**: all MC API calls execute on the render thread via `Minecraft.tell()`. Long-running code blocks the render loop.

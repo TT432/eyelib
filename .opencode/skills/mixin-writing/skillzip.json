@@ -1,0 +1,645 @@
+{
+  "schemaVersion": 1,
+  "skillPath": "E:/_ideaProjects/qylEyelib/.opencode/skills/mixin-writing/SKILL.md",
+  "sourcePath": "E:/_ideaProjects/qylEyelib/.opencode/skills/mixin-writing/SKILL.md",
+  "contract": {
+    "interface": {
+      "name": "mixin-writing",
+      "purpose": "为 eyelib 编写 Mixin accessor 与注入器：用 @Accessor/@Invoker 替代反射获取 private/protected/package-private 成员访问权，保留类型安全与重构友好性；覆盖 Forge 1.20.1（启用 Mixin AP）与 NeoForge 1.21.1（无 Mixin AP）双版本模式。",
+      "triggers": [
+        {
+          "text": "用 @Accessor/@Invoker 替代反射访问私有成员",
+          "spans": [
+            "B3d11bfe2d45a7c98"
+          ]
+        },
+        {
+          "text": "向 vanilla 方法注入逻辑（@Inject/MixinExtras）",
+          "spans": [
+            "B81561cccf45ad946"
+          ]
+        },
+        {
+          "text": "调试 Mixin AP 编译错误（refmap、逆协变类型检查）",
+          "spans": [
+            "B4ef70ad60d17356c"
+          ]
+        },
+        {
+          "text": "编写跨 1.20.1/1.21.1 双版本的 Mixin 代码",
+          "spans": [
+            "Bad975755af12d97f"
+          ]
+        }
+      ],
+      "exclusions": [
+        {
+          "text": "非 Mixin 的普通反射工具编写",
+          "spans": []
+        },
+        {
+          "text": "与 eyelib Stonecutter 双版本布局无关的单版本项目",
+          "spans": []
+        }
+      ]
+    },
+    "rules": [
+      {
+        "id": "C1",
+        "scope": "root",
+        "modality": "must",
+        "predicate": "Accessor interface 必须注册到 mixins.json，否则运行时不生效",
+        "spans": [
+          "Bd34e4a80db71ae7a"
+        ],
+        "locked": false
+      },
+      {
+        "id": "C2",
+        "scope": "root",
+        "modality": "must",
+        "predicate": "Accessor 方法名前缀用 `eyelib$`，避免与其他 mod 冲突",
+        "spans": [
+          "B3fb357c00a0a9afa"
+        ],
+        "locked": false
+      },
+      {
+        "id": "C3",
+        "scope": "root",
+        "modality": "must",
+        "predicate": "跨版本差异用整文件级 `//?` 条件化（非逐方法条件）；仅在某一版本需要的 accessor（如 1.21.1 的 private 化字段、宽返回类型、泛型字段）整文件包进 `//? if >=1.20.6` 块，仅在该版本编译",
+        "spans": [
+          "Bad975755af12d97f",
+          "B180f4bf3d4322bfd",
+          "B3ac6d1ea88c9a330",
+          "B8397ac735e172cb1",
+          "B3848bf83aeb95ee5"
+        ],
+        "locked": false
+      },
+      {
+        "id": "C4",
+        "scope": "root",
+        "modality": "must",
+        "predicate": "启用 Mixin AP（annotationProcessor + refmap 配置）；被 `//?` 注释掉的文件不在 source set 中，Mixin AP 不处理",
+        "guard": "version=1.20.1 legacyForge",
+        "family": "mixin-ap-availability",
+        "spans": [
+          "Bed47c1a8c315f996",
+          "B9b58a9749b617f2e"
+        ],
+        "locked": false
+      },
+      {
+        "id": "C5",
+        "scope": "root",
+        "modality": "must_not",
+        "predicate": "启用 Mixin AP；文件正常编译，无 Mixin AP 约束",
+        "guard": "version=1.21.1 NeoForge",
+        "family": "mixin-ap-availability",
+        "spans": [
+          "Bed47c1a8c315f996",
+          "B9b58a9749b617f2e"
+        ],
+        "locked": false
+      },
+      {
+        "id": "C6",
+        "scope": "root",
+        "modality": "must",
+        "predicate": "@Accessor/@Invoker 的 `value` 用开发环境名（parchment/mojmap），不用 searge 名；1.20.1 Forge 运行时是 searge 映射，Mixin AP 通过 refmap 转换，字段名在 searge 中不存在时报 \"Could not locate @Accessor target\"",
+        "guard": "version=1.20.1 (searge runtime)",
+        "spans": [
+          "B818143f9fc8243b3",
+          "B00d32bab2913a9f9"
+        ],
+        "locked": false
+      },
+      {
+        "id": "C7",
+        "scope": "root",
+        "modality": "must_not",
+        "predicate": "让 @Accessor 返回宽于字段类型的类型（如泛型字段返回 Object、Polygon[] 字段返回 Object[]）——Mixin AP 0.8.5 的类型检查是逆协变的（检查 `字段类型.isAssignableFrom(返回类型)`），会拒绝运行时安全但返回类型更宽的 accessor",
+        "guard": "Mixin AP active (1.20.1)",
+        "exception": "返回类型必须宽时，按整文件级 `//? if >=1.20.6` 条件化到 1.21.1 只编译",
+        "spans": [
+          "B9ac9684c766479fe",
+          "B8397ac735e172cb1"
+        ],
+        "locked": false
+      },
+      {
+        "id": "C8",
+        "scope": "root",
+        "modality": "prefer",
+        "predicate": "注入器优先用 MixinExtras 而非 vanilla：@WrapOperation 替代 @Redirect（包装方法调用，更灵活不冲突）、@ModifyExpressionValue 替代 @ModifyArg/@ModifyVariable、@Expression 替代 @At(value=\"INVOKE\", ordinal=N)（精确锚点，支持链式调用）、@Local 替代 LocalCapture",
+        "spans": [
+          "B81561cccf45ad946",
+          "Bf6ea7b3dc4660613"
+        ],
+        "locked": false
+      },
+      {
+        "id": "C9",
+        "scope": "root",
+        "modality": "must_not",
+        "predicate": "用 @Coerce 绕过 @Accessor/@Invoker 的类型检查——@Coerce 只支持 @Inject/@Redirect",
+        "spans": [
+          "B5d1ed61d4a306b67"
+        ],
+        "locked": false
+      },
+      {
+        "id": "C10",
+        "scope": "root",
+        "modality": "must",
+        "predicate": "package-private 内部类（如 1.21.1 的 ModelPart.Polygon/Vertex）的 @Mixin targets 用字符串全限定名（`$` 分隔）避免 import",
+        "spans": [
+          "Bcbc5b21099cef136"
+        ],
+        "locked": false
+      },
+      {
+        "id": "C11",
+        "scope": "root",
+        "modality": "must",
+        "predicate": "对 final 类实例获取 accessor 用双重 cast `(Accessor)(Object) instance`——Java 编译器拒绝 `(Interface) finalClassInstance`（inconvertible types）；非 final 类直接 cast",
+        "spans": [
+          "Bdf559babd627f565"
+        ],
+        "locked": false
+      },
+      {
+        "id": "C12",
+        "scope": "root",
+        "modality": "must_not",
+        "predicate": "从 mixins.json 条件移除被 `//?` 注释掉的 accessor 注册——Mixin AP 只处理 source set 中存在的类，注册名在 1.20.1 被忽略、1.21.1 正常加载",
+        "spans": [
+          "B4619f26cde5470c6"
+        ],
+        "locked": false
+      },
+      {
+        "id": "C13",
+        "scope": "root",
+        "modality": "prefer",
+        "predicate": "mixin 内部引用目标字段用 @Shadow（abstract class mixin，@Inject 方法体内读字段，运行时重定向到真实字段）；从外部类获取 private 字段访问用 @Accessor（interface mixin，生成 getter/setter）",
+        "spans": [
+          "B17cd76b50dd366e7"
+        ],
+        "locked": false
+      }
+    ],
+    "workflow": [
+      {
+        "id": "W1",
+        "scope": "root/编译验证",
+        "kind": "action",
+        "action": "编译双版本验证：mcmcp_build version=\"1.20.1\"，或 bash 执行 gradlew :1.20.1:compileJava :1.21.1:compileJava",
+        "tool": "mcmcp_build",
+        "spans": [
+          "B39f2af2ca1d3f7c6"
+        ]
+      },
+      {
+        "id": "W2",
+        "scope": "root/常见坑/1-searge-映射名",
+        "kind": "action",
+        "action": "验证 searge 映射：检查 build/mixin/eyelib.refmap.json，确认 accessor 有映射条目",
+        "spans": [
+          "Bc4309825f4cbc9d7"
+        ]
+      },
+      {
+        "id": "W3",
+        "scope": "root/编译验证",
+        "kind": "fallback",
+        "action": "若 Mixin AP 报错，按序排查：1) 检查 eyelib.refmap.json 是否有该 accessor 的映射；2) 检查字段名是否开发环境名（非 searge 名）；3) 检查返回类型是否窄于或等于字段类型（避免逆协变 bug）；4) 返回类型必须宽（Object/Object[]）时用 `//? if >=1.20.6` 条件化到 1.21.1 只",
+        "spans": [
+          "B4ef70ad60d17356c",
+          "B6a8555ca46907184",
+          "B00d32bab2913a9f9",
+          "Bf2ef0bbdc82e97d7",
+          "B3848bf83aeb95ee5"
+        ]
+      }
+    ],
+    "tools": [
+      {
+        "id": "T1",
+        "name": "mcmcp_build",
+        "required_args": [
+          "version"
+        ],
+        "spans": [
+          "B39f2af2ca1d3f7c6"
+        ]
+      }
+    ],
+    "output": {
+      "fields": [
+        {
+          "name": "注册到 mixins.json 的 @Accessor/@Invoker interface（方法名带 eyelib$ 前缀）",
+          "required": true,
+          "spans": [
+            "Bd34e4a80db71ae7a",
+            "B3fb357c00a0a9afa"
+          ]
+        },
+        {
+          "name": "1.20.1 与 1.21.1 双版本编译通过",
+          "required": true,
+          "validation": "gradlew :1.20.1:compileJava :1.21.1:compileJava 均成功",
+          "spans": [
+            "B39f2af2ca1d3f7c6"
+          ]
+        },
+        {
+          "name": "eyelib.refmap.json 中存在 accessor 映射条目（1.20.1）",
+          "required": false,
+          "spans": [
+            "Bc4309825f4cbc9d7"
+          ]
+        }
+      ],
+      "type": "mixin-code",
+      "termination": [
+        "双版本编译通过且 refmap 映射确认后完成"
+      ],
+      "spans": []
+    },
+    "evidence": [],
+    "residual": [
+      {
+        "source_block": "B92a2c331f53a303f",
+        "reason": "UNIQUE_EVIDENCE"
+      },
+      {
+        "source_block": "Bef48226fad995b39",
+        "reason": "UNIQUE_EVIDENCE"
+      },
+      {
+        "source_block": "B6f40410118d99a83",
+        "reason": "UNIQUE_EVIDENCE"
+      },
+      {
+        "source_block": "B286b75f34831ac09",
+        "reason": "UNIQUE_EVIDENCE"
+      },
+      {
+        "source_block": "Beab1bce3774e9ad5",
+        "reason": "UNIQUE_EVIDENCE"
+      },
+      {
+        "source_block": "B2dbcfb62b449a028",
+        "reason": "UNIQUE_EVIDENCE"
+      },
+      {
+        "source_block": "B7d00fc9d488eeaef",
+        "reason": "UNIQUE_EVIDENCE"
+      },
+      {
+        "source_block": "Bc3d22d681628d7c6",
+        "reason": "UNIQUE_EVIDENCE"
+      },
+      {
+        "source_block": "Bdaaa07eb2d76ef7d",
+        "reason": "AMBIGUOUS"
+      },
+      {
+        "source_block": "B3fb357c00a0a9afa",
+        "reason": "USER_LOCKED"
+      },
+      {
+        "source_block": "B39f2af2ca1d3f7c6",
+        "reason": "USER_LOCKED"
+      },
+      {
+        "source_block": "Bc4309825f4cbc9d7",
+        "reason": "USER_LOCKED"
+      }
+    ]
+  },
+  "scopes": [
+    {
+      "id": "root",
+      "parent": null,
+      "heading": "root",
+      "headingPath": [
+        "root"
+      ],
+      "depth": 0
+    },
+    {
+      "id": "root/核心理念",
+      "parent": "root",
+      "heading": "核心理念",
+      "headingPath": [
+        "root",
+        "核心理念"
+      ],
+      "depth": 1
+    },
+    {
+      "id": "root/核心理念/铁律",
+      "parent": "root/核心理念",
+      "heading": "铁律",
+      "headingPath": [
+        "root",
+        "核心理念",
+        "铁律"
+      ],
+      "depth": 2
+    },
+    {
+      "id": "root/accessor-字段访问",
+      "parent": "root",
+      "heading": "@Accessor：字段访问",
+      "headingPath": [
+        "root",
+        "accessor-字段访问"
+      ],
+      "depth": 1
+    },
+    {
+      "id": "root/accessor-字段访问/基本模式",
+      "parent": "root/accessor-字段访问",
+      "heading": "基本模式",
+      "headingPath": [
+        "root",
+        "accessor-字段访问",
+        "基本模式"
+      ],
+      "depth": 2
+    },
+    {
+      "id": "root/accessor-字段访问/使用方式",
+      "parent": "root/accessor-字段访问",
+      "heading": "使用方式",
+      "headingPath": [
+        "root",
+        "accessor-字段访问",
+        "使用方式"
+      ],
+      "depth": 2
+    },
+    {
+      "id": "root/accessor-字段访问/accessor-类型检查陷阱-mixin-ap-0-8-5",
+      "parent": "root/accessor-字段访问",
+      "heading": "@Accessor 类型检查陷阱（Mixin AP 0.8.5）",
+      "headingPath": [
+        "root",
+        "accessor-字段访问",
+        "accessor-类型检查陷阱-mixin-ap-0-8-5"
+      ],
+      "depth": 2
+    },
+    {
+      "id": "root/invoker-方法-构造器调用",
+      "parent": "root",
+      "heading": "@Invoker：方法/构造器调用",
+      "headingPath": [
+        "root",
+        "invoker-方法-构造器调用"
+      ],
+      "depth": 1
+    },
+    {
+      "id": "root/invoker-方法-构造器调用/构造器调用",
+      "parent": "root/invoker-方法-构造器调用",
+      "heading": "构造器调用",
+      "headingPath": [
+        "root",
+        "invoker-方法-构造器调用",
+        "构造器调用"
+      ],
+      "depth": 2
+    },
+    {
+      "id": "root/invoker-方法-构造器调用/private-方法调用",
+      "parent": "root/invoker-方法-构造器调用",
+      "heading": "private 方法调用",
+      "headingPath": [
+        "root",
+        "invoker-方法-构造器调用",
+        "private-方法调用"
+      ],
+      "depth": 2
+    },
+    {
+      "id": "root/跨版本条件化模式",
+      "parent": "root",
+      "heading": "跨版本条件化模式",
+      "headingPath": [
+        "root",
+        "跨版本条件化模式"
+      ],
+      "depth": 1
+    },
+    {
+      "id": "root/跨版本条件化模式/整文件级条件-推荐",
+      "parent": "root/跨版本条件化模式",
+      "heading": "整文件级条件（推荐）",
+      "headingPath": [
+        "root",
+        "跨版本条件化模式",
+        "整文件级条件-推荐"
+      ],
+      "depth": 2
+    },
+    {
+      "id": "root/跨版本条件化模式/mixins-json-注册策略",
+      "parent": "root/跨版本条件化模式",
+      "heading": "mixins.json 注册策略",
+      "headingPath": [
+        "root",
+        "跨版本条件化模式",
+        "mixins-json-注册策略"
+      ],
+      "depth": 2
+    },
+    {
+      "id": "root/final-类的-cast-问题",
+      "parent": "root",
+      "heading": "final 类的 cast 问题",
+      "headingPath": [
+        "root",
+        "final-类的-cast-问题"
+      ],
+      "depth": 1
+    },
+    {
+      "id": "root/shadow-vs-accessor",
+      "parent": "root",
+      "heading": "@Shadow vs @Accessor",
+      "headingPath": [
+        "root",
+        "shadow-vs-accessor"
+      ],
+      "depth": 1
+    },
+    {
+      "id": "root/mixinextras-注入器-优先于-vanilla",
+      "parent": "root",
+      "heading": "MixinExtras 注入器（优先于 vanilla）",
+      "headingPath": [
+        "root",
+        "mixinextras-注入器-优先于-vanilla"
+      ],
+      "depth": 1
+    },
+    {
+      "id": "root/常见坑",
+      "parent": "root",
+      "heading": "常见坑",
+      "headingPath": [
+        "root",
+        "常见坑"
+      ],
+      "depth": 1
+    },
+    {
+      "id": "root/常见坑/1-searge-映射名",
+      "parent": "root/常见坑",
+      "heading": "1. searge 映射名",
+      "headingPath": [
+        "root",
+        "常见坑",
+        "1-searge-映射名"
+      ],
+      "depth": 2
+    },
+    {
+      "id": "root/常见坑/2-package-private-内部类",
+      "parent": "root/常见坑",
+      "heading": "2. package-private 内部类",
+      "headingPath": [
+        "root",
+        "常见坑",
+        "2-package-private-内部类"
+      ],
+      "depth": 2
+    },
+    {
+      "id": "root/常见坑/3-泛型字段",
+      "parent": "root/常见坑",
+      "heading": "3. 泛型字段",
+      "headingPath": [
+        "root",
+        "常见坑",
+        "3-泛型字段"
+      ],
+      "depth": 2
+    },
+    {
+      "id": "root/常见坑/4-coerce-不支持-accessor",
+      "parent": "root/常见坑",
+      "heading": "4. @Coerce 不支持 @Accessor",
+      "headingPath": [
+        "root",
+        "常见坑",
+        "4-coerce-不支持-accessor"
+      ],
+      "depth": 2
+    },
+    {
+      "id": "root/编译验证",
+      "parent": "root",
+      "heading": "编译验证",
+      "headingPath": [
+        "root",
+        "编译验证"
+      ],
+      "depth": 1
+    }
+  ],
+  "procedures": [],
+  "sourceBlocks": {
+    "B5c001a6cb20e5cfa": "核心理念",
+    "B3d11bfe2d45a7c98": "Mixin 是**编译时声明的运行时字节码修改**。用 @Accessor/@Invoker 替代反射获取 private/protected/package-private 成员访问权，保留类型安全和重构友好性。",
+    "Ba09fa2135aef1e7d": "反射（弱）                    Mixin Accessor（强）\nField.get(obj)                @Accessor interface → 类型安全调用\nConstructor.newInstance()     @Invoker(\"<init>\") → 类型安全构造",
+    "B292a0227c1053625": "铁律",
+    "Bd34e4a80db71ae7a": "**Accessor interface 必须注册到 mixins.json**，否则运行时不生效",
+    "B3fb357c00a0a9afa": "**Accessor 名前缀用 `eyelib$`**（避免与其他 mod 冲突）",
+    "Bad975755af12d97f": "**跨版本差异用整文件级 `//?` 条件化**（非逐方法条件）",
+    "Bed47c1a8c315f996": "**Mixin AP 只在 legacyForge 1.20.1 启用**，NeoForge 1.21.1 不启用",
+    "Be057d0f4b43c722e": "---",
+    "B695677df4f638805": "@Accessor：字段访问",
+    "Bd055a550ae6bfffe": "基本模式",
+    "B92a2c331f53a303f": "@Mixin(TargetClass.class)\npublic interface TargetAccessor {\n    @Accessor(\"fieldName\")\n    ReturnType eyelib$getFieldName();\n\n    @Accessor(\"fieldName\")\n    void eyelib$setFieldName(ReturnType value);\n}",
+    "B4ed41e3afb50cd18": "使用方式",
+    "Bef48226fad995b39": "// 非 final 类：直接 cast\nTargetAccessor accessor = (TargetAccessor) targetInstance;\nReturnType value = accessor.eyelib$getFieldName();\n\n// final 类：双重 cast 绕过编译器\nTargetAccessor accessor = (TargetAccessor) (Object) targetInstance;",
+    "B5bf38f8f7b6d7ae5": "@Accessor 类型检查陷阱（Mixin AP 0.8.5）",
+    "B9ac9684c766479fe": "**Mixin AP 的类型检查是逆协变的**：检查 `字段类型.isAssignableFrom(返回类型)`，而非正确的 `返回类型.isAssignableFrom(字段类型)`。",
+    "Bdaaa07eb2d76ef7d": "| 返回类型 | 字段类型 | Mixin AP 结论 | 实际 |\n|---|---|---|---|\n| `boolean` | `boolean` | ✓ 通过 | ✓ |\n| `int` | `int` | ✓ 通过 | ✓ |\n| `Vector3f` | `Vector3f` | ✓ 通过 | ✓ |\n| `Map<String, ModelPart>` | `Map` | ✓ 通过 | ✓ |\n| **`Object`** | `T toAvoid` (泛型) | **✗ 失败** | ✓（运行时安全） |\n| **`Object[]`** | `Polygon[]` | **✗ 失败** | ✓（运行时安全） |",
+    "B3ac6d1ea88c9a330": "**解决：返回宽类型的 accessor 用整文件级 `//? if >=1.20.6` 条件化，仅在 1.21.1（无 Mixin AP）编译。**",
+    "B6bc9e9d43ede2be2": "---",
+    "B730cbc1fff138761": "@Invoker：方法/构造器调用",
+    "B23551b461c085ef4": "构造器调用",
+    "B6f40410118d99a83": "@Mixin(TargetClass.class)\npublic interface TargetConstructorAccessor {\n    @Invoker(\"<init>\")\n    static TargetClass eyelib$create(ArgType1 arg1, ArgType2 arg2);\n}",
+    "B5496ea93355adad1": "private 方法调用",
+    "B286b75f34831ac09": "@Mixin(TargetClass.class)\npublic interface TargetMethodAccessor {\n    @Invoker(\"privateMethodName\")\n    ReturnType eyelib$callPrivateMethod(TargetClass self, ArgType arg);\n}",
+    "B4ed83658e82b89ca": "---",
+    "B56faec0e3a1413dc": "跨版本条件化模式",
+    "B3b8befb6493b9cdc": "整文件级条件（推荐）",
+    "B180f4bf3d4322bfd": "当 accessor 仅在某一版本需要时（如 1.21.1 的 private 化字段），用整文件级 `//?` 条件化：",
+    "Beab1bce3774e9ad5": "//? if >=1.20.6 {\npackage io.github.tt432.eyelib.mixin;\n\nimport net.minecraft.client.model.geom.ModelPart;\nimport org.spongepowered.asm.mixin.Mixin;\nimport org.spongepowered.asm.mixin.gen.Accessor;\n\n@Mixin(ModelPart.class)\npublic interface ModelPartAccessor {\n    @Accessor(\"children\")\n    Map<String, ModelPart> eyelib$getChildren();\n\n    @Accessor(\"cubes\")\n    List<ModelPart.Cube> eyelib$getCubes();\n}\n//?}",
+    "B9b58a9749b617f2e": "1.20.1 语境：整个文件被 stonecutter 注释掉（`/* */` 包裹），Mixin AP 不处理。\n1.21.1 语境：文件正常编译，无 Mixin AP 约束。",
+    "B4f04558694c772ac": "mixins.json 注册策略",
+    "B4619f26cde5470c6": "**条件化的 accessor 不需要从 mixins.json 条件移除。** Mixin AP 只处理 source set 中存在的类。被 `//?` 注释掉的文件不在 source set 中，注册名会被忽略（1.20.1）或正常加载（1.21.1）。",
+    "B6df9c61a8e4f2c70": "---",
+    "B301c40ebc2cef3c1": "final 类的 cast 问题",
+    "Bdf559babd627f565": "Java 编译器拒绝 `(Interface) finalClassInstance`（final 类不能实现外部 interface）。",
+    "B7d00fc9d488eeaef": "// ModelPart 在 1.21.1 是 final class\n// 编译错误：inconvertible types\nModelPartAccessor acc = (ModelPartAccessor) modelPart;\n\n// 修复：双重 cast\nModelPartAccessor acc = (ModelPartAccessor) (Object) modelPart;",
+    "B467ba748de0327be": "---",
+    "B67493508750b8356": "@Shadow vs @Accessor",
+    "B17cd76b50dd366e7": "| 特性 | @Shadow | @Accessor |\n|---|---|---|\n| 适用 | abstract class mixin | interface mixin |\n| 用途 | 在 mixin 内部引用目标字段 | 从外部获取字段访问 |\n| 运行时 | 重定向到真实字段 | 生成 getter/setter |\n| 典型场景 | @Inject 方法体内读字段 | 外部类需读 private 字段 |",
+    "B61f5b0f166c39adb": "---",
+    "B81561cccf45ad946": "MixinExtras 注入器（优先于 vanilla）",
+    "Bf6ea7b3dc4660613": "| MixinExtras | 替代的 vanilla | 用途 |\n|---|---|---|\n| `@WrapOperation` | `@Redirect` | 包装方法调用（更灵活，不冲突） |\n| `@ModifyExpressionValue` | `@ModifyArg` / `@ModifyVariable` | 修改表达式值 |\n| `@Expression` | `@At(value=\"INVOKE\", ordinal=N)` | 精确锚点（支持链式调用） |\n| `@Local` | `LocalCapture` | 捕获局部变量 |",
+    "Bc5e846e2b9dc323c": "---",
+    "Ba943c9a82692e056": "常见坑",
+    "B3cbc25292591471b": "1. searge 映射名",
+    "B818143f9fc8243b3": "1.20.1 Forge 用 searge 映射。@Accessor/@Invoker 的 `value` 必须是**开发环境名**（parchment/mojmap），Mixin AP 通过 refmap 转换为 searge。如果字段名在 searge 中不存在，Mix AP 报 \"Could not locate @Accessor target\"。",
+    "Bc4309825f4cbc9d7": "**验证方法**：检查 `build/mixin/eyelib.refmap.json`，确认 accessor 有映射条目。",
+    "Bf7c4c5f5dd8a1737": "2. package-private 内部类",
+    "Bcbc5b21099cef136": "`ModelPart.Polygon` 和 `ModelPart.Vertex` 在 1.21.1 是 package-private。@Mixin targets 用字符串避免 import：",
+    "B2dbcfb62b449a028": "@Mixin(targets = \"net.minecraft.client.model.geom.ModelPart$Polygon\")\npublic interface ModelPartPolygonAccessor { ... }",
+    "B89298df80359bbba": "3. 泛型字段",
+    "B8397ac735e172cb1": "`AvoidEntityGoal<T>` 的 `toAvoid` 字段是 `protected T`。@Accessor 返回 `Object` 会被 Mixin AP 拒绝（逆协变类型检查）。解决：整文件条件化到 1.21.1 只。",
+    "B0ba4e4e8c469e08a": "4. @Coerce 不支持 @Accessor",
+    "B5d1ed61d4a306b67": "`@Coerce` 注解只支持 `@Inject`/`@Redirect`，不支持 `@Accessor`/`@Invoker`。无法用它绕过类型检查。",
+    "Bda500c9840a7b55a": "---",
+    "Baeb122b83d8b7ace": "编译验证",
+    "Bc3d22d681628d7c6": "// build.gradle — Mixin AP 只在 legacyForge 启用\nif (isLegacyForge) {\n    mixin {\n        add sourceSets.main, \"eyelib.refmap.json\"\n        config \"eyelib.mixins.json\"\n    }\n    annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'\n}",
+    "B39f2af2ca1d3f7c6": "# 通过 mcmcp 拓展 或 bash gradlew 编译\nmcmcp_build version=\"1.20.1\"\n# 或 bash: gradlew :1.20.1:compileJava :1.21.1:compileJava",
+    "B4ef70ad60d17356c": "如果 Mixin AP 报错：",
+    "B6a8555ca46907184": "检查 `eyelib.refmap.json` 是否有该 accessor 的映射",
+    "B00d32bab2913a9f9": "检查字段名是否是开发环境名（非 searge 名）",
+    "Bf2ef0bbdc82e97d7": "检查返回类型是否窄于或等于字段类型（避免逆协变 bug）",
+    "B3848bf83aeb95ee5": "如果返回类型必须宽（Object/Object[]），用 `//? if >=1.20.6` 条件化到 1.21.1 只"
+  },
+  "stats": {
+    "patches": 2,
+    "repacks": 0,
+    "lastRepackAt": "2026-08-13T08:57:00.876Z",
+    "totalSavedTokens": 0
+  },
+  "transactionLog": [
+    {
+      "ts": "2026-08-13T08:57:00.876Z",
+      "operation": "COMPRESS",
+      "summary": "one-shot: 63 blocks → 4820 chars rendered",
+      "savingTokens": 0
+    },
+    {
+      "ts": "2026-08-13T09:04:11.774Z",
+      "operation": "AUDIT",
+      "summary": "restored 3 missing spans as locked residual",
+      "savingTokens": 0
+    }
+  ],
+  "createdAt": "2026-08-13T08:57:00.876Z",
+  "updatedAt": "2026-08-13T09:04:11.774Z"
+}

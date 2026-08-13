@@ -1,4 +1,4 @@
-﻿---
+---
 name: unit-test
 description: Write and run JUnit 5 unit tests. Use for structural invariants, boundary enforcement, codec round-trips, and null safety checks that do NOT require a running Minecraft client.
 license: MIT
@@ -8,50 +8,44 @@ metadata:
   version: "1.0.0"
 ---
 
-## Test Framework
+# unit-test
 
-JUnit Jupiter 5.10.2. No custom runners, no Mockito, no base classes.
+Write and run JUnit 5 unit tests (structural invariants, boundary enforcement, codec round-trips, null safety) that do NOT require a running Minecraft client.
 
-Tests are run via Gradle `test` tasks using `mcmcp_test`:
-```
-mcmcp_test              # 全 project
-mcmcp_test version="1.20.1"  # Stonecutter active node
-```
+## When to use
+- Writing pure unit tests for utility methods: construct inputs, assert outputs (structural invariants / null safety).
+- Codec round-trip tests for datafixerupper Codec serialization/deserialization.
+- Boundary enforcement: verifying production source respects module boundaries and ownership rules via structural boundary tests.
+- Testing multiple inputs with the same logic via parameterized tests.
+- Fixture-based integration tests loading fixtures from src/test/resources/.
+- Do NOT use when: Tests that require a running Minecraft client (render output, GL state, texture correctness, full-lifecycle integration) — use the smoke-test skill instead.
 
-## Test File Conventions
+## Rules
+- Name test files `*Test.java`.
+- Declare test classes package-private (`class FooTest`).
+- Name test methods with descriptive camelCase (e.g. `firstAndLastReturnListEnds`).
+- Static-import assertions from `org.junit.jupiter.api.Assertions.*`.
+- Mirror the source structure under `src/test/java/`.
+- Use JUnit Jupiter 5.10.2 as the test framework.
+- NEVER Use custom runners, Mockito, or base classes.
+- Run tests via the standard Gradle `test` task, driven through the mcmcp_test tool.
+- When Pattern A: Pure unit test:
+  - PREFER Test a utility method as a pure unit test by constructing inputs and asserting outputs.
+- When Pattern B: Codec round-trip test:
+  - PREFER Test datafixerupper Codec serialization/deserialization as a codec round-trip test.
+- When Pattern C: Parameterized test:
+  - PREFER Test multiple inputs with the same logic as a parameterized test.
+- When Pattern D: Structural boundary test:
+  - PREFER Enforce module boundaries and ownership rules with a structural boundary test: read `.java` files as text and assert allowed/forbidden imports so production code follows the declared dependency graph.
+- When Pattern E: Fixture-based integration test:
+  - PREFER Load test fixtures from `src/test/resources/` and process them in fixture-based integration tests.
 
-| Convention | Rule |
-|-----------|------|
-| File name | `*Test.java` |
-| Class visibility | Package-private (`class FooTest`) |
-| Method naming | Descriptive camelCase (`firstAndLastReturnListEnds`) |
-| Assertions | Static import from `org.junit.jupiter.api.Assertions.*` |
-| Location | Mirror source structure under `src/test/java/` |
+## Workflow
+1. Manually Gradle sync (reimport) in IDEA.
+2. Build the project via mcmcp_build.
+3. Run the relevant test via mcmcp_test.
 
-## Common Test Patterns
-
-### Pattern A: Pure unit test
-
-Test a utility method by constructing inputs and asserting outputs.
-
-```java
-import org.junit.jupiter.api.Test;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
-class ListAccessorsTest {
-    @Test
-    void firstAndLastReturnListEnds() {
-        List<String> values = List.of("first", "middle", "last");
-        assertEquals("first", ListAccessors.first(values));
-        assertEquals("last", ListAccessors.last(values));
-    }
-}
-```
-
-### Pattern B: Codec round-trip test
-
-Test datafixerupper Codec serialization/deserialization.
-
+<!-- locked residual (verbatim, do not edit) -->
 ```java
 @Test
 void parsesAnimationFromCodec() {
@@ -62,27 +56,6 @@ void parsesAnimationFromCodec() {
     assertEquals(expected, obj.someField());
 }
 ```
-
-### Pattern C: Parameterized test
-
-Test multiple inputs with the same logic.
-
-```java
-@ParameterizedTest
-@CsvSource(value = {
-    "1+2~3.0",
-    "5-3~2.0",
-    "5/0~0.0"
-}, delimiter = '~')
-void binaryArithmetic(String expression, float expected) {
-    assertEquals(expected, evaluate(expression), 0.0001);
-}
-```
-
-### Pattern D: Structural boundary test
-
-Assert that source file contents respect module boundaries. Read `.java` files as text and check for allowed/forbidden imports.
-
 ```java
 @Test
 void spawnServiceDoesNotImportRootParticleTypes() throws IOException {
@@ -93,13 +66,6 @@ void spawnServiceDoesNotImportRootParticleTypes() throws IOException {
     assertFalse(source.contains("import io.github.tt432.eyelib.client.particle.bedrock.BrParticle;"));
 }
 ```
-
-This pattern is unique to this project. It enforces module boundaries and ownership rules by verifying that production source code follows the declared dependency graph.
-
-### Pattern E: Fixture-based integration test
-
-Load test fixtures from `src/test/resources/` and process them.
-
 ```java
 @TempDir
 Path tempDir;
@@ -110,11 +76,3 @@ void loadsAddonFixture() throws Exception {
     assertNotNull(addon);
 }
 ```
-
-## Running Tests
-
-All modules run JUnit via the standard Gradle `test` task. To verify changes:
-
-1. 在 IDEA 里手动 Gradle sync(reimport)（如果修改了 `build.gradle`）
-2. Build the project via `mcmcp_build`
-3. Run the relevant test via `mcmcp_test`

@@ -1,0 +1,1119 @@
+{
+  "schemaVersion": 1,
+  "skillPath": "E:/_ideaProjects/qylEyelib/.opencode/skills/codec-design/SKILL.md",
+  "sourcePath": "E:/_ideaProjects/qylEyelib/.opencode/skills/codec-design/SKILL.md",
+  "contract": {
+    "interface": {
+      "name": "codec-design",
+      "purpose": "设计并实现基于 Codec（DataFixerUpper）的纯数据转换：结构化解析、类型映射、验证；使 loader/schema 代码由 Codec 驱动，并将 I/O 与数据解析分离。Codec 是 DynamicOps<A> → T 的纯数据转换，不关心数据来源与去向。",
+      "triggers": [
+        {
+          "text": "创建或重构用于序列化的 Codec",
+          "spans": [
+            "B6ae649c48010730a"
+          ]
+        },
+        {
+          "text": "将 loader/schema 代码改为 Codec 驱动",
+          "spans": [
+            "B6ae649c48010730a"
+          ]
+        },
+        {
+          "text": "需要把 I/O（文件/网络/注册表读取）与数据解析分离时",
+          "spans": [
+            "B6ae649c48010730a"
+          ]
+        }
+      ],
+      "exclusions": [
+        {
+          "text": "不涉及具体 I/O 实现与业务流程设计（属于 Codec 之外的调用方职责）",
+          "spans": [
+            "B6ae649c48010730a"
+          ]
+        }
+      ]
+    },
+    "rules": [
+      {
+        "id": "r-io-purity",
+        "scope": "root/核心理念/铁律",
+        "modality": "must",
+        "predicate": "Codec 不接触 I/O：不读文件、不走网络、不直接调注册表，只通过 DynamicOps 操作数据；I/O 在 Codec 外部完成，传入解析好的 JsonElement/Tag",
+        "family": "codec-purity",
+        "spans": [
+          "Bf0b439d30cb479d9"
+        ],
+        "locked": false
+      },
+      {
+        "id": "r-io-purity-anti",
+        "scope": "root/常见反模式/codec-中直接访问文件-网络",
+        "modality": "must_not",
+        "predicate": "Codec 不接触 I/O：不读文件、不走网络、不直接调注册表，只通过 DynamicOps 操作数据；I/O 在 Codec 外部完成，传入解析好的 JsonElement/Tag",
+        "family": "codec-purity",
+        "spans": [
+          "B5cfbb88d8f332cb3",
+          "B2b17d9c86f0ee8d2"
+        ],
+        "locked": false
+      },
+      {
+        "id": "r-no-logic",
+        "scope": "root/核心理念/铁律",
+        "modality": "must",
+        "predicate": "Codec 不包含业务逻辑：它是数据形状的声明；流程控制（循环、条件分支、远程调用）在调用方完成，Codec 只做数据形状转换",
+        "family": "codec-purity",
+        "spans": [
+          "B377d4ec605d09c74"
+        ],
+        "locked": false
+      },
+      {
+        "id": "r-no-logic-anti",
+        "scope": "root/常见反模式/codec-内做流程控制",
+        "modality": "must_not",
+        "predicate": "Codec 不包含业务逻辑：它是数据形状的声明；流程控制（循环、条件分支、远程调用）在调用方完成，Codec 只做数据形状转换",
+        "family": "codec-purity",
+        "spans": [
+          "B677433c4631666c2",
+          "B9f0ed08afdc64920"
+        ],
+        "locked": false
+      },
+      {
+        "id": "r-roundtrip",
+        "scope": "root/核心理念/铁律",
+        "modality": "must",
+        "predicate": "每个 Codec 必须有 round-trip 测试：encode → decode 应无损恢复原始等价对象",
+        "family": "codec-testing",
+        "spans": [
+          "B0003dd9f74467cbd",
+          "B7b294ac2da4a3350"
+        ],
+        "locked": false
+      },
+      {
+        "id": "r-test-partial",
+        "scope": "root/测试-codec/必测项",
+        "modality": "must",
+        "predicate": "测试覆盖 partial decode：缺少字段时 DataResult.error() 包含有意义的错误信息",
+        "family": "codec-testing",
+        "spans": [
+          "Ba7a4b1785c843d1e"
+        ],
+        "locked": false
+      },
+      {
+        "id": "r-test-boundary",
+        "scope": "root/测试-codec/必测项",
+        "modality": "must",
+        "predicate": "测试覆盖边界值：空集合、null optional、极限值",
+        "family": "codec-testing",
+        "spans": [
+          "B1837f84a85d4bab0"
+        ],
+        "locked": false
+      },
+      {
+        "id": "r-compose",
+        "scope": "root/codec-设计原则/1-组合优于继承",
+        "modality": "prefer",
+        "predicate": "优先使用 xmap、comapFlatMap、withAlternative 组合已有 Codec，而非新建自定义 Codec 类",
+        "spans": [
+          "Beaa5905a23f0872c",
+          "B248af031bff2d917"
+        ],
+        "locked": false
+      },
+      {
+        "id": "r-colocate",
+        "scope": "root/codec-设计原则/2-codec-放在类型旁边",
+        "modality": "must",
+        "predicate": "Codec 作为 public static final 字段定义在它序列化的类型中，命名为 CODEC",
+        "spans": [
+          "B49090fc1957a456b",
+          "Be6eb36db17686719"
+        ],
+        "locked": false
+      },
+      {
+        "id": "r-xmap-bridge",
+        "scope": "root/codec-设计原则/3-跨模块-codec-通过-xmap-桥接",
+        "modality": "prefer",
+        "predicate": "跨模块可互转类型通过在其中一个模块用 xmap 桥接另一侧的 Codec",
+        "guard": "类型 A 在模块 M1、类型 B 在模块 M2，且两者可互相转换时",
+        "spans": [
+          "Bd9042d4506031f53",
+          "Bebca7bb84fcbcbc6"
+        ],
+        "locked": false
+      },
+      {
+        "id": "r-error-msg",
+        "scope": "root/codec-设计原则/4-错误信息要有意义",
+        "modality": "must",
+        "predicate": "DataResult.error() 的错误信息必须包含上下文（类型名、期望值、实际值），不得是无意义的 \"error\"",
+        "spans": [
+          "B6b0b8f6620736a74"
+        ],
+        "locked": false
+      },
+      {
+        "id": "r-partial-decode",
+        "scope": "root/codec-设计原则/5-partial-decode-优先于完全失败",
+        "modality": "prefer",
+        "predicate": "Partial decode 优先于完全失败：用 setPartial/resultOrPartial 让消费者拿到部分解析结果，并在 mapError 中追加缺失信息",
+        "spans": [
+          "Bca5b34a29740b010",
+          "Bb071710637eb26d0"
+        ],
+        "locked": false
+      },
+      {
+        "id": "r-immutable",
+        "scope": "root/codec-设计原则/6-不可变集合的注意",
+        "modality": "must",
+        "predicate": "listOf() 和 unboundedMap() 返回不可变集合；需要可变集合时追加 xmap 转换",
+        "guard": "需要可变集合时",
+        "spans": [
+          "B94c7043547cd830b",
+          "Ba842a8acda22c6a2"
+        ],
+        "locked": false
+      },
+      {
+        "id": "r-no-swallow",
+        "scope": "root/常见反模式/吞掉-dataresult-错误",
+        "modality": "must_not",
+        "predicate": "不得吞掉 DataResult 错误（parse().result().ifPresent 丢失错误信息）；用 resultOrPartial 记录错误后再 ifPresent",
+        "spans": [
+          "Bb7e912840660e122",
+          "Ba90da09e2cf9fae8",
+          "B6a64319b3af605a1"
+        ],
+        "locked": false
+      },
+      {
+        "id": "r-optional-field",
+        "scope": "root/常见反模式/用-optionalfieldof-掩盖格式错误",
+        "modality": "must_not",
+        "predicate": "不得用 optionalFieldOf 掩盖格式错误（非法值会导致整个 decode 失败）；需要容错时用 lenientOptionalFieldOf 静默回退默认值",
+        "guard": "字段值可能是非法格式且希望容错时",
+        "spans": [
+          "B2523edc28b458650"
+        ],
+        "locked": false
+      },
+      {
+        "id": "r-encode-direction",
+        "scope": "root/常见反模式/忽略-encode-方向",
+        "modality": "must_not",
+        "predicate": "不得忽略 encode 方向、永远不要返回虚假的 encode 结果",
+        "exception": "只需要 decode 的只读配置场景：encode 方向实现为抛 UnsupportedOperationException 并加注释说明",
+        "spans": [
+          "B213ff424ab90b056",
+          "B9b9365a64190acc8",
+          "Bd9d09b83fab2a531"
+        ],
+        "locked": false
+      },
+      {
+        "id": "r-nbt-ops",
+        "scope": "root/nbt-专用考量/jsonops-vs-nbtops-差异",
+        "modality": "prefer",
+        "predicate": "优先在 JsonOps 下测试，再在 NbtOps 下验证（JsonOps 数字类型自动推断最窄类型，NbtOps 数字类型固定，ListTag/IntArrayTag 类型不匹配会出错）",
+        "spans": [
+          "B5b3f54b6834f773c",
+          "B6e0cd0f8a70d7b66"
+        ],
+        "locked": false
+      },
+      {
+        "id": "r-registry-ops",
+        "scope": "root/nbt-专用考量/registryops",
+        "modality": "must",
+        "predicate": "Codec 需要解析注册表条目时使用 RegistryOps 而非裸 JsonOps",
+        "guard": "Codec 需要解析注册表条目时",
+        "spans": [
+          "B36524500e5dec0a2",
+          "B201b2a3144b1cd0f"
+        ],
+        "locked": false
+      }
+    ],
+    "workflow": [
+      {
+        "id": "w-select",
+        "scope": "root/codec-选型指南",
+        "kind": "decision",
+        "action": "为类型设计 Codec 时按决策路径选择原语：固定字段 record/POJO（≤16 字段 RecordCodecBuilder，>16 拆分嵌套或自定义）；单值映射（双向无损 xmap，解码可能失败 flatXMap/comapFlatMap，范围限制 intRange/floatRange/doubleRange）；集合（listOf/unboundedMap/非 String key 用 pair-list+xmap/单值或列表 either+xmap）；多态（type 字段 dispatch，格式互斥 either/xor/withAlternative，按 key 分发 EyelibCodec.list()）；自引用（recursive，依赖未就绪 lazyInitialized）；多格式兼容（withAlternative，位置编码 TupleCodec/pair）；组合子无法表达时实现 Codec<T>/MapCodec<T>",
+        "spans": [
+          "Bdb98e427081fd7f1",
+          "Bcefe7779d349893f"
+        ]
+      },
+      {
+        "id": "w-field",
+        "scope": "root/核心模式/recordcodecbuilder-结构化-record",
+        "kind": "decision",
+        "action": "按字段语义选择 fieldOf（必填，缺失 decode 失败）/ optionalFieldOf（选填，缺失用默认值但非法值报错）/ lenientOptionalFieldOf（选填，非法值静默回退默认值）",
+        "spans": [
+          "B5f6dd2b002e4ca52",
+          "B69f134d8e68731b6",
+          "Bbbf79c07355d6685",
+          "B73ad888041a4cefe"
+        ]
+      },
+      {
+        "id": "w-direction",
+        "scope": "root/核心模式/flatxmap-带验证的类型映射",
+        "kind": "decision",
+        "action": "按 decode/encode 两个方向是否可能失败选择映射方法：都成功 xmap；decode 可能失败 comapFlatMap；encode 可能失败 flatComapMap；都可能失败 flatXMap",
+        "spans": [
+          "B12d0f9c543afef9b",
+          "Bb48d082ebea75138"
+        ]
+      },
+      {
+        "id": "w-custom",
+        "scope": "root/自定义-codec-实现/何时需要自定义",
+        "kind": "decision",
+        "action": "组合子无法表达数据形状时直接实现 Codec<T> 或 MapCodec<T>：数据格式有特殊哨兵字段、需处理非标准顶层结构、DynamicOps 层面手动操作不可避免",
+        "spans": [
+          "B8de6001d273b872b",
+          "B345c926636e4137c",
+          "B905a1dd11bdc0ef3",
+          "B766d88ac769c7136"
+        ]
+      }
+    ],
+    "tools": [],
+    "output": {
+      "fields": [],
+      "termination": []
+    },
+    "evidence": [
+      {
+        "id": "e-diagram",
+        "kind": "background",
+        "supports": [
+          "r-io-purity"
+        ],
+        "adds_unique_unit": false,
+        "source_blocks": [
+          "B7b4c3aa4582ab166"
+        ]
+      },
+      {
+        "id": "e-rcb",
+        "kind": "example",
+        "supports": [
+          "w-field"
+        ],
+        "adds_unique_unit": false,
+        "source_blocks": [
+          "Bf54e3e60fbc87d8e",
+          "B3cdc83b9cff270cb"
+        ]
+      },
+      {
+        "id": "e-xmap",
+        "kind": "example",
+        "supports": [
+          "w-direction",
+          "r-compose"
+        ],
+        "adds_unique_unit": false,
+        "source_blocks": [
+          "Bb6158a0595d83957",
+          "Bd9fac40fd95e846d"
+        ]
+      },
+      {
+        "id": "e-flatxmap",
+        "kind": "example",
+        "supports": [
+          "w-direction"
+        ],
+        "adds_unique_unit": false,
+        "source_blocks": [
+          "B7f60c05072a69cf2",
+          "B0270750f020f5ae1"
+        ]
+      },
+      {
+        "id": "e-dispatch",
+        "kind": "example",
+        "supports": [
+          "w-select"
+        ],
+        "adds_unique_unit": false,
+        "source_blocks": [
+          "B51ce774cd32e5a76",
+          "B7e55fa0d8c4aa137",
+          "Bba37f399efe2b9fb"
+        ]
+      },
+      {
+        "id": "e-tagged-union",
+        "kind": "example",
+        "supports": [
+          "w-select"
+        ],
+        "adds_unique_unit": false,
+        "source_blocks": [
+          "B1815ad21df00f2db",
+          "Bcaa846fc1575f3ee",
+          "B396eb15c9b02807e"
+        ]
+      },
+      {
+        "id": "e-withalt",
+        "kind": "example",
+        "supports": [
+          "w-select"
+        ],
+        "adds_unique_unit": false,
+        "source_blocks": [
+          "B59a15ab1071c1cb7",
+          "B19f6b4ecb3264f0a"
+        ]
+      },
+      {
+        "id": "e-singleorlist",
+        "kind": "example",
+        "supports": [
+          "w-select"
+        ],
+        "adds_unique_unit": false,
+        "source_blocks": [
+          "B6758297bf5d9cbe9"
+        ]
+      },
+      {
+        "id": "e-mapcodec",
+        "kind": "example",
+        "supports": [
+          "w-custom"
+        ],
+        "adds_unique_unit": false,
+        "source_blocks": [
+          "Bdba05153395f3bfd",
+          "Bc17e12240d26c7ae",
+          "B682a82ec5517da86",
+          "B7ccf5aac0196140e",
+          "B73728390fa5f3cda"
+        ]
+      },
+      {
+        "id": "e-recursive",
+        "kind": "example",
+        "supports": [
+          "w-select"
+        ],
+        "adds_unique_unit": false,
+        "source_blocks": [
+          "B5f8f903e7cc8c528"
+        ]
+      },
+      {
+        "id": "e-tuple",
+        "kind": "example",
+        "supports": [
+          "w-select"
+        ],
+        "adds_unique_unit": false,
+        "source_blocks": [
+          "B5c96e76006f38772",
+          "Becdb05c87045c67e"
+        ]
+      },
+      {
+        "id": "e-custom-templates",
+        "kind": "template",
+        "supports": [
+          "w-custom"
+        ],
+        "adds_unique_unit": false,
+        "source_blocks": [
+          "B57c5f60e921bb600",
+          "B0d1c39c13214f867"
+        ]
+      },
+      {
+        "id": "e-test-template",
+        "kind": "template",
+        "supports": [
+          "r-roundtrip",
+          "r-test-partial"
+        ],
+        "adds_unique_unit": false,
+        "source_blocks": [
+          "B63adfe417d012b33"
+        ]
+      },
+      {
+        "id": "e-project-tools",
+        "kind": "background",
+        "supports": [],
+        "adds_unique_unit": true,
+        "source_blocks": [
+          "B7c95073f69bf1bf9",
+          "B73e89db24e54f000"
+        ]
+      },
+      {
+        "id": "e-references",
+        "kind": "background",
+        "supports": [],
+        "adds_unique_unit": false,
+        "source_blocks": [
+          "B84b5ece6f5a375a8",
+          "B3d2512b0b592aede",
+          "Bed0f16ae94617f30",
+          "Bf3879b809c40d51e"
+        ]
+      },
+      {
+        "id": "E1",
+        "kind": "template",
+        "supports": [
+          "w-select"
+        ],
+        "adds_unique_unit": true,
+        "source_blocks": [
+          "B1f36d097cb1ffc69",
+          "B27499304a07caac6"
+        ]
+      },
+      {
+        "id": "E2",
+        "kind": "template",
+        "supports": [
+          "w-select"
+        ],
+        "adds_unique_unit": true,
+        "source_blocks": [
+          "Bec7ac11e8775f4a8",
+          "Bf69f5620db8343a6"
+        ]
+      },
+      {
+        "id": "E3",
+        "kind": "template",
+        "supports": [
+          "w-custom"
+        ],
+        "adds_unique_unit": true,
+        "source_blocks": [
+          "B73b0b44a740a0a34"
+        ]
+      },
+      {
+        "id": "E4",
+        "kind": "template",
+        "supports": [
+          "w-custom"
+        ],
+        "adds_unique_unit": true,
+        "source_blocks": [
+          "B01a1fafd28e41c9b"
+        ]
+      }
+    ],
+    "residual": []
+  },
+  "scopes": [
+    {
+      "id": "root",
+      "parent": null,
+      "heading": "root",
+      "headingPath": [
+        "root"
+      ],
+      "depth": 0
+    },
+    {
+      "id": "root/核心理念",
+      "parent": "root",
+      "heading": "核心理念",
+      "headingPath": [
+        "root",
+        "核心理念"
+      ],
+      "depth": 1
+    },
+    {
+      "id": "root/核心理念/铁律",
+      "parent": "root/核心理念",
+      "heading": "铁律",
+      "headingPath": [
+        "root",
+        "核心理念",
+        "铁律"
+      ],
+      "depth": 2
+    },
+    {
+      "id": "root/codec-选型指南",
+      "parent": "root",
+      "heading": "Codec 选型指南",
+      "headingPath": [
+        "root",
+        "codec-选型指南"
+      ],
+      "depth": 1
+    },
+    {
+      "id": "root/核心模式",
+      "parent": "root",
+      "heading": "核心模式",
+      "headingPath": [
+        "root",
+        "核心模式"
+      ],
+      "depth": 1
+    },
+    {
+      "id": "root/核心模式/recordcodecbuilder-结构化-record",
+      "parent": "root/核心模式",
+      "heading": "RecordCodecBuilder — 结构化 record",
+      "headingPath": [
+        "root",
+        "核心模式",
+        "recordcodecbuilder-结构化-record"
+      ],
+      "depth": 2
+    },
+    {
+      "id": "root/核心模式/xmap-类型映射",
+      "parent": "root/核心模式",
+      "heading": "xmap — 类型映射",
+      "headingPath": [
+        "root",
+        "核心模式",
+        "xmap-类型映射"
+      ],
+      "depth": 2
+    },
+    {
+      "id": "root/核心模式/flatxmap-带验证的类型映射",
+      "parent": "root/核心模式",
+      "heading": "flatXMap — 带验证的类型映射",
+      "headingPath": [
+        "root",
+        "核心模式",
+        "flatxmap-带验证的类型映射"
+      ],
+      "depth": 2
+    },
+    {
+      "id": "root/核心模式/dispatch-多态分发",
+      "parent": "root/核心模式",
+      "heading": "Dispatch — 多态分发",
+      "headingPath": [
+        "root",
+        "核心模式",
+        "dispatch-多态分发"
+      ],
+      "depth": 2
+    },
+    {
+      "id": "root/核心模式/tagged-union-key-dispatch",
+      "parent": "root/核心模式",
+      "heading": "Tagged Union (Key Dispatch)",
+      "headingPath": [
+        "root",
+        "核心模式",
+        "tagged-union-key-dispatch"
+      ],
+      "depth": 2
+    },
+    {
+      "id": "root/核心模式/withalternative-多格式兼容",
+      "parent": "root/核心模式",
+      "heading": "withAlternative — 多格式兼容",
+      "headingPath": [
+        "root",
+        "核心模式",
+        "withalternative-多格式兼容"
+      ],
+      "depth": 2
+    },
+    {
+      "id": "root/核心模式/单值或列表兼容",
+      "parent": "root/核心模式",
+      "heading": "单值或列表兼容",
+      "headingPath": [
+        "root",
+        "核心模式",
+        "单值或列表兼容"
+      ],
+      "depth": 2
+    },
+    {
+      "id": "root/核心模式/自定义-mapcodec-动态字段",
+      "parent": "root/核心模式",
+      "heading": "自定义 MapCodec — 动态字段",
+      "headingPath": [
+        "root",
+        "核心模式",
+        "自定义-mapcodec-动态字段"
+      ],
+      "depth": 2
+    },
+    {
+      "id": "root/核心模式/recursive-自引用类型",
+      "parent": "root/核心模式",
+      "heading": "Recursive — 自引用类型",
+      "headingPath": [
+        "root",
+        "核心模式",
+        "recursive-自引用类型"
+      ],
+      "depth": 2
+    },
+    {
+      "id": "root/核心模式/tuplecodec-位置编码",
+      "parent": "root/核心模式",
+      "heading": "TupleCodec — 位置编码",
+      "headingPath": [
+        "root",
+        "核心模式",
+        "tuplecodec-位置编码"
+      ],
+      "depth": 2
+    },
+    {
+      "id": "root/自定义-codec-实现",
+      "parent": "root",
+      "heading": "自定义 Codec 实现",
+      "headingPath": [
+        "root",
+        "自定义-codec-实现"
+      ],
+      "depth": 1
+    },
+    {
+      "id": "root/自定义-codec-实现/何时需要自定义",
+      "parent": "root/自定义-codec-实现",
+      "heading": "何时需要自定义",
+      "headingPath": [
+        "root",
+        "自定义-codec-实现",
+        "何时需要自定义"
+      ],
+      "depth": 2
+    },
+    {
+      "id": "root/自定义-codec-实现/codec-t-模板",
+      "parent": "root/自定义-codec-实现",
+      "heading": "Codec<T> 模板",
+      "headingPath": [
+        "root",
+        "自定义-codec-实现",
+        "codec-t-模板"
+      ],
+      "depth": 2
+    },
+    {
+      "id": "root/自定义-codec-实现/mapcodec-t-模板",
+      "parent": "root/自定义-codec-实现",
+      "heading": "MapCodec<T> 模板",
+      "headingPath": [
+        "root",
+        "自定义-codec-实现",
+        "mapcodec-t-模板"
+      ],
+      "depth": 2
+    },
+    {
+      "id": "root/测试-codec",
+      "parent": "root",
+      "heading": "测试 Codec",
+      "headingPath": [
+        "root",
+        "测试-codec"
+      ],
+      "depth": 1
+    },
+    {
+      "id": "root/测试-codec/必测项",
+      "parent": "root/测试-codec",
+      "heading": "必测项",
+      "headingPath": [
+        "root",
+        "测试-codec",
+        "必测项"
+      ],
+      "depth": 2
+    },
+    {
+      "id": "root/测试-codec/模板",
+      "parent": "root/测试-codec",
+      "heading": "模板",
+      "headingPath": [
+        "root",
+        "测试-codec",
+        "模板"
+      ],
+      "depth": 2
+    },
+    {
+      "id": "root/codec-设计原则",
+      "parent": "root",
+      "heading": "Codec 设计原则",
+      "headingPath": [
+        "root",
+        "codec-设计原则"
+      ],
+      "depth": 1
+    },
+    {
+      "id": "root/codec-设计原则/1-组合优于继承",
+      "parent": "root/codec-设计原则",
+      "heading": "1. 组合优于继承",
+      "headingPath": [
+        "root",
+        "codec-设计原则",
+        "1-组合优于继承"
+      ],
+      "depth": 2
+    },
+    {
+      "id": "root/codec-设计原则/2-codec-放在类型旁边",
+      "parent": "root/codec-设计原则",
+      "heading": "2. Codec 放在类型旁边",
+      "headingPath": [
+        "root",
+        "codec-设计原则",
+        "2-codec-放在类型旁边"
+      ],
+      "depth": 2
+    },
+    {
+      "id": "root/codec-设计原则/3-跨模块-codec-通过-xmap-桥接",
+      "parent": "root/codec-设计原则",
+      "heading": "3. 跨模块 Codec 通过 xmap 桥接",
+      "headingPath": [
+        "root",
+        "codec-设计原则",
+        "3-跨模块-codec-通过-xmap-桥接"
+      ],
+      "depth": 2
+    },
+    {
+      "id": "root/codec-设计原则/4-错误信息要有意义",
+      "parent": "root/codec-设计原则",
+      "heading": "4. 错误信息要有意义",
+      "headingPath": [
+        "root",
+        "codec-设计原则",
+        "4-错误信息要有意义"
+      ],
+      "depth": 2
+    },
+    {
+      "id": "root/codec-设计原则/5-partial-decode-优先于完全失败",
+      "parent": "root/codec-设计原则",
+      "heading": "5. Partial decode 优先于完全失败",
+      "headingPath": [
+        "root",
+        "codec-设计原则",
+        "5-partial-decode-优先于完全失败"
+      ],
+      "depth": 2
+    },
+    {
+      "id": "root/codec-设计原则/6-不可变集合的注意",
+      "parent": "root/codec-设计原则",
+      "heading": "6. 不可变集合的注意",
+      "headingPath": [
+        "root",
+        "codec-设计原则",
+        "6-不可变集合的注意"
+      ],
+      "depth": 2
+    },
+    {
+      "id": "root/常见反模式",
+      "parent": "root",
+      "heading": "常见反模式",
+      "headingPath": [
+        "root",
+        "常见反模式"
+      ],
+      "depth": 1
+    },
+    {
+      "id": "root/常见反模式/codec-中直接访问文件-网络",
+      "parent": "root/常见反模式",
+      "heading": "❌ Codec 中直接访问文件/网络",
+      "headingPath": [
+        "root",
+        "常见反模式",
+        "codec-中直接访问文件-网络"
+      ],
+      "depth": 2
+    },
+    {
+      "id": "root/常见反模式/吞掉-dataresult-错误",
+      "parent": "root/常见反模式",
+      "heading": "❌ 吞掉 DataResult 错误",
+      "headingPath": [
+        "root",
+        "常见反模式",
+        "吞掉-dataresult-错误"
+      ],
+      "depth": 2
+    },
+    {
+      "id": "root/常见反模式/codec-内做流程控制",
+      "parent": "root/常见反模式",
+      "heading": "❌ Codec 内做流程控制",
+      "headingPath": [
+        "root",
+        "常见反模式",
+        "codec-内做流程控制"
+      ],
+      "depth": 2
+    },
+    {
+      "id": "root/常见反模式/用-optionalfieldof-掩盖格式错误",
+      "parent": "root/常见反模式",
+      "heading": "❌ 用 optionalFieldOf 掩盖格式错误",
+      "headingPath": [
+        "root",
+        "常见反模式",
+        "用-optionalfieldof-掩盖格式错误"
+      ],
+      "depth": 2
+    },
+    {
+      "id": "root/常见反模式/忽略-encode-方向",
+      "parent": "root/常见反模式",
+      "heading": "❌ 忽略 encode 方向",
+      "headingPath": [
+        "root",
+        "常见反模式",
+        "忽略-encode-方向"
+      ],
+      "depth": 2
+    },
+    {
+      "id": "root/nbt-专用考量",
+      "parent": "root",
+      "heading": "NBT 专用考量",
+      "headingPath": [
+        "root",
+        "nbt-专用考量"
+      ],
+      "depth": 1
+    },
+    {
+      "id": "root/nbt-专用考量/jsonops-vs-nbtops-差异",
+      "parent": "root/nbt-专用考量",
+      "heading": "JsonOps vs NbtOps 差异",
+      "headingPath": [
+        "root",
+        "nbt-专用考量",
+        "jsonops-vs-nbtops-差异"
+      ],
+      "depth": 2
+    },
+    {
+      "id": "root/nbt-专用考量/registryops",
+      "parent": "root/nbt-专用考量",
+      "heading": "RegistryOps",
+      "headingPath": [
+        "root",
+        "nbt-专用考量",
+        "registryops"
+      ],
+      "depth": 2
+    },
+    {
+      "id": "root/项目内-codec-工具引用",
+      "parent": "root",
+      "heading": "项目内 Codec 工具引用",
+      "headingPath": [
+        "root",
+        "项目内-codec-工具引用"
+      ],
+      "depth": 1
+    },
+    {
+      "id": "root/参考资料",
+      "parent": "root",
+      "heading": "参考资料",
+      "headingPath": [
+        "root",
+        "参考资料"
+      ],
+      "depth": 1
+    }
+  ],
+  "procedures": [],
+  "sourceBlocks": {
+    "B5c001a6cb20e5cfa": "核心理念",
+    "B6ae649c48010730a": "Codec 是 **纯数据转换**（`DynamicOps<A> → T`），职责是结构化解析、类型映射、验证。它不关心数据从哪里来（文件、网络、常量），也不关心数据到哪里去。",
+    "B7b4c3aa4582ab166": "数据源 (I/O 层)          Codec 管道             目标类型 (领域层)\n┌──────────┐          ┌──────────────┐       ┌──────────────┐\n│ JSON文本   │   parse  │ Codec<Foo>   │  →    │ Foo           │\n│ NBT数据   │ ────────→│ .decode()    │  ←    │               │\n│ 内存结构   │   encode │ .encode()   │       │               │\n└──────────┘          └──────────────┘       └──────────────┘",
+    "B292a0227c1053625": "铁律",
+    "Bf0b439d30cb479d9": "**Codec 不接触 I/O**：不读文件、不走网络、不调注册表（只通过 `DynamicOps` 操作数据）",
+    "B377d4ec605d09c74": "**Codec 不包含业务逻辑**：它是数据形状的声明，不是流程控制",
+    "B0003dd9f74467cbd": "**每个 Codec 必须有 round-trip 测试**：`encode → decode` 应无损恢复原始值",
+    "Be057d0f4b43c722e": "---",
+    "B7bcf7f49e33de3c7": "Codec 选型指南",
+    "Bdb98e427081fd7f1": "当你需要为某类型设计 Codec 时，按以下决策路径选择原语：",
+    "Bcefe7779d349893f": "类型是什么形态？\n│\n├─ 固定字段的 record/POJO\n│   ├─ 字段 ≤ 16 → RecordCodecBuilder\n│   └─ 字段 > 16 → 拆分嵌套 record 或自定义 Codec<>\n│\n├─ 单一值的映射/转换\n│   ├─ 双向无损 → xmap\n│   ├─ 解码可能失败（验证/解析） → flatXMap / comapFlatMap\n│   └─ 带范围限制 → intRange / floatRange / doubleRange\n│\n├─ 集合类型\n│   ├─ List<T> → Codec<T>.listOf()\n│   ├─ Map<String, V> → Codec.unboundedMap(Codec.STRING, Codec<V>)\n│   ├─ Map<K, V> (K 不是 String) → 自定义 pair-list codec + xmap\n│   └─ 单值或列表兼容 → Codec.either(codec, codec.listOf()) → xmap\n│\n├─ 多态/变体（sealed class / tagged union）\n│   ├─ 基于 type 字段分发 → Codec.dispatch(typeGetter, typeToCodec)\n│   ├─ 无需 type 字段，格式互斥 → Codec.either / Codec.xor / Codec.withAlternative\n│   └─ 按 key 分发（JSON 对象的 key 决定类型） → EyelibCodec.list() / MapCodec 自定义\n│\n├─ 自引用（递归结构）\n│   ├─ 标准场景 → Codec.recursive(name, selfRef -> ...)\n│   └─ 需要 lazy 初始化（依赖尚未就绪的 Codec） → Codec.lazyInitialized(supplier)\n│\n├─ 多格式兼容\n│   ├─ 新旧格式共存，新格式优先 → Codec.withAlternative\n│   ├─ 多版本按需读取（读取时选新，写入只用新） → withAlternative\n│   └─ 元组/位置编码（如 [x, y, z]）→ TupleCodec / Codec.pair 链\n│\n└─ 无法用现有组合子表达\n    └─ 实现 Codec<T> 或 MapCodec<T> 接口（见下文\"自定义 Codec\"）",
+    "B0a25e2f26960fc60": "---",
+    "B53b1adf61577b5ec": "核心模式",
+    "B94d0112e1f5978ec": "RecordCodecBuilder — 结构化 record",
+    "Bf54e3e60fbc87d8e": "最常用模式。适用条件：数据形状是固定字段的 JSON 对象 / NBT compound。",
+    "B3cdc83b9cff270cb": "public static final Codec<MyRecord> CODEC = RecordCodecBuilder.create(ins -> ins.group(\n    Codec.STRING.fieldOf(\"name\").forGetter(MyRecord::name),\n    Codec.INT.optionalFieldOf(\"count\", 0).forGetter(MyRecord::count)\n).apply(ins, MyRecord::new));",
+    "B5f6dd2b002e4ca52": "关键决策：",
+    "B69f134d8e68731b6": "`fieldOf`：必填字段，缺失时 decode 失败",
+    "Bbbf79c07355d6685": "`optionalFieldOf`：选填字段，缺失时用默认值；但遇到非法值会报错",
+    "B73ad888041a4cefe": "`lenientOptionalFieldOf`：选填字段，非法值被忽略（静默回退到默认值）",
+    "B80483a453949432b": "xmap — 类型映射",
+    "Bb6158a0595d83957": "当两个类型互相可无损转换时使用。",
+    "Bd9fac40fd95e846d": "// 枚举 ↔ 字符串\npublic static final Codec<MyEnum> CODEC = Codec.STRING.xmap(\n    MyEnum::valueOf,\n    MyEnum::name\n);\n\n// 外部类型适配（Vec3 ↔ List<Double>）\npublic static final Codec<Vec3> CODEC = Codec.DOUBLE.listOf().xmap(\n    l -> new Vec3(l.get(0), l.get(1), l.get(2)),\n    v -> List.of(v.x, v.y, v.z)\n);",
+    "B784f2e597166312f": "flatXMap — 带验证的类型映射",
+    "B7f60c05072a69cf2": "当转换可能失败时需要 `DataResult`。",
+    "B0270750f020f5ae1": "public static final Codec<Integer> POSITIVE_INT = Codec.INT.flatXMap(\n    i -> i > 0\n        ? DataResult.success(i)\n        : DataResult.error(() -> \"Expected positive, got \" + i),\n    DataResult::success  // encode 方向不会失败\n);",
+    "B12d0f9c543afef9b": "方向矩阵：",
+    "Bb48d082ebea75138": "| decode 方向 | encode 方向 | 方法 |\n|-----------|-----------|------|\n| 总成功 | 总成功 | `xmap` |\n| 可能失败 | 总成功 | `comapFlatMap` |\n| 总成功 | 可能失败 | `flatComapMap` |\n| 可能失败 | 可能失败 | `flatXMap` |",
+    "B4cffddb1e4f11b77": "Dispatch — 多态分发",
+    "B51ce774cd32e5a76": "当数据包含 `type` 字段决定子类型时使用。",
+    "B7e55fa0d8c4aa137": "// 定义 type 获取器和 codec 查找表\npublic static final Codec<Animal> CODEC = Codec.STRING.dispatch(\n    Animal::type,        // type 字段值\n    type -> switch (type) {\n        case \"cat\" -> Cat.CODEC;\n        case \"dog\" -> Dog.CODEC;\n        default -> throw new IllegalStateException(\"Unknown type: \" + type);\n    }\n);",
+    "Bba37f399efe2b9fb": "如果需要按 key 分发（JSON 的顶级 key 决定类型），参考下一节。",
+    "B069426acc9ba9f62": "Tagged Union (Key Dispatch)",
+    "B1815ad21df00f2db": "当 sealed class 的子类型通过 JSON 对象的唯一 key 区分时（如 `{\"all_of\": [...]}`、`{\"one_of\": [...]}`），用 `EyelibCodec.list()`：",
+    "Bcaa846fc1575f3ee": "public static final MapCodec<ComplexFilter> CODEC = EyelibCodec.list(() -> Map.of(\n    \"all_of\", new EyelibCodec.CodecInfo<>(AllOf.class, AllOf.CODEC),\n    \"one_of\", new EyelibCodec.CodecInfo<>(OneOf.class, OneOf.CODEC),\n    \"none_of\", new EyelibCodec.CodecInfo<>(NoneOf.class, NoneOf.CODEC)\n));",
+    "B396eb15c9b02807e": "特点：每个变体通过 `MapCodec.fieldOf(key)` 自动包装，encode 时写回对应的 key。",
+    "B1b7d9c9325c9d871": "withAlternative — 多格式兼容",
+    "B59a15ab1071c1cb7": "读取时接受多种格式，写入时只用主格式。",
+    "B19f6b4ecb3264f0a": "// 新格式 [x, y, z] 或旧格式 {\"x\": 1, \"y\": 2, \"z\": 3}\npublic static final Codec<BlockPos> CODEC = Codec.withAlternative(\n    BlockPos.CODEC,           // 主格式（用于 encode）\n    LEGACY_POS_CODEC          // 兼容格式（只用于 decode）\n);",
+    "B3f1592b2b02ffa28": "单值或列表兼容",
+    "B6758297bf5d9cbe9": "// 接受 \"foo\" 或 [\"foo\", \"bar\"]\npublic static Codec<List<String>> singleOrList(Codec<String> codec) {\n    return Codec.either(codec, codec.listOf())\n        .xmap(e -> e.map(List::of, Function.identity()), Either::right);\n}",
+    "Be386e8383865dd06": "自定义 MapCodec — 动态字段",
+    "Bdba05153395f3bfd": "当 record 的字段名不是编译期常量，而需要从数据中动态读取时，实现自定义 `MapCodec`。",
+    "Bc17e12240d26c7ae": "// Map<K, V> 的 codec，其中 value 的 codec 由 key 决定\npublic record DispatchedMapCodec<K, V>(\n    Codec<K> keyCodec,\n    Function<K, Codec<? extends V>> valueCodecFunction\n) implements Codec<Map<K, V>> {\n    // decode: 遍历 map 的每个 entry，用 keyCodec 解析 key，\n    //         用 key 查找对应的 valueCodec，解析 value\n    // encode: 遍历 map，分别 encode key 和 value\n}",
+    "B682a82ec5517da86": "常见变体：",
+    "B7ccf5aac0196140e": "**KeyDispatchMapCodec**：和 DispatchedMapCodec 类似但 value 的 Codec 通过 key 查找，不通过 key Codec",
+    "B73728390fa5f3cda": "**自定义顶层 Codec<>**：当 JSON 结构有特殊规则（如某字段与数据平级），直接实现 `Codec<T>` 接口",
+    "B2ea91dc3f240eba9": "Recursive — 自引用类型",
+    "B5f8f903e7cc8c528": "public static final Codec<TreeNode> CODEC = Codec.recursive(\n    \"TreeNode\",\n    self -> RecordCodecBuilder.create(ins -> ins.group(\n        Codec.STRING.fieldOf(\"value\").forGetter(TreeNode::value),\n        self.listOf().optionalFieldOf(\"children\", List.of()).forGetter(TreeNode::children)\n    ).apply(ins, TreeNode::new))\n);",
+    "B1754ae8d9a892b13": "TupleCodec — 位置编码",
+    "B5c96e76006f38772": "当数据用数组位置表达字段（如 `[1.0, 2.0, 3.0]` 表示 Vec3）时使用。",
+    "Becdb05c87045c67e": "public static final Codec<Vec2> CODEC = ChinExtraCodecs.tuple(Codec.FLOAT, Codec.FLOAT)\n    .bmap(Vec2::new, v -> Tuple.of(v.x, v.y));",
+    "B94e8a446bec37064": "---",
+    "Bb32f884e9ed88564": "自定义 Codec 实现",
+    "B8de6001d273b872b": "当 `RecordCodecBuilder`、`xmap`、`dispatch` 等组合子无法表达数据形状时，直接实现 `Codec<T>` 或 `MapCodec<T>`。",
+    "B3c7eea1e0be00b34": "何时需要自定义",
+    "B345c926636e4137c": "数据格式有\"特殊哨兵字段\"（如 `version` 字段和数据条目在同一层级）",
+    "B905a1dd11bdc0ef3": "需要处理非标准（非 JSON 对象）的顶层结构",
+    "B766d88ac769c7136": "`DynamicOps` 层面的手动操作不可避免",
+    "Ba70fefd07219e4e6": "Codec<T> 模板",
+    "B57c5f60e921bb600": "public static final Codec<MyType> CODEC = new Codec<>() {\n    @Override\n    public <T> DataResult<Pair<MyType, T>> decode(DynamicOps<T> ops, T input) {\n        return ops.getMap(input).flatMap(map -> {\n            // 使用 ops.get(fieldName) 手动读取字段\n            // 使用子 Codec 做结构化解析\n            // 返回 DataResult<Pair<MyType, T>>\n        });\n    }\n\n    @Override\n    public <T> DataResult<T> encode(MyType input, DynamicOps<T> ops, T prefix) {\n        // 构造 RecordBuilder，build 返回 encode 结果\n    }\n};",
+    "B43e530002ae0f636": "MapCodec<T> 模板",
+    "B0d1c39c13214f867": "public static final MapCodec<MyType> CODEC = new MapCodec<>() {\n    @Override\n    public <T> Stream<T> keys(DynamicOps<T> ops) {\n        return Stream.of(ops.createString(\"field1\"), ops.createString(\"field2\"));\n    }\n\n    @Override\n    public <T> DataResult<MyType> decode(DynamicOps<T> ops, MapLike<T> input) {\n        // 从 MapLike 中按 key 读取\n    }\n\n    @Override\n    public <T> RecordBuilder<T> encode(MyType input, DynamicOps<T> ops, RecordBuilder<T> prefix) {\n        // 往 RecordBuilder 中添加字段\n    }\n};",
+    "Be66755bf488d6409": "---",
+    "Bc3424e9fcbf25d3d": "测试 Codec",
+    "B5b344dc8998c7a9e": "必测项",
+    "B7b294ac2da4a3350": "**Round-trip**：`encode → decode` 得到等价对象",
+    "Ba7a4b1785c843d1e": "**Partial decode**：缺少字段时 `DataResult.error()` 包含有意义的错误信息",
+    "B1837f84a85d4bab0": "**边界值**：空集合、null optional、极限值",
+    "Bf2719fb0209ebc3e": "模板",
+    "B63adfe417d012b33": "class MyCodecTest {\n    static final Codec<MyType> CODEC = MyType.CODEC;\n\n    @Test\n    void roundTrip() {\n        var original = new MyType(\"test\", 42);\n        var encoded = CODEC.encodeStart(JsonOps.INSTANCE, original)\n            .getOrThrow(false, msg -> fail(msg));\n        var decoded = CODEC.parse(JsonOps.INSTANCE, encoded)\n            .getOrThrow(false, msg -> fail(msg));\n        assertEquals(original, decoded);\n    }\n\n    @Test\n    void missingRequiredField() {\n        var json = new JsonObject(); // 缺少必填字段\n        var result = CODEC.parse(JsonOps.INSTANCE, json);\n        assertTrue(result.error().isPresent());\n    }\n\n    @Test\n    void jsonStructureSnapshot() {\n        // snapshot 测试：确保 encode 输出结构稳定\n        var obj = new MyType(\"test\", 42);\n        var json = CODEC.encodeStart(JsonOps.INSTANCE, obj)\n            .getOrThrow(false, AssertionError::new);\n        assertEquals(\"\"\"\n            {\"name\":\"test\",\"count\":42}\"\"\", json.toString());\n    }\n}",
+    "B05e14199444fe0d3": "---",
+    "Be59d2ee72610a7ed": "Codec 设计原则",
+    "Bf44fdcfaeaabab3c": "1. 组合优于继承",
+    "Beaa5905a23f0872c": "优先使用 `xmap`、`comapFlatMap`、`withAlternative` 组合已有 Codec，而非新建类。",
+    "B248af031bff2d917": "// ✅ 组合\npublic static final Codec<MyType> CODEC = Codec.STRING.xmap(MyType::parse, MyType::toString);\n\n// ❌ 过度自定义（除非必要）\npublic static final Codec<MyType> CODEC = new Codec<>() { /* 50 行实现 */ };",
+    "B1408f09b124b3b45": "2. Codec 放在类型旁边",
+    "B49090fc1957a456b": "Codec 作为 `public static final` 字段定义在它序列化的类型中，命名为 `CODEC`。",
+    "Be6eb36db17686719": "public record Foo(String name, int count) {\n    public static final Codec<Foo> CODEC = RecordCodecBuilder.create(/* ... */);\n}",
+    "B9681f314e2f6f94e": "3. 跨模块 Codec 通过 xmap 桥接",
+    "Bd9042d4506031f53": "当类型 A 在模块 M1，类型 B 在模块 M2，且两者可互相转换时：",
+    "Bebca7bb84fcbcbc6": "// 在 M2 中\npublic static final Codec<B> CODEC = A.CODEC.xmap(A::toB, B::toA);",
+    "B5aa6e058610d7a12": "4. 错误信息要有意义",
+    "B6b0b8f6620736a74": "// ❌ 无意义的错误\nDataResult.error(() -> \"error\")\n\n// ✅ 包含上下文\nDataResult.error(() -> \"Failed to decode MyType: expected positive int, got \" + value)",
+    "B6de523444f8a3cce": "5. Partial decode 优先于完全失败",
+    "Bca5b34a29740b010": "使用 `setPartial` 或 `resultOrPartial` 让消费者能拿到部分解析结果：",
+    "Bb071710637eb26d0": "return result.map(unit -> elements)\n    .setPartial(elements)   // 即使有错误，也返回已解析的部分\n    .mapError(e -> e + \" missed input: \" + errors);",
+    "B769a5e3810cedb0a": "6. 不可变集合的注意",
+    "B94c7043547cd830b": "`listOf()` 和 `unboundedMap()` 返回不可变集合。如果需要可变集合，追加 `xmap`：",
+    "Ba842a8acda22c6a2": "public static final Codec<List<String>> CODEC = Codec.STRING.listOf()\n    .xmap(ArrayList::new, Function.identity());",
+    "Bb4091526342729c0": "---",
+    "Bc4868d0ccbb291ba": "常见反模式",
+    "Be8002542f5e13864": "❌ Codec 中直接访问文件/网络",
+    "B5cfbb88d8f332cb3": "// 错误\nCodec<Config> BAD = RecordCodecBuilder.create(ins -> ins.group(\n    Codec.STRING.fieldOf(\"data\").forGetter(c ->\n        Files.readString(Path.of(\"config.json\")) // NEVER\n    )\n).apply(ins, Config::new));",
+    "B2b17d9c86f0ee8d2": "**正确**：在 Codec 外部完成 I/O，传入解析好的 `JsonElement` / `Tag`。",
+    "B0927f53b74374c41": "❌ 吞掉 DataResult 错误",
+    "Bb7e912840660e122": "// 错误：丢失错误信息\ncodec.parse(ops, input).result().ifPresent(map::put);",
+    "Ba90da09e2cf9fae8": "**正确**：",
+    "B6a64319b3af605a1": "codec.parse(ops, input).resultOrPartial(err -> log.warn(\"Decode error: {}\", err))\n    .ifPresent(map::put);",
+    "B603c97283d51e35e": "❌ Codec 内做流程控制",
+    "B677433c4631666c2": "// 错误：Codec 内做循环、条件分支等业务逻辑\nCodec<List<Foo>> BAD = Codec.STRING.listOf().comapFlatMap(names -> {\n    for (String name : names) {\n        fetchRemote(name); // NEVER\n    }\n    return DataResult.success(List.of());\n});",
+    "B9f0ed08afdc64920": "**正确**：流程控制在调用方，Codec 只做数据形状转换。",
+    "Bd9ae1c63c75a2129": "❌ 用 optionalFieldOf 掩盖格式错误",
+    "B2523edc28b458650": "// 情况：字段值是非法格式时，optionalFieldOf 会报错终止解析\n// 如果希望容错，用 lenientOptionalFieldOf\n\n// ❌ 非法值会导致整个 decode 失败\nCodec.INT.optionalFieldOf(\"count\", 0).forGetter(Foo::count)\n\n// ✅ 非法值被静默忽略，使用默认值\nCodec.INT.lenientOptionalFieldOf(\"count\", 0).forGetter(Foo::count)",
+    "B2a0e331becaa3491": "❌ 忽略 encode 方向",
+    "B213ff424ab90b056": "如果只需要 decode（只读配置），至少把 encode 方向实现为抛异常并加注释说明：",
+    "B9b9365a64190acc8": "// 编码不支持（此 Codec 仅用于解码）\nCodec.BYTE_BUFFER.comapFlatMap(\n    bytes -> /* decode logic */,\n    obj -> { throw new UnsupportedOperationException(\"encode not supported\"); }\n);",
+    "Bd9d09b83fab2a531": "永远不要返回虚假的 encode 结果。",
+    "B7ed8fd4a6a021b44": "---",
+    "Bf67fdb27892c5e5d": "NBT 专用考量",
+    "Ba6deb4084d00f2b2": "JsonOps vs NbtOps 差异",
+    "B5b3f54b6834f773c": "// JsonOps: 数字类型自动推断最窄类型\n// NbtOps: 数字类型固定（Tag 有明确的类型标记）\n\n// 危险：JsonOps 下工作正常，NbtOps 下 ListTag 类型不匹配会导致错误\nCodec.INT.listOf()  // NbtOps 下只能从 IntArrayTag 解码，不能从 ListTag 解码",
+    "B6e0cd0f8a70d7b66": "解决方案：优先在 `JsonOps` 下测试，再在 `NbtOps` 下验证。",
+    "Bcb966729fc4413c3": "RegistryOps",
+    "B36524500e5dec0a2": "当 Codec 需要解析注册表条目时，使用 `RegistryOps` 而非裸 `JsonOps`：",
+    "B201b2a3144b1cd0f": "RegistryOps<JsonElement> ops = RegistryOps.create(JsonOps.INSTANCE, lookupProvider);\ncodec.parse(ops, json);",
+    "B8a8129b566b9b4eb": "---",
+    "B01f8a24a7c085d20": "项目内 Codec 工具引用",
+    "B7c95073f69bf1bf9": "本项目的通用 Codec 工具位于 `src/main/java/io/github/tt432/eyelib/util/codec/`：",
+    "B73e89db24e54f000": "| 工具 | 用途 |\n|------|------|\n| `EyelibCodec` | `list()` 分发式 MapCodec、`recursive`、`optionalMapCodec`、`withAlternative`、`int2ObjectMap`、数学/向量 Codec |\n| `ChinExtraCodecs` | `singleOrList`、`check`（验证）、`treeMap`、`withAlternative(MapCodec)`、`tuple` 元组 |\n| `CodecHelper` | `withAlternative`、`dispatchedMap` |\n| `DispatchedMapCodec` | 按 key 分发的 Map Codec（完整实现） |\n| `KeyDispatchMapCodec` | 按 key 分发的 Map Codec（每 entry 独立 dispatch） |\n| `TupleCodec` | 异构元组 list 编码（1–16 个元素） |",
+    "Ba7754ed025d651e2": "---",
+    "B32ee186cd959b6e2": "参考资料",
+    "B84b5ece6f5a375a8": "[NeoForge Codec 文档](https://docs.neoforged.net/docs/datastorage/codecs)",
+    "B3d2512b0b592aede": "[Mojang DataFixerUpper 源码](https://github.com/Mojang/DataFixerUpper) — `Codec`、`DataResult`、`DynamicOps` 的定义",
+    "Bed0f16ae94617f30": "`com.mojang.serialization.Codec` — 标准库 Codec 组合子的完整列表",
+    "Bf3879b809c40d51e": "`net.minecraft.util.ExtraCodecs` — Minecraft 提供的额外 Codec",
+    "Bdd89af5a95dc2dd8": "Tagged Union (Key Dispatch)",
+    "B1f36d097cb1ffc69": "当 sealed class 的子类型通过 JSON 对象的唯一 key 区分时（如 `{\"all_of\": [...]}`、`{\"one_of\": [...]}`），用 `EyelibCodec.list()`：",
+    "B27499304a07caac6": "public static final MapCodec<ComplexFilter> CODEC = EyelibCodec.list(() -> Map.of(\n    \"all_of\", new EyelibCodec.CodecInfo<>(AllOf.class, AllOf.CODEC),\n    \"one_of\", new EyelibCodec.CodecInfo<>(OneOf.class, OneOf.CODEC),\n    \"none_of\", new EyelibCodec.CodecInfo<>(NoneOf.class, NoneOf.CODEC)\n));",
+    "B62adefeb7ab07ea1": "TupleCodec — 位置编码",
+    "Bec7ac11e8775f4a8": "当数据用数组位置表达字段（如 `[1.0, 2.0, 3.0]` 表示 Vec3）时使用。",
+    "Bf69f5620db8343a6": "public static final Codec<Vec2> CODEC = ChinExtraCodecs.tuple(Codec.FLOAT, Codec.FLOAT)\n    .bmap(Vec2::new, v -> Tuple.of(v.x, v.y));",
+    "Ba97f5fe2364c2748": "Codec<T> 模板",
+    "B73b0b44a740a0a34": "public static final Codec<MyType> CODEC = new Codec<>() {\n    @Override\n    public <T> DataResult<Pair<MyType, T>> decode(DynamicOps<T> ops, T input) {\n        return ops.getMap(input).flatMap(map -> {\n            // 使用 ops.get(fieldName) 手动读取字段\n            // 使用子 Codec 做结构化解析\n            // 返回 DataResult<Pair<MyType, T>>\n        });\n    }\n\n    @Override\n    public <T> DataResult<T> encode(MyType input, DynamicOps<T> ops, T prefix) {\n        // 构造 RecordBuilder，build 返回 encode 结果\n    }\n};",
+    "B3df10c62c458c478": "MapCodec<T> 模板",
+    "B01a1fafd28e41c9b": "public static final MapCodec<MyType> CODEC = new MapCodec<>() {\n    @Override\n    public <T> Stream<T> keys(DynamicOps<T> ops) {\n        return Stream.of(ops.createString(\"field1\"), ops.createString(\"field2\"));\n    }\n\n    @Override\n    public <T> DataResult<MyType> decode(DynamicOps<T> ops, MapLike<T> input) {\n        // 从 MapLike 中按 key 读取\n    }\n\n    @Override\n    public <T> RecordBuilder<T> encode(MyType input, DynamicOps<T> ops, RecordBuilder<T> prefix) {\n        // 往 RecordBuilder 中添加字段\n    }\n};"
+  },
+  "stats": {
+    "patches": 2,
+    "repacks": 0,
+    "lastRepackAt": "2026-08-13T08:44:46.112Z",
+    "totalSavedTokens": 0
+  },
+  "transactionLog": [
+    {
+      "ts": "2026-08-13T08:44:46.112Z",
+      "operation": "COMPRESS",
+      "summary": "one-shot: 126 blocks → 3442 chars rendered",
+      "savingTokens": 0
+    },
+    {
+      "ts": "2026-08-13T08:52:15.081Z",
+      "operation": "EXTEND",
+      "summary": "EXTEND: +0 rules, +0 workflow, +0 tools, +0 fields",
+      "savingTokens": 0
+    }
+  ],
+  "createdAt": "2026-08-13T08:44:46.112Z",
+  "updatedAt": "2026-08-13T08:52:15.095Z"
+}

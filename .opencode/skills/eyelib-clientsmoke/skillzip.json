@@ -1,0 +1,380 @@
+{
+  "schemaVersion": 1,
+  "skillPath": "E:/_ideaProjects/qylEyelib/.opencode/skills/eyelib-clientsmoke/SKILL.md",
+  "sourcePath": "E:/_ideaProjects/qylEyelib/.opencode/skills/eyelib-clientsmoke/SKILL.md",
+  "contract": {
+    "interface": {
+      "name": "eyelib-clientsmoke",
+      "purpose": "Eyelib Clientsmoke 客户端烟雾测试——@ClientSmoke 注解、三层测试架构（ADR-0012）、运行与报告。编写或运行 clientsmoke 测试时使用。",
+      "triggers": [
+        {
+          "text": "编写或运行 @ClientSmoke 烟雾测试",
+          "spans": [
+            "Bc4749808c9f96ce2",
+            "B54a0c332f1b1cb7c"
+          ]
+        },
+        {
+          "text": "判断检查属于三层测试架构（domain spec / 管道 / Bridge / 接线）的哪一层",
+          "spans": [
+            "B0dfceb15a71ceaef"
+          ]
+        },
+        {
+          "text": "在 build.gradle client run 配置中启用 clientsmoke",
+          "spans": [
+            "Ba1cd6c3bf149faa9",
+            "Be65199ae60b7e5b4"
+          ]
+        },
+        {
+          "text": "定位或解读 clientsmoke JSON/XML/截图报告",
+          "spans": [
+            "Bef26ad6c6879ad8e",
+            "B77976a538b9fc399",
+            "Ba5c718d106a3c2af"
+          ]
+        }
+      ],
+      "exclusions": [
+        {
+          "text": "不需要运行 MC 客户端的纯 JUnit 单元测试（用 unit-test 技能）",
+          "spans": [
+            "B0dfceb15a71ceaef"
+          ]
+        },
+        {
+          "text": "通用 Gradle 构建/测试排障（用 eyelib-build 技能）",
+          "spans": [
+            "Bc4749808c9f96ce2"
+          ]
+        },
+        {
+          "text": "对运行中客户端的交互式状态探查（用 progressive-exploration 技能）",
+          "spans": [
+            "Bc4749808c9f96ce2"
+          ]
+        }
+      ]
+    },
+    "rules": [
+      {
+        "id": "R1",
+        "scope": "root/eyelib-clientsmoke-测试/启用-clientsmoke",
+        "modality": "must",
+        "predicate": "在 build.gradle 的 client run 配置中设置 systemProperty 'clientsmoke.enabled'='true' 才会执行测试；该属性默认 false，不加则状态机进入 IDLE 不执行任何测试",
+        "spans": [
+          "Badb94426bf4e7414",
+          "Ba1cd6c3bf149faa9",
+          "Bc6a73fe68058d15c"
+        ],
+        "locked": false
+      },
+      {
+        "id": "R2",
+        "scope": "root/eyelib-clientsmoke-测试/启用-clientsmoke",
+        "modality": "prefer",
+        "predicate": "同时设置 systemProperty 'clientsmoke.autoExit'='false' 可让测试结束后客户端保持开启",
+        "spans": [
+          "Be65199ae60b7e5b4"
+        ],
+        "locked": false
+      },
+      {
+        "id": "R3",
+        "scope": "root/eyelib-clientsmoke-测试",
+        "modality": "must_not",
+        "predicate": "clientsmoke 运行期间调用 mcmcp_enter_world——clientsmoke 自己创建 ClientSmokeTest 世界，手动 enter_world 会冲突",
+        "spans": [
+          "Bd483270e41adb7c0",
+          "Bd7ad489ae10c52dc"
+        ],
+        "locked": false
+      },
+      {
+        "id": "R4",
+        "scope": "root/eyelib-clientsmoke-测试/写-clientsmoke-测试",
+        "modality": "must",
+        "predicate": "测试类放在 src/main/java/io/github/tt432/eyelib/smoke/，用 @ClientSmoke(description, priority) 注解；全部测试逻辑在无参构造器中执行，throw 异常 = fail，正常返回 = pass；构造器内可调用 Minecraft.getInstance()、所有 Manager、所有 Bridge 类",
+        "spans": [
+          "B10046b3f64d11711",
+          "B1f4aaea704210b01",
+          "B54a0c332f1b1cb7c"
+        ],
+        "locked": false
+      },
+      {
+        "id": "R5",
+        "scope": "root/eyelib-clientsmoke-测试/常见陷阱",
+        "modality": "must",
+        "predicate": "MaterialManager 的 key 使用 `name:base` 格式——.mcpack 中的 key 是 `entity_nocull:entity` 而不是 `entity_nocull`",
+        "spans": [
+          "B0a64f0693ab5d91f",
+          "Bc1b6d75384689d91"
+        ],
+        "locked": false
+      },
+      {
+        "id": "R6",
+        "scope": "root/eyelib-clientsmoke-测试/常见陷阱",
+        "modality": "must",
+        "predicate": "ResourceLocation 用 `new ResourceLocation(ns, path)` 构造——MC 1.20.1 没有 fromNamespaceAndPath",
+        "spans": [
+          "B4c2d9d3abc94f6d8"
+        ],
+        "locked": false
+      }
+    ],
+    "workflow": [
+      {
+        "id": "W1",
+        "scope": "root/eyelib-clientsmoke-测试/运行",
+        "kind": "action",
+        "action": "调用 mcmcp_clientsmoke(timeout=180) 一键完成重建 + 注入 JVM 参数 + 启动客户端 + 解析报告",
+        "tool": "mcmcp_clientsmoke",
+        "required_args": [
+          "timeout"
+        ],
+        "next": [
+          "W2"
+        ],
+        "spans": [
+          "Ba5906a3f8d006fb5",
+          "Bd483270e41adb7c0"
+        ]
+      },
+      {
+        "id": "W2",
+        "scope": "root/eyelib-clientsmoke-测试/运行",
+        "kind": "stop",
+        "action": "等待约 30s，状态机按 INIT → CONFIG_LOAD → SCAN → WORLD_CREATE → STABILIZE → TEST_EXEC → REPORT 推进到 REPORT 后，从 clientsmoke-reports/ 读取 report-*.json、junit-*.xml 与 screenshots/",
+        "spans": [
+          "Bd483270e41adb7c0"
+        ]
+      }
+    ],
+    "tools": [
+      {
+        "id": "T1",
+        "name": "mcmcp_clientsmoke",
+        "required_args": [
+          "timeout"
+        ],
+        "observations": [
+          "重建 + 注入 clientsmoke JVM 参数 + 启动客户端 + 等待并解析报告（一键）"
+        ],
+        "errors": [
+          "与 mcmcp_enter_world 同时调用会冲突（clientsmoke 自建 ClientSmokeTest 世界）"
+        ],
+        "spans": [
+          "Bd483270e41adb7c0"
+        ]
+      }
+    ],
+    "output": {
+      "fields": [
+        {
+          "name": "report-YYYYMMDD-HHmmss.json",
+          "required": true,
+          "validation": "位于 versions/<version>/run/clientsmoke/clientsmoke-reports/",
+          "spans": [
+            "Bef26ad6c6879ad8e"
+          ]
+        },
+        {
+          "name": "junit-YYYYMMDD-HHmmss.xml",
+          "required": true,
+          "validation": "位于 versions/<version>/run/clientsmoke/clientsmoke-reports/",
+          "spans": [
+            "B77976a538b9fc399"
+          ]
+        },
+        {
+          "name": "screenshots/（每测试一张截图）",
+          "required": true,
+          "validation": "位于 versions/<version>/run/clientsmoke/clientsmoke-reports/screenshots/",
+          "spans": [
+            "Ba5c718d106a3c2af"
+          ]
+        }
+      ],
+      "type": "clientsmoke 报告文件",
+      "termination": [
+        "状态机推进到 REPORT 阶段后报告已写出"
+      ],
+      "spans": [
+        "B641daefc5bcad032"
+      ]
+    },
+    "evidence": [
+      {
+        "id": "E1",
+        "kind": "background",
+        "supports": [
+          "W1"
+        ],
+        "adds_unique_unit": false,
+        "source_blocks": [
+          "B29458c00e8c0be9e",
+          "Bc4749808c9f96ce2"
+        ]
+      }
+    ],
+    "residual": [
+      {
+        "source_block": "B68225dfb166b92ad",
+        "reason": "UNIQUE_EVIDENCE"
+      },
+      {
+        "source_block": "B0dfceb15a71ceaef",
+        "reason": "UNIQUE_EVIDENCE"
+      },
+      {
+        "source_block": "Be65199ae60b7e5b4",
+        "reason": "UNIQUE_EVIDENCE"
+      },
+      {
+        "source_block": "B54a0c332f1b1cb7c",
+        "reason": "UNIQUE_EVIDENCE"
+      },
+      {
+        "source_block": "Bd483270e41adb7c0",
+        "reason": "UNIQUE_EVIDENCE"
+      },
+      {
+        "source_block": "Bef26ad6c6879ad8e",
+        "reason": "USER_LOCKED"
+      },
+      {
+        "source_block": "B77976a538b9fc399",
+        "reason": "USER_LOCKED"
+      },
+      {
+        "source_block": "Ba5c718d106a3c2af",
+        "reason": "USER_LOCKED"
+      }
+    ]
+  },
+  "scopes": [
+    {
+      "id": "root",
+      "parent": null,
+      "heading": "root",
+      "headingPath": [
+        "root"
+      ],
+      "depth": 0
+    },
+    {
+      "id": "root/eyelib-clientsmoke-测试",
+      "parent": "root",
+      "heading": "Eyelib Clientsmoke 测试",
+      "headingPath": [
+        "root",
+        "eyelib-clientsmoke-测试"
+      ],
+      "depth": 1
+    },
+    {
+      "id": "root/eyelib-clientsmoke-测试/三层测试架构-adr-0012",
+      "parent": "root/eyelib-clientsmoke-测试",
+      "heading": "三层测试架构（ADR-0012）",
+      "headingPath": [
+        "root",
+        "eyelib-clientsmoke-测试",
+        "三层测试架构-adr-0012"
+      ],
+      "depth": 2
+    },
+    {
+      "id": "root/eyelib-clientsmoke-测试/启用-clientsmoke",
+      "parent": "root/eyelib-clientsmoke-测试",
+      "heading": "启用 clientsmoke",
+      "headingPath": [
+        "root",
+        "eyelib-clientsmoke-测试",
+        "启用-clientsmoke"
+      ],
+      "depth": 2
+    },
+    {
+      "id": "root/eyelib-clientsmoke-测试/写-clientsmoke-测试",
+      "parent": "root/eyelib-clientsmoke-测试",
+      "heading": "写 @ClientSmoke 测试",
+      "headingPath": [
+        "root",
+        "eyelib-clientsmoke-测试",
+        "写-clientsmoke-测试"
+      ],
+      "depth": 2
+    },
+    {
+      "id": "root/eyelib-clientsmoke-测试/运行",
+      "parent": "root/eyelib-clientsmoke-测试",
+      "heading": "运行",
+      "headingPath": [
+        "root",
+        "eyelib-clientsmoke-测试",
+        "运行"
+      ],
+      "depth": 2
+    },
+    {
+      "id": "root/eyelib-clientsmoke-测试/常见陷阱",
+      "parent": "root/eyelib-clientsmoke-测试",
+      "heading": "常见陷阱",
+      "headingPath": [
+        "root",
+        "eyelib-clientsmoke-测试",
+        "常见陷阱"
+      ],
+      "depth": 2
+    }
+  ],
+  "procedures": [],
+  "sourceBlocks": {
+    "B29458c00e8c0be9e": "Eyelib Clientsmoke 测试",
+    "Bc4749808c9f96ce2": "**clientsmoke** 是 eyelib 的客户端烟雾测试框架——在 MC 客户端加载后、world 就绪时自动执行 `@ClientSmoke` 注解的测试类，输出 JSON/XML 报告。",
+    "B68225dfb166b92ad": "三层测试架构（ADR-0012）",
+    "B0dfceb15a71ceaef": "| 层 | 环境 | 测试内容 |\n|---|------|---------|\n| Layer 1 domain spec | 纯 JUnit (`:test`) | MaterialResolver, BrRenderStateFactory, Molang, CODEC |\n| Layer 2a 管道 | 纯 JUnit | `BrMaterialEntry → BrRenderState` 语义映射 |\n| Layer 2b Bridge | clientsmoke | `RenderTypeResolver`, `RenderPassAdapter`, `EntityPortAdapter` — 需 MC 类型 |\n| Layer 3 接线 | clientsmoke + Fake | `EntityRenderSystem.setupClientEntity` — Component 接线 |",
+    "Badb94426bf4e7414": "启用 clientsmoke",
+    "Ba1cd6c3bf149faa9": "在 `build.gradle` 的 `client` run 配置中添加：",
+    "Be65199ae60b7e5b4": "systemProperty 'clientsmoke.enabled', 'true'\nsystemProperty 'clientsmoke.autoExit', 'false'  // 测试结束后保持开启",
+    "Bc6a73fe68058d15c": "> `clientsmoke.enabled` 默认 `false`，不加此属性状态机进入 IDLE 不执行。",
+    "B10046b3f64d11711": "写 @ClientSmoke 测试",
+    "B1f4aaea704210b01": "测试类放在 `src/main/java/io/github/tt432/eyelib/smoke/`。模式：",
+    "B54a0c332f1b1cb7c": "@ClientSmoke(description = \"简短描述\", priority = 10)\npublic class MySmoke {\n    public MySmoke() {\n        // 全部逻辑在无参构造器中执行\n        // throw = fail, 正常返回 = pass\n        // 可调用 Minecraft.getInstance()、所有 Manager、所有 Bridge 类\n        var materials = MaterialManager.INSTANCE.getAllData();\n        require(!materials.isEmpty(), \"No materials\");\n    }\n\n    private static void require(boolean cond, String msg) {\n        if (!cond) throw new AssertionError(msg);\n    }\n}",
+    "Ba5906a3f8d006fb5": "运行",
+    "Bd483270e41adb7c0": "mcmcp_clientsmoke(timeout=180)  # 重建 + 注入 JVM 参数 + 启动 + 解析报告（一键）\n# ⚠️ 不要调用 mcmcp_enter_world！clientsmoke 自己创建 ClientSmokeTest 世界\n# 等待 ~30s → 状态机 INIT → CONFIG_LOAD → SCAN → WORLD_CREATE → STABILIZE → TEST_EXEC → REPORT",
+    "B641daefc5bcad032": "输出（gameDir = `versions/<version>/run/clientsmoke`，由 build.gradle clientSmoke run config 决定）：",
+    "Bef26ad6c6879ad8e": "`versions/<version>/run/clientsmoke/clientsmoke-reports/report-YYYYMMDD-HHmmss.json`",
+    "B77976a538b9fc399": "`versions/<version>/run/clientsmoke/clientsmoke-reports/junit-YYYYMMDD-HHmmss.xml`",
+    "Ba5c718d106a3c2af": "`versions/<version>/run/clientsmoke/clientsmoke-reports/screenshots/` — 每测试一张截图",
+    "B0a64f0693ab5d91f": "常见陷阱",
+    "Bc1b6d75384689d91": "**MaterialManager key 用 `name:base` 格式**：`.mcpack` 中的 key 是 `entity_nocull:entity` 不是 `entity_nocull`",
+    "Bd7ad489ae10c52dc": "**不能和 `mcmcp_enter_world` 同时使用**：clientsmoke 自己创建世界，手动 enter_world 会冲突",
+    "B4c2d9d3abc94f6d8": "**`ResourceLocation` 用 `new ResourceLocation(ns, path)`**：MC 1.20.1 没有 `fromNamespaceAndPath`"
+  },
+  "stats": {
+    "patches": 2,
+    "repacks": 0,
+    "lastRepackAt": "2026-08-13T08:53:51.157Z",
+    "totalSavedTokens": 0
+  },
+  "transactionLog": [
+    {
+      "ts": "2026-08-13T08:53:51.157Z",
+      "operation": "COMPRESS",
+      "summary": "one-shot: 21 blocks → 3142 chars rendered",
+      "savingTokens": 0
+    },
+    {
+      "ts": "2026-08-13T08:59:21.895Z",
+      "operation": "AUDIT",
+      "summary": "restored 3 missing spans as locked residual",
+      "savingTokens": 0
+    }
+  ],
+  "createdAt": "2026-08-13T08:53:51.157Z",
+  "updatedAt": "2026-08-13T08:59:21.895Z"
+}

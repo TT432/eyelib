@@ -1,0 +1,427 @@
+{
+  "schemaVersion": 1,
+  "skillPath": ".opencode/skills/unit-test/SKILL.md",
+  "sourcePath": "E:\\_ideaProjects\\qylEyelib\\.opencode\\skills\\unit-test\\SKILL.md",
+  "contract": {
+    "interface": {
+      "name": "unit-test",
+      "purpose": "Write and run JUnit 5 unit tests (structural invariants, boundary enforcement, codec round-trips, null safety) that do NOT require a running Minecraft client.",
+      "triggers": [
+        {
+          "text": "Writing pure unit tests for utility methods: construct inputs, assert outputs (structural invariants / null safety).",
+          "spans": [
+            "B5c7afac2fd791504"
+          ]
+        },
+        {
+          "text": "Codec round-trip tests for datafixerupper Codec serialization/deserialization.",
+          "spans": [
+            "B809a49d30d27e459"
+          ]
+        },
+        {
+          "text": "Boundary enforcement: verifying production source respects module boundaries and ownership rules via structural boundary tests.",
+          "spans": [
+            "B286d2438aba089b6",
+            "B4b9f70dab0b33b24"
+          ]
+        },
+        {
+          "text": "Testing multiple inputs with the same logic via parameterized tests.",
+          "spans": [
+            "B654777aadc359c30"
+          ]
+        },
+        {
+          "text": "Fixture-based integration tests loading fixtures from src/test/resources/.",
+          "spans": [
+            "B53d4cdd57d7037f3"
+          ]
+        }
+      ],
+      "exclusions": [
+        {
+          "text": "Tests that require a running Minecraft client (render output, GL state, texture correctness, full-lifecycle integration) — use the smoke-test skill instead.",
+          "spans": []
+        }
+      ]
+    },
+    "rules": [
+      {
+        "id": "C1",
+        "scope": "root/test-framework",
+        "modality": "must",
+        "predicate": "Use JUnit Jupiter 5.10.2 as the test framework.",
+        "spans": [
+          "Bbee216d03cbcee46"
+        ],
+        "locked": false
+      },
+      {
+        "id": "C2",
+        "scope": "root/test-framework",
+        "modality": "must_not",
+        "predicate": "Use custom runners, Mockito, or base classes.",
+        "spans": [
+          "Bbee216d03cbcee46"
+        ],
+        "locked": false
+      },
+      {
+        "id": "C3",
+        "scope": "root/test-framework",
+        "modality": "must",
+        "predicate": "Run tests via the standard Gradle `test` task, driven through the mcmcp_test tool.",
+        "spans": [
+          "B76341167b29398f9",
+          "B98271b43c67447f5"
+        ],
+        "locked": false
+      },
+      {
+        "id": "C4",
+        "scope": "root/test-file-conventions",
+        "modality": "must",
+        "predicate": "Name test files `*Test.java`.",
+        "spans": [
+          "Bac03783e2c0d1b0c"
+        ],
+        "locked": false
+      },
+      {
+        "id": "C5",
+        "scope": "root/test-file-conventions",
+        "modality": "must",
+        "predicate": "Declare test classes package-private (`class FooTest`).",
+        "spans": [
+          "Bac03783e2c0d1b0c"
+        ],
+        "locked": false
+      },
+      {
+        "id": "C6",
+        "scope": "root/test-file-conventions",
+        "modality": "must",
+        "predicate": "Name test methods with descriptive camelCase (e.g. `firstAndLastReturnListEnds`).",
+        "spans": [
+          "Bac03783e2c0d1b0c"
+        ],
+        "locked": false
+      },
+      {
+        "id": "C7",
+        "scope": "root/test-file-conventions",
+        "modality": "must",
+        "predicate": "Static-import assertions from `org.junit.jupiter.api.Assertions.*`.",
+        "spans": [
+          "Bac03783e2c0d1b0c"
+        ],
+        "locked": false
+      },
+      {
+        "id": "C8",
+        "scope": "root/test-file-conventions",
+        "modality": "must",
+        "predicate": "Mirror the source structure under `src/test/java/`.",
+        "spans": [
+          "Bac03783e2c0d1b0c"
+        ],
+        "locked": false
+      },
+      {
+        "id": "C9",
+        "scope": "root/common-test-patterns/pattern-a-pure-unit-test",
+        "modality": "prefer",
+        "predicate": "Test a utility method as a pure unit test by constructing inputs and asserting outputs.",
+        "spans": [
+          "B5c7afac2fd791504"
+        ],
+        "locked": false
+      },
+      {
+        "id": "C10",
+        "scope": "root/common-test-patterns/pattern-b-codec-round-trip-test",
+        "modality": "prefer",
+        "predicate": "Test datafixerupper Codec serialization/deserialization as a codec round-trip test.",
+        "spans": [
+          "B809a49d30d27e459"
+        ],
+        "locked": false
+      },
+      {
+        "id": "C11",
+        "scope": "root/common-test-patterns/pattern-c-parameterized-test",
+        "modality": "prefer",
+        "predicate": "Test multiple inputs with the same logic as a parameterized test.",
+        "spans": [
+          "B654777aadc359c30"
+        ],
+        "locked": false
+      },
+      {
+        "id": "C12",
+        "scope": "root/common-test-patterns/pattern-d-structural-boundary-test",
+        "modality": "prefer",
+        "predicate": "Enforce module boundaries and ownership rules with a structural boundary test: read `.java` files as text and assert allowed/forbidden imports so production code follows the declared dependency graph.",
+        "spans": [
+          "B286d2438aba089b6",
+          "B4b9f70dab0b33b24"
+        ],
+        "locked": false
+      },
+      {
+        "id": "C13",
+        "scope": "root/common-test-patterns/pattern-e-fixture-based-integration-test",
+        "modality": "prefer",
+        "predicate": "Load test fixtures from `src/test/resources/` and process them in fixture-based integration tests.",
+        "spans": [
+          "B53d4cdd57d7037f3"
+        ],
+        "locked": false
+      }
+    ],
+    "workflow": [
+      {
+        "id": "W1",
+        "scope": "root/running-tests",
+        "kind": "action",
+        "action": "Manually Gradle sync (reimport) in IDEA.",
+        "spans": [
+          "B9bb5e00d4ecec43b"
+        ]
+      },
+      {
+        "id": "W2",
+        "scope": "root/running-tests",
+        "kind": "action",
+        "action": "Build the project via mcmcp_build.",
+        "tool": "mcmcp_build",
+        "spans": [
+          "B35cf5c203791a332"
+        ]
+      },
+      {
+        "id": "W3",
+        "scope": "root/running-tests",
+        "kind": "action",
+        "action": "Run the relevant test via mcmcp_test.",
+        "tool": "mcmcp_test",
+        "spans": [
+          "B5123b6a14e3a85fb"
+        ]
+      }
+    ],
+    "tools": [
+      {
+        "id": "T1",
+        "name": "mcmcp_test",
+        "required_args": [],
+        "observations": [
+          "Runs Gradle `test` tasks; without args runs the whole project; `version=\"1.20.1\"` targets the Stonecutter active node."
+        ],
+        "spans": [
+          "B76341167b29398f9",
+          "B8a6fe1f89a7e55aa"
+        ]
+      },
+      {
+        "id": "T2",
+        "name": "mcmcp_build",
+        "required_args": [],
+        "spans": [
+          "B35cf5c203791a332"
+        ]
+      }
+    ],
+    "output": {
+      "fields": []
+    },
+    "evidence": [
+      {
+        "id": "E1",
+        "kind": "example",
+        "supports": [],
+        "adds_unique_unit": false,
+        "source_blocks": [
+          "B55ecadc12d966027"
+        ]
+      },
+      {
+        "id": "E2",
+        "kind": "example",
+        "supports": [],
+        "adds_unique_unit": false,
+        "source_blocks": [
+          "B23e92699f2841dd7"
+        ]
+      }
+    ],
+    "residual": [
+      {
+        "source_block": "Bfec6741223cfa7f8",
+        "reason": "UNIQUE_EVIDENCE"
+      },
+      {
+        "source_block": "B45e9aab1a057f473",
+        "reason": "UNIQUE_EVIDENCE"
+      },
+      {
+        "source_block": "B7b5b11497c7764bb",
+        "reason": "UNIQUE_EVIDENCE"
+      }
+    ]
+  },
+  "scopes": [
+    {
+      "id": "root",
+      "parent": null,
+      "heading": "root",
+      "headingPath": [
+        "root"
+      ],
+      "depth": 0
+    },
+    {
+      "id": "root/test-framework",
+      "parent": "root",
+      "heading": "Test Framework",
+      "headingPath": [
+        "root",
+        "test-framework"
+      ],
+      "depth": 1
+    },
+    {
+      "id": "root/test-file-conventions",
+      "parent": "root",
+      "heading": "Test File Conventions",
+      "headingPath": [
+        "root",
+        "test-file-conventions"
+      ],
+      "depth": 1
+    },
+    {
+      "id": "root/common-test-patterns",
+      "parent": "root",
+      "heading": "Common Test Patterns",
+      "headingPath": [
+        "root",
+        "common-test-patterns"
+      ],
+      "depth": 1
+    },
+    {
+      "id": "root/common-test-patterns/pattern-a-pure-unit-test",
+      "parent": "root/common-test-patterns",
+      "heading": "Pattern A: Pure unit test",
+      "headingPath": [
+        "root",
+        "common-test-patterns",
+        "pattern-a-pure-unit-test"
+      ],
+      "depth": 2
+    },
+    {
+      "id": "root/common-test-patterns/pattern-b-codec-round-trip-test",
+      "parent": "root/common-test-patterns",
+      "heading": "Pattern B: Codec round-trip test",
+      "headingPath": [
+        "root",
+        "common-test-patterns",
+        "pattern-b-codec-round-trip-test"
+      ],
+      "depth": 2
+    },
+    {
+      "id": "root/common-test-patterns/pattern-c-parameterized-test",
+      "parent": "root/common-test-patterns",
+      "heading": "Pattern C: Parameterized test",
+      "headingPath": [
+        "root",
+        "common-test-patterns",
+        "pattern-c-parameterized-test"
+      ],
+      "depth": 2
+    },
+    {
+      "id": "root/common-test-patterns/pattern-d-structural-boundary-test",
+      "parent": "root/common-test-patterns",
+      "heading": "Pattern D: Structural boundary test",
+      "headingPath": [
+        "root",
+        "common-test-patterns",
+        "pattern-d-structural-boundary-test"
+      ],
+      "depth": 2
+    },
+    {
+      "id": "root/common-test-patterns/pattern-e-fixture-based-integration-test",
+      "parent": "root/common-test-patterns",
+      "heading": "Pattern E: Fixture-based integration test",
+      "headingPath": [
+        "root",
+        "common-test-patterns",
+        "pattern-e-fixture-based-integration-test"
+      ],
+      "depth": 2
+    },
+    {
+      "id": "root/running-tests",
+      "parent": "root",
+      "heading": "Running Tests",
+      "headingPath": [
+        "root",
+        "running-tests"
+      ],
+      "depth": 1
+    }
+  ],
+  "procedures": [],
+  "sourceBlocks": {
+    "B5f4ae0a31182d001": "Test Framework",
+    "Bbee216d03cbcee46": "JUnit Jupiter 5.10.2. No custom runners, no Mockito, no base classes.",
+    "B76341167b29398f9": "Tests are run via Gradle `test` tasks using `mcmcp_test`:",
+    "B8a6fe1f89a7e55aa": "mcmcp_test              # 全 project\nmcmcp_test version=\"1.20.1\"  # Stonecutter active node",
+    "Bc7dccfb640aa67ec": "Test File Conventions",
+    "Bac03783e2c0d1b0c": "| Convention | Rule |\n|-----------|------|\n| File name | `*Test.java` |\n| Class visibility | Package-private (`class FooTest`) |\n| Method naming | Descriptive camelCase (`firstAndLastReturnListEnds`) |\n| Assertions | Static import from `org.junit.jupiter.api.Assertions.*` |\n| Location | Mirror source structure under `src/test/java/` |",
+    "B91f6ecce1faf7fb4": "Common Test Patterns",
+    "B4036dd83c1efa3f1": "Pattern A: Pure unit test",
+    "B5c7afac2fd791504": "Test a utility method by constructing inputs and asserting outputs.",
+    "B55ecadc12d966027": "import org.junit.jupiter.api.Test;\nimport static org.junit.jupiter.api.Assertions.assertEquals;\n\nclass ListAccessorsTest {\n    @Test\n    void firstAndLastReturnListEnds() {\n        List<String> values = List.of(\"first\", \"middle\", \"last\");\n        assertEquals(\"first\", ListAccessors.first(values));\n        assertEquals(\"last\", ListAccessors.last(values));\n    }\n}",
+    "B3ac74b01fed35217": "Pattern B: Codec round-trip test",
+    "B809a49d30d27e459": "Test datafixerupper Codec serialization/deserialization.",
+    "Bfec6741223cfa7f8": "@Test\nvoid parsesAnimationFromCodec() {\n    MyType obj = MyType.CODEC.parse(JsonOps.INSTANCE,\n        JsonParser.parseString(\"{ ... }\")\n    ).getOrThrow(false, AssertionError::new);\n    assertNotNull(obj);\n    assertEquals(expected, obj.someField());\n}",
+    "B74360706aa0198cc": "Pattern C: Parameterized test",
+    "B654777aadc359c30": "Test multiple inputs with the same logic.",
+    "B23e92699f2841dd7": "@ParameterizedTest\n@CsvSource(value = {\n    \"1+2~3.0\",\n    \"5-3~2.0\",\n    \"5/0~0.0\"\n}, delimiter = '~')\nvoid binaryArithmetic(String expression, float expected) {\n    assertEquals(expected, evaluate(expression), 0.0001);\n}",
+    "Bccadf245a28969a3": "Pattern D: Structural boundary test",
+    "B286d2438aba089b6": "Assert that source file contents respect module boundaries. Read `.java` files as text and check for allowed/forbidden imports.",
+    "B45e9aab1a057f473": "@Test\nvoid spawnServiceDoesNotImportRootParticleTypes() throws IOException {\n    String source = Files.readString(Path.of(\n        \"src/main/java/io/github/tt432/eyelib/client/particle/ParticleSpawnService.java\"\n    ));\n    assertTrue(source.contains(\"import io.github.tt432.eyelib.particle.api.ParticleSpawnRequest;\"));\n    assertFalse(source.contains(\"import io.github.tt432.eyelib.client.particle.bedrock.BrParticle;\"));\n}",
+    "B4b9f70dab0b33b24": "This pattern is unique to this project. It enforces module boundaries and ownership rules by verifying that production source code follows the declared dependency graph.",
+    "Bb242dd2d92bd186b": "Pattern E: Fixture-based integration test",
+    "B53d4cdd57d7037f3": "Load test fixtures from `src/test/resources/` and process them.",
+    "B7b5b11497c7764bb": "@TempDir\nPath tempDir;\n\n@Test\nvoid loadsAddonFixture() throws Exception {\n    BedrockAddon addon = BedrockAddonLoader.load(pathToFixture());\n    assertNotNull(addon);\n}",
+    "B2ed5a4adf733da1b": "Running Tests",
+    "B98271b43c67447f5": "All modules run JUnit via the standard Gradle `test` task. To verify changes:",
+    "B9bb5e00d4ecec43b": "在 IDEA 里手动 Gradle sync(reimport)（如果修改了 `build.gradle`）",
+    "B35cf5c203791a332": "Build the project via `mcmcp_build`",
+    "B5123b6a14e3a85fb": "Run the relevant test via `mcmcp_test`"
+  },
+  "stats": {
+    "patches": 1,
+    "repacks": 0,
+    "lastRepackAt": "2026-08-13T08:53:07.064Z",
+    "totalSavedTokens": 0
+  },
+  "transactionLog": [
+    {
+      "ts": "2026-08-13T08:53:07.064Z",
+      "operation": "COMPRESS",
+      "summary": "one-shot: 28 blocks → 3173 chars rendered",
+      "savingTokens": 0
+    }
+  ],
+  "createdAt": "2026-08-13T08:53:07.064Z",
+  "updatedAt": "2026-08-13T08:53:07.075Z"
+}
