@@ -1,3 +1,7 @@
 [submodule "clientsmoke"]
 	path = clientsmoke
 	url = https://github.com/TT432/clientsmoke
+[submodule "third_party/LDLib2"]
+	path = third_party/LDLib2
+	url = https://github.com/TT432/LDLib2-1.20.1-Forge.git
+	branch = update-2.2.34

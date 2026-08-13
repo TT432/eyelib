@@ -57,7 +57,6 @@ test_resources/
 
 # local research / debugging artifacts (tracked work docs unaffected)
 work/perf-ms-frame-plan/spark/
-work/LDLib2-fork/
 work/*.png
 work/rd_*
 work/shot/

@@ -399,7 +399,7 @@ dependencies {
     // LDLib2：节点图编辑器可选前置（docs/specs/nodegraph-visual-molang.md D7）。
     // compileOnly + dev runtime，不 jarJar 嵌入产物；运行时缺失时编辑器入口关闭。
     if (isLegacyForge) {
-        // LDLib2 1.20.1 Forge fork（TT432/LDLib2-1.20.1-Forge，work/LDLib2-fork 构建）：SRG 名，modId=ldlib2，
+        // LDLib2 1.20.1 Forge fork（TT432/LDLib2-1.20.1-Forge，third_party/LDLib2 submodule 构建）：SRG 名，modId=ldlib2，
         // -all.jar 内嵌 yoga/taffy，kotlin-stdlib 需显式补（fastutil 由 MC 提供）。
         modLdlibCompile "com.github.tt432:ldlib2-forge-1.20.1:2.2.34+forge.1.20.1-fork.4"
         modLocalRuntime "com.github.tt432:ldlib2-forge-1.20.1:2.2.34+forge.1.20.1-fork.4"
