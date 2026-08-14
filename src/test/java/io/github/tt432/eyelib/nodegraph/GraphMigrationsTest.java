@@ -560,4 +560,48 @@ class GraphMigrationsTest {
                 "ref.animation 的变量连线应保留");
         assertEquals(GraphLibrary.CURRENT_FORMAT_VERSION, migrated.formatVersion());
     }
+
+    @Test
+    void v11ToV12MigratesAnyVariableDeclsToObject() {
+        GraphData g = new GraphData(List.of(), List.of(),
+                List.of(
+                        VariableDecl.of("qpptaw", PortType.ANY),
+                        VariableDecl.of("speed", PortType.FLOAT),
+                        new VariableDecl("name", PortType.ANY, Optional.empty(),
+                                Optional.of(new JsonPrimitive("a")), VariableDecl.Scope.TEMP)),
+                List.of(), List.of(), Optional.empty());
+        GraphLibrary migrated = GraphMigrations.migrate(library(11, Map.of("root", g)));
+
+        List<VariableDecl> vars = migrated.mainGraph().variables();
+        assertEquals(PortType.OBJECT, vars.get(0).type(), "any 声明应迁移为 object");
+        assertEquals(PortType.FLOAT, vars.get(1).type(), "非 any 声明不动");
+        assertEquals(PortType.OBJECT, vars.get(2).type());
+        assertEquals(VariableDecl.Scope.TEMP, vars.get(2).scope(), "迁移保留 scope");
+        assertEquals(new JsonPrimitive("a"), vars.get(2).defaultValue().orElseThrow(), "迁移保留默认值");
+    }
+
+    @Test
+    void v11ToV12MigratesSubgraphInterfaceParams() {
+        GraphInterface iface = new GraphInterface(
+                List.of(GraphInterface.Param.of("in_any", PortType.ANY),
+                        GraphInterface.Param.of("in_str", PortType.STRING)),
+                GraphInterface.Param.of("result", PortType.ANY));
+        GraphData sub = new GraphData(List.of(), List.of(), List.of(), List.of(), List.of(),
+                Optional.of(iface));
+        GraphLibrary migrated = GraphMigrations.migrate(library(11, Map.of("root", sub)));
+
+        GraphInterface out = migrated.mainGraph().graphInterface().orElseThrow();
+        assertEquals(PortType.OBJECT, out.inputs().get(0).type());
+        assertEquals(PortType.STRING, out.inputs().get(1).type(), "非 any 参数不动");
+        assertEquals(PortType.OBJECT, out.output().type());
+    }
+
+    @Test
+    void v12LibraryWithoutAnyDeclsUntouched() {
+        GraphData g = new GraphData(List.of(), List.of(),
+                List.of(VariableDecl.of("x", PortType.FLOAT)),
+                List.of(), List.of(), Optional.empty());
+        GraphLibrary migrated = GraphMigrations.migrate(library(11, Map.of("root", g)));
+        assertEquals(PortType.FLOAT, migrated.mainGraph().variables().get(0).type());
+    }
 }

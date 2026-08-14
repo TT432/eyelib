@@ -53,7 +53,9 @@
   - 行内编辑：改名（`setName`，同内建检查器）、改型（直连
     `setDataTypeHandle`，同内建黑板属性面板语义）、改作用域（写侧表）、改默认值
     （initialization model `setValue`）。
-  - 可声明类型收窄为 molang 值类型（FLOAT/INT/BOOL/STRING/OBJECT=ANY）——
+  - 可声明类型收窄为 molang 值类型（FLOAT/INT/BOOL/STRING/OBJECT；
+    2026-08-14 起 OBJECT 是独立 PortType，不再是 ANY 别名——见
+    nodegraph-object-and-typed-ports.md §2.1；ANY 不可声明，未决用 UNKNOWN）——
     EXECUTION_FLOW/SLOT/VARIABLE 身份与 *_REF/COLOR 不是可存储的值
     （`EvmTypeHandles.allVariableDeclTypes`，黑板类型选择器同源）。
   - 读/写引用数（2026-08-10 起两列，闭包级）：写入边（→variable.in）计写、

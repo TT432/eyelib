@@ -5,7 +5,7 @@ import io.github.tt432.eyelib.util.PortStringRepresentable;
 import java.util.Locale;
 
 /**
- * 端口类型。物理类型（exec/float/bool/string/array/any）+ 资源引用语义子类型（string 的 sub-type）。
+ * 端口类型。物理类型（exec/float/bool/string/array/object/any）+ 资源引用语义子类型（string 的 sub-type）。
  *
  * <p>兼容矩阵见 {@link #isAssignableTo(PortType)}，规则对应规格 §2.1。
  */
@@ -22,6 +22,8 @@ public enum PortType implements PortStringRepresentable {
     STRING,
     /** Molang 数组（仅 query 返回值可产出）。 */
     ARRAY,
+    /** 结构化对象（molang struct：隐式定义、点分路径成员访问；非标量，不与 number/string 互转）。 */
+    OBJECT,
     /** 结构连接（装配槽，不承载 molang 值）。 */
     SLOT,
     /** 未推导/通配。 */
@@ -61,7 +63,7 @@ public enum PortType implements PortStringRepresentable {
      *   <li>ANY 与任何类型兼容（诊断降级为 warning，由验证器处理）；</li>
      *   <li>number 子类型（FLOAT/INT/BOOL）双向隐式互通（molang 运行时同值域，非 0 即真）；</li>
      *   <li>资源引用类型产出端可接 STRING；资源引用输入端口只接受同类型或 ANY；</li>
-     *   <li>ARRAY 仅接 ARRAY/ANY。</li>
+     *   <li>ARRAY 仅接 ARRAY/ANY；OBJECT 仅接 OBJECT/ANY（ANY/UNKNOWN 通配除外）。</li>
      * </ul>
      */
     public boolean isAssignableTo(PortType target) {
@@ -73,6 +75,8 @@ public enum PortType implements PortStringRepresentable {
         if (this == UNKNOWN || target == UNKNOWN) return true;
         if (this == EXEC || target == EXEC) return false;
         if (this == SLOT || target == SLOT) return false;
+        // OBJECT 是结构值：除 ANY/UNKNOWN 通配（上方已放行）外只与 OBJECT 互通
+        if (this == OBJECT || target == OBJECT) return false;
         // 变量身份 → 任意值端口 = 隐式读；其它类型不能冒充变量身份（ANY 通配除外，验证器严格化）
         if (target == VARIABLE) return false;
         if (this == VARIABLE) return true;

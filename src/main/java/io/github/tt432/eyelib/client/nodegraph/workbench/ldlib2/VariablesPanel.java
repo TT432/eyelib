@@ -193,9 +193,9 @@ final class VariablesPanel extends UIElement {
      * 名字文本按列宽截断（Label 不裁剪，长名会溢出画进类型列——实机截图实证
      * 「actions_and_stuff」渗进类型下拉）。截断时悬浮提示全名。
      */
-    private static String fitName(String name) {
+    private static String fitName(String name, int indentPx) {
         var font = net.minecraft.client.Minecraft.getInstance().font;
-        int avail = nameColumnWidth();
+        int avail = nameColumnWidth() - indentPx;
         if (font.width(name) <= avail) {
             return name;
         }
@@ -398,22 +398,38 @@ final class VariablesPanel extends UIElement {
 
     // ==================== 行构建 ====================
 
+    /** 成员行每级缩进宽（px）：object 父声明的点分前缀成员缩进跟随（截图布局）。 */
+    private static final int MEMBER_INDENT_W = 8;
+
     private void rebuild() {
         table.clearAllScrollViewChildren();
         GraphModel model = lastModel;
         if (model == null) {
             return;
         }
+        List<VariableDeclarationModelBase> vars = new ArrayList<>();
         for (VariableDeclarationModelBase var : model.getGraphVariableModels()) {
             if (var == null) continue;
             if (!filterText.isEmpty() && !var.getName().toLowerCase().contains(filterText)) {
                 continue;
             }
-            table.addScrollViewChild(buildRow(model, var));
+            vars.add(var);
+        }
+        if (!filterText.isEmpty()) {
+            // 筛选态保持平铺（成员脱离父上下文，缩进无参照）
+            for (VariableDeclarationModelBase var : vars) {
+                table.addScrollViewChild(buildRow(model, var, 0));
+            }
+            return;
+        }
+        for (VariableDisplayGrouping.Row<VariableDeclarationModelBase> row : VariableDisplayGrouping.group(
+                vars, VariableDeclarationModelBase::getName,
+                v -> EvmTypeHandles.toPortType(v.getDataTypeHandle()) == PortType.OBJECT)) {
+            table.addScrollViewChild(buildRow(model, row.item(), row.depth()));
         }
     }
 
-    private UIElement buildRow(GraphModel model, VariableDeclarationModelBase var) {
+    private UIElement buildRow(GraphModel model, VariableDeclarationModelBase var, int depth) {
         boolean interfaceVar = var.isInputOrOutput();
         UIElement row = new UIElement()
                 .layout(layout -> layout
@@ -422,8 +438,12 @@ final class VariablesPanel extends UIElement {
                         .flexDirection(FlexDirection.ROW)
                         .gapAll(2));
 
-        // 名字：可拖动标签（拖上画布生成变量节点）+ 双击改名（接口变量只读）
-        UIElement nameCell = buildNameCell(model, var, interfaceVar);
+        // 名字：可拖动标签（拖上画布生成变量节点）+ 双击改名（接口变量只读）；
+        // 成员行（object 声明的点分前缀成员）按深度缩进
+        UIElement nameCell = buildNameCell(model, var, interfaceVar, depth * MEMBER_INDENT_W);
+        if (depth > 0) {
+            nameCell.layout(layout -> layout.paddingLeft(depth * MEMBER_INDENT_W));
+        }
 
         // 类型（同内建黑板属性面板的直连语义）；候选显示用编辑器类型名而非 handle 原文
         Selector<TypeHandle> type = new Selector<>();
@@ -439,7 +459,11 @@ final class VariablesPanel extends UIElement {
             GraphView view = currentView();
             if (view != null && handle != null && handle != var.getDataTypeHandle()) {
                 EvmUndo.push(view, model, currentContext(), "修改变量类型",
-                        "var:type:" + var.getUid(), () -> var.setDataTypeHandle(handle));
+                        "var:type:" + var.getUid(), () -> {
+                            var.setDataTypeHandle(handle);
+                            // 声明类型是 variable 读出口的传播源——改型后重算透传节点
+                            io.github.tt432.eyelib.client.nodegraph.editor.ldlib2.EvmTypePropagation.refresh(model);
+                        });
             }
         });
         type.layout(layout -> layout.width(TYPE_W).heightPercent(100));
@@ -596,12 +620,13 @@ final class VariablesPanel extends UIElement {
      * 落在画布上生成绑定该声明的变量节点）；双击切换为输入框改名，Enter/失焦提交。
      * 接口变量（in/out）不改名但可拖拽（绑定接口声明的变量节点合法）。
      */
-    private UIElement buildNameCell(GraphModel model, VariableDeclarationModelBase var, boolean interfaceVar) {
+    private UIElement buildNameCell(GraphModel model, VariableDeclarationModelBase var, boolean interfaceVar,
+                                    int indentPx) {
         UIElement cell = new UIElement()
                 .layout(layout -> layout.flex(1).minWidth(0).heightPercent(100));
         Label label = new Label();
         label.textStyle(style -> style.fontSize(9));
-        String fitted = fitName(var.getName());
+        String fitted = fitName(var.getName(), indentPx);
         label.setText(fitted);
         if (!fitted.equals(var.getName())) {
             label.getStyle().tooltips(Component.literal(var.getName()));

@@ -9,6 +9,7 @@ import io.github.tt432.eyelib.nodegraph.GraphLibrary;
 import io.github.tt432.eyelib.nodegraph.MolangLiterals;
 import io.github.tt432.eyelib.nodegraph.NodeInstance;
 import io.github.tt432.eyelib.nodegraph.NodeTypes;
+import io.github.tt432.eyelib.nodegraph.PortType;
 import io.github.tt432.eyelib.nodegraph.ShortNames;
 import io.github.tt432.eyelib.nodegraph.VariableDecl;
 import java.util.ArrayList;
@@ -130,7 +131,10 @@ public final class ClientEntityAssembler {
         // （用户 initialize 语句可覆盖初始化值）。
         List<String> varInits = new ArrayList<>();
         for (VariableDecl decl : main.variables()) {
-            if (decl.scope() != VariableDecl.Scope.VARIABLE || decl.defaultValue().isEmpty()) {
+            // OBJECT 声明跳过：对象无标量字面值默认值（根上写标量会遮蔽成员；
+            // 成员默认值声明在成员变量上，如 qpptaw.r = 0）
+            if (decl.scope() != VariableDecl.Scope.VARIABLE || decl.defaultValue().isEmpty()
+                    || decl.type() == PortType.OBJECT) {
                 continue;
             }
             String literal = MolangLiterals.literal(decl.defaultValue().get());

@@ -14,7 +14,8 @@ import java.util.Set;
  * 从原始 JSON 文档提取实体级 molang 变量引用名（规格 nodegraph-animation-variable-refs §2.2）。
  *
  * <p>递归收集全部字符串值，逐个经 {@link MolangTokenizer} 切词，匹配
- * {@code variable.<name>} 与别名 {@code v.<name>}（IDENT DOT IDENT 三连）。
+ * {@code variable.<name>} 与别名 {@code v.<name>}（IDENT DOT IDENT 起，成员链
+ * (DOT IDENT)* 保留点分全名——{@code variable.qpptaw.r} 记为 {@code qpptaw.r}）。
  * 语法残缺的字符串静默跳过（不阻断导入）。{@code temp.}/{@code t.} 不收集
  * （表达式局部，非实体级作用域）；统一从原始文档提取，不依赖图翻译保真度。
  */
@@ -86,9 +87,19 @@ public final class MolangVariableRefs {
             if (name.kind() != MolangTokenKind.IDENTIFIER) {
                 continue;
             }
-            // 赋值左值 = 写：三连后紧跟单等号（EQUAL；`==` 是 EQUAL_EQUAL 不算）
-            boolean isWrite = i + 3 < tokens.size() && tokens.get(i + 3).kind() == MolangTokenKind.EQUAL;
-            (isWrite ? writes : reads).add(name.lexeme());
+            // 成员链保留点分全名（variable.qpptaw.r → "qpptaw.r"）——对象是声明层概念，
+            // 成员是扁平点分变量；父链 OBJECT 声明由 VariableDeclInference.completeObjectParents 补
+            StringBuilder fullName = new StringBuilder(name.lexeme());
+            int j = i + 3;
+            while (j + 1 < tokens.size()
+                    && tokens.get(j).kind() == MolangTokenKind.DOT
+                    && tokens.get(j + 1).kind() == MolangTokenKind.IDENTIFIER) {
+                fullName.append('.').append(tokens.get(j + 1).lexeme());
+                j += 2;
+            }
+            // 赋值左值 = 写：成员链后紧跟单等号（EQUAL；`==` 是 EQUAL_EQUAL 不算）
+            boolean isWrite = j < tokens.size() && tokens.get(j).kind() == MolangTokenKind.EQUAL;
+            (isWrite ? writes : reads).add(fullName.toString());
         }
     }
 }

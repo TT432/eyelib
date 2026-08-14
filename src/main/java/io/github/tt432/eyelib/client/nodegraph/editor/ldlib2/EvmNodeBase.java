@@ -255,10 +255,28 @@ public abstract class EvmNodeBase extends Node {
             applyCapacity(builder.build(), port);
         }
         for (PortDef port : type().outputsOf(view, resolver)) {
-            var builder = context.addOutputPort(port.id(), EvmTypeHandles.toHandle(port.type()))
+            var builder = context.addOutputPort(port.id(), EvmTypeHandles.toHandle(effectiveOutType(port)))
                     .withDisplayName(Component.literal(port.label().orElse(port.id())));
             applyCapacity(builder.build(), port);
         }
+    }
+
+    /**
+     * call 类节点 out 端口的有效类型（v13）：query.call/math.call 按函数返回类型显示
+     * （{@link MolangReturnTypes}），替代 domain 静态 ANY——类型随 function 选项变更
+     * 重跑 defineNode 自动刷新；其余端口保持 domain 声明类型。
+     */
+    private PortType effectiveOutType(PortDef port) {
+        NodeType.Kind kind = type().kind();
+        if ((kind == NodeType.Kind.QUERY_CALL || kind == NodeType.Kind.MATH_CALL)
+                && "out".equals(port.id())) {
+            String fn = readStringOption("function");
+            if (fn == null || fn.isEmpty()) {
+                fn = initialFunction != null ? initialFunction : "";
+            }
+            return io.github.tt432.eyelib.client.nodegraph.MolangReturnTypes.returnTypeOf(fn);
+        }
+        return port.type();
     }
 
     /** LDLib2 默认容量（输入 SINGLE/输出 MULTIPLE）与 domain multi 对齐。 */

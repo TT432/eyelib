@@ -6,6 +6,7 @@ import io.github.tt432.eyelib.molang.type.MolangFloat;
 import io.github.tt432.eyelib.molang.type.MolangFloatSupplierObject;
 import io.github.tt432.eyelib.molang.type.MolangNull;
 import io.github.tt432.eyelib.molang.type.MolangObject;
+import io.github.tt432.eyelib.molang.type.MolangStruct;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Collections;
@@ -111,6 +112,38 @@ public final class MolangScope {
         return name.startsWith("temp.");
     }
 
+    // ---- struct 支持（官方 syntax-guide「Structs」：结构按使用隐式定义）----
+    // 点分名按「根键 + 成员路径」解析：molang 根前缀（variable./temp./context./query./math.）
+    // 的根键取前两段（variable.qpptaw.r → 根 variable.qpptaw、路径 r），其余点名取首段。
+    // 两段名（variable.foo）整名即根键——简单变量的存取路径与 struct 引入前完全一致。
+    private static final java.util.List<String> STRUCT_ROOTS =
+            java.util.List.of("variable", "temp", "context", "query", "math");
+
+    /** 根键：无点 → 整名；molang 根前缀 → 前两段；其余 → 首段。 */
+    private static String rootKeyOf(String name) {
+        int firstDot = name.indexOf('.');
+        if (firstDot < 0) {
+            return name;
+        }
+        if (STRUCT_ROOTS.contains(name.substring(0, firstDot))) {
+            int secondDot = name.indexOf('.', firstDot + 1);
+            return secondDot < 0 ? name : name.substring(0, secondDot);
+        }
+        return name.substring(0, firstDot);
+    }
+
+    /** 根值按剩余成员路径下降；路径为空 → 根本身；任一层缺失/非标量 → null。 */
+    private static @Nullable MolangObject descend(MolangObject root, String name, String rootKey) {
+        if (rootKey.length() == name.length()) {
+            return root;
+        }
+        String path = name.substring(rootKey.length() + 1);
+        if (root instanceof MolangStruct struct) {
+            return struct.getPath(path);
+        }
+        return null;
+    }
+
     /**
      * 清空本层全部 {@code temp.*} 变量。Bedrock 语义：temp 是单次表达式求值的草稿区，
      * 跨求值不保留。求值入口（{@code MolangValue#getObject}）每次调用前执行本方法；
@@ -145,14 +178,33 @@ public final class MolangScope {
     }
 
     public boolean contains(String name) {
-        return cache.containsKey(name) || (parent != null && parent.contains(name));
+        String rootKey = rootKeyOf(name);
+        MolangObject root = cache.get(rootKey);
+        boolean local = root != null && descend(root, name, rootKey) != null;
+        if (!local) {
+            local = cache.containsKey(name);
+        }
+        return local || (parent != null && parent.contains(name));
     }
 
+    /**
+     * 读取变量。点分名按根键 + struct 成员路径解析（见 {@link #rootKeyOf}）；
+     * 根键本层缺失才委托 parent（根级遮蔽语义与引入 struct 前的整键遮蔽一致）。
+     */
     public MolangObject get(String name) {
-        MolangObject result = cache.get(name);
-        if (result != null) return result;
-        if (parent != null) return parent.get(name);
-        return MolangNull.INSTANCE;
+        String rootKey = rootKeyOf(name);
+        MolangObject root = cache.get(rootKey);
+        if (root == null) {
+            if (parent != null) return parent.get(name);
+            return MolangNull.INSTANCE;
+        }
+        MolangObject result = descend(root, name, rootKey);
+        if (result == null) {
+            // 兼容：历史扁平点分键（非 set() 通道写入的整名）兜底直查
+            MolangObject exact = cache.get(name);
+            return exact != null ? exact : MolangNull.INSTANCE;
+        }
+        return result;
     }
 
     public MolangObject set(String name, float value) {
@@ -173,8 +225,25 @@ public final class MolangScope {
         return object;
     }
 
+    /**
+     * 写入变量。点分名的成员路径段写入根键下的 {@link MolangStruct}（缺失/非标量中间层
+     * 按 BE 隐式 struct 语义重建，覆盖既有标量）；整名赋值为 struct 时是引用共享。
+     */
     public MolangObject set(String name, MolangObject object) {
-        putTracked(name, object);
+        String rootKey = rootKeyOf(name);
+        if (rootKey.length() == name.length()) {
+            putTracked(name, object);
+            return object;
+        }
+        MolangObject root = cache.get(rootKey);
+        MolangStruct struct;
+        if (root instanceof MolangStruct existing) {
+            struct = existing;
+        } else {
+            struct = new MolangStruct();
+            putTracked(rootKey, struct);
+        }
+        struct.setPath(name.substring(rootKey.length() + 1), object);
         return object;
     }
 
@@ -186,6 +255,23 @@ public final class MolangScope {
     }
 
     public void remove(String name) {
+        String rootKey = rootKeyOf(name);
+        if (rootKey.length() < name.length()) {
+            // 成员路径：删叶成员；根 struct 保留（空 struct 是无害占位）
+            MolangObject root = cache.get(rootKey);
+            if (root instanceof MolangStruct struct) {
+                String path = name.substring(rootKey.length() + 1);
+                int lastDot = path.lastIndexOf('.');
+                if (lastDot < 0) {
+                    struct.remove(path);
+                } else {
+                    MolangObject parentStruct = struct.getPath(path.substring(0, lastDot));
+                    if (parentStruct instanceof MolangStruct ps) {
+                        ps.remove(path.substring(lastDot + 1));
+                    }
+                }
+            }
+        }
         cache.remove(name);
         if (isTempKey(name)) {
             tempKeys.remove(name);

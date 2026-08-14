@@ -11,6 +11,7 @@ import org.jetbrains.annotations.Nullable;
  *       运行时同值域，互为可赋（见节点图 PortType 兼容矩阵）；</li>
  *   <li>{@code string} —— 字符串；</li>
  *   <li>{@code array} —— molang 数组（仅 query 返回值可产出）；</li>
+ *   <li>{@code object} —— struct 值（成员为命名 molang 值，{@link MolangStruct}）；</li>
  *   <li>{@code dynamic} —— 未标注/无法推断。</li>
  * </ul>
  *
@@ -23,6 +24,8 @@ public enum MolangType {
     BOOL,
     STRING,
     ARRAY,
+    /** struct/object 值（官方 syntax-guide Structs；成员为命名 molang 值）。 */
+    OBJECT,
     DYNAMIC;
 
     /** 是否为 number 子类型（float/int/bool）。 */
@@ -43,6 +46,9 @@ public enum MolangType {
         }
         if (value instanceof MolangArray) {
             return ARRAY;
+        }
+        if (value instanceof MolangStruct) {
+            return OBJECT;
         }
         return value.isNumber() ? FLOAT : DYNAMIC;
     }
@@ -82,6 +88,22 @@ public enum MolangType {
                 yield value.asString();
             }
             case DYNAMIC -> value.asString();
+            case OBJECT -> {
+                if (value instanceof MolangStruct struct) {
+                    StringBuilder sb = new StringBuilder("{");
+                    boolean first = true;
+                    for (var entry : struct.members().entrySet()) {
+                        if (!first) {
+                            sb.append(", ");
+                        }
+                        first = false;
+                        sb.append(entry.getKey()).append(": ")
+                                .append(infer(entry.getValue()).format(entry.getValue()));
+                    }
+                    yield sb.append('}').toString();
+                }
+                yield value.asString();
+            }
         };
     }
 

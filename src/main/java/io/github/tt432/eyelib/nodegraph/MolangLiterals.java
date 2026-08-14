@@ -39,4 +39,24 @@ public final class MolangLiterals {
         }
         return null;
     }
+
+    /**
+     * JSON 字面量 → 声明端口类型（导入推断/折叠声明单一口径）：bool → BOOL；
+     * 整数值数字 → INT，其余数字 → FLOAT；string → STRING；非基元 → null。
+     */
+    public static @Nullable PortType portTypeOf(JsonElement e) {
+        if (e instanceof JsonPrimitive p) {
+            if (p.isBoolean()) {
+                return PortType.BOOL;
+            }
+            if (p.isNumber()) {
+                double v = p.getAsDouble();
+                return v == Math.rint(v) && Math.abs(v) < 9.0e15 ? PortType.INT : PortType.FLOAT;
+            }
+            if (p.isString()) {
+                return PortType.STRING;
+            }
+        }
+        return null;
+    }
 }

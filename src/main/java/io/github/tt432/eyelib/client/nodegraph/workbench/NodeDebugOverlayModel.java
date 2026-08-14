@@ -193,6 +193,7 @@ public final class NodeDebugOverlayModel {
             case BOOL -> MolangType.BOOL;
             case STRING -> MolangType.STRING;
             case ARRAY -> MolangType.ARRAY;
+            case OBJECT -> MolangType.OBJECT;
             default -> MolangType.DYNAMIC;
         };
     }

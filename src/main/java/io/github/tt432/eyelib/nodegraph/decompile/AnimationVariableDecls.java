@@ -80,7 +80,7 @@ public final class AnimationVariableDecls {
                             node.x(), node.y() + 40 + row * 40,
                             Map.of("name", new JsonPrimitive(name)), new LinkedHashMap<>()));
                     wires.add(new Wire(new PortRef(uid, "out"),
-                            new PortRef(node.uid(), NodeTypes.VAR_READ_PREFIX + name)));
+                            new PortRef(node.uid(), NodeTypes.varRefPortId(NodeTypes.VAR_READ_PREFIX, name))));
                     row++;
                 }
                 if (refs.writes().contains(name)) {
@@ -89,7 +89,7 @@ public final class AnimationVariableDecls {
                             node.x(), node.y() + 40 + row * 40,
                             Map.of("name", new JsonPrimitive(name)), new LinkedHashMap<>()));
                     // v9 左读右写：write 是 ref 的右侧输出，接 declvar 节点的 in
-                    wires.add(new Wire(new PortRef(node.uid(), NodeTypes.VAR_WRITE_PREFIX + name),
+                    wires.add(new Wire(new PortRef(node.uid(), NodeTypes.varRefPortId(NodeTypes.VAR_WRITE_PREFIX, name)),
                             new PortRef(uid, "in")));
                     row++;
                 }
@@ -104,6 +104,8 @@ public final class AnimationVariableDecls {
         }
         List<VariableDecl> variables = new ArrayList<>(main.variables());
         variables.addAll(newDecls);
+        // 点分成员名（qpptaw.r）补 OBJECT 父链声明（qpptaw）
+        variables = new ArrayList<>(VariableDeclInference.completeObjectParents(variables));
         Map<String, GraphData> graphs = new LinkedHashMap<>(library.graphs());
         graphs.put(library.main(), new GraphData(nodes, wires, variables,
                 main.placemats(), main.stickyNotes(), main.graphInterface()));

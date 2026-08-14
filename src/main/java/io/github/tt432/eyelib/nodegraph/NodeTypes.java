@@ -357,6 +357,15 @@ public final class NodeTypes {
         return portId.startsWith(VAR_READ_PREFIX) || portId.startsWith(VAR_WRITE_PREFIX);
     }
 
+    /**
+     * 变量引用端口 id：名字中的 '.' 编码为 ':'（LDLib2 端口 id 禁用 '.'——保留给子端口；
+     * molang 变量名是 IDENT(.IDENT)* 不含 ':'，编码在可达名字集上无碰撞）。
+     * 连线两端与 {@link #varRefReadPorts}/{@link #varRefWritePorts} 必须同走本函数。
+     */
+    public static String varRefPortId(String prefix, String name) {
+        return prefix + name.replace('.', ':');
+    }
+
     /** 从选项快照派生命名变量端口（无快照 = 无端口）。 */
     public static List<PortDef> varRefPorts(NodeInstance instance) {
         List<PortDef> ports = new ArrayList<>(varRefReadPorts(instance));
@@ -378,7 +387,7 @@ public final class NodeTypes {
         for (com.google.gson.JsonElement e : reads) {
             String name = e.getAsString();
             // 左读右写（v9）：读 = 左侧输入，写 = 右侧输出；位置即语义，不加文字标记
-            ports.add(PortDef.inLabeled(VAR_READ_PREFIX + name, PortType.VARIABLE, "v." + name));
+            ports.add(PortDef.inLabeled(varRefPortId(VAR_READ_PREFIX, name), PortType.VARIABLE, "v." + name));
         }
         return ports;
     }
@@ -396,7 +405,7 @@ public final class NodeTypes {
         List<PortDef> ports = new ArrayList<>();
         for (com.google.gson.JsonElement e : writes) {
             String name = e.getAsString();
-            ports.add(PortDef.outLabeled(VAR_WRITE_PREFIX + name, PortType.VARIABLE, "v." + name));
+            ports.add(PortDef.outLabeled(varRefPortId(VAR_WRITE_PREFIX, name), PortType.VARIABLE, "v." + name));
         }
         return ports;
     }

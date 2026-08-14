@@ -243,8 +243,10 @@ final class ImportGraphBuilder {
         diagnostics.addAll(constInlined.diagnostics());
         List<NodeInstance> laidOut = GraphLayout.layout(List.copyOf(buildNodes), buildWires);
         List<StickyNote> placed = GraphLayout.placeStickyNotes(stickies, laidOut);
+        List<VariableDecl> decls = VariableDeclInference.completeObjectParents(
+                mergeDecls(collectVariables(laidOut, List.copyOf(buildWires)), folded.foldedDecls()));
         GraphData data = new GraphData(laidOut, List.copyOf(buildWires),
-                mergeDecls(collectVariables(laidOut), folded.foldedDecls()),
+                decls,
                 List.of(), placed, Optional.empty());
         return new ImportResult(
                 new GraphLibrary(GraphLibrary.CURRENT_FORMAT_VERSION, kind, "root", Map.of("root", data)),
@@ -268,15 +270,23 @@ final class ImportGraphBuilder {
         return List.copyOf(out);
     }
 
-    /** 黑板变量声明：收集 variable 节点引用的变量名（不带根，去重排序）。 */
-    private static List<VariableDecl> collectVariables(List<NodeInstance> nodes) {
+    /**
+     * 黑板变量声明：收集 variable 节点引用的变量名（不带根，去重排序）；声明类型经
+     * {@link VariableDeclInference} 从写入来源推断（string 字面量 → STRING 等），
+     * 推不出 → UNKNOWN（v12 起 ANY 不可声明）。
+     */
+    private static List<VariableDecl> collectVariables(List<NodeInstance> nodes, List<Wire> wires) {
         Set<String> names = new TreeSet<>();
         for (NodeInstance n : nodes) {
             if ("variable".equals(n.type())) {
                 addVarName(names, n.options().get("name"));
             }
         }
-        return names.stream().map(name -> VariableDecl.of(name, PortType.ANY)).toList();
+        Map<String, PortType> inferred = VariableDeclInference.inferWrittenTypes(nodes, wires);
+        return names.stream()
+                .map(name -> new VariableDecl(name, VariableDeclInference.declType(inferred, name),
+                        Optional.empty(), Optional.empty(), VariableDecl.Scope.VARIABLE))
+                .toList();
     }
 
     private static void addVarName(Set<String> out, @Nullable JsonElement name) {

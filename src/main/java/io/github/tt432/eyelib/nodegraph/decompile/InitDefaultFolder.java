@@ -269,16 +269,9 @@ final class InitDefaultFolder {
     }
 
     private static PortType typeOf(JsonElement constant) {
-        if (constant instanceof JsonPrimitive p) {
-            if (p.isBoolean()) {
-                return PortType.BOOL;
-            }
-            if (p.isNumber()) {
-                double v = p.getAsDouble();
-                return v == Math.rint(v) && Math.abs(v) < 9.0e15 ? PortType.INT : PortType.FLOAT;
-            }
-        }
-        return PortType.STRING;
+        // 规则收口到 MolangLiterals.portTypeOf；非基元兜底 STRING（literal() 本就不产非基元）
+        PortType type = io.github.tt432.eyelib.nodegraph.MolangLiterals.portTypeOf(constant);
+        return type != null ? type : PortType.STRING;
     }
 
     private static JsonElement valueDefaultOf(NodeInstance set) {

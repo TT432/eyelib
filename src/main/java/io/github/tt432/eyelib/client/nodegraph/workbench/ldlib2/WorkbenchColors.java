@@ -15,6 +15,7 @@ final class WorkbenchColors {
     static final int BADGE_NUMBER = 0xFF55C4C4;
     static final int BADGE_STRING = 0xFF7FC97F;
     static final int BADGE_ARRAY = 0xFFFFFF55;
+    static final int BADGE_OBJECT = 0xFFCE93D8;
     static final int BADGE_DYNAMIC = 0xFFAAAAAA;
     static final int BADGE_ERROR = 0xFFFF5555;
     /** 徽标半透明黑底 pill。 */
@@ -45,6 +46,7 @@ final class WorkbenchColors {
         return switch (type) {
             case STRING -> BADGE_STRING;
             case ARRAY -> BADGE_ARRAY;
+            case OBJECT -> BADGE_OBJECT;
             default -> BADGE_DYNAMIC;
         };
     }

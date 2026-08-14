@@ -12,7 +12,8 @@ import java.util.List;
  * 端口类型 ↔ LDLib2 {@link TypeHandle} 双向映射（规格 §2.1 / 适配层 §2）。
  *
  * <p>映射规则：FLOAT/BOOL/STRING 用内置 handle；EXEC → {@link TypeHandles#EXECUTION_FLOW}；
- * ANY/ARRAY → {@link TypeHandles#OBJECT}；VARIABLE、SLOT 与 6 种 *_REF 为自定义 handle
+ * OBJECT（struct 对象）/ARRAY → {@link TypeHandles#OBJECT}；ANY（通配）→ 自定义
+ * {@code eyelib:any} handle；VARIABLE、SLOT 与 8 种 *_REF 为自定义 handle
  * （{@link TypeHandleHelpers#customType}，identification 形如 {@code eyelib:slot}）。
  *
  * <p>自定义 handle 经 {@link Holder} 懒加载注册恰好一次（customType 重复注册会报错日志）。
@@ -50,6 +51,9 @@ public final class EvmTypeHandles {
     private static final class Holder {
         static final TypeHandle SLOT = colored(SlotValue.class, "eyelib:slot", "Slot", 0xFF9C27B0);
         static final TypeHandle VARIABLE = colored(VariableValue.class, "eyelib:variable", "Variable", 0xFFE91E63);
+        /** ANY 通配（未推导/任意值）：独立 handle，与 OBJECT（struct 值）区分——
+         *  v12 前 ANY/ARRAY 共用内建 OBJECT handle，是「Object 满天飞」的显示根源。 */
+        static final TypeHandle ANY = colored(Object.class, "eyelib:any", "Any", 0xFF9E9E9E);
         static final TypeHandle GEOMETRY_REF = colored(String.class, "eyelib:geometry_ref", "Geometry Ref", 0xFF4CAF50);
         static final TypeHandle TEXTURE_REF = colored(String.class, "eyelib:texture_ref", "Texture Ref", 0xFF8BC34A);
         static final TypeHandle MATERIAL_REF = colored(String.class, "eyelib:material_ref", "Material Ref", 0xFF009688);
@@ -67,6 +71,7 @@ public final class EvmTypeHandles {
                 TypeHandles.BOOL,
                 TypeHandles.STRING,
                 TypeHandles.OBJECT,
+                ANY,
                 SLOT,
                 VARIABLE,
                 GEOMETRY_REF,
@@ -80,8 +85,9 @@ public final class EvmTypeHandles {
                 COLOR);
         /**
          * 黑板变量声明可选类型：变量存的是 molang 值，只收值类型（FLOAT/INT/BOOL/STRING/
-         * OBJECT=ANY）。EXECUTION_FLOW/SLOT/VARIABLE 是结构/身份标注，*_REF 是引用语义
-         * 子类型，COLOR 是复合值（无 molang 标量），均不可声明。
+         * OBJECT=struct 对象）。EXECUTION_FLOW/SLOT/VARIABLE 是结构/身份标注、*_REF 是引用语义
+         * 子类型，COLOR 是复合值（无 molang 标量），均不可声明；ANY 通配不可声明
+         * （未决类型用 UNKNOWN 占位，规格 nodegraph-variable-table §2.6）。
          */
         static final List<TypeHandle> VARIABLE_DECL_TYPES = List.of(
                 TypeHandles.FLOAT,
@@ -102,7 +108,7 @@ public final class EvmTypeHandles {
         return Holder.ALL;
     }
 
-    /** 黑板变量声明可选类型（仅 molang 值类型：FLOAT/INT/BOOL/STRING/OBJECT=ANY）。 */
+    /** 黑板变量声明可选类型（仅 molang 值类型：FLOAT/INT/BOOL/STRING/OBJECT=struct）。 */
     public static List<TypeHandle> allVariableDeclTypes() {
         return Holder.VARIABLE_DECL_TYPES;
     }
@@ -115,7 +121,8 @@ public final class EvmTypeHandles {
             case INT -> TypeHandles.INT;
             case BOOL -> TypeHandles.BOOL;
             case STRING -> TypeHandles.STRING;
-            case ARRAY, ANY -> TypeHandles.OBJECT;
+            case ARRAY, OBJECT -> TypeHandles.OBJECT;
+            case ANY -> Holder.ANY;
             case SLOT -> Holder.SLOT;
             case VARIABLE -> Holder.VARIABLE;
             case GEOMETRY_REF -> Holder.GEOMETRY_REF;
@@ -139,8 +146,9 @@ public final class EvmTypeHandles {
         if (handle.equals(TypeHandles.INT)) return PortType.INT;
         if (handle.equals(TypeHandles.BOOL)) return PortType.BOOL;
         if (handle.equals(TypeHandles.STRING)) return PortType.STRING;
-        if (handle.equals(TypeHandles.OBJECT)) return PortType.ANY;
+        if (handle.equals(TypeHandles.OBJECT)) return PortType.OBJECT;
         if (handle.equals(TypeHandles.UNKNOWN)) return PortType.UNKNOWN;
+        if (handle.equals(Holder.ANY)) return PortType.ANY;
         if (handle.equals(Holder.SLOT)) return PortType.SLOT;
         if (handle.equals(Holder.VARIABLE)) return PortType.VARIABLE;
         if (handle.equals(Holder.GEOMETRY_REF)) return PortType.GEOMETRY_REF;

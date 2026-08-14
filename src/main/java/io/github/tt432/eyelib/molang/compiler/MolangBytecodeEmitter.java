@@ -173,10 +173,19 @@ public final class MolangBytecodeEmitter {
         } else if (expr instanceof BoundMolang.BoundAssignmentExpr assignmentExpr) {
             emitAssignmentExpr(code, assignmentExpr, state);
         } else if (expr instanceof BoundMolang.BoundMemberAccessExpr memberAccessExpr) {
-            code.aload(1);
-            code.ldc(memberAccessName(memberAccessExpr));
-            code.invokestatic(CD_RUNTIME_SUPPORT, "resolveMemberAccess",
-                              MethodTypeDesc.of(CD_MOLANG_OBJECT, CD_MOLANG_SCOPE, CD_STRING));
+            if (isFlattenableMemberOwner(memberAccessExpr.owner())) {
+                code.aload(1);
+                code.ldc(memberAccessName(memberAccessExpr));
+                code.invokestatic(CD_RUNTIME_SUPPORT, "resolveMemberAccess",
+                                  MethodTypeDesc.of(CD_MOLANG_OBJECT, CD_MOLANG_SCOPE, CD_STRING));
+            } else {
+                // 动态成员访问（owner 是 call/index/arrow 等值表达式）：先求 owner 值，
+                // 再按 struct 成员解析（官方 struct 语义；旧行为退化为裸名 scope 查找，属错误）
+                emitExpr(code, memberAccessExpr.owner(), state);
+                code.ldc(memberAccessExpr.memberName());
+                code.invokestatic(CD_RUNTIME_SUPPORT, "memberAccess",
+                                  MethodTypeDesc.of(CD_MOLANG_OBJECT, CD_MOLANG_OBJECT, CD_STRING));
+            }
         } else if (expr instanceof BoundMolang.BoundCallExpr callExpr) {
             code.aload(1);
             code.ldc(resolveCallName(callExpr.callee()));
@@ -598,7 +607,9 @@ public final class MolangBytecodeEmitter {
             return id.name();
         }
         if (target instanceof BoundMolang.BoundMemberAccessExpr memberAccessExpr) {
-            return memberAccessName(memberAccessExpr);
+            // 非静态可扁平化的 owner（call/index/arrow 结果）不可作为写入目标
+            return isFlattenableMemberOwner(memberAccessExpr.owner())
+                    ? memberAccessName(memberAccessExpr) : null;
         }
         if (target instanceof BoundMolang.BoundQueryAccessExpr queryAccessExpr) {
             return resolveAssignmentTargetName(queryAccessExpr.access());
@@ -634,6 +645,13 @@ public final class MolangBytecodeEmitter {
             throw new IllegalStateException("break/continue outside of loop");
         }
         return loopContext;
+    }
+
+    /** 成员链可静态扁平化为点分名 ⟺ owner 链全由 identifier/member-access 构成。 */
+    private static boolean isFlattenableMemberOwner(BoundMolang.BoundExpr owner) {
+        return owner instanceof BoundMolang.BoundIdentifierExpr
+                || (owner instanceof BoundMolang.BoundMemberAccessExpr ownerAccess
+                    && isFlattenableMemberOwner(ownerAccess.owner()));
     }
 
     private static String memberAccessName(BoundMolang.BoundMemberAccessExpr expr) {

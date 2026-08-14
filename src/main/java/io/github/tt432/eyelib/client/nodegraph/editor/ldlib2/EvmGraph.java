@@ -236,6 +236,19 @@ public class EvmGraph extends Graph {
             return super.createNodeFromDiscriminator(type);
         }
 
+        /** 连线增删后重算透传节点（ternary/null_coalesce）的输出类型（EvmTypePropagation）。 */
+        @Override
+        protected void addWire(com.lowdragmc.lowdraglib2.nodegraphtookit.model.wire.WireModel wireModel) {
+            super.addWire(wireModel);
+            EvmTypePropagation.refresh(this);
+        }
+
+        @Override
+        protected void removeWire(com.lowdragmc.lowdraglib2.nodegraphtookit.model.wire.WireModel wireModel) {
+            super.removeWire(wireModel);
+            EvmTypePropagation.refresh(this);
+        }
+
         @Override
         public boolean canAssignTo(PortModel destination, PortModel source) {
             PortType dest = EvmTypeHandles.toPortType(destination.getDataTypeHandle());

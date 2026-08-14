@@ -28,8 +28,34 @@ public final class MolangBinder {
                 state.deferredNotes
         );
     }
-    private BoundMolang.BoundExpr bindExpr(MolangAst.Expr expr, BindingState state, boolean allowQueryProjection) {
-        BoundMolang.BoundExpr boundExpr;
+    /**
+     * 把赋值目标 owner 链中的箭头上提到最外层：parser 将 {@code a->b.c.d} 解析为
+     * {@code MemberAccess(MemberAccess(ArrowAccess(a, b), c), d)}，而语义上
+     * {@code a->b.c.d = v} ≡ {@code a->(b.c.d = v)}。返回 {@code null} = 目标中无箭头。
+     */
+    private static MolangAst.ArrowAccessExpr hoistArrow(MolangAst.Expr expr) {
+        if (expr instanceof MolangAst.ArrowAccessExpr arrow) {
+            return arrow;
+        }
+        if (expr instanceof MolangAst.MemberAccessExpr memberAccess) {
+            MolangAst.ArrowAccessExpr inner = hoistArrow(memberAccess.owner());
+            if (inner != null) {
+                return new MolangAst.ArrowAccessExpr(inner.span(), inner.left(),
+                        new MolangAst.MemberAccessExpr(memberAccess.span(), inner.right(), memberAccess.memberName()));
+            }
+            return null;
+        }
+        if (expr instanceof MolangAst.IndexExpr index) {
+            MolangAst.ArrowAccessExpr inner = hoistArrow(index.owner());
+            if (inner != null) {
+                return new MolangAst.ArrowAccessExpr(inner.span(), inner.left(),
+                        new MolangAst.IndexExpr(index.span(), inner.right(), index.index()));
+            }
+        }
+        return null;
+    }
+
+    private BoundMolang.BoundExpr bindExpr(MolangAst.Expr expr, BindingState state, boolean allowQueryProjection) {        BoundMolang.BoundExpr boundExpr;
         if (expr instanceof MolangAst.UnknownExpr unknownExpr) {
             boundExpr = new BoundMolang.BoundUnknownExpr(unknownExpr.span(), unknownExpr.text());
         } else if (expr instanceof MolangAst.IdentifierExpr identifierExpr) {
@@ -117,8 +143,30 @@ public final class MolangBinder {
                     bindExpr(arrowAccessExpr.right(), state, false)
             );
         } else if (expr instanceof MolangAst.AssignmentExpr assignmentExpr) {
-            BoundMolang.BoundExpr target = bindExpr(assignmentExpr.target(), state, true);
             BoundMolang.BoundExpr value = bindExpr(assignmentExpr.value(), state, true);
+            MolangAst.ArrowAccessExpr hoistedArrow = hoistArrow(assignmentExpr.target());
+            if (hoistedArrow != null) {
+                // 箭头赋值脱糖：a->b.c = v ≡ a->(b.c = v)——写入发生在箭头宿主上下文
+                // （官方 syntax-guide struct 例的形态；左式仅作宿主、不是写入路径的一部分）。
+                // parser 将 a->b.c.d 解析为 MemberAccess(…MemberAccess(ArrowAccess(a, b), c), d)，
+                // hoistArrow 把箭头沿 owner 链上提到最外层。
+                BoundMolang.BoundExpr left = bindExpr(hoistedArrow.left(), state, false);
+                BoundMolang.BoundExpr right = bindExpr(hoistedArrow.right(), state, true);
+                String arrowTargetRoot = AssignmentValidator.leftMostRoot(
+                        AssignmentValidator.unwrapQueryAccess(right)).orElse(null);
+                boolean arrowWritable = AssignmentValidator.isWritableTarget(arrowTargetRoot, right);
+                if (!arrowWritable) {
+                    AssignmentValidator.reportInvalidWriteTarget(state, assignmentExpr, arrowTargetRoot, right);
+                }
+                boundExpr = new BoundMolang.BoundArrowAccessExpr(
+                        hoistedArrow.span(),
+                        left,
+                        new BoundMolang.BoundAssignmentExpr(
+                                assignmentExpr.span(), right, value,
+                                Optional.ofNullable(arrowTargetRoot), arrowWritable)
+                );
+            } else {
+            BoundMolang.BoundExpr target = bindExpr(assignmentExpr.target(), state, true);
             String targetRoot = AssignmentValidator.leftMostRoot(AssignmentValidator.unwrapQueryAccess(target)).orElse(null);
             boolean writableTarget = AssignmentValidator.isWritableTarget(targetRoot, target);
             if (!writableTarget) {
@@ -131,6 +179,7 @@ public final class MolangBinder {
                     Optional.ofNullable(targetRoot),
                     writableTarget
             );
+            }
         } else if (expr instanceof MolangAst.BlockExpr blockExpr) {
             List<BoundMolang.BoundStmt> statements = new ArrayList<>();
             for (MolangAst.Stmt statement : blockExpr.statements()) {

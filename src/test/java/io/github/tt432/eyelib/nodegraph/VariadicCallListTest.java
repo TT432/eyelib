@@ -201,7 +201,7 @@ class VariadicCallListTest {
                                 opts("function", "query.is_name_any", "arg_count", 2), constants)),
                 List.of(wire("q", "out", "root", "scale")));
         GraphLibrary migrated = GraphMigrations.migrate(library(10, main));
-        assertEquals(11, migrated.formatVersion());
+        assertEquals(GraphLibrary.CURRENT_FORMAT_VERSION, migrated.formatVersion());
         NodeInstance q = migrated.mainGraph().findNode("q").orElseThrow();
         assertFalse(q.options().containsKey("arg_count"));
         assertEquals(args("a", "b"), q.options().get("args"));

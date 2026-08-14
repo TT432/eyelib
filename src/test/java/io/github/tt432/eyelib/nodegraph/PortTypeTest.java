@@ -76,8 +76,29 @@ class PortTypeTest {
     }
 
     @Test
-    void colorIsStrictlyColorOnly() {
-        // COLOR 是复合值：仅自连；ANY 通配 / VARIABLE 隐式读 / number 互通全不适用
+    void objectIsStructOnly() {
+        // OBJECT 是结构值：仅自连 + ANY/UNKNOWN 通配；与 number/string/array 全隔离
+        assertTrue(PortType.OBJECT.isAssignableTo(PortType.OBJECT));
+        assertTrue(PortType.OBJECT.isAssignableTo(PortType.ANY));
+        assertTrue(PortType.ANY.isAssignableTo(PortType.OBJECT));
+        assertTrue(PortType.OBJECT.isAssignableTo(PortType.UNKNOWN));
+        assertTrue(PortType.UNKNOWN.isAssignableTo(PortType.OBJECT));
+        assertFalse(PortType.OBJECT.isAssignableTo(PortType.FLOAT));
+        assertFalse(PortType.FLOAT.isAssignableTo(PortType.OBJECT));
+        assertFalse(PortType.OBJECT.isAssignableTo(PortType.STRING));
+        assertFalse(PortType.STRING.isAssignableTo(PortType.OBJECT));
+        assertFalse(PortType.OBJECT.isAssignableTo(PortType.ARRAY));
+        assertFalse(PortType.ARRAY.isAssignableTo(PortType.OBJECT));
+        assertFalse(PortType.OBJECT.isAssignableTo(PortType.EXEC));
+        assertFalse(PortType.OBJECT.isAssignableTo(PortType.SLOT));
+        assertFalse(PortType.OBJECT.isNumber());
+        assertFalse(PortType.OBJECT.isRef());
+        assertTrue(PortType.OBJECT.isValue());
+        org.junit.jupiter.api.Assertions.assertEquals("object", PortType.OBJECT.getSerializedName());
+    }
+
+    @Test
+    void colorIsStrictlyColorOnly() {        // COLOR 是复合值：仅自连；ANY 通配 / VARIABLE 隐式读 / number 互通全不适用
         assertTrue(PortType.COLOR.isAssignableTo(PortType.COLOR));
         assertFalse(PortType.COLOR.isAssignableTo(PortType.ANY));
         assertFalse(PortType.ANY.isAssignableTo(PortType.COLOR));

@@ -85,6 +85,7 @@ LDLib2 有 SubgraphNodeModel，LDLib 1.x graphprocessor 没有子图。为保证
 | `bool` | 布尔（语义标注，物即 float 0/1） | 见上 |
 | `string` | 字符串 | string↔string；资源引用节点产出 string 子类型 |
 | `array` | Molang 数组（仅 query 返回值可产出） | 仅 for_each 输入/索引消费 |
+| `object` | struct 对象（2026-08-14 起，见 nodegraph-object-and-typed-ports.md） | 仅接 object/any/unknown；与 number/string/array 隔离 |
 | `any` | 未推导（未连接端口默认值推导用） | 与任何类型兼容（诊断降级为 warning） |
 
 资源引用类型（`geometry_ref` / `texture_ref` / `material_ref` / `animation_ref` / `ac_ref` / `rc_ref`）是 string 的语义子类型：只能由对应引用节点产出，只能接入对应插槽，保证 ClientEntity 组装时信息完备（引用集合 = 实体的 geometry/texture/material/animation 声明表来源）。

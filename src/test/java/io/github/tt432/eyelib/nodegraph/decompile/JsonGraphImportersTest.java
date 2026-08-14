@@ -569,6 +569,42 @@ class JsonGraphImportersTest {
         assertEquals(built.json(), rebuilt.json());
     }
 
+    /** 导入推断（VariableDeclInference）：折叠常量定 STRING/INT、点分成员补 OBJECT 父、
+     *  非折叠内联字面量定 STRING、ANY 源落 UNKNOWN。 */
+    @Test
+    void importInfersVariableDeclTypes() {
+        JsonObject json = parse("""
+                {
+                  "minecraft:client_entity": {
+                    "description": {
+                      "identifier": "test:infer",
+                      "scripts": {
+                        "initialize": "variable.name = 'abc'; variable.qpptaw.r = 1; variable.qpptaw.x = 2;",
+                        "pre_animation": "variable.s = 'hi'; variable.dyn = query.anim_time;"
+                      },
+                      "scale": "variable.qpptaw.x * 2"
+                    }
+                  }
+                }
+                """);
+        ImportResult imported = JsonGraphImporters.importClientEntity(json);
+        assertFalse(imported.hasErrors(), () -> imported.diagnostics().toString());
+        GraphData graph = imported.library().mainGraph();
+
+        var byName = new java.util.HashMap<String, io.github.tt432.eyelib.nodegraph.VariableDecl>();
+        graph.variables().forEach(d -> byName.put(d.name(), d));
+        // 折叠的 initialize 常量：string → STRING、整数 → INT（含默认值）
+        assertEquals(io.github.tt432.eyelib.nodegraph.PortType.STRING, byName.get("name").type());
+        assertEquals(new JsonPrimitive("abc"), byName.get("name").defaultValue().orElseThrow());
+        assertEquals(io.github.tt432.eyelib.nodegraph.PortType.INT, byName.get("qpptaw.r").type());
+        // 点分成员补 OBJECT 父声明
+        assertEquals(io.github.tt432.eyelib.nodegraph.PortType.OBJECT, byName.get("qpptaw").type());
+        // pre_animation 内联字面量（非折叠路径）：STRING
+        assertEquals(io.github.tt432.eyelib.nodegraph.PortType.STRING, byName.get("s").type());
+        // query.call 源静态 ANY → 无把握 → UNKNOWN（不猜）
+        assertEquals(io.github.tt432.eyelib.nodegraph.PortType.UNKNOWN, byName.get("dyn").type());
+    }
+
     /** (d) 不支持结构：诊断 + 便签 + const 0 占位，其余字段正常导入。 */
     @Test
     void unsupportedStructureKeepsEverythingElse() {

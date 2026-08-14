@@ -36,9 +36,9 @@ final class DebugPanel extends UIElement {
     static final int WIDTH = 260;
 
     /** watch 显示类型选项标签；下标 0 = auto（运行时推断），其余对应 {@link #DISPLAY_TYPES}。 */
-    private static final String[] DISPLAY_TYPE_LABELS = {"auto", "float", "int", "bool", "string"};
+    private static final String[] DISPLAY_TYPE_LABELS = {"auto", "float", "int", "bool", "string", "object"};
     private static final MolangType[] DISPLAY_TYPES =
-            {MolangType.FLOAT, MolangType.INT, MolangType.BOOL, MolangType.STRING};
+            {MolangType.FLOAT, MolangType.INT, MolangType.BOOL, MolangType.STRING, MolangType.OBJECT};
 
     /**
      * 已格式化的表格行（名称/类型/值三列）。

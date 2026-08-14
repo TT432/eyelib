@@ -66,4 +66,22 @@ class MolangVariableRefsTest {
         var json = JsonParser.parseString("[\"v.b=v.a\", \"v.c=v.b\"]");
         assertEquals(Set.of("a", "b", "c"), MolangVariableRefs.collect(json));
     }
+
+    @Test
+    void memberChainsKeepDottedName() {
+        // variable.qpptaw.r = 1 → 成员写 "qpptaw.r"；v.qpptaw.x = 2 → 写；v.qpptaw.y 读取 → 读
+        var json = JsonParser.parseString(
+                "\"variable.qpptaw.r=1; v.qpptaw.x=2; v.out=v.qpptaw.y + 1\"");
+        MolangVariableRefs.Refs refs = MolangVariableRefs.collectWithAccess(json);
+        assertEquals(Set.of("qpptaw.r", "qpptaw.x", "out"), refs.writes());
+        assertEquals(Set.of("qpptaw.y"), refs.reads());
+    }
+
+    @Test
+    void deepMemberChainAndWholeObjectCoexist() {
+        var json = JsonParser.parseString("\"v.a.b.c=1; v.a=v.b\"");
+        MolangVariableRefs.Refs refs = MolangVariableRefs.collectWithAccess(json);
+        assertEquals(Set.of("a.b.c", "a"), refs.writes());
+        assertEquals(Set.of("b"), refs.reads());
+    }
 }

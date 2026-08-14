@@ -93,6 +93,35 @@ class AnimationVariableDeclsTest {
     }
 
     @Test
+    void dottedMemberGetsObjectParentAndSanitizedPort() {
+        GraphLibrary lib = lib(List.of(
+                new NodeInstance("ra", "ref.animation", 100, 200, Map.of(), Map.of())));
+        GraphLibrary out = AnimationVariableDecls.wire(lib,
+                Map.of("ra", refs(Set.of("qpptaw.y"), Set.of("qpptaw.r"))));
+
+        GraphData main = out.mainGraph();
+        // 端口 id 编码 '.'→':'（LDLib2 端口 id 禁 '.'），label 保留点分名
+        assertTrue(main.wires().stream().anyMatch(
+                w -> w.to().node().equals("ra") && w.to().port().equals("read:qpptaw:y")));
+        assertTrue(main.wires().stream().anyMatch(
+                w -> w.from().node().equals("ra") && w.from().port().equals("write:qpptaw:r")));
+        NodeInstance ref = main.findNode("ra").orElseThrow();
+        List<PortDef> ins = NodeTypes.REF_ANIMATION.inputsOf(ref, null);
+        assertTrue(ins.stream().anyMatch(p -> p.id().equals("read:qpptaw:y")
+                && p.label().orElse("").equals("v.qpptaw.y")));
+        List<PortDef> outs = NodeTypes.REF_ANIMATION.outputsOf(ref, null);
+        assertTrue(outs.stream().anyMatch(p -> p.id().equals("write:qpptaw:r")
+                && p.label().orElse("").equals("v.qpptaw.r")));
+
+        // 声明：成员 UNKNOWN + 父链 OBJECT 补齐
+        var byName = new java.util.HashMap<String, io.github.tt432.eyelib.nodegraph.PortType>();
+        main.variables().forEach(d -> byName.put(d.name(), d.type()));
+        assertEquals(io.github.tt432.eyelib.nodegraph.PortType.UNKNOWN, byName.get("qpptaw.r"));
+        assertEquals(io.github.tt432.eyelib.nodegraph.PortType.UNKNOWN, byName.get("qpptaw.y"));
+        assertEquals(io.github.tt432.eyelib.nodegraph.PortType.OBJECT, byName.get("qpptaw"));
+    }
+
+    @Test
     void emptyInputIsNoOp() {
         GraphLibrary lib = lib(List.of(new NodeInstance("ra", "ref.animation", 0, 0,
                 Map.of(), Map.of())));

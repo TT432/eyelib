@@ -14,6 +14,7 @@ import io.github.tt432.eyelib.molang.type.MolangFloat;
 import io.github.tt432.eyelib.molang.type.MolangNull;
 import io.github.tt432.eyelib.molang.type.MolangObject;
 import io.github.tt432.eyelib.molang.type.MolangString;
+import io.github.tt432.eyelib.molang.type.MolangStruct;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -153,6 +154,18 @@ public final class MolangRuntimeSupport {
         }
 
         return invokeMethod(functionInfo, scope, visibleArgs);
+    }
+
+    /**
+     * 动态成员访问（owner 为 call/index/arrow 等值表达式的回退路径）：struct 成员查找，
+     * 非标量/缺失 → {@link MolangNull}。
+     */
+    public static MolangObject memberAccess(MolangObject owner, String member) {
+        if (owner instanceof MolangStruct struct && member != null) {
+            MolangObject value = struct.get(member);
+            return value != null ? value : MolangNull.INSTANCE;
+        }
+        return MolangNull.INSTANCE;
     }
 
     public static MolangObject resolveIndex(MolangScope scope, MolangObject owner, int index) {
@@ -313,6 +326,16 @@ public final class MolangRuntimeSupport {
                 items.add(wrapJavaResult(Array.get(result, i)));
             }
             return new MolangArray<>(items);
+        }
+        // Map → molang struct（Java 侧 query/生产者返回对象的通道；键转字符串）
+        if (result instanceof java.util.Map<?, ?> map) {
+            MolangStruct struct = new MolangStruct();
+            for (java.util.Map.Entry<?, ?> e : map.entrySet()) {
+                if (e.getKey() != null) {
+                    struct.set(String.valueOf(e.getKey()), wrapJavaResult(e.getValue()));
+                }
+            }
+            return struct;
         }
         return MolangNull.INSTANCE;
     }
