@@ -5,10 +5,10 @@ import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.Button;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.Label;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.ScrollerView;
-import com.lowdragmc.lowdraglib2.gui.ui.elements.Selector;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.TextField;
 import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvents;
 import com.lowdragmc.lowdraglib2.gui.ui.utils.UIElementProvider;
+import io.github.tt432.eyelib.client.nodegraph.editor.ldlib2.SearchableSelector;
 import com.lowdragmc.lowdraglib2.nodegraphtookit.api.type.TypeHandle;
 import com.lowdragmc.lowdraglib2.nodegraphtookit.api.type.TypeHandles;
 import com.lowdragmc.lowdraglib2.nodegraphtookit.editor.GraphEditorView;
@@ -446,7 +446,8 @@ final class VariablesPanel extends UIElement {
         }
 
         // 类型（同内建黑板属性面板的直连语义）；候选显示用编辑器类型名而非 handle 原文
-        Selector<TypeHandle> type = new Selector<>();
+        SearchableSelector<TypeHandle> type = new SearchableSelector<>();
+        type.setSearchTextProvider(VariablesPanel::typeDisplayName);
         List<TypeHandle> candidates = new ArrayList<>(model.getVariableSupportTypes());
         if (!candidates.contains(var.getDataTypeHandle())) {
             candidates.add(var.getDataTypeHandle());

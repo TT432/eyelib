@@ -35,6 +35,7 @@ public final class EvmSelectorConfigurator<T> extends ValueConfigurator<T> {
             value = defaultValue;
         }
         inlineContainer.addChild(selector = new LazySelector<>());
+        selector.setSearchTextProvider(candidate -> candidate == null ? "---" : mapping.apply(candidate));
         selector.setCandidates(candidates);
         selector.setCandidateUIProvider(candidate -> new Label()
                 .textStyle(style -> style

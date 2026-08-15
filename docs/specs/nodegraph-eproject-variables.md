@@ -151,6 +151,11 @@ project.json：
 - ~~下拉只是候选供给，不锁死自由输入（外部契约逃生舱，与 short_name 覆盖同理）。~~
   **修订（2026-08-07 用户决策）**：不再保留自由输入行——标识符一律下拉选择；
   选择器宽度随选中内容自适应（文本宽 + 图标/padding，夹取 [60, 320]）。
+- **2026-08-16 用户决策**：所有下拉打开后可打字筛选。`SearchableSelector`（LDLib2
+  `Selector` 子类，适配层单端实现、三版本一致——fork 只服务 1.20.1，不入 fork）在对话框
+  顶部内嵌搜索框，show() 自动聚焦并重置过滤；输入按候选显示文本不区分大小写子串过滤
+  （只切条目 display，不重建 UI，与懒构建兼容）；Enter 选中首个可见候选。接线点：
+  `LazySelector extends SearchableSelector`（全部节点资产选项）+ VariablesPanel 类型列。
 
 ### 4.3 ref 节点 short_name 行
 
