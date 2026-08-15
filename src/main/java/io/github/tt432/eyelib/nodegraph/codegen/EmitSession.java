@@ -38,6 +38,11 @@ import java.util.regex.Pattern;
 /**
  * 单次槽生成的会话（每个 emit 调用一个实例，保证 §2.4-2 确定性）。
  *
+ * <p>入口两类：值/EXEC 汇入槽（IN 端口，如 scale、loop.body、subgraph.output.exec_in）
+ * 与 EXEC 时机源端口（OUT 端口，v13 起：event.* 节点的 exec_out、ac.state 的
+ * on_entry/on_exit；规格 nodegraph-event-nodes）。链拓扑不变（exec_out → exec_in），
+ * 只是发射起点从「槽口反向走」变为「源端口正向走」。
+ *
  * <p>两阶段：
  * <ol>
  *   <li><b>计数</b>：从槽口沿数据流反向遍历，统计每个值节点在本槽 DAG 内的使用次数
@@ -80,7 +85,7 @@ final class EmitSession {
     // ---------- 入口 ----------
 
     CodegenResult emitExpression(String graphName, PortRef slot) {
-        Optional<Frame> frame = openSlot(graphName, slot, false);
+        Optional<Frame> frame = openSlot(graphName, slot);
         if (frame.isEmpty()) {
             return new CodegenResult("0", diagnostics);
         }
@@ -92,20 +97,60 @@ final class EmitSession {
         return new CodegenResult(String.join("; ", parts), diagnostics);
     }
 
-    CodegenResult emitStatementList(String graphName, PortRef slot) {
-        Optional<Frame> frame = openSlot(graphName, slot, true);
+    /**
+     * 从 EXEC OUT 时机源端口正向发射语句序列（v13，规格 nodegraph-event-nodes）：
+     * 源端口（event.* 节点的 exec_out、ac.state 的 on_entry/on_exit）连链首，
+     * 沿 exec_out 正向走到链尾。空链 → "0"。
+     */
+    CodegenResult emitStatementListFrom(String graphName, PortRef source) {
+        Optional<Frame> frame = openSource(graphName, source);
         if (frame.isEmpty()) {
             return new CodegenResult("0", diagnostics);
         }
         Frame f = frame.get();
-        countExecInput(f, slot.node(), slot.port(), true);
-        List<String> statements = emitExecInput(f, slot.node(), slot.port());
+        countExecFrom(f, source.node(), source.port(), true);
+        List<String> statements = new ArrayList<>();
+        for (NodeInstance node : resolveChainForward(f, source.node(), source.port(), true)) {
+            statements.addAll(emitStatement(f, node));
+        }
         String code = statements.isEmpty() ? "0" : String.join("; ", statements);
         return new CodegenResult(code, diagnostics);
     }
 
-    /** 校验图/节点/端口并建立根帧；失败时报告诊断并返回空。 */
-    private Optional<Frame> openSlot(String graphName, PortRef slot, boolean exec) {
+    /** 校验 EXEC OUT 时机源端口并建立根帧；失败时报告诊断并返回空。 */
+    private Optional<Frame> openSource(String graphName, PortRef source) {
+        Optional<GraphData> graph = library.graph(graphName);
+        if (graph.isEmpty()) {
+            error("UNKNOWN_GRAPH", "graph '" + graphName + "' not found in library");
+            return Optional.empty();
+        }
+        Optional<NodeInstance> node = graph.get().findNode(source.node());
+        if (node.isEmpty()) {
+            error("UNKNOWN_NODE", "node '" + source.node() + "' not found in graph '" + graphName + "'",
+                    source.node());
+            return Optional.empty();
+        }
+        Optional<NodeType> type = NodeTypes.get(node.get().type());
+        if (type.isEmpty()) {
+            error("UNKNOWN_NODE_TYPE", "unknown node type '" + node.get().type() + "'", source.node());
+            return Optional.empty();
+        }
+        Frame frame = new Frame(graph.get(), "");
+        Optional<PortDef> port = type.get().outputsOf(node.get(), frame.resolver).stream()
+                .filter(p -> p.id().equals(source.port()) && p.direction() == PortDirection.OUT
+                        && p.type() == PortType.EXEC)
+                .findFirst();
+        if (port.isEmpty()) {
+            error("INVALID_SLOT",
+                    "port '" + source.port() + "' of node '" + source.node()
+                            + "' is not an exec output source port", source.node());
+            return Optional.empty();
+        }
+        return Optional.of(frame);
+    }
+
+    /** 校验图/节点/值输入槽并建立根帧；失败时报告诊断并返回空。 */
+    private Optional<Frame> openSlot(String graphName, PortRef slot) {
         Optional<GraphData> graph = library.graph(graphName);
         if (graph.isEmpty()) {
             error("UNKNOWN_GRAPH", "graph '" + graphName + "' not found in library");
@@ -125,13 +170,11 @@ final class EmitSession {
         Optional<PortDef> port = type.get().inputsOf(node.get(), frame.resolver).stream()
                 .filter(p -> p.id().equals(slot.port()) && p.direction() == PortDirection.IN)
                 .findFirst();
-        boolean ok = exec
-                ? port.isPresent() && port.get().type() == PortType.EXEC
-                : port.isPresent() && port.get().type().isValue();
+        boolean ok = port.isPresent() && port.get().type().isValue();
         if (!ok) {
             error("INVALID_SLOT",
-                    "port '" + slot.port() + "' of node '" + slot.node() + "' is not an "
-                            + (exec ? "exec" : "value") + " input slot", slot.node());
+                    "port '" + slot.port() + "' of node '" + slot.node() + "' is not a value input slot",
+                    slot.node());
             return Optional.empty();
         }
         return Optional.of(frame);
@@ -784,6 +827,51 @@ final class EmitSession {
     }
 
     /**
+     * 正向解析 exec 链（v13 时机源模型）：源端口出线指向链首，沿 exec_out 逐节点前进。
+     * 返回链首→链尾序列；源端口未连线 → 空序列。
+     */
+    private List<NodeInstance> resolveChainForward(Frame f, String sourceUid, String sourcePort,
+                                                   boolean report) {
+        Optional<Wire> first = wireOutOf(f.graph, sourceUid, sourcePort);
+        if (first.isEmpty()) return List.of();
+        List<NodeInstance> chain = new ArrayList<>();
+        Set<String> visited = new HashSet<>();
+        String current = first.get().to().node();
+        while (true) {
+            if (!visited.add(current)) {
+                if (report) error("EXEC_CYCLE", "exec chain contains a cycle at node '" + current + "'", current);
+                break;
+            }
+            Optional<NodeInstance> node = f.graph.findNode(current);
+            if (node.isEmpty()) {
+                if (report) error("UNKNOWN_NODE", "exec chain node '" + current + "' not found", current);
+                break;
+            }
+            chain.add(node.get());
+            Optional<Wire> next = wireOutOf(f.graph, current, "exec_out");
+            if (next.isEmpty()) break;
+            current = next.get().to().node();
+        }
+        return chain;
+    }
+
+    private void countExecFrom(Frame f, String sourceUid, String sourcePort, boolean report) {
+        for (NodeInstance node : resolveChainForward(f, sourceUid, sourcePort, report)) {
+            Optional<NodeType> type = NodeTypes.get(node.type());
+            if (type.isEmpty()) continue;
+            for (PortDef in : type.get().inputsOf(node, f.resolver)) {
+                if (in.direction() == PortDirection.IN && in.type().isValue() && !in.multi()
+                        && !io.github.tt432.eyelib.nodegraph.NodeTypes.isVarRefPort(in.id())) {
+                    countValueInput(f, node.uid(), in.id());
+                }
+            }
+            if (type.get().kind() == NodeType.Kind.EXEC_LOOP || type.get().kind() == NodeType.Kind.EXEC_FOREACH) {
+                countExecInput(f, node.uid(), "body", report);
+            }
+        }
+    }
+
+    /**
      * 解析 exec 链：返回链首→链尾的节点序列。
      * 槽口/前驱 exec_out 的连线指向链尾；节点缺 exec_in 连接即链首。空槽 → 空序列。
      */
@@ -953,6 +1041,13 @@ final class EmitSession {
         return graph.wires().stream()
                 .filter(w -> w.to().node().equals(nodeUid) && w.to().port().equals(portId))
                 .min(Comparator.comparing((Wire w) -> w.from().node()).thenComparing(w -> w.from().port()));
+    }
+
+    /** 某输出端口的出线（多条时取 to (node, port) 字典序最小者，与 EXEC_FANOUT 诊断共存兜底）。 */
+    private static Optional<Wire> wireOutOf(GraphData graph, String nodeUid, String portId) {
+        return graph.wires().stream()
+                .filter(w -> w.from().node().equals(nodeUid) && w.from().port().equals(portId))
+                .min(Comparator.comparing((Wire w) -> w.to().node()).thenComparing(w -> w.to().port()));
     }
 
     private static Out combine(List<Out> parts, String expr) {

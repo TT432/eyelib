@@ -112,11 +112,12 @@ public final class AnimationControllerAssembler {
     private static JsonObject assembleState(AssemblySupport.Ctx ctx, NodeInstance state,
                                             List<NodeInstance> transitionsOut) {
         JsonObject obj = new JsonObject();
-        if (AssemblySupport.hasWire(ctx.main, state.uid(), "on_entry")) {
-            obj.addProperty("on_entry", ctx.emitStatements(state.uid(), "on_entry"));
+        // v13：on_entry/on_exit 是 state 的 EXEC OUT 时机源端口（规格 nodegraph-event-nodes）
+        if (AssemblySupport.hasWireOut(ctx.main, state.uid(), "on_entry")) {
+            obj.addProperty("on_entry", ctx.emitStatementsFrom(state.uid(), "on_entry"));
         }
-        if (AssemblySupport.hasWire(ctx.main, state.uid(), "on_exit")) {
-            obj.addProperty("on_exit", ctx.emitStatements(state.uid(), "on_exit"));
+        if (AssemblySupport.hasWireOut(ctx.main, state.uid(), "on_exit")) {
+            obj.addProperty("on_exit", ctx.emitStatementsFrom(state.uid(), "on_exit"));
         }
 
         // 同 short_name 后来者覆盖；先归并再发射

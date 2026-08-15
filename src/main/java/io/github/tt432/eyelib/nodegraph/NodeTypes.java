@@ -25,6 +25,7 @@ public final class NodeTypes {
     public static final String CAT_QUERY = "query";
     public static final String CAT_OPERATOR = "operator";
     public static final String CAT_EXEC = "exec";
+    public static final String CAT_EVENT = "event";
     public static final String CAT_REF = "reference";
     public static final String CAT_ENTITY = "entity";
     public static final String CAT_RC = "render_controller";
@@ -509,9 +510,8 @@ public final class NodeTypes {
                     NodeOptionDef.string("spawn_egg_base_color", ""),
                     NodeOptionDef.string("spawn_egg_overlay_color", "")),
             List.of(
-                    new PortDef("initialize", PortDirection.IN, PortType.EXEC, Optional.empty(), false),
-                    new PortDef("pre_animation", PortDirection.IN, PortType.EXEC, Optional.empty(), false),
-                    new PortDef("parent_setup", PortDirection.IN, PortType.EXEC, Optional.empty(), false),
+                    // v13：initialize/pre_animation/parent_setup 执行槽 → event.* 源节点
+                    // （见 EVENT_SCRIPT_SLOTS；规格 nodegraph-event-nodes）
                     PortDef.in("scale", PortType.FLOAT, new JsonPrimitive(1)),
                     PortDef.in("scale_x", PortType.FLOAT),
                     PortDef.in("scale_y", PortType.FLOAT),
@@ -534,6 +534,27 @@ public final class NodeTypes {
                     PortDef.in("ref", PortType.ANY),
                     PortDef.in("weight", PortType.FLOAT, new JsonPrimitive(1))),
             List.of(slotOut("entry"))));
+
+    // ---------- Event（执行时机锚点，v13） ----------
+
+    /** event.initialize：ClientEntity scripts.initialize 的执行时机源节点。 */
+    public static final NodeType EVENT_INITIALIZE = register(NodeType.of(
+            "event.initialize", NodeType.Kind.EVENT, CAT_EVENT,
+            List.of(), List.of(), List.of(execOut())));
+    /** event.pre_animation：scripts.pre_animation 的执行时机源节点。 */
+    public static final NodeType EVENT_PRE_ANIMATION = register(NodeType.of(
+            "event.pre_animation", NodeType.Kind.EVENT, CAT_EVENT,
+            List.of(), List.of(), List.of(execOut())));
+    /** event.parent_setup：scripts.parent_setup 的执行时机源节点。 */
+    public static final NodeType EVENT_PARENT_SETUP = register(NodeType.of(
+            "event.parent_setup", NodeType.Kind.EVENT, CAT_EVENT,
+            List.of(), List.of(), List.of(execOut())));
+
+    /** event 节点类型 id → scripts 槽名（装配/迁移/验证共用；同类事件每张主图至多 1 个）。 */
+    public static final Map<String, String> EVENT_SCRIPT_SLOTS = Map.of(
+            "event.initialize", "initialize",
+            "event.pre_animation", "pre_animation",
+            "event.parent_setup", "parent_setup");
 
     // ---------- RenderController ----------
 
@@ -600,15 +621,17 @@ public final class NodeTypes {
                     NodeOptionDef.number("blend_transition", 0.2),
                     NodeOptionDef.bool("blend_via_shortest_path", false)),
             List.of(
-                    new PortDef("on_entry", PortDirection.IN, PortType.EXEC, Optional.empty(), false),
-                    new PortDef("on_exit", PortDirection.IN, PortType.EXEC, Optional.empty(), false),
                     slotIn("animations"),
                     slotIn("transitions"),
                     // v10：incoming = 指向本状态的 transition 图边；粒子/音效（规格 §2.1/2.3）
                     slotIn("incoming"),
                     slotIn("particles"),
                     PortDef.inMulti("sounds", PortType.SOUND_REF)),
-            List.of(slotOut("state"))));
+            // v13：on_entry/on_exit 翻转为 EXEC OUT 时机源端口——链从 state 出发，
+            // 与 event.* 节点同模型（规格 nodegraph-event-nodes）
+            List.of(new PortDef("on_entry", PortDirection.OUT, PortType.EXEC, Optional.empty(), false),
+                    new PortDef("on_exit", PortDirection.OUT, PortType.EXEC, Optional.empty(), false),
+                    slotOut("state"))));
 
     public static final NodeType AC_TRANSITION = register(NodeType.of(
             "ac.transition", NodeType.Kind.AC_TRANSITION, CAT_AC,

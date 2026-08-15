@@ -69,6 +69,10 @@ public final class GraphValidator {
     public static final String LIST_CYCLE = "LIST_CYCLE";
     /** 条目节点不在任何到达 rc.root 的链上（不会出现在输出）。 */
     public static final String ENTRY_ORPHAN = "ENTRY_ORPHAN";
+    /** event.* 节点放在非 client_entity 主图（v13，规格 nodegraph-event-nodes）。 */
+    public static final String EVENT_GRAPH_KIND = "EVENT_GRAPH_KIND";
+    /** 同类 event 节点在主图出现超过 1 个（v13，规格 nodegraph-event-nodes）。 */
+    public static final String EVENT_DUPLICATE = "EVENT_DUPLICATE";
 
     /** SLOT 装配白名单：目标(节点类型.端口) → 允许的源节点类型。 */
     private static final Map<String, String> SLOT_WHITELIST = Map.ofEntries(
@@ -94,8 +98,13 @@ public final class GraphValidator {
     /** 可接表达式槽、list/material 条目 value 或 RC 锚点声明端口的引用节点。 */
     private static final Set<String> VALUE_REFS = Set.of("ref.geometry", "ref.texture", "ref.material");
 
-    /** 根锚点节点类型 id（可达性分析起点）。 */
+    /** 根锚点节点类型 id（可达性分析起点，沿边反向：谁喂给根）。 */
     private static final Set<String> ROOT_ANCHORS = Set.of("entity.root", "rc.root", "ac.root", "subgraph.output");
+
+    /** 时机源锚点（v13，规格 nodegraph-event-nodes）：exec 链从此出发，
+     *  可达性分析沿边正向；ac.state 的 on_entry/on_exit 是 OUT 源端口。 */
+    private static final Set<String> SOURCE_ANCHORS = Set.of(
+            "event.initialize", "event.pre_animation", "event.parent_setup", "ac.state");
 
     /** 装配根节点：其输入是「槽」——未连线 = 字段缺省，不报 UNCONNECTED_INPUT。 */
     private static final Set<String> ASSEMBLY_ROOTS = Set.of("entity.root", "rc.root", "ac.root");
@@ -745,15 +754,21 @@ public final class GraphValidator {
         // 检查 9：环检测（值边 + exec 边，SLOT 边不参与）
         detectValueCycle(byUid, valueExecEdges, out);
 
-        // 可达性（根锚点出发，沿全部合法边反向遍历）
+        // 可达性（根锚点反向 + 时机源锚点正向，v13）
         Set<String> roots = new LinkedHashSet<>();
+        Set<String> sources = new LinkedHashSet<>();
         for (NodeInstance node : byUid.values()) {
             if (ROOT_ANCHORS.contains(node.type())) {
                 roots.add(node.uid());
             }
+            if (SOURCE_ANCHORS.contains(node.type())) {
+                sources.add(node.uid());
+            }
         }
         Set<String> reachable = reverseReachable(roots, allEdges);
+        reachable.addAll(forwardReachable(sources, allEdges));
         Set<String> execReachable = reverseReachable(roots, execEdges);
+        execReachable.addAll(forwardReachable(sources, execEdges));
 
         // 检查 17：可达节点的未连接输入
         for (String uid : reachable) {
@@ -786,8 +801,8 @@ public final class GraphValidator {
             }
         }
 
-        // 检查 18：孤儿 exec 链（存在根锚点才检查，避免无主图时报全图）
-        if (!roots.isEmpty()) {
+        // 检查 18：孤儿 exec 链（存在锚点才检查，避免无主图时报全图）
+        if (!roots.isEmpty() || !sources.isEmpty()) {
             for (Map.Entry<String, NodeInstance> e : byUid.entrySet()) {
                 if (execReachable.contains(e.getKey())) {
                     continue;
@@ -798,7 +813,7 @@ public final class GraphValidator {
                         .anyMatch(p -> p.type() == PortType.EXEC);
                 if (hasExec) {
                     out.add(Diagnostic.warning(ORPHAN_CHAIN,
-                            "exec 链节点未连入任何槽：" + e.getKey() + "（" + e.getValue().type() + "）", e.getKey()));
+                            "exec 链节点未接入任何执行时机锚点或槽：" + e.getKey() + "（" + e.getValue().type() + "）", e.getKey()));
                 }
             }
         }
@@ -809,7 +824,44 @@ public final class GraphValidator {
         // 检查 20：exec.set_var target 必须是 variable 节点
         checkSetVarTargets(graph, byUid, types, out);
 
+        // 检查 21：event.* 时机节点图种与数量约束（v13，规格 nodegraph-event-nodes）
+        checkEventNodes(library, graphName, byUid, out);
+
         return out;
+    }
+
+    /**
+     * 检查 21：event.* 节点只能出现在 CLIENT_ENTITY 库的主图，且同类至多 1 个
+     * （用户决策 2026-08-15：同类事件唯一，语义最清晰）。
+     */
+    private static void checkEventNodes(GraphLibrary library, String graphName,
+                                        Map<String, NodeInstance> byUid, List<Diagnostic> out) {
+        Map<String, Integer> eventCounts = new LinkedHashMap<>();
+        for (NodeInstance node : byUid.values()) {
+            if (NodeTypes.EVENT_SCRIPT_SLOTS.containsKey(node.type())) {
+                eventCounts.merge(node.type(), 1, Integer::sum);
+            }
+        }
+        if (eventCounts.isEmpty()) {
+            return;
+        }
+        boolean entityMain = library.kind() == GraphKind.CLIENT_ENTITY && graphName.equals(library.main());
+        if (!entityMain) {
+            for (NodeInstance node : byUid.values()) {
+                if (NodeTypes.EVENT_SCRIPT_SLOTS.containsKey(node.type())) {
+                    out.add(Diagnostic.error(EVENT_GRAPH_KIND,
+                            "event 节点 " + node.type() + " 只能放在 client_entity 库的主图（当前库种类 "
+                                    + library.kind().getSerializedName() + "，图 '" + graphName + "'）", node.uid()));
+                }
+            }
+            return;
+        }
+        for (Map.Entry<String, Integer> e : eventCounts.entrySet()) {
+            if (e.getValue() > 1) {
+                out.add(Diagnostic.error(EVENT_DUPLICATE,
+                        "同类 event 节点每张主图至多 1 个：" + e.getKey() + " 实际 " + e.getValue()));
+            }
+        }
     }
 
     /** wire 端点解析结果。 */
@@ -970,6 +1022,25 @@ public final class GraphValidator {
             for (String prev : reverse.getOrDefault(uid, List.of())) {
                 if (visited.add(prev)) {
                     queue.add(prev);
+                }
+            }
+        }
+        return visited;
+    }
+
+    /** 从时机源锚点沿边正向（from → to）可达的节点集合（含种子自身）。 */
+    private static Set<String> forwardReachable(Set<String> sources, List<Wire> edges) {
+        Map<String, List<String>> forward = new HashMap<>();
+        for (Wire wire : edges) {
+            forward.computeIfAbsent(wire.from().node(), k -> new ArrayList<>()).add(wire.to().node());
+        }
+        Set<String> visited = new LinkedHashSet<>(sources);
+        Deque<String> queue = new ArrayDeque<>(sources);
+        while (!queue.isEmpty()) {
+            String uid = queue.poll();
+            for (String next : forward.getOrDefault(uid, List.of())) {
+                if (visited.add(next)) {
+                    queue.add(next);
                 }
             }
         }

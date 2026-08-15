@@ -82,16 +82,17 @@ class VariableScopeCodegenTest {
     void setVarWriteFollowsTempScope() {
         GraphData main = graphWithDecl(
                 new NodeInstance("root", "entity.root", 0, 0, Map.of(), Map.of()),
-                List.of(new NodeInstance("s", "exec.set_var", 0, 0, Map.of(), Map.of()),
+                List.of(new NodeInstance("ev", "event.initialize", 0, 0, Map.of(), Map.of()),
+                        new NodeInstance("s", "exec.set_var", 0, 0, Map.of(), Map.of()),
                         varNode("t", "scratch"),
                         new NodeInstance("one", "const.int", 0, 0,
                                 Map.<String, JsonElement>of("value", new JsonPrimitive(1)), Map.of())),
-                List.of(new Wire(new PortRef("s", "target"), new PortRef("t", "in")),
-                        new Wire(new PortRef("one", "out"), new PortRef("s", "value")),
-                        new Wire(new PortRef("s", "exec_out"), new PortRef("root", "initialize"))),
+                List.of(new Wire(new PortRef("ev", "exec_out"), new PortRef("s", "exec_in")),
+                        new Wire(new PortRef("s", "target"), new PortRef("t", "in")),
+                        new Wire(new PortRef("one", "out"), new PortRef("s", "value"))),
                 List.of(new VariableDecl("scratch", PortType.FLOAT, Optional.empty(),
                         Optional.empty(), VariableDecl.Scope.TEMP)));
-        CodegenResult r = new MolangGenerator(lib(main)).emitStatementListFor("root", "root", "initialize");
+        CodegenResult r = new MolangGenerator(lib(main)).emitStatementListFromFor("root", "ev", "exec_out");
         assertFalse(r.hasErrors(), () -> "unexpected errors: " + r.diagnostics());
         assertEquals("temp.scratch = 1", r.code());
     }

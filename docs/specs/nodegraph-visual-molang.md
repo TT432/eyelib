@@ -106,7 +106,7 @@ LDLib2 有 SubgraphNodeModel，LDLib 1.x graphprocessor 没有子图。为保证
 
 每个「求值槽」声明其上下文种类：
 - **表达式槽**（scale、transition 条件、geometry/texture/material 选择式、blend weight、RC color）：图必须归约为单值；生成单个表达式字符串。
-- **执行槽**（initialize、pre_animation、on_entry/on_exit、parent_setup）：exec 流；生成 `stmt; stmt; …` 序列；尾表达式作为返回值（Molang ExprSet 语义）。
+- **执行时机**（v13 起为源模型，规格 nodegraph-event-nodes / ADR-0029）：initialize、pre_animation、parent_setup 是 event.* 事件节点（EXEC OUT 源）；on_entry/on_exit 是 ac.state 的 EXEC OUT 端口。exec 链从时机源出发；生成 `stmt; stmt; …` 序列；尾表达式作为返回值（Molang ExprSet 语义）。
 
 ### 2.4 代码生成规则（不变量）
 
@@ -127,9 +127,9 @@ ClientEntity 文档 = 一个主图，含唯一 EntityRoot 节点。EntityRoot �
 | 插槽 | 字段 | 上下文 | 备注 |
 |---|---|---|---|
 | identifier | identifier | 配置字符串 | 非图 |
-| initialize | scripts.initialize | exec | |
-| pre_animation | scripts.pre_animation | exec | |
-| parent_setup | scripts.parent_setup | exec | |
+| initialize | scripts.initialize | event.initialize 节点 | v13 事件节点（ADR-0029） |
+| pre_animation | scripts.pre_animation | event.pre_animation 节点 | 同上 |
+| parent_setup | scripts.parent_setup | event.parent_setup 节点 | 同上 |
 | scale / scaleX / scaleY / scaleZ | scripts.scale* | 表达式 | |
 | animate[] | scripts.animate | 表达式(blend weight) + AnimationRef/ACRef | 动态条目 |
 | render_controllers[] | render_controllers + renderControllerConditions | RCRef + 条件表达式 | |
@@ -140,7 +140,7 @@ ClientEntity 文档 = 一个主图，含唯一 EntityRoot 节点。EntityRoot �
 
 **RC/AC 文档**（独立图文档类型，同样可制作）：
 - RC 文档：geometry(表达式)、textures[](表达式)、materials[](pattern+表达式)、part_visibility[](骨骼 pattern+条件表达式)、color/is_hurt/on_fire/overlay(表达式组)、ignoreLighting、arrays。
-- AC 文档：状态集合（每状态：on_entry/on_exit exec 槽、animations 条目+blend 表达式、transitions 条目+条件表达式、blend_transition、blend_via_shortest_path）、initial_state。
+- AC 文档：状态集合（每状态：on_entry/on_exit EXEC OUT 时机源端口（v13，ADR-0029）、animations 条目+blend 表达式、transitions 条目+条件表达式、blend_transition、blend_via_shortest_path）、initial_state。
 
 ### 2.6 组装输出（Build 动作）
 

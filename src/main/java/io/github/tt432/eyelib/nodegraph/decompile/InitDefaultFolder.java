@@ -13,10 +13,8 @@ import io.github.tt432.eyelib.nodegraph.VariableDecl;
 import io.github.tt432.eyelib.nodegraph.Wire;
 import org.jspecify.annotations.Nullable;
 
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Deque;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -27,7 +25,7 @@ import java.util.regex.Pattern;
 
 /**
  * 导入期初始化赋值折叠（规格 nodegraph-init-default-fold）：「只写不读的常量初始化语句」
- * （{@code variable.x = 常量}，位于 entity.root.initialize 链上）折叠为变量声明的默认值，
+ * （{@code variable.x = 常量}，位于 event.initialize 链上，v13 事件模型）折叠为变量声明的默认值，
  * 删除 set_var 与 variable 节点。导入时无条件启用——判据严格到产物语义等价：
  * 原语句经 initialize 链导出，折叠后经默认值导出，同进 scripts.initialize。
  *
@@ -35,8 +33,8 @@ import java.util.regex.Pattern;
  * <ul>
  *   <li>恰好一次写入（variable 节点唯一出边 → set_var.target）且零读取（无其它出边）；</li>
  * <li>写入值为常量：value 端口未连线（行内常量，缺省取端口默认值）或连线自 const.* 节点；</li>
- *   <li>从 set_var 沿 exec_out 的路径只经过 exec.set_var/exec.set_temp，
- *       终末落在 entity.root.initialize（pre_animation/动画链不折——常量虽值等价，
+ *   <li>从 set_var 沿 exec_in 反向的路径只经过 exec.set_var/exec.set_temp，
+ *       链首挂在 event.initialize（pre_animation/动画链不折——常量虽值等价，
  *       但导出位置变化，严格等价不折）；</li>
  *   <li>变量名未以文本形式出现在任何行内 molang 常量中（variable.x / v.x 两种写法都挡）；</li>
  *   <li>同图无第二个同名 variable 节点（绑定无歧义）；声明已有不同默认值时不折。</li>
@@ -174,8 +172,8 @@ final class InitDefaultFolder {
             constant = value;
             constUid = src.uid();
         }
-        // exec 路径：set →（仅经 set_var/set_temp）→ entity.root.initialize
-        if (!pathToInitialize(set.uid(), byUid, fromOut)) {
+        // exec 路径：从 set 沿 exec_in 反向，路径只经 set_var/set_temp，链首挂在 event.initialize
+        if (!anchoredAtInitializeEvent(set.uid(), byUid, into)) {
             return null;
         }
         // 声明冲突：已有不同默认值不折（相等视为同一语义，照常折）
@@ -193,17 +191,16 @@ final class InitDefaultFolder {
         return new Candidate(set.uid(), v.uid(), constUid, name, constant);
     }
 
-    /** set 沿 exec_out 前向：路径节点只允许 set_var/set_temp，终末 entity.root.initialize。 */
-    private static boolean pathToInitialize(String setUid, Map<String, NodeInstance> byUid,
-                                            Map<String, List<Wire>> fromOut) {
+    /**
+     * set 沿 exec_in 反向（v13 事件模型）：路径节点只允许 set_var/set_temp，
+     * 链首的 exec_in 必须接 event.initialize 的 exec_out（pre_animation/动画链不折——
+     * 常量虽值等价，但导出位置变化，严格等价不折）。
+     */
+    private static boolean anchoredAtInitializeEvent(String setUid, Map<String, NodeInstance> byUid,
+                                                     Map<String, Map<String, Wire>> into) {
         Set<String> visited = new HashSet<>();
-        Deque<String> stack = new ArrayDeque<>();
-        stack.push(setUid);
-        while (!stack.isEmpty()) {
-            String cur = stack.pop();
-            if (!visited.add(cur)) {
-                continue;
-            }
+        String cur = setUid;
+        while (visited.add(cur)) {
             NodeInstance node = byUid.get(cur);
             if (node == null) {
                 return false;
@@ -212,24 +209,18 @@ final class InitDefaultFolder {
                     && !"exec.set_var".equals(node.type()) && !"exec.set_temp".equals(node.type())) {
                 return false;
             }
-            boolean hasOut = false;
-            for (Wire w : fromOut.getOrDefault(cur, List.of())) {
-                if (!"exec_out".equals(w.from().port())) {
-                    continue;
-                }
-                hasOut = true;
-                NodeInstance to = byUid.get(w.to().node());
-                if (to == null) {
-                    return false;
-                }
-                if ("entity.root".equals(to.type())) {
-                    return "initialize".equals(w.to().port());
-                }
-                stack.push(w.to().node());
+            Wire back = into.getOrDefault(cur, Map.of()).get("exec_in");
+            if (back == null) {
+                return false; // 链首悬空：未挂任何时机锚点，折叠会新增从未执行的语句
             }
-            if (!hasOut) {
-                return false; // dead-end：链未接入 initialize，折叠会新增从未执行的语句
+            NodeInstance prev = byUid.get(back.from().node());
+            if (prev == null) {
+                return false;
             }
+            if ("event.initialize".equals(prev.type())) {
+                return "exec_out".equals(back.from().port());
+            }
+            cur = prev.uid();
         }
         return false;
     }

@@ -515,11 +515,84 @@ class GraphValidatorTest {
 
     @Test
     void connectedExecChainIsNotOrphan() {
+        // v13：链首挂在 event.initialize 的 exec_out（时机源锚点），不再接 entity.root.initialize
         GraphData main = graph(
                 List.of(node("r", "entity.root", Map.of(), opts("scale_x", 1, "scale_y", 1, "scale_z", 1)),
+                        node("ev", "event.initialize"),
                         node("s", "exec.set_temp", opts("name", "temp.t"))),
-                List.of(wire("s", "exec_out", "r", "initialize")));
+                List.of(wire("ev", "exec_out", "s", "exec_in")));
         assertFalse(hasCode(validateGraph(main), GraphValidator.ORPHAN_CHAIN));
+    }
+
+    @Test
+    void acStateWithoutEntryChainIsNotOrphan() {
+        // v13：ac.state 的 on_entry/on_exit 翻转为 EXEC OUT 时机源端口，ac.state 本身是源锚点，
+        // 即使无 on_entry 链也不报 ORPHAN_CHAIN
+        GraphData main = graph(
+                List.of(node("r", "ac.root"), node("s", "ac.state")),
+                List.of(wire("s", "state", "r", "states")));
+        List<Diagnostic> diags = GraphValidator.validate(lib(GraphKind.ANIMATION_CONTROLLER, main));
+        assertFalse(hasCode(diags, GraphValidator.ORPHAN_CHAIN));
+    }
+
+    // ---------- 18b EVENT_GRAPH_KIND / EVENT_DUPLICATE（v13，规格 nodegraph-event-nodes） ----------
+
+    @Test
+    void duplicateEventNodesReported() {
+        // 同类 event 节点每张主图至多 1 个：恰好 1 条 EVENT_DUPLICATE ERROR
+        GraphData main = graph(
+                List.of(node("r", "entity.root"),
+                        node("ev1", "event.initialize"),
+                        node("ev2", "event.initialize")),
+                List.of());
+        List<Diagnostic> diags = GraphValidator.validate(lib(GraphKind.CLIENT_ENTITY, main));
+        List<Diagnostic> errors = byCode(diags, GraphValidator.EVENT_DUPLICATE);
+        assertEquals(1, errors.size());
+        assertEquals(Diagnostic.Severity.ERROR, errors.get(0).severity());
+        assertFalse(hasCode(diags, GraphValidator.EVENT_GRAPH_KIND));
+    }
+
+    @Test
+    void distinctEventNodesAreFine() {
+        GraphData main = graph(
+                List.of(node("r", "entity.root"),
+                        node("ev1", "event.initialize"),
+                        node("ev2", "event.pre_animation")),
+                List.of());
+        List<Diagnostic> diags = GraphValidator.validate(lib(GraphKind.CLIENT_ENTITY, main));
+        assertFalse(hasCode(diags, GraphValidator.EVENT_DUPLICATE));
+        assertFalse(hasCode(diags, GraphValidator.EVENT_GRAPH_KIND));
+    }
+
+    @Test
+    void eventNodeInRenderControllerLibraryIsError() {
+        // event.* 只能出现在 CLIENT_ENTITY 库主图；RC 库主图 → EVENT_GRAPH_KIND
+        GraphData main = graph(
+                List.of(node("r", "rc.root", opts("identifier", "controller.render.a")),
+                        node("ev", "event.initialize")),
+                List.of());
+        List<Diagnostic> diags = GraphValidator.validate(lib(GraphKind.RENDER_CONTROLLER, main));
+        List<Diagnostic> errors = byCode(diags, GraphValidator.EVENT_GRAPH_KIND);
+        assertEquals(1, errors.size());
+        assertEquals(Diagnostic.Severity.ERROR, errors.get(0).severity());
+        assertEquals("ev", errors.get(0).nodeUid().orElseThrow());
+    }
+
+    @Test
+    void eventNodeInClientEntitySubgraphIsError() {
+        // CLIENT_ENTITY 库的非主图（子图）放 event 节点同样报 EVENT_GRAPH_KIND
+        GraphInterface iface = new GraphInterface(List.of(), GraphInterface.Param.of("result", PortType.FLOAT));
+        GraphData sg = subgraph(
+                List.of(node("out", "subgraph.output"), node("ev", "event.initialize")),
+                List.of(), iface);
+        Map<String, GraphData> graphs = Map.of(
+                "root", graph(List.of(node("r", "entity.root")), List.of()),
+                "sg", sg);
+        List<Diagnostic> diags = GraphValidator.validate(lib(GraphKind.CLIENT_ENTITY, graphs));
+        List<Diagnostic> errors = byCode(diags, GraphValidator.EVENT_GRAPH_KIND);
+        assertEquals(1, errors.size());
+        assertEquals("ev", errors.get(0).nodeUid().orElseThrow());
+        assertFalse(hasCode(diags, GraphValidator.EVENT_DUPLICATE));
     }
 
     // ---------- 19 UNDECLARED_VARIABLE (WARNING) ----------
@@ -548,8 +621,9 @@ class GraphValidatorTest {
     void setVarTargetUnconnectedIsError() {
         GraphData main = graph(
                 List.of(node("r", "entity.root", Map.of(), opts("scale_x", 1, "scale_y", 1, "scale_z", 1)),
+                        node("ev", "event.initialize"),
                         node("s", "exec.set_var")),
-                List.of(wire("s", "exec_out", "r", "initialize")));
+                List.of(wire("ev", "exec_out", "s", "exec_in")));
         assertTrue(hasCode(validateGraph(main), GraphValidator.SET_TARGET_NOT_VARIABLE));
     }
 
@@ -557,9 +631,10 @@ class GraphValidatorTest {
     void setVarTargetFromConstantIsError() {
         GraphData main = graph(
                 List.of(node("r", "entity.root", Map.of(), opts("scale_x", 1, "scale_y", 1, "scale_z", 1)),
+                        node("ev", "event.initialize"),
                         node("s", "exec.set_var"),
                         node("c", "const.number")),
-                List.of(wire("s", "exec_out", "r", "initialize"),
+                List.of(wire("ev", "exec_out", "s", "exec_in"),
                         wire("s", "target", "c", "in")));
         assertTrue(hasCode(validateGraph(main), GraphValidator.SET_TARGET_NOT_VARIABLE));
     }
@@ -568,9 +643,10 @@ class GraphValidatorTest {
     void setVarTargetFromVariableNodeIsFine() {
         GraphData main = graph(
                 List.of(node("r", "entity.root", Map.of(), opts("scale_x", 1, "scale_y", 1, "scale_z", 1)),
+                        node("ev", "event.initialize"),
                         node("s", "exec.set_var"),
                         node("v", "variable", opts("name", "foo"))),
-                List.of(wire("s", "exec_out", "r", "initialize"),
+                List.of(wire("ev", "exec_out", "s", "exec_in"),
                         wire("s", "target", "v", "in")),
                 List.of(VariableDecl.of("foo", PortType.FLOAT)));
         assertFalse(hasCode(validateGraph(main), GraphValidator.SET_TARGET_NOT_VARIABLE));
@@ -754,11 +830,12 @@ class GraphValidatorTest {
                 List.of(node("si", "subgraph.input"), node("so", "subgraph.output")),
                 List.of(wire("si", "x", "so", "result")), iface);
 
-        // 主图：entity.root + scale 子图调用 + initialize exec 链 + animate.entry
+        // 主图：entity.root + scale 子图调用 + initialize 事件 exec 链 + animate.entry
         NodeInstance root = node("r", "entity.root", Map.of(),
                 opts("scale_x", 1, "scale_y", 1, "scale_z", 1));
         NodeInstance call = node("sc", "subgraph.call", opts("subgraph", "sg"));
         NodeInstance arg = node("c1", "const.number", opts("value", 2));
+        NodeInstance eventInit = node("ev", "event.initialize");
         NodeInstance setVar = node("sv", "exec.set_var");
         NodeInstance setTarget = node("svt", "variable", opts("name", "foo"));
         NodeInstance animRef = node("ra", "ref.animation",
@@ -766,11 +843,11 @@ class GraphValidatorTest {
         NodeInstance entry = node("ae", "animate.entry");
 
         GraphData main = graph(
-                List.of(root, call, arg, setVar, setTarget, animRef, entry),
+                List.of(root, call, arg, eventInit, setVar, setTarget, animRef, entry),
                 List.of(
                         wire("sc", "result", "r", "scale"),
                         wire("c1", "out", "sc", "x"),
-                        wire("sv", "exec_out", "r", "initialize"),
+                        wire("ev", "exec_out", "sv", "exec_in"),
                         wire("sv", "target", "svt", "in"),
                         wire("ra", "ref", "ae", "ref"),
                         wire("ra", "ref", "r", "animations"),

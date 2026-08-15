@@ -55,21 +55,24 @@ class InitDefaultFolderTest {
         return InitDefaultFolder.fold(nodes, wires, List.of());
     }
 
-    /** 正例：initialize 链上 value 未连线（默认 0）→ 折叠为默认值 0，节点删除。 */
+    /** 正例：event.initialize 链上 value 未连线（默认 0）→ 折叠为默认值 0，节点删除。 */
     @Test
     void foldsUnwiredConstantIntoDefault() {
         List<NodeInstance> nodes = new ArrayList<>(List.of(
                 node("root", "entity.root"),
+                node("ev", "event.initialize"),
                 node("v", "variable", opts("name", "x")),
                 node("s", "exec.set_var")));
         List<Wire> wires = new ArrayList<>(List.of(
                 wire("s", "target", "v", "in"),
-                wire("s", "exec_out", "root", "initialize")));
+                wire("ev", "exec_out", "s", "exec_in")));
 
         InitDefaultFolder.Result r = fold(nodes, wires);
 
         assertFalse(hasNode(r, "v"));
         assertFalse(hasNode(r, "s"));
+        assertTrue(hasNode(r, "ev")); // 事件锚点保留，exec_out 悬空
+        assertFalse(hasWire(r, "ev", "exec_out", "s", "exec_in"));
         assertEquals(1, r.foldedDecls().size());
         VariableDecl d = decl(r, "x").orElseThrow();
         assertEquals(new JsonPrimitive(0), d.defaultValue().orElseThrow());
@@ -82,6 +85,7 @@ class InitDefaultFolderTest {
     void foldLeavesDeclNodesIntact() {
         List<NodeInstance> nodes = new ArrayList<>(List.of(
                 node("root", "entity.root"),
+                node("ev", "event.initialize"),
                 node("v", "variable", opts("name", "x")),
                 node("dv", "variable", opts("name", "y")),
                 node("ra", "ref.animation"),
@@ -89,7 +93,7 @@ class InitDefaultFolderTest {
         List<Wire> wires = new ArrayList<>(List.of(
                 wire("s", "target", "v", "in"),
                 wire("dv", "out", "ra", "read:y"),
-                wire("s", "exec_out", "root", "initialize")));
+                wire("ev", "exec_out", "s", "exec_in")));
 
         InitDefaultFolder.Result r = fold(nodes, wires);
 
@@ -100,11 +104,12 @@ class InitDefaultFolderTest {
         assertTrue(decl(r, "x").isPresent());
     }
 
-    /** 正例：两个 set_var 串联（s1→s2→root），各自折叠且 exec 链逐步塌缩。 */
+    /** 正例：两个 set_var 串联（ev→s1→s2，链尾悬空），各自折叠且 exec 链逐步塌缩。 */
     @Test
     void foldsChainedInitStatements() {
         List<NodeInstance> nodes = new ArrayList<>(List.of(
                 node("root", "entity.root"),
+                node("ev", "event.initialize"),
                 node("v1", "variable", opts("name", "a")),
                 node("v2", "variable", opts("name", "b")),
                 node("s1", "exec.set_var"),
@@ -112,8 +117,8 @@ class InitDefaultFolderTest {
         List<Wire> wires = new ArrayList<>(List.of(
                 wire("s1", "target", "v1", "in"),
                 wire("s2", "target", "v2", "in"),
-                wire("s1", "exec_out", "s2", "exec_in"),
-                wire("s2", "exec_out", "root", "initialize")));
+                wire("ev", "exec_out", "s1", "exec_in"),
+                wire("s1", "exec_out", "s2", "exec_in")));
 
         InitDefaultFolder.Result r = fold(nodes, wires);
 
@@ -122,6 +127,7 @@ class InitDefaultFolderTest {
         assertTrue(decl(r, "b").isPresent());
         assertFalse(hasNode(r, "s1"));
         assertFalse(hasNode(r, "s2"));
+        assertTrue(hasNode(r, "ev")); // 事件锚点保留
     }
 
     /** 正例：值连线自 const.int → 用其常量，孤儿 const 节点一并删除。 */
@@ -129,13 +135,14 @@ class InitDefaultFolderTest {
     void foldsConstWiredValueAndRemovesOrphanConst() {
         List<NodeInstance> nodes = new ArrayList<>(List.of(
                 node("root", "entity.root"),
+                node("ev", "event.initialize"),
                 node("v", "variable", opts("name", "x")),
                 node("s", "exec.set_var"),
                 node("c", "const.int", opts("value", 7))));
         List<Wire> wires = new ArrayList<>(List.of(
                 wire("s", "target", "v", "in"),
                 wire("c", "out", "s", "value"),
-                wire("s", "exec_out", "root", "initialize")));
+                wire("ev", "exec_out", "s", "exec_in")));
 
         InitDefaultFolder.Result r = fold(nodes, wires);
 
@@ -150,13 +157,14 @@ class InitDefaultFolderTest {
     void skipsWhenVariableIsRead() {
         List<NodeInstance> nodes = new ArrayList<>(List.of(
                 node("root", "entity.root"),
+                node("ev", "event.initialize"),
                 node("v", "variable", opts("name", "x")),
                 node("s", "exec.set_var"),
                 node("q", "query.call", opts("function", "query.health", "arg_count", 0))));
         List<Wire> wires = new ArrayList<>(List.of(
                 wire("s", "target", "v", "in"),
                 wire("v", "out", "q", "arg1"),
-                wire("s", "exec_out", "root", "initialize")));
+                wire("ev", "exec_out", "s", "exec_in")));
 
         InitDefaultFolder.Result r = fold(nodes, wires);
 
@@ -169,29 +177,31 @@ class InitDefaultFolderTest {
     void skipsExpressionValue() {
         List<NodeInstance> nodes = new ArrayList<>(List.of(
                 node("root", "entity.root"),
+                node("ev", "event.initialize"),
                 node("v", "variable", opts("name", "x")),
                 node("s", "exec.set_var"),
                 node("m", "op.binary", opts("op", "+"))));
         List<Wire> wires = new ArrayList<>(List.of(
                 wire("s", "target", "v", "in"),
                 wire("m", "out", "s", "value"),
-                wire("s", "exec_out", "root", "initialize")));
+                wire("ev", "exec_out", "s", "exec_in")));
 
         InitDefaultFolder.Result r = fold(nodes, wires);
 
         assertTrue(r.foldedDecls().isEmpty());
     }
 
-    /** 负例：终末是 pre_animation 而非 initialize → 不折（导出位置会变，严格等价不折）。 */
+    /** 负例：链挂在 event.pre_animation 而非 event.initialize → 不折（导出位置会变，严格等价不折）。 */
     @Test
     void skipsPreAnimationTerminal() {
         List<NodeInstance> nodes = new ArrayList<>(List.of(
                 node("root", "entity.root"),
+                node("ev", "event.pre_animation"),
                 node("v", "variable", opts("name", "x")),
                 node("s", "exec.set_var")));
         List<Wire> wires = new ArrayList<>(List.of(
                 wire("s", "target", "v", "in"),
-                wire("s", "exec_out", "root", "pre_animation")));
+                wire("ev", "exec_out", "s", "exec_in")));
 
         InitDefaultFolder.Result r = fold(nodes, wires);
 
@@ -199,18 +209,19 @@ class InitDefaultFolderTest {
         assertTrue(hasNode(r, "s"));
     }
 
-    /** 负例：路径中间夹 exec.call（副作用语句）→ 不折。 */
+    /** 负例：锚点到 set_var 的路径中间夹 exec.call（副作用语句）→ 不折。 */
     @Test
     void skipsWhenCallBetween() {
         List<NodeInstance> nodes = new ArrayList<>(List.of(
                 node("root", "entity.root"),
+                node("ev", "event.initialize"),
                 node("v", "variable", opts("name", "x")),
                 node("s", "exec.set_var"),
                 node("call", "exec.call", opts("function", "query.foo", "arg_count", 0))));
         List<Wire> wires = new ArrayList<>(List.of(
                 wire("s", "target", "v", "in"),
-                wire("s", "exec_out", "call", "exec_in"),
-                wire("call", "exec_out", "root", "initialize")));
+                wire("ev", "exec_out", "call", "exec_in"),
+                wire("call", "exec_out", "s", "exec_in")));
 
         InitDefaultFolder.Result r = fold(nodes, wires);
 
@@ -222,6 +233,7 @@ class InitDefaultFolderTest {
     void skipsTextualReference() {
         List<NodeInstance> nodes = new ArrayList<>(List.of(
                 node("root", "entity.root"),
+                node("ev", "event.initialize"),
                 node("v", "variable", opts("name", "x")),
                 node("s", "exec.set_var"),
                 node("q", "query.call", opts("function", "math.min", "arg_count", 2)),
@@ -229,8 +241,8 @@ class InitDefaultFolderTest {
                         Map.of("value", new JsonPrimitive("variable.x + 1")))));
         List<Wire> wires = new ArrayList<>(List.of(
                 wire("s", "target", "v", "in"),
-                wire("s", "exec_out", "lit", "exec_in"),
-                wire("lit", "exec_out", "root", "initialize")));
+                wire("ev", "exec_out", "s", "exec_in"),
+                wire("s", "exec_out", "lit", "exec_in")));
 
         InitDefaultFolder.Result r = fold(nodes, wires);
 
@@ -242,19 +254,20 @@ class InitDefaultFolderTest {
     void skipsAmbiguousBinding() {
         List<NodeInstance> nodes = new ArrayList<>(List.of(
                 node("root", "entity.root"),
+                node("ev", "event.initialize"),
                 node("v1", "variable", opts("name", "x")),
                 node("v2", "variable", opts("name", "x")),
                 node("s", "exec.set_var")));
         List<Wire> wires = new ArrayList<>(List.of(
                 wire("s", "target", "v1", "in"),
-                wire("s", "exec_out", "root", "initialize")));
+                wire("ev", "exec_out", "s", "exec_in")));
 
         InitDefaultFolder.Result r = fold(nodes, wires);
 
         assertTrue(r.foldedDecls().isEmpty());
     }
 
-    /** 负例：链未接入 entity.root（dead-end）→ 折叠会新增从未执行的语句，不折。 */
+    /** 负例：链未接入任何执行时机锚点（链首 exec_in 悬空，dead-end）→ 折叠会新增从未执行的语句，不折。 */
     @Test
     void skipsDeadEndChain() {
         List<NodeInstance> nodes = new ArrayList<>(List.of(
@@ -274,13 +287,14 @@ class InitDefaultFolderTest {
     void respectsExistingDefaultConflict() {
         List<NodeInstance> nodes = new ArrayList<>(List.of(
                 node("root", "entity.root"),
+                node("ev", "event.initialize"),
                 node("v", "variable", opts("name", "x")),
                 node("s", "exec.set_var"),
                 node("c", "const.int", opts("value", 7))));
         List<Wire> wires = new ArrayList<>(List.of(
                 wire("s", "target", "v", "in"),
                 wire("c", "out", "s", "value"),
-                wire("s", "exec_out", "root", "initialize")));
+                wire("ev", "exec_out", "s", "exec_in")));
 
         InitDefaultFolder.Result conflict = InitDefaultFolder.fold(nodes, wires, List.of(
                 new VariableDecl("x", io.github.tt432.eyelib.nodegraph.PortType.INT,
@@ -300,13 +314,14 @@ class InitDefaultFolderTest {
     void infersDeclTypeFromConstant() {
         List<NodeInstance> nodes = new ArrayList<>(List.of(
                 node("root", "entity.root"),
+                node("ev", "event.initialize"),
                 node("vb", "variable", opts("name", "flag")),
                 node("sb", "exec.set_var"),
                 node("cb", "const.bool", opts("value", true))));
         List<Wire> wires = new ArrayList<>(List.of(
                 wire("sb", "target", "vb", "in"),
                 wire("cb", "out", "sb", "value"),
-                wire("sb", "exec_out", "root", "initialize")));
+                wire("ev", "exec_out", "sb", "exec_in")));
 
         InitDefaultFolder.Result r = fold(nodes, wires);
 

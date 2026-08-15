@@ -264,6 +264,30 @@ public final class EvmNodes {
         }
     }
 
+    @NodeAttribute(name = "event.initialize", group = NodeTypes.CAT_EVENT, graphTypes = {EvmGraph.class})
+    public static final class EventInitialize extends EvmNodeBase {
+        @Override
+        public NodeType type() {
+            return NodeTypes.EVENT_INITIALIZE;
+        }
+    }
+
+    @NodeAttribute(name = "event.pre_animation", group = NodeTypes.CAT_EVENT, graphTypes = {EvmGraph.class})
+    public static final class EventPreAnimation extends EvmNodeBase {
+        @Override
+        public NodeType type() {
+            return NodeTypes.EVENT_PRE_ANIMATION;
+        }
+    }
+
+    @NodeAttribute(name = "event.parent_setup", group = NodeTypes.CAT_EVENT, graphTypes = {EvmGraph.class})
+    public static final class EventParentSetup extends EvmNodeBase {
+        @Override
+        public NodeType type() {
+            return NodeTypes.EVENT_PARENT_SETUP;
+        }
+    }
+
     @NodeAttribute(name = "animate.entry", group = NodeTypes.CAT_ENTITY, graphTypes = {EvmGraph.class})
     public static final class AnimateEntry extends EvmNodeBase {
         @Override
@@ -386,6 +410,7 @@ public final class EvmNodes {
             ExecLoop.class, ExecForEach.class, ExecBreak.class, ExecContinue.class, ExecReturn.class,
             RefGeometry.class, RefTexture.class, RefMaterial.class, RefAnimation.class, RefAc.class, RefRc.class,
             EntityRoot.class, AnimateEntry.class,
+            EventInitialize.class, EventPreAnimation.class, EventParentSetup.class,
             RcRoot.class, ListEntry.class, MaterialEntry.class, PartVisibilityEntry.class,
             AcRoot.class, AcState.class, AcTransition.class, ParticleEntry.class,
             RefParticle.class, RefSound.class,
@@ -439,6 +464,9 @@ public final class EvmNodes {
         names.put("ref.ac", "AC Ref");
         names.put("ref.rc", "RC Ref");
         names.put("entity.root", "Entity Root");
+        names.put("event.initialize", "Event Initialize");
+        names.put("event.pre_animation", "Event Pre Animation");
+        names.put("event.parent_setup", "Event Parent Setup");
         names.put("animate.entry", "Animate Entry");
         names.put("rc.root", "RC Root");
         names.put("list.entry", "List Entry");

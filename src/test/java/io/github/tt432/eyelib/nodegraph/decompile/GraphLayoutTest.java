@@ -436,26 +436,30 @@ class GraphLayoutTest {
         // 语句链（exec_out→exec_in）纵向共列：逐语句独占一列会把脚本拉成每列 1-2 节点
         // 的水平细针（悦灵 65 语句 × 300 ≈ 19500px 宽实证 2026-08-10）。链成员与链尾同层，
         // 列内按执行顺序自上而下；值生产者正常分层在左。
-        NodeInstance root = NodeInstance.of("root", "entity.root", 0, 0);
+        // v13 事件模型：链首挂 event.initialize 的 exec_out（0 代价顺序边，事件锚点同列入链、
+        // 排在链首上方），链尾 exec_out 悬空——entity.root 不再有 initialize 槽口连线。
+        NodeInstance ev = NodeInstance.of("ev", "event.initialize", 0, 0);
         NodeInstance s1 = NodeInstance.of("s1", "exec.set_var", 0, 0);
         NodeInstance s2 = NodeInstance.of("s2", "exec.set_var", 0, 0);
         NodeInstance s3 = NodeInstance.of("s3", "exec.set_var", 0, 0);
         NodeInstance p = NodeInstance.of("p", "const.number", 0, 0);
         List<NodeInstance> laid = GraphLayout.layout(
-                List.of(root, s1, s2, s3, p),
-                List.of(new Wire(new PortRef("s1", "exec_out"), new PortRef("s2", "exec_in")),
+                List.of(ev, s1, s2, s3, p),
+                List.of(new Wire(new PortRef("ev", "exec_out"), new PortRef("s1", "exec_in")),
+                        new Wire(new PortRef("s1", "exec_out"), new PortRef("s2", "exec_in")),
                         new Wire(new PortRef("s2", "exec_out"), new PortRef("s3", "exec_in")),
-                        new Wire(new PortRef("s3", "exec_out"), new PortRef("root", "initialize")),
                         new Wire(new PortRef("p", "out"), new PortRef("s1", "value"))));
 
         float sx = find(laid, "s1").x();
+        assertEquals(sx, find(laid, "ev").x(), "事件锚点应与语句链同列");
         assertEquals(sx, find(laid, "s2").x(), "链成员应同列");
         assertEquals(sx, find(laid, "s3").x(), "链成员应同列");
-        assertEquals(sx + GraphLayout.X_SPACING, find(laid, "root").x(), "root 应在语句列右一列");
         assertEquals(sx - GraphLayout.X_SPACING, find(laid, "p").x(), "值生产者应在语句列左一列");
-        assertTrue(find(laid, "s1").y() < find(laid, "s2").y()
+        assertTrue(find(laid, "ev").y() < find(laid, "s1").y()
+                        && find(laid, "s1").y() < find(laid, "s2").y()
                         && find(laid, "s2").y() < find(laid, "s3").y(),
-                "语句应按执行顺序自上而下：s1=" + find(laid, "s1").y()
+                "事件锚点与语句应按执行顺序自上而下：ev=" + find(laid, "ev").y()
+                        + " s1=" + find(laid, "s1").y()
                         + " s2=" + find(laid, "s2").y() + " s3=" + find(laid, "s3").y());
     }
 
@@ -526,7 +530,8 @@ class GraphLayoutTest {
             }
             prev = "s" + i;
         }
-        wires.add(new Wire(new PortRef("s4", "exec_out"), new PortRef("root", "initialize")));
+        nodes.add(NodeInstance.of("ev", "event.initialize", 0, 0));
+        wires.add(new Wire(new PortRef("ev", "exec_out"), new PortRef("s1", "exec_in")));
         nodes.add(NodeInstance.of("ref", "ref.animation", 0, 0));
         nodes.add(NodeInstance.of("rv", "variable", 0, 0));
         wires.add(new Wire(new PortRef("ref", "ref"), new PortRef("root", "animations")));
@@ -552,11 +557,12 @@ class GraphLayoutTest {
         // 纯写入变量（全部边都是 set_var→variable.in）共位到写入方右侧相邻列并贴其 y——
         // 按 10 人切块 + 中位数居中的旧共位会把写变量摊成多列、dy 拉到 1500（悦灵实证）。
         NodeInstance root = NodeInstance.of("root", "entity.root", 0, 0);
+        NodeInstance ev = NodeInstance.of("ev", "event.initialize", 0, 0);
         NodeInstance s = NodeInstance.of("s", "exec.set_var", 0, 0);
         NodeInstance v = NodeInstance.of("v", "variable", 0, 0);
         List<NodeInstance> laid = GraphLayout.layout(
-                List.of(root, s, v),
-                List.of(new Wire(new PortRef("s", "exec_out"), new PortRef("root", "initialize")),
+                List.of(root, ev, s, v),
+                List.of(new Wire(new PortRef("ev", "exec_out"), new PortRef("s", "exec_in")),
                         new Wire(new PortRef("s", "target"), new PortRef("v", "in"))));
 
         // 芯片锚定快照：写芯片贴写入方右缘（set_var 宽 190 + 净距 8）、同行

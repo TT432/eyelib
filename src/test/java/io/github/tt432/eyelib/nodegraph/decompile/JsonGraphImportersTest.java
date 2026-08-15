@@ -7,6 +7,7 @@ import static io.github.tt432.eyelib.nodegraph.decompile.DecompileTestSupport.no
 import static io.github.tt432.eyelib.nodegraph.decompile.DecompileTestSupport.opts;
 import static io.github.tt432.eyelib.nodegraph.decompile.DecompileTestSupport.parse;
 import static io.github.tt432.eyelib.nodegraph.decompile.DecompileTestSupport.wireSource;
+import static io.github.tt432.eyelib.nodegraph.decompile.DecompileTestSupport.wireTarget;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -440,9 +441,11 @@ class JsonGraphImportersTest {
         ImportResult imported = JsonGraphImporters.importClientEntity(json);
         assertFalse(imported.hasErrors(), () -> imported.diagnostics().toString());
 
-        // exec 链：set_var → set_var → loop → return，链尾接 root.initialize
+        // v13 事件模型：event.initialize 源节点 exec_out 引出链
+        // set_var → set_var → loop → return，链尾 exec_out 悬空（不再接回 root）
         GraphData graph = imported.library().mainGraph();
-        assertEquals("exec.return", wireSourceNode(graph, "root", "initialize").type());
+        NodeInstance evInit = firstByType(graph.nodes(), "event.initialize");
+        assertEquals("exec.set_var", wireTargetNode(graph, evInit.uid(), "exec_out").type());
 
         AssemblyResult assembled = ClientEntityAssembler.assemble(imported.library());
         assertFalse(assembled.hasErrors(), () -> assembled.diagnostics().toString());
@@ -513,6 +516,7 @@ class JsonGraphImportersTest {
                         List.of(
                                 node("root", "entity.root", opts("identifier", "test:cycle"),
                                         opts("scale_x", 2)),
+                                node("ev_init", "event.initialize"),
                                 node("s1", "exec.set_var", Map.of(),
                                         opts("value", 1)),
                                 node("s1t", "variable", opts("name", "foo")),
@@ -527,7 +531,7 @@ class JsonGraphImportersTest {
                                 node("rg1", "ref.geometry",
                                         opts("short_name", "default", "identifier", "geometry.test.model"))),
                         List.of(
-                                wire("s1", "exec_out", "root", "initialize"),
+                                wire("ev_init", "exec_out", "s1", "exec_in"),
                                 wire("s1", "target", "s1t", "in"),
                                 wire("cscale", "out", "root", "scale"),
                                 wire("ra1", "ref", "ae1", "ref"),
@@ -1057,9 +1061,9 @@ class JsonGraphImportersTest {
         return new Wire(new PortRef(fromNode, fromPort), new PortRef(toNode, toPort));
     }
 
-    private static NodeInstance wireSourceNode(GraphData graph, String nodeUid, String portId) {
-        String sourceUid = wireSource(graph.wires(), nodeUid, portId);
-        return graph.findNode(sourceUid).orElseThrow();
+    private static NodeInstance wireTargetNode(GraphData graph, String nodeUid, String portId) {
+        String targetUid = wireTarget(graph.wires(), nodeUid, portId);
+        return graph.findNode(targetUid).orElseThrow();
     }
 
     private static Map<String, String> stringMap(JsonObject obj) {

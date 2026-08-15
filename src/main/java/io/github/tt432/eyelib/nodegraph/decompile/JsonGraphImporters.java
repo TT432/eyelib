@@ -27,7 +27,8 @@ import org.jspecify.annotations.Nullable;
  *   <li>ClientEntity：description.identifier → entity.root 选项；geometry/textures/materials/
  *       animations/animation_controllers 声明表 → ref.* 节点，建节点即接线到 entity.root
  *       对应声明端口（规格 D1：声明 = 连线）；
- *       scripts.initialize/pre_animation/parent_setup（string 或 string[]）→ exec 链；
+ *       scripts.initialize/pre_animation/parent_setup（string 或 string[]）→ event.* 源节点
+ *       + exec 链（v13 事件模型，规格 nodegraph-event-nodes）；
  *       scale/scaleX/scaleY/scaleZ → 表达式槽（数值/布尔 → 内联常量，字符串 → molang 反编译连线）；
  *       animate → animate.entry（短名解析到声明表 ref.animation/ref.ac，未声明 → 补独立
  *       ref.animation + UNKNOWN_REFERENCE）；render_controllers → rc.condition_entry + ref.rc；</li>
@@ -360,10 +361,15 @@ public final class JsonGraphImporters {
     private static void importEntityScripts(ImportGraphBuilder b, JsonObject scripts,
                                             Map<String, String> animationRefs,
                                             Map<String, String> acRefs) {
+        // v13 事件模型：scripts 执行槽 → event.* 源节点 + 其 exec_out 引出的链
         for (String slot : List.of("initialize", "pre_animation", "parent_setup")) {
             JsonElement v = scripts.get(slot);
             if (v != null) {
-                b.wireStatements(statementSources(b, "scripts." + slot, v), "root", slot);
+                List<String> sources = statementSources(b, "scripts." + slot, v);
+                if (!sources.isEmpty()) {
+                    String eventUid = b.addNode("ev", "event." + slot, Map.of());
+                    b.wireStatementsFrom(sources, eventUid, "exec_out");
+                }
             }
         }
         JsonElement animate = scripts.get("animate");
@@ -719,11 +725,11 @@ public final class JsonGraphImporters {
 
         JsonElement onEntry = state.get("on_entry");
         if (onEntry != null) {
-            b.wireStatements(statementSources(b, label + ".on_entry", onEntry), stateUid, "on_entry");
+            b.wireStatementsFrom(statementSources(b, label + ".on_entry", onEntry), stateUid, "on_entry");
         }
         JsonElement onExit = state.get("on_exit");
         if (onExit != null) {
-            b.wireStatements(statementSources(b, label + ".on_exit", onExit), stateUid, "on_exit");
+            b.wireStatementsFrom(statementSources(b, label + ".on_exit", onExit), stateUid, "on_exit");
         }
         JsonElement animations = state.get("animations");
         if (animations != null) {

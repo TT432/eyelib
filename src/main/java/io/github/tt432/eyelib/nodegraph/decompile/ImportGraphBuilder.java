@@ -194,10 +194,12 @@ final class ImportGraphBuilder {
     }
 
     /**
-     * molang 语句序列列表（Bedrock 允许 string 或 string[]，调用方拆好）→ exec 链接入消费 EXEC 槽。
-     * 多段顺序拼接：前段链尾 exec_out → 后段链首 exec_in；最终链尾 → 消费槽（反向汇入槽模型）。
+     * molang 语句序列列表（Bedrock 允许 string 或 string[]，调用方拆好）→ exec 链挂到
+     * 时机源端口（v13 事件模型：event.* 的 exec_out / ac.state 的 on_entry、on_exit）。
+     * 多段顺序拼接：源端口 → 首段链首 exec_in；前段链尾 exec_out → 后段链首 exec_in。
      */
-    void wireStatements(List<String> sources, String consumerUid, String consumerPort) {
+    void wireStatementsFrom(List<String> sources, String sourceUid, String sourcePort) {
+        PortRef firstHead = null;
         PortRef prevTail = null;
         for (String source : sources) {
             if (source.isBlank()) {
@@ -208,14 +210,17 @@ final class ImportGraphBuilder {
             if (frag.chain().isEmpty()) {
                 continue;
             }
+            if (firstHead == null) {
+                firstHead = new PortRef(prefix + frag.chain().get(0), "exec_in");
+            }
             if (prevTail != null) {
                 wire(prevTail.node(), prevTail.port(), prefix + frag.chain().get(0), "exec_in");
             }
             List<String> chain = frag.chain();
             prevTail = new PortRef(prefix + chain.get(chain.size() - 1), "exec_out");
         }
-        if (prevTail != null) {
-            wire(prevTail.node(), prevTail.port(), consumerUid, consumerPort);
+        if (firstHead != null) {
+            wire(sourceUid, sourcePort, firstHead.node(), firstHead.port());
         }
     }
 

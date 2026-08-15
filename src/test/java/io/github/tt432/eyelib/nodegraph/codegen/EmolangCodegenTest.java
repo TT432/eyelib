@@ -210,11 +210,12 @@ class EmolangCodegenTest {
         register("function sethp(val) { variable.hp = val; return 0; }");
         GraphLibrary lib = library(
                 List.of(node("root", "entity.root"),
+                        node("ev", "event.initialize"),
                         node("c", "exec.call", opts("function", "sethp")),
                         num("nine", 9)),
-                List.of(wire("c", "exec_out", "root", "initialize"),
+                List.of(wire("ev", "exec_out", "c", "exec_in"),
                         wire("nine", "out", "c", "arg1")));
-        CodegenResult r = new MolangGenerator(lib).emitStatementListFor("root", "root", "initialize");
+        CodegenResult r = new MolangGenerator(lib).emitStatementListFromFor("root", "ev", "exec_out");
         assertFalse(r.hasErrors(), () -> "errors: " + r.diagnostics());
         assertTrue(r.code().contains("variable.hp = (9)"), () -> r.code());
     }

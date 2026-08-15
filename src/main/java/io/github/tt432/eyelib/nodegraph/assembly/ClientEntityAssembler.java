@@ -25,7 +25,8 @@ import java.util.Optional;
  *
  * <p>产出 {@code {"format_version":"1.10.0","minecraft:client_entity":{"description":{...}}}}。
  * 主图恰 1 个 entity.root（验证器保证）。description 字段：
- * identifier；scripts（initialize/pre_animation/parent_setup EXEC 槽未连线则跳过，
+ * identifier；scripts（initialize/pre_animation/parent_setup = event.* 源节点的 exec 链，
+ * 节点缺席或 exec_out 未连线则跳过，
  * scale/scaleX/scaleY/scaleZ 有连线或内联值才输出，animate 恒输出 weight 表达式）；
  * 声明表（geometry/textures/materials = {@link DeclarationTables} 从 RC 锚点派生；
  * animations = entity.root 两端口，ref.ac 同发进 animations 表）；
@@ -142,9 +143,14 @@ public final class ClientEntityAssembler {
                 varInits.add("variable." + decl.name() + " = " + literal);
             }
         }
+        // v13 事件模型（规格 nodegraph-event-nodes）：scripts 三个执行槽 = event.* 源节点
+        // 引出的 exec 链；event 节点缺席或 exec_out 未连线 = 该槽不输出
         for (String slot : List.of("initialize", "pre_animation", "parent_setup")) {
-            if (AssemblySupport.hasWire(main, root.uid(), slot)) {
-                String statements = ctx.emitStatements(root.uid(), slot);
+            String eventType = "event." + slot;
+            Optional<NodeInstance> event = main.nodes().stream()
+                    .filter(n -> n.type().equals(eventType)).findFirst();
+            if (event.isPresent() && AssemblySupport.hasWireOut(main, event.get().uid(), "exec_out")) {
+                String statements = ctx.emitStatementsFrom(event.get().uid(), "exec_out");
                 if (slot.equals("initialize") && !varInits.isEmpty()) {
                     statements = String.join("; ", varInits) + "; " + statements;
                 }

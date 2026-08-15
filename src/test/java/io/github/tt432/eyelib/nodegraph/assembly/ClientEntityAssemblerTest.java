@@ -55,6 +55,8 @@ class ClientEntityAssemblerTest {
                 List.of(
                         node("root", "entity.root", opts("identifier", "test:full"),
                                 opts("scale_x", 2)),
+                        // v13：initialize 链挂 event.initialize 事件源节点
+                        node("ev1", "event.initialize"),
                         node("s1", "exec.set_var"),
                         node("s1t", "variable", opts("name", "foo")),
                         node("cscale", "const.number", opts("value", 1.5)),
@@ -75,7 +77,8 @@ class ClientEntityAssemblerTest {
                         node("rm1", "ref.material",
                                 opts("short_name", "default", "material", "entity_alphatest"))),
                 List.of(
-                        wire("s1", "exec_out", "root", "initialize"),
+                        // v13：event.initialize.exec_out → 链首 exec_in；链尾 exec_out 悬空
+                        wire("ev1", "exec_out", "s1", "exec_in"),
                         wire("s1", "target", "s1t", "in"),
                         wire("cscale", "out", "root", "scale"),
                         wire("ae1", "entry", "root", "animate"),
@@ -441,10 +444,13 @@ class ClientEntityAssemblerTest {
     void variableDefaultsPrependUserInitialize() {
         GraphData main = graphWithVars(
                 List.of(node("root", "entity.root", opts("identifier", "test:inits2")),
+                        // v13：initialize 链挂 event.initialize 事件源节点
+                        node("ev1", "event.initialize"),
                         node("s1", "exec.set_var"),
                         node("s1t", "variable", opts("name", "foo"))),
                 List.of(wire("s1", "target", "s1t", "in"),
-                        wire("s1", "exec_out", "root", "initialize")),
+                        // v13：event.initialize.exec_out → 链首 exec_in；链尾 exec_out 悬空
+                        wire("ev1", "exec_out", "s1", "exec_in")),
                 List.of(new io.github.tt432.eyelib.nodegraph.VariableDecl("hp", PortType.FLOAT,
                         Optional.empty(), Optional.of(new com.google.gson.JsonPrimitive(3)),
                         io.github.tt432.eyelib.nodegraph.VariableDecl.Scope.VARIABLE)));
@@ -456,5 +462,43 @@ class ClientEntityAssemblerTest {
                 .getAsJsonObject("description").getAsJsonObject("scripts");
         // 初始化在前（用户语句可覆盖初始化值）
         assertEquals("variable.hp = 3; variable.foo = 0", scripts.get("initialize").getAsString());
+    }
+
+    // ---------- v13：无 event 节点 / event 节点 exec_out 悬空 → scripts 槽不输出 ----------
+
+    @Test
+    void unanchoredChainEmitsNoScript() {
+        // 无 event 节点：exec 链不接任何执行时机锚点 → initialize 不输出
+        // （ORPHAN_CHAIN 警告由 GraphValidator 产生，覆盖见 GraphValidatorTest.orphanChain）
+        GraphLibrary lib = lib(GraphKind.CLIENT_ENTITY, graph(
+                List.of(
+                        node("root", "entity.root", opts("identifier", "test:noevent")),
+                        node("s1", "exec.set_var"),
+                        node("s1t", "variable", opts("name", "foo"))),
+                List.of(wire("s1", "target", "s1t", "in"))));
+
+        AssemblyResult r = ClientEntityAssembler.assemble(lib);
+
+        assertFalse(r.hasErrors(), () -> r.diagnostics().toString());
+        JsonObject desc = r.json().getAsJsonObject("minecraft:client_entity").getAsJsonObject("description");
+        assertFalse(desc.has("scripts"));
+    }
+
+    @Test
+    void eventNodeUnwiredEmitsNoScript() {
+        // event.initialize 在场但 exec_out 悬空（链未接到事件源）→ initialize 不输出
+        GraphLibrary lib = lib(GraphKind.CLIENT_ENTITY, graph(
+                List.of(
+                        node("root", "entity.root", opts("identifier", "test:evunwired")),
+                        node("ev1", "event.initialize"),
+                        node("s1", "exec.set_var"),
+                        node("s1t", "variable", opts("name", "foo"))),
+                List.of(wire("s1", "target", "s1t", "in"))));
+
+        AssemblyResult r = ClientEntityAssembler.assemble(lib);
+
+        assertFalse(r.hasErrors(), () -> r.diagnostics().toString());
+        JsonObject desc = r.json().getAsJsonObject("minecraft:client_entity").getAsJsonObject("description");
+        assertFalse(desc.has("scripts"));
     }
 }

@@ -7,8 +7,8 @@ import io.github.tt432.eyelib.nodegraph.PortRef;
  * 图 → Molang 代码生成器（规格 §2.4 / T4 / T5）。
  *
  * <p>按槽生成：表达式槽（值类 IN 端口，如 entity.root 的 scale）产出单表达式
- * ExprSet；执行槽（EXEC 类 IN 端口，如 initialize）产出语句序列 ExprSet。
- * 每次 emit 是独立会话（temp.gN 编号、子图调用计数均从 0 开始），同图同输出。
+ * ExprSet；执行链（EXEC 时机源端口，如 event.initialize 的 exec_out）产出语句序列
+ * ExprSet。每次 emit 是独立会话（temp.gN 编号、子图调用计数均从 0 开始），同图同输出。
  *
  * <p>不可连接的输入按「constants 内联值 → 端口默认值 → UNCONNECTED_INPUT 错误（0 占位）」
  * 顺序回退；诊断收集在 {@link CodegenResult} 中，不抛异常。
@@ -31,13 +31,13 @@ public final class MolangGenerator {
     }
 
     /**
-     * 生成执行槽的完整 ExprSet（语句序列）。
+     * 从 EXEC OUT 时机源端口生成完整 ExprSet（语句序列，v13 起，规格 nodegraph-event-nodes）。
      *
      * @param graphName 图名（库内键）
-     * @param slot      EXEC 类 IN 端口（如 entity.root 的 initialize）
+     * @param source    EXEC 类 OUT 端口（event.* 节点的 exec_out、ac.state 的 on_entry/on_exit）
      */
-    public CodegenResult emitStatementList(String graphName, PortRef slot) {
-        return new EmitSession(library).emitStatementList(graphName, slot);
+    public CodegenResult emitStatementListFrom(String graphName, PortRef source) {
+        return new EmitSession(library).emitStatementListFrom(graphName, source);
     }
 
     /** {@link #emitExpression(String, PortRef)} 的 (节点 uid, 端口 id) 便捷形。 */
@@ -45,9 +45,9 @@ public final class MolangGenerator {
         return emitExpression(graphName, new PortRef(nodeUid, portId));
     }
 
-    /** {@link #emitStatementList(String, PortRef)} 的 (节点 uid, 端口 id) 便捷形。 */
-    public CodegenResult emitStatementListFor(String graphName, String nodeUid, String portId) {
-        return emitStatementList(graphName, new PortRef(nodeUid, portId));
+    /** {@link #emitStatementListFrom(String, PortRef)} 的 (节点 uid, 端口 id) 便捷形。 */
+    public CodegenResult emitStatementListFromFor(String graphName, String nodeUid, String portId) {
+        return emitStatementListFrom(graphName, new PortRef(nodeUid, portId));
     }
 
     /**

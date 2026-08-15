@@ -66,9 +66,9 @@ final class AssemblySupport {
             return r.code();
         }
 
-        /** 执行槽生成（EXEC 槽 → 语句序列）；诊断透传。 */
-        String emitStatements(String nodeUid, String portId) {
-            CodegenResult r = generator.emitStatementListFor(library.main(), nodeUid, portId);
+        /** 执行时机源生成（EXEC OUT 端口 → 语句序列，v13 事件模型）；诊断透传。 */
+        String emitStatementsFrom(String nodeUid, String portId) {
+            CodegenResult r = generator.emitStatementListFromFor(library.main(), nodeUid, portId);
             diagnostics.addAll(r.diagnostics());
             return r.code();
         }
@@ -145,6 +145,12 @@ final class AssemblySupport {
     static boolean hasWire(GraphData graph, String nodeUid, String portId) {
         return graph.wires().stream()
                 .anyMatch(w -> w.to().node().equals(nodeUid) && w.to().port().equals(portId));
+    }
+
+    /** 某输出端口是否有出线（时机源端口判定用）。 */
+    static boolean hasWireOut(GraphData graph, String nodeUid, String portId) {
+        return graph.wires().stream()
+                .anyMatch(w -> w.from().node().equals(nodeUid) && w.from().port().equals(portId));
     }
 
     /** 值槽「有内容」判定：有连线，或 constants 含该端口内联值（内联值由 codegen 处理）。 */

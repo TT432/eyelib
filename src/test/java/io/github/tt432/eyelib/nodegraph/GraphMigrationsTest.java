@@ -18,7 +18,8 @@ import org.junit.jupiter.api.Test;
 /**
  * {@link GraphMigrations}：format_version 1 → 2 变量节点化迁移契约（规格 §3.4）
  * + 2 → 3 声明连线化迁移契约（规格 nodegraph-declaration-wiring §2.4）
- * + 3 → 4 RenderController 内联迁移契约（规格 nodegraph-inline-render-controller §5）。
+ * + 3 → 4 RenderController 内联迁移契约（规格 nodegraph-inline-render-controller §5）
+ * + 12 → 13 执行时机事件化迁移契约（规格 nodegraph-event-nodes）。
  * v2 起点用例走完整迁移链，断言的是 v9 终态（v8→v9 翻转 set_var.target 写入方向）。
  */
 class GraphMigrationsTest {
@@ -603,5 +604,77 @@ class GraphMigrationsTest {
                 List.of(), List.of(), Optional.empty());
         GraphLibrary migrated = GraphMigrations.migrate(library(11, Map.of("root", g)));
         assertEquals(PortType.FLOAT, migrated.mainGraph().variables().get(0).type());
+    }
+
+    // ---------- v12 → v13：执行时机事件化（规格 nodegraph-event-nodes） ----------
+
+    @Test
+    void v12InitializeSlotBecomesEventNode() {
+        // v12 图：set_var 链尾 exec_out 接 entity.root.initialize 槽（旧 EXEC IN 槽）
+        GraphLibrary old = library(12, Map.of("root", graph(
+                List.of(rootNode(),
+                        node("s1", "exec.set_var"),
+                        node("s1t", "variable", opts("name", "a")),
+                        node("c1", "const.number", opts("value", 1))),
+                List.of(wire("s1", "exec_out", "root", "initialize"),
+                        wire("s1", "target", "s1t", "in"),
+                        wire("c1", "out", "s1", "value")))));
+
+        GraphLibrary migrated = GraphMigrations.migrate(old);
+
+        assertEquals(GraphLibrary.CURRENT_FORMAT_VERSION, migrated.formatVersion());
+        GraphData main = migrated.mainGraph();
+        // event.initialize 源节点补入（uid event_initialize，位置在链首左移 280），exec_out 引链首
+        NodeInstance event = main.findNode("event_initialize").orElseThrow();
+        assertEquals("event.initialize", event.type());
+        assertEquals(-280f, event.x(), 1e-6f);
+        assertTrue(main.wires().contains(wire("event_initialize", "exec_out", "s1", "exec_in")));
+        // 旧槽线消失，链内其他连线不动
+        assertFalse(main.wires().contains(wire("s1", "exec_out", "root", "initialize")));
+        assertTrue(main.wires().contains(wire("s1", "target", "s1t", "in")));
+        assertTrue(main.wires().contains(wire("c1", "out", "s1", "value")));
+        // 导出产物等价：scripts.initialize = 链语句序列
+        AssemblyResult assembled = ClientEntityAssembler.assemble(migrated);
+        assertFalse(assembled.hasErrors(), () -> assembled.diagnostics().toString());
+        JsonObject scripts = assembled.json().getAsJsonObject("minecraft:client_entity")
+                .getAsJsonObject("description").getAsJsonObject("scripts");
+        assertEquals("variable.a = 1", scripts.get("initialize").getAsString());
+    }
+
+    @Test
+    void v12StateSlotFlipsToSourcePort() {
+        // v12 ANIMATION_CONTROLLER 图：两语句链尾 exec_out 接 ac.state.on_entry（旧 EXEC IN 槽）
+        GraphLibrary old = new GraphLibrary(12, GraphKind.ANIMATION_CONTROLLER, "root",
+                Map.of("root", graph(
+                        List.of(node("st", "ac.state", opts("name", "idle")),
+                                node("s1", "exec.set_var"),
+                                node("s2", "exec.set_var")),
+                        List.of(wire("s1", "exec_out", "s2", "exec_in"),
+                                wire("s2", "exec_out", "st", "on_entry")))));
+
+        GraphLibrary migrated = GraphMigrations.migrate(old);
+
+        assertEquals(GraphLibrary.CURRENT_FORMAT_VERSION, migrated.formatVersion());
+        GraphData main = migrated.mainGraph();
+        // 旧槽线消失，改写为 state.on_entry → 链首 exec_in（方向翻转，端口 id 不变）
+        assertFalse(main.wires().contains(wire("s2", "exec_out", "st", "on_entry")));
+        assertTrue(main.wires().contains(wire("st", "on_entry", "s1", "exec_in")));
+        // 链内部拓扑不变；state 槽不产 event 节点
+        assertTrue(main.wires().contains(wire("s1", "exec_out", "s2", "exec_in")));
+        assertTrue(main.nodes().stream().noneMatch(n -> n.type().startsWith("event.")));
+    }
+
+    @Test
+    void v12UnwiredSlotProducesNoEventNode() {
+        // 槽无连线 → 不产 event 节点，图内容原样
+        GraphData main = graph(
+                List.of(rootNode(),
+                        node("s1", "exec.set_var"),
+                        node("s1t", "variable", opts("name", "a"))),
+                List.of(wire("s1", "target", "s1t", "in")));
+        GraphLibrary migrated = GraphMigrations.migrate(library(12, Map.of("root", main)));
+
+        assertEquals(GraphLibrary.CURRENT_FORMAT_VERSION, migrated.formatVersion());
+        assertEquals(main, migrated.mainGraph());
     }
 }

@@ -27,7 +27,8 @@
 | `ac.root.identifier` 裸字符串选项 | `NodeOptionDef.asset`（ac 注册表下拉） |
 | `ac.state.name` 可见字符串选项 | 保留为数据（导出 states 键），编辑器 UI 行隐藏（仅内部使用，同 short_name 处理） |
 
-- `ac.state` 现有端口不变：on_entry/on_exit（EXEC）、animations/transitions（SLOT）、
+- `ac.state` 现有端口不变：on_entry/on_exit（EXEC；v13 起翻转为 OUT 时机源端口，
+  规格 nodegraph-event-nodes / ADR-0029）、animations/transitions（SLOT）、
   blend_transition/blend_via_shortest_path（数值/布尔选项）。
 - 导出：initial_state 由 initial 连线的 state 名推导，未连线则不输出该字段
   （BE 缺省 "default"）；transition 目标名由 target 边推导，未连线 → UNKNOWN_STATE error。

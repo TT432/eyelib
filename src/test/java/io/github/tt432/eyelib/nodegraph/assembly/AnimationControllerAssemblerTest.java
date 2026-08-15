@@ -77,7 +77,8 @@ class AnimationControllerAssemblerTest {
                 List.of(
                         wire("s1", "state", "root", "states"),
                         wire("s1", "state", "root", "initial"),
-                        wire("e1", "exec_out", "s1", "on_entry"),
+                        // v13：state.on_entry 是 EXEC OUT → 链首 exec_in
+                        wire("s1", "on_entry", "e1", "exec_in"),
                         wire("ae1", "entry", "s1", "animations"),
                         wire("ra1", "ref", "ae1", "ref"),
                         wire("t1", "transition", "s1", "transitions"),
@@ -85,7 +86,8 @@ class AnimationControllerAssemblerTest {
                         wire("t1", "target", "s2", "incoming"),
                         wire("q1", "out", "t1", "condition"),
                         wire("s2", "state", "root", "states"),
-                        wire("sv", "exec_out", "s2", "on_exit"),
+                        // v13：state.on_exit 是 EXEC OUT → 链首 exec_in
+                        wire("s2", "on_exit", "sv", "exec_in"),
                         wire("sv", "target", "svt", "in"),
                         wire("t2", "transition", "s2", "transitions"),
                         wire("t2", "target", "s1", "incoming"))));

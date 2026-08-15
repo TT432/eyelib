@@ -2,6 +2,8 @@
 
 > amended by [ADR-0028](0028-ldlib1-retirement.md)（2026-08-07）：「1.20.1 走 LDLib 1.x」
 > 路线废止，全版本统一 LDLib2。
+> amended by [ADR-0029](0029-event-nodes.md)（2026-08-15）：exec 链「反向汇入槽」
+> 模型废止，执行时机改为 event.* 源节点 / ac.state OUT 端口。
 
 **Status:** Accepted
 **Date:** 2026-08-02

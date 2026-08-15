@@ -13,8 +13,8 @@
 
 1. 恰好一次写入：variable 节点唯一出边 → `set_var.target`；零读取（无其它出边）；
 2. 写入值为常量：value 端口未连线（端口默认值）或连线自 `const.*` 节点；
-3. exec 路径只经过 `exec.set_var`/`exec.set_temp`，终末落在 `entity.root.initialize`
-   （pre_animation/动画/dead-end 不折）；
+3. exec 路径只经过 `exec.set_var`/`exec.set_temp`，链首挂在 `event.initialize`
+   （v13 事件模型；pre_animation/动画/dead-end 不折）；
 4. 变量名未以文本形式出现在任何行内 molang 常量（`variable.x`/`v.x` 词边界匹配）；
 5. 同图无同名第二个 variable 节点；声明已有**不同**默认值时不折。
 

@@ -25,7 +25,8 @@ import org.junit.jupiter.api.Test;
  * {@link MolangGenerator} 单测：黄金字符串覆盖 §2.4 发射表全类节点、共享子表达式提取、
  * exec 链（loop/for_each 嵌套）、子图内联展开（名称隔离/递归检测）、未连接输入诊断、常量转义。
  *
- * <p>表达式槽统一用 entity.root 的 scale/scale_x/scale_y/scale_z 作汇；执行槽用 initialize。
+ * <p>表达式槽统一用 entity.root 的 scale/scale_x/scale_y/scale_z 作汇；执行链由 event.* 时机源
+ * 节点的 exec_out 出发（v13，规格 nodegraph-event-nodes）。
  * 图直接用 record 构造，不走 JSON。
  */
 class MolangGeneratorTest {
@@ -90,8 +91,9 @@ class MolangGeneratorTest {
         return r.code();
     }
 
-    private static String exec(GraphLibrary lib, String port) {
-        CodegenResult r = new MolangGenerator(lib).emitStatementListFor("root", "root", port);
+    /** 从 event.* 时机源节点的 exec_out 正向发射语句序列。 */
+    private static String exec(GraphLibrary lib, String eventUid) {
+        CodegenResult r = new MolangGenerator(lib).emitStatementListFromFor("root", eventUid, "exec_out");
         assertFalse(r.hasErrors(), () -> "unexpected errors: " + r.diagnostics());
         return r.code();
     }
@@ -373,6 +375,7 @@ class MolangGeneratorTest {
         // set1: variable.a = 1（variable 节点连线 target）→ set2: temp.t = (variable.a * 2)
         GraphData main = graph(
                 List.of(root(),
+                        node("ev", "event.initialize"),
                         node("set1", "exec.set_var"),
                         node("ta", "variable", opts("name", "a")),
                         node("c1", "const.number", opts("value", 1)),
@@ -380,20 +383,21 @@ class MolangGeneratorTest {
                         node("mul", "op.binary", opts("op", "*")),
                         node("va", "variable", opts("name", "a")),
                         node("c2", "const.number", opts("value", 2))),
-                List.of(wire("set2", "exec_out", "root", "initialize"),
+                List.of(wire("ev", "exec_out", "set1", "exec_in"),
                         wire("set1", "exec_out", "set2", "exec_in"),
                         wire("set1", "target", "ta", "in"),
                         wire("c1", "out", "set1", "value"),
                         wire("mul", "out", "set2", "value"),
                         wire("va", "out", "mul", "a"),
                         wire("c2", "out", "mul", "b")));
-        assertEquals("variable.a = 1; temp.t = (variable.a * 2)", exec(library(main), "initialize"));
+        assertEquals("variable.a = 1; temp.t = (variable.a * 2)", exec(library(main), "ev"));
     }
 
     @Test
     void emptyExecSlotEmitsZero() {
-        GraphData main = graph(List.of(root()), List.of());
-        assertEquals("0", exec(library(main), "initialize"));
+        // event 节点存在但 exec_out 悬空 → 空链 → "0"
+        GraphData main = graph(List.of(root(), node("ev", "event.initialize")), List.of());
+        assertEquals("0", exec(library(main), "ev"));
     }
 
     @Test
@@ -401,6 +405,7 @@ class MolangGeneratorTest {
         // initialize: loop(3, { for_each(temp.item, query.my_array, { temp.sum = (temp.sum + temp.item) }) })
         GraphData main = graph(
                 List.of(root(),
+                        node("ev", "event.initialize"),
                         node("loop", "exec.loop"),
                         node("c3", "const.number", opts("value", 3)),
                         node("fe", "exec.for_each", opts("var_name", "temp.item")),
@@ -409,7 +414,7 @@ class MolangGeneratorTest {
                         node("add", "op.binary", opts("op", "+")),
                         node("sum", "temp.get", opts("name", "temp.sum")),
                         node("item", "temp.get", opts("name", "temp.item"))),
-                List.of(wire("loop", "exec_out", "root", "initialize"),
+                List.of(wire("ev", "exec_out", "loop", "exec_in"),
                         wire("c3", "out", "loop", "count"),
                         wire("fe", "exec_out", "loop", "body"),
                         wire("arr", "out", "fe", "array"),
@@ -418,15 +423,17 @@ class MolangGeneratorTest {
                         wire("sum", "out", "add", "a"),
                         wire("item", "out", "add", "b")));
         assertEquals("loop(3, { for_each(temp.item, query.my_array, { temp.sum = (temp.sum + temp.item) }) })",
-                exec(library(main), "initialize"));
+                exec(library(main), "ev"));
     }
 
     @Test
     void execCallBreakContinueReturn() {
-        // 注：break/continue/return 无 exec_out 端口（NodeTypes 注册表现状），
-        // 本用例直接以 exec_out 名义连线到槽口，仅验证发射规则本身。
+        // 注：br/cont 的 exec_out 仅用于验证发射规则本身（body 槽、链尾悬空均合法）。
         GraphData main = graph(
                 List.of(root(),
+                        node("ev_init", "event.initialize"),
+                        node("ev_pre", "event.pre_animation"),
+                        node("ev_parent", "event.parent_setup"),
                         // v11：连线进 call 参数需定长签名函数（math.pow 双参 → arg1/arg2 端口）
                         node("call", "exec.call", opts("function", "math.pow")),
                         node("c1", "const.number", opts("value", 1)),
@@ -434,31 +441,32 @@ class MolangGeneratorTest {
                         node("loop", "exec.loop", Map.of(), opts("count", 10)),
                         node("br", "exec.break"),
                         node("cont", "exec.continue")),
-                List.of(wire("call", "exec_out", "root", "initialize"),
+                List.of(wire("ev_init", "exec_out", "call", "exec_in"),
                         wire("c1", "out", "call", "arg1"),
                         wire("v", "out", "call", "arg2"),
-                        wire("loop", "exec_out", "root", "pre_animation"),
+                        wire("ev_pre", "exec_out", "loop", "exec_in"),
                         wire("br", "exec_out", "loop", "body"),
-                        wire("cont", "exec_out", "root", "parent_setup")));
+                        wire("ev_parent", "exec_out", "cont", "exec_in")));
         GraphLibrary lib = library(main);
-        assertEquals("math.pow(1, variable.x)", exec(lib, "initialize"));
-        assertEquals("loop(10, { break })", exec(lib, "pre_animation"));
-        assertEquals("continue", exec(lib, "parent_setup"));
+        assertEquals("math.pow(1, variable.x)", exec(lib, "ev_init"));
+        assertEquals("loop(10, { break })", exec(lib, "ev_pre"));
+        assertEquals("continue", exec(lib, "ev_parent"));
     }
 
     @Test
     void execReturnEmitsReturnStatement() {
         GraphData main = graph(
                 List.of(root(),
+                        node("ev", "event.initialize"),
                         node("ret", "exec.return"),
                         node("add", "op.binary", opts("op", "+")),
                         node("va", "variable", opts("name", "a")),
                         node("c1", "const.number", opts("value", 1))),
-                List.of(wire("ret", "exec_out", "root", "initialize"),
+                List.of(wire("ev", "exec_out", "ret", "exec_in"),
                         wire("add", "out", "ret", "value"),
                         wire("va", "out", "add", "a"),
                         wire("c1", "out", "add", "b")));
-        assertEquals("return (variable.a + 1)", exec(library(main), "initialize"));
+        assertEquals("return (variable.a + 1)", exec(library(main), "ev"));
     }
 
     // ---------- 子图内联展开（D5/§2.4-9） ----------
@@ -598,11 +606,11 @@ class MolangGeneratorTest {
 
     @Test
     void invalidSlotsProduceDiagnosticsNotExceptions() {
-        GraphData main = graph(List.of(root()), List.of());
+        GraphData main = graph(List.of(root(), node("ev", "event.initialize")), List.of());
         MolangGenerator gen = new MolangGenerator(library(main));
-        // 值槽上请求语句序列 / exec 槽上请求表达式 / 未知图 / 未知节点
-        assertTrue(gen.emitStatementListFor("root", "root", "scale").hasErrors());
-        assertTrue(gen.emitExpressionFor("root", "root", "initialize").hasErrors());
+        // 值槽上请求语句序列 / EXEC OUT 源端口上请求表达式 / 未知图 / 未知节点
+        assertTrue(gen.emitStatementListFromFor("root", "root", "scale").hasErrors());
+        assertTrue(gen.emitExpressionFor("root", "ev", "exec_out").hasErrors());
         assertTrue(gen.emitExpression("nope", new PortRef("root", "scale")).hasErrors());
         assertTrue(gen.emitExpressionFor("root", "ghost", "scale").hasErrors());
         Diagnostic d = gen.emitExpression("nope", new PortRef("root", "scale")).diagnostics().get(0);
