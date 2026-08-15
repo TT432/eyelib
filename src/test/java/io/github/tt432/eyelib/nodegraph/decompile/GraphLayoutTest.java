@@ -117,7 +117,7 @@ class GraphLayoutTest {
 
     @Test
     void unrelatedFieldsPassThrough() {
-        NodeInstance original = new NodeInstance("a", "op.binary", 0, 0,
+        NodeInstance original = new NodeInstance("a", "op.add", 0, 0,
                 Map.of(), Map.of());
         List<NodeInstance> laid = GraphLayout.layout(List.of(original), List.of());
         assertEquals(original.type(), laid.get(0).type());
@@ -467,7 +467,7 @@ class GraphLayoutTest {
     void entryConnectedRefFollowsEntryNotCluster() {
         // 有 entry 消费者的 ref.ac 不进声明簇：留在流分层贴 entry（簇内从列顶堆叠实证
         // ref.ac→entry dy≈2094）；entry 的 condition/weight 链入流——链尾在 entry 左侧，
-        // 无回流边（悦灵实证 op.binary 钉在 entry 右列 avgMan≈3074，2026-08-10）。
+        // 无回流边（悦灵实证 op 节点钉在 entry 右列 avgMan≈3074，2026-08-10）。
         NodeInstance root = NodeInstance.of("root", "entity.root", 0, 0);
         NodeInstance entry = NodeInstance.of("entry", "animate.entry", 0, 0);
         NodeInstance ref = NodeInstance.of("ref", "ref.ac", 0, 0);

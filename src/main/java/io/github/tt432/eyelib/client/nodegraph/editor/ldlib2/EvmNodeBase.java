@@ -36,9 +36,10 @@ import java.util.Optional;
  * 全部 eyelib 节点的 LDLib2 基类：子类只声明 {@link #type()}（domain 节点类型）。
  *
  * <p>选项：{@link NodeOptionDef} → LDLib2 节点选项（STRING/TEXT/ENUM/IDENTIFIER→String、
- * INT→Integer、FLOAT→Float、BOOL→Boolean）。动态端口节点（query/math/exec.call 的 arg_count、
- * op.binary 的 op、subgraph.call 的子图名）按 TestAddNode 模式在 {@link #onDefinePorts}
+ * INT→Integer、FLOAT→Float、BOOL→Boolean）。动态端口节点（query/math/exec.call 的变长实参、
+ * subgraph.call 的子图名）按 TestAddNode 模式在 {@link #onDefinePorts}
  * 读当前选项值重算端口——选项值变更时 LDLib2 会重跑 defineNode（OptionBuilder setterAction）。
+ * （v14 起 op.* 一符一类型、无 op 选项，操作符节点已不再是动态端口节点。）
  *
  * <p>端口：端口 id 与 domain {@link PortDef#id()} 完全一致（addInputPort 第一个参数即 id，
  * 也是缺省显示名）。容量按 domain multi 标志显式设置（LDLib2 默认输入 SINGLE/输出 MULTIPLE）。

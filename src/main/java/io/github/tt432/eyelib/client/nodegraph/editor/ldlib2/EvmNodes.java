@@ -136,19 +136,117 @@ public final class EvmNodes {
         }
     }
 
-    @NodeAttribute(name = "op.binary", group = NodeTypes.CAT_OPERATOR, graphTypes = {EvmGraph.class})
-    public static final class OpBinary extends EvmNodeBase {
+    // ---- 独立操作符节点（v14：一符一类型，符号固化在 domain 类型里） ----
+
+    @NodeAttribute(name = "op.add", group = NodeTypes.CAT_OPERATOR, graphTypes = {EvmGraph.class})
+    public static final class OpAdd extends EvmNodeBase {
         @Override
         public NodeType type() {
-            return NodeTypes.OP_BINARY;
+            return NodeTypes.require("op.add");
         }
     }
 
-    @NodeAttribute(name = "op.unary", group = NodeTypes.CAT_OPERATOR, graphTypes = {EvmGraph.class})
-    public static final class OpUnary extends EvmNodeBase {
+    @NodeAttribute(name = "op.subtract", group = NodeTypes.CAT_OPERATOR, graphTypes = {EvmGraph.class})
+    public static final class OpSubtract extends EvmNodeBase {
         @Override
         public NodeType type() {
-            return NodeTypes.OP_UNARY;
+            return NodeTypes.require("op.subtract");
+        }
+    }
+
+    @NodeAttribute(name = "op.multiply", group = NodeTypes.CAT_OPERATOR, graphTypes = {EvmGraph.class})
+    public static final class OpMultiply extends EvmNodeBase {
+        @Override
+        public NodeType type() {
+            return NodeTypes.require("op.multiply");
+        }
+    }
+
+    @NodeAttribute(name = "op.divide", group = NodeTypes.CAT_OPERATOR, graphTypes = {EvmGraph.class})
+    public static final class OpDivide extends EvmNodeBase {
+        @Override
+        public NodeType type() {
+            return NodeTypes.require("op.divide");
+        }
+    }
+
+    @NodeAttribute(name = "op.equal", group = NodeTypes.CAT_OPERATOR, graphTypes = {EvmGraph.class})
+    public static final class OpEqual extends EvmNodeBase {
+        @Override
+        public NodeType type() {
+            return NodeTypes.require("op.equal");
+        }
+    }
+
+    @NodeAttribute(name = "op.not_equal", group = NodeTypes.CAT_OPERATOR, graphTypes = {EvmGraph.class})
+    public static final class OpNotEqual extends EvmNodeBase {
+        @Override
+        public NodeType type() {
+            return NodeTypes.require("op.not_equal");
+        }
+    }
+
+    @NodeAttribute(name = "op.less", group = NodeTypes.CAT_OPERATOR, graphTypes = {EvmGraph.class})
+    public static final class OpLess extends EvmNodeBase {
+        @Override
+        public NodeType type() {
+            return NodeTypes.require("op.less");
+        }
+    }
+
+    @NodeAttribute(name = "op.less_equal", group = NodeTypes.CAT_OPERATOR, graphTypes = {EvmGraph.class})
+    public static final class OpLessEqual extends EvmNodeBase {
+        @Override
+        public NodeType type() {
+            return NodeTypes.require("op.less_equal");
+        }
+    }
+
+    @NodeAttribute(name = "op.greater", group = NodeTypes.CAT_OPERATOR, graphTypes = {EvmGraph.class})
+    public static final class OpGreater extends EvmNodeBase {
+        @Override
+        public NodeType type() {
+            return NodeTypes.require("op.greater");
+        }
+    }
+
+    @NodeAttribute(name = "op.greater_equal", group = NodeTypes.CAT_OPERATOR, graphTypes = {EvmGraph.class})
+    public static final class OpGreaterEqual extends EvmNodeBase {
+        @Override
+        public NodeType type() {
+            return NodeTypes.require("op.greater_equal");
+        }
+    }
+
+    @NodeAttribute(name = "op.and", group = NodeTypes.CAT_OPERATOR, graphTypes = {EvmGraph.class})
+    public static final class OpAnd extends EvmNodeBase {
+        @Override
+        public NodeType type() {
+            return NodeTypes.require("op.and");
+        }
+    }
+
+    @NodeAttribute(name = "op.or", group = NodeTypes.CAT_OPERATOR, graphTypes = {EvmGraph.class})
+    public static final class OpOr extends EvmNodeBase {
+        @Override
+        public NodeType type() {
+            return NodeTypes.require("op.or");
+        }
+    }
+
+    @NodeAttribute(name = "op.negate", group = NodeTypes.CAT_OPERATOR, graphTypes = {EvmGraph.class})
+    public static final class OpNegate extends EvmNodeBase {
+        @Override
+        public NodeType type() {
+            return NodeTypes.require("op.negate");
+        }
+    }
+
+    @NodeAttribute(name = "op.not", group = NodeTypes.CAT_OPERATOR, graphTypes = {EvmGraph.class})
+    public static final class OpNot extends EvmNodeBase {
+        @Override
+        public NodeType type() {
+            return NodeTypes.require("op.not");
         }
     }
 
@@ -406,7 +504,10 @@ public final class EvmNodes {
             ConstColor.class, ColorCompose.class,
             Variable.class, ContextGet.class, TempGet.class, ExecSetVar.class, ExecSetTemp.class,
             QueryCall.class, MathCall.class, ExecCall.class,
-            OpBinary.class, OpUnary.class, OpTernary.class, OpNullCoalesce.class,
+            OpAdd.class, OpSubtract.class, OpMultiply.class, OpDivide.class,
+            OpEqual.class, OpNotEqual.class, OpLess.class, OpLessEqual.class,
+            OpGreater.class, OpGreaterEqual.class, OpAnd.class, OpOr.class,
+            OpNegate.class, OpNot.class, OpTernary.class, OpNullCoalesce.class,
             ExecLoop.class, ExecForEach.class, ExecBreak.class, ExecContinue.class, ExecReturn.class,
             RefGeometry.class, RefTexture.class, RefMaterial.class, RefAnimation.class, RefAc.class, RefRc.class,
             EntityRoot.class, AnimateEntry.class,
@@ -448,8 +549,20 @@ public final class EvmNodes {
         names.put("query.call", "Query Call");
         names.put("math.call", "Math Call");
         names.put("exec.call", "Exec Call");
-        names.put("op.binary", "Binary Op");
-        names.put("op.unary", "Unary Op");
+        names.put("op.add", "Add");
+        names.put("op.subtract", "Subtract");
+        names.put("op.multiply", "Multiply");
+        names.put("op.divide", "Divide");
+        names.put("op.equal", "Equal");
+        names.put("op.not_equal", "Not Equal");
+        names.put("op.less", "Less Than");
+        names.put("op.less_equal", "Less Than Or Equal");
+        names.put("op.greater", "Greater Than");
+        names.put("op.greater_equal", "Greater Than Or Equal");
+        names.put("op.and", "And");
+        names.put("op.or", "Or");
+        names.put("op.negate", "Negate");
+        names.put("op.not", "Not");
         names.put("op.ternary", "Ternary");
         names.put("op.null_coalesce", "Null Coalesce");
         names.put("exec.loop", "Loop");

@@ -57,7 +57,7 @@ class NodeTypePropagationTest {
                 NodeTypePropagation.propagatedOut("op.ternary", PortType.STRING, PortType.STRING));
         assertEquals(PortType.FLOAT,
                 NodeTypePropagation.propagatedOut("op.null_coalesce", PortType.INT, PortType.BOOL));
-        assertNull(NodeTypePropagation.propagatedOut("op.binary", PortType.INT, PortType.INT));
+        assertNull(NodeTypePropagation.propagatedOut("op.add", PortType.INT, PortType.INT));
         assertNull(NodeTypePropagation.propagatedOut("query.call", PortType.STRING, PortType.STRING));
     }
 }

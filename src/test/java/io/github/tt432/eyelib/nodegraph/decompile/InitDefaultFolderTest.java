@@ -180,7 +180,7 @@ class InitDefaultFolderTest {
                 node("ev", "event.initialize"),
                 node("v", "variable", opts("name", "x")),
                 node("s", "exec.set_var"),
-                node("m", "op.binary", opts("op", "+"))));
+                node("m", "op.add")));
         List<Wire> wires = new ArrayList<>(List.of(
                 wire("s", "target", "v", "in"),
                 wire("m", "out", "s", "value"),

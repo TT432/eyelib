@@ -43,7 +43,7 @@ molang 字符串 → MolangAst（现有手写解析器）→ 图 IR：
 | molang AST | 图节点 |
 |---|---|
 | 数字/字符串/bool 字面量 | const.number / const.string / const.bool（整数 → const.int） |
-| `a op b` / `op a` / `c ? a : b` / `a ?? b` | op.binary / op.unary / op.ternary / op.null_coalesce |
+| `a op b` / `op a` / `c ? a : b` / `a ?? b` | op.&lt;操作符&gt;（一符一类型，v14：op.add/subtract/multiply/divide/equal/not_equal/less/less_equal/greater/greater_equal/and/or/negate/not）/ op.ternary / op.null_coalesce |
 | `variable.x` / `temp.x` / `context.x` | var.get / temp.get / **context.get（新增节点）** |
 | `query.f(...)` / `math.f(...)` | query.call / math.call（含 arg_count 与参数连线） |
 | `variable.x = e;` | exec.set_var |
@@ -127,6 +127,16 @@ molang 字符串 → MolangAst（现有手写解析器）→ 图 IR：
   （PreviewViewState per 节点持有，widget 重建不丢）。有纹理路径零变化。
 - short_name 字段：普通字段始终显示有效短名（底层空=自动派生随 identifier 刷新），
   去除「高级·留空=派生」 jargon 与折叠组。
+
+2026-08-16 操作符节点拆分（用户决策）：
+- op.binary / op.unary 的 op 下拉选项固化为节点类型身份——一符一节点类型
+  （op.add/subtract/multiply/divide/equal/not_equal/less/less_equal/greater/
+  greater_equal/and/or + op.negate/not 共 14 个），节点库按操作符直接选取，
+  不再需要先放节点再改下拉。ternary / null_coalesce 本就无 op 选项，不动。
+- 端口/连线不变（a/b/out）；输出类型注册时固化（比较/逻辑 → BOOL，算术 → FLOAT，
+  一元 ! → BOOL、- → FLOAT），不再是动态端口节点。
+- 图格式 v13 → v14：迁移把 op 选项改写为新类型 id 并移除选项；
+  codegen 从类型 id 取符号（NodeTypes.opSymbolOf），反编译按符号映射类型。
 
 1. ~~导入 vanilla `minecraft:zombie`（ClientEntity）→ 图结构完整（root+refs+scripts），~~
    ~~未修改直接 build → 注入后实体渲染与原版一致（语义等价）。~~

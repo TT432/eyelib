@@ -6,6 +6,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import org.jspecify.annotations.Nullable;
 
 /**
  * 节点目录：全部节点类型的注册表（规格 §2.2）。
@@ -38,15 +39,24 @@ public final class NodeTypes {
     public static final List<String> ARITHMETIC_OPS = List.of("+", "-", "*", "/");
     /** 比较/逻辑二元运算符（输出 BOOL）。 */
     public static final List<String> LOGICAL_OPS = List.of("==", "!=", "<", "<=", ">", ">=", "&&", "||");
-    public static final List<String> BINARY_OPS;
 
-    static {
-        List<String> ops = new ArrayList<>(ARITHMETIC_OPS);
-        ops.addAll(LOGICAL_OPS);
-        BINARY_OPS = List.copyOf(ops);
-    }
+    /**
+     * 二元操作符符号表：{符号, id 名}（节点类型 id = "op." + 名，v14 起一符一类型）。
+     * 顺序 = 节点库目录顺序。
+     */
+    private static final String[][] BINARY_OP_TABLE = {
+            {"+", "add"}, {"-", "subtract"}, {"*", "multiply"}, {"/", "divide"},
+            {"==", "equal"}, {"!=", "not_equal"}, {"<", "less"}, {"<=", "less_equal"},
+            {">", "greater"}, {">=", "greater_equal"}, {"&&", "and"}, {"||", "or"},
+    };
 
-    public static final List<String> UNARY_OPS = List.of("-", "!");
+    /** 一元操作符符号表（同上）。 */
+    private static final String[][] UNARY_OP_TABLE = {
+            {"-", "negate"}, {"!", "not"},
+    };
+
+    /** 节点类型 id → 操作符符号（含二元与一元）。 */
+    private static final Map<String, String> OP_SYMBOL_BY_TYPE = new LinkedHashMap<>();
 
     // ---------- 执行流端口 ----------
 
@@ -232,29 +242,52 @@ public final class NodeTypes {
             NodeType.PortProvider.fixed(List.of(execOut()))));
 
     // ---------- 运算 ----------
+    // v14 起一符一节点类型（规格 nodegraph-workbench §2 拆分决策）：操作符是类型身份，
+    // 不再有 op 实例选项；输出端口类型在注册时固化（逻辑/比较 → BOOL，其余 → FLOAT）。
 
-    public static final NodeType OP_BINARY = register(NodeType.dynamic(
-            "op.binary", NodeType.Kind.OP_BINARY, CAT_OPERATOR,
-            List.of(NodeOptionDef.enumeration("op", "+", BINARY_OPS)),
-            NodeType.PortProvider.fixed(List.of(
-                    PortDef.in("a", PortType.ANY, new JsonPrimitive(0)),
-                    PortDef.in("b", PortType.ANY, new JsonPrimitive(0)))),
-            (instance, resolver) -> {
-                String op = instance.optionString("op", "+");
-                PortType out = LOGICAL_OPS.contains(op) ? PortType.BOOL : PortType.FLOAT;
-                return List.of(PortDef.out("out", out));
-            }));
+    /** 二元操作符：符号 → 节点类型（符号表顺序）。 */
+    public static final Map<String, NodeType> BINARY_OP_TYPES = registerOps(BINARY_OP_TABLE, true);
+    /** 一元操作符：符号 → 节点类型。 */
+    public static final Map<String, NodeType> UNARY_OP_TYPES = registerOps(UNARY_OP_TABLE, false);
 
-    public static final NodeType OP_UNARY = register(NodeType.dynamic(
-            "op.unary", NodeType.Kind.OP_UNARY, CAT_OPERATOR,
-            List.of(NodeOptionDef.enumeration("op", "-", UNARY_OPS)),
-            NodeType.PortProvider.fixed(List.of(
-                    PortDef.in("a", PortType.ANY, new JsonPrimitive(0)))),
-            (instance, resolver) -> {
-                String op = instance.optionString("op", "-");
-                PortType out = "!".equals(op) ? PortType.BOOL : PortType.FLOAT;
-                return List.of(PortDef.out("out", out));
-            }));
+    private static Map<String, NodeType> registerOps(String[][] table, boolean binary) {
+        Map<String, NodeType> map = new LinkedHashMap<>();
+        for (String[] row : table) {
+            String symbol = row[0];
+            PortType out = binary
+                    ? (LOGICAL_OPS.contains(symbol) ? PortType.BOOL : PortType.FLOAT)
+                    : ("!".equals(symbol) ? PortType.BOOL : PortType.FLOAT);
+            List<PortDef> inputs = binary
+                    ? List.of(PortDef.in("a", PortType.ANY, new JsonPrimitive(0)),
+                              PortDef.in("b", PortType.ANY, new JsonPrimitive(0)))
+                    : List.of(PortDef.in("a", PortType.ANY, new JsonPrimitive(0)));
+            NodeType type = register(NodeType.of(
+                    "op." + row[1], binary ? NodeType.Kind.OP_BINARY : NodeType.Kind.OP_UNARY,
+                    CAT_OPERATOR, List.of(), inputs, List.of(PortDef.out("out", out))));
+            map.put(symbol, type);
+            OP_SYMBOL_BY_TYPE.put(type.id(), symbol);
+        }
+        return Map.copyOf(map);
+    }
+
+    /** 二元操作符符号 → 节点类型；未知符号返回 null。 */
+    public static @Nullable NodeType binaryOp(String symbol) {
+        return BINARY_OP_TYPES.get(symbol);
+    }
+
+    /** 一元操作符符号 → 节点类型；未知符号返回 null。 */
+    public static @Nullable NodeType unaryOp(String symbol) {
+        return UNARY_OP_TYPES.get(symbol);
+    }
+
+    /** 操作符节点类型 id → 符号；非操作符类型抛 {@link IllegalArgumentException}。 */
+    public static String opSymbolOf(String typeId) {
+        String symbol = OP_SYMBOL_BY_TYPE.get(typeId);
+        if (symbol == null) {
+            throw new IllegalArgumentException("not an operator node type: " + typeId);
+        }
+        return symbol;
+    }
 
     public static final NodeType OP_TERNARY = register(NodeType.of(
             "op.ternary", NodeType.Kind.OP_TERNARY, CAT_OPERATOR,

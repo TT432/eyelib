@@ -630,9 +630,9 @@ class JsonGraphImportersTest {
         GraphData graph = imported.library().mainGraph();
         assertTrue(graph.stickyNotes().stream().anyMatch(s -> s.text().contains("variable.a->query.b")));
 
-        // scale：op.binary 的 a 侧为 const 0 占位，b 侧 const.int 1 正常；
+        // scale：op.add 的 a 侧为 const 0 占位，b 侧 const.int 1 正常；
         // 单用 const 已内联为端口行内常量（nodegraph-import-const-inline），不再产生 const 节点
-        NodeInstance op = firstByType(graph.nodes(), "op.binary");
+        NodeInstance op = firstByType(graph.nodes(), "op.add");
         assertEquals(op.uid(), wireSource(graph.wires(), "root", "scale"));
         assertEquals(0.0, op.constants().get("a").getAsDouble());
         assertEquals(1, op.constants().get("b").getAsInt());

@@ -460,11 +460,11 @@ final class EmitSession {
                 Out a = emitValueInput(f, node.uid(), "a");
                 Out b = emitValueInput(f, node.uid(), "b");
                 yield combine(List.of(a, b),
-                        "(" + a.expr() + " " + string(node, type, "op") + " " + b.expr() + ")");
+                        "(" + a.expr() + " " + NodeTypes.opSymbolOf(type.id()) + " " + b.expr() + ")");
             }
             case OP_UNARY -> {
                 Out a = emitValueInput(f, node.uid(), "a");
-                yield combine(List.of(a), "(" + string(node, type, "op") + a.expr() + ")");
+                yield combine(List.of(a), "(" + NodeTypes.opSymbolOf(type.id()) + a.expr() + ")");
             }
             case OP_TERNARY -> {
                 Out cond = emitValueInput(f, node.uid(), "cond");

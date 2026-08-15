@@ -119,7 +119,7 @@ class EmolangCodegenTest {
                 List.of(node("root", "entity.root"),
                         node("c", "query.call", opts("function", "sq")),
                         node("h", "query.call", opts("function", "query.health")),
-                        node("plus", "op.binary", opts("op", "+")),
+                        node("plus", "op.add"),
                         num("one", 1)),
                 List.of(wire("c", "out", "root", "scale"),
                         wire("plus", "out", "c", "arg1"),

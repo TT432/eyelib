@@ -133,7 +133,7 @@ class GraphValidatorTest {
     @Test
     void wireDirectionFromInputPort() {
         List<Diagnostic> diags = validateGraph(graph(
-                List.of(node("n1", "op.binary"), node("n2", "op.binary")),
+                List.of(node("n1", "op.add"), node("n2", "op.add")),
                 List.of(wire("n1", "a", "n2", "a"))));
         assertTrue(hasCode(diags, GraphValidator.WIRE_DIRECTION));
     }
@@ -141,7 +141,7 @@ class GraphValidatorTest {
     @Test
     void wireDirectionToOutputPort() {
         List<Diagnostic> diags = validateGraph(graph(
-                List.of(node("n1", "op.binary"), node("n2", "op.binary")),
+                List.of(node("n1", "op.add"), node("n2", "op.add")),
                 List.of(wire("n1", "out", "n2", "out"))));
         assertTrue(hasCode(diags, GraphValidator.WIRE_DIRECTION));
     }
@@ -161,7 +161,7 @@ class GraphValidatorTest {
     @Test
     void duplicateInput() {
         List<Diagnostic> diags = validateGraph(graph(
-                List.of(node("c1", "const.number"), node("c2", "const.number"), node("n", "op.binary")),
+                List.of(node("c1", "const.number"), node("c2", "const.number"), node("n", "op.add")),
                 List.of(wire("c1", "out", "n", "a"), wire("c2", "out", "n", "a"))));
         assertTrue(hasCode(diags, GraphValidator.DUPLICATE_INPUT));
     }
@@ -181,7 +181,7 @@ class GraphValidatorTest {
     @Test
     void cycle() {
         List<Diagnostic> diags = validateGraph(graph(
-                List.of(node("n1", "op.binary"), node("n2", "op.binary")),
+                List.of(node("n1", "op.add"), node("n2", "op.add")),
                 List.of(wire("n1", "out", "n2", "a"), wire("n2", "out", "n1", "a"))));
         List<Diagnostic> cycles = byCode(diags, GraphValidator.CYCLE);
         assertFalse(cycles.isEmpty());

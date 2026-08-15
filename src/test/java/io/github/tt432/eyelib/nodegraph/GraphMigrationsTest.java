@@ -19,7 +19,8 @@ import org.junit.jupiter.api.Test;
  * {@link GraphMigrations}：format_version 1 → 2 变量节点化迁移契约（规格 §3.4）
  * + 2 → 3 声明连线化迁移契约（规格 nodegraph-declaration-wiring §2.4）
  * + 3 → 4 RenderController 内联迁移契约（规格 nodegraph-inline-render-controller §5）
- * + 12 → 13 执行时机事件化迁移契约（规格 nodegraph-event-nodes）。
+ * + 12 → 13 执行时机事件化迁移契约（规格 nodegraph-event-nodes）
+ * + 13 → 14 操作符节点拆分迁移契约（op.binary/op.unary → op.&lt;操作符&gt; 单类型）。
  * v2 起点用例走完整迁移链，断言的是 v9 终态（v8→v9 翻转 set_var.target 写入方向）。
  */
 class GraphMigrationsTest {
@@ -676,5 +677,42 @@ class GraphMigrationsTest {
 
         assertEquals(GraphLibrary.CURRENT_FORMAT_VERSION, migrated.formatVersion());
         assertEquals(main, migrated.mainGraph());
+    }
+
+    @Test
+    void v13OpOptionBecomesTypeIdentity() {
+        // v13 → v14：op.binary/op.unary 的 op 选项固化为节点类型，端口常量与连线不动
+        GraphData main = graph(
+                List.of(node("add", "op.binary", opts("op", "+")),
+                        node("le", "op.binary", opts("op", "<=")),
+                        node("neg", "op.unary", opts("op", "-")),
+                        node("not", "op.unary", opts("op", "!")),
+                        node("def", "op.binary"),
+                        node("tern", "op.ternary")),
+                List.of(wire("add", "out", "le", "a")));
+        GraphLibrary migrated = GraphMigrations.migrate(library(13, Map.of("root", main)));
+
+        assertEquals(GraphLibrary.CURRENT_FORMAT_VERSION, migrated.formatVersion());
+        GraphData g = migrated.mainGraph();
+        assertEquals("op.add", g.findNode("add").orElseThrow().type());
+        assertEquals("op.less_equal", g.findNode("le").orElseThrow().type());
+        assertEquals("op.negate", g.findNode("neg").orElseThrow().type());
+        assertEquals("op.not", g.findNode("not").orElseThrow().type());
+        // 缺失 op 选项按旧默认回落 +
+        assertEquals("op.add", g.findNode("def").orElseThrow().type());
+        // ternary/null_coalesce 本就无 op 选项，不动
+        assertEquals("op.ternary", g.findNode("tern").orElseThrow().type());
+        assertTrue(g.nodes().stream().noneMatch(n -> n.options().containsKey("op")));
+        assertTrue(g.wires().contains(wire("add", "out", "le", "a")));
+    }
+
+    @Test
+    void v13UnknownOpFallsBackToDefault() {
+        GraphData main = graph(List.of(node("m", "op.binary", opts("op", "%"))), List.of());
+        GraphLibrary migrated = GraphMigrations.migrate(library(13, Map.of("root", main)));
+
+        NodeInstance node = migrated.mainGraph().findNode("m").orElseThrow();
+        assertEquals("op.add", node.type());
+        assertTrue(node.options().isEmpty());
     }
 }

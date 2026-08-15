@@ -64,8 +64,7 @@ class MolangDecompilerTest {
     @Test
     void binaryOperator() {
         MolangDecompiler.ExprFragment f = MolangDecompiler.decompileExpression("1 + variable.x");
-        NodeInstance op = firstByType(f.nodes(), "op.binary");
-        assertEquals("+", op.options().get("op").getAsString());
+        NodeInstance op = firstByType(f.nodes(), "op.add");
         assertEquals(new PortRef(op.uid(), "out"), f.output().orElseThrow());
 
         NodeInstance a = firstByType(f.nodes(), "const.int");
@@ -78,12 +77,11 @@ class MolangDecompilerTest {
     @Test
     void unaryOperator() {
         MolangDecompiler.ExprFragment neg = MolangDecompiler.decompileExpression("-variable.a");
-        NodeInstance op = firstByType(neg.nodes(), "op.unary");
-        assertEquals("-", op.options().get("op").getAsString());
+        NodeInstance op = firstByType(neg.nodes(), "op.negate");
         assertEquals(firstByType(neg.nodes(), "variable").uid(), wireSource(neg.wires(), op.uid(), "a"));
 
         MolangDecompiler.ExprFragment not = MolangDecompiler.decompileExpression("!query.is_baby");
-        assertEquals("!", firstByType(not.nodes(), "op.unary").options().get("op").getAsString());
+        firstByType(not.nodes(), "op.not");
     }
 
     @Test
@@ -103,12 +101,8 @@ class MolangDecompilerTest {
     void groupingDissolves() {
         // 图 IR 无括号节点：(1 + 2) * 3 与 1 + 2 * 3 的 AST 不同但结构映射一致
         MolangDecompiler.ExprFragment f = MolangDecompiler.decompileExpression("(1 + 2) * 3");
-        List<NodeInstance> binaries = allByType(f.nodes(), "op.binary");
-        assertEquals(2, binaries.size());
-        NodeInstance mul = binaries.stream()
-                .filter(n -> "*".equals(n.options().get("op").getAsString())).findFirst().orElseThrow();
-        NodeInstance add = binaries.stream()
-                .filter(n -> "+".equals(n.options().get("op").getAsString())).findFirst().orElseThrow();
+        NodeInstance mul = firstByType(f.nodes(), "op.multiply");
+        NodeInstance add = firstByType(f.nodes(), "op.add");
         assertEquals(add.uid(), wireSource(f.wires(), mul.uid(), "a"));
     }
 
@@ -321,7 +315,7 @@ class MolangDecompilerTest {
         MolangDecompiler.ExecFragment f = MolangDecompiler.decompileStatements("variable.x = query.health + 1;");
         NodeInstance setVar = firstByType(f.nodes(), "exec.set_var");
         assertTrue(setVar.constants().isEmpty());
-        assertEquals(firstByType(f.nodes(), "op.binary").uid(), wireSource(f.wires(), setVar.uid(), "value"));
+        assertEquals(firstByType(f.nodes(), "op.add").uid(), wireSource(f.wires(), setVar.uid(), "value"));
     }
 
     @Test
@@ -398,8 +392,8 @@ class MolangDecompilerTest {
         assertEquals(1, countCode(f.diagnostics(), DecompileDiagnostics.UNSUPPORTED_IMPORT));
         // 便签留原文
         assertTrue(f.stickyNotes().stream().anyMatch(s -> s.text().contains("variable.a[2]")));
-        // const.number 0 占位接入 op.binary.b，a 侧正常
-        NodeInstance op = firstByType(f.nodes(), "op.binary");
+        // const.number 0 占位接入 op.add.b，a 侧正常
+        NodeInstance op = firstByType(f.nodes(), "op.add");
         NodeInstance placeholder = firstByType(f.nodes(), "const.number");
         assertEquals(0.0, placeholder.options().get("value").getAsDouble());
         assertEquals(placeholder.uid(), wireSource(f.wires(), op.uid(), "b"));

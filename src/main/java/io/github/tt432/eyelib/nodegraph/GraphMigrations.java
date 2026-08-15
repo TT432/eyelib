@@ -70,6 +70,9 @@ import org.jspecify.annotations.Nullable;
  * initialize/pre_animation/parent_setup EXEC 槽 → event.* 源节点（exec_out 引链）；
  * ac.state 的 on_entry/on_exit 翻转为 EXEC OUT 源端口。链拓扑不变，导出产物等价。
  *
+ * <p>v13 → v14 操作符节点拆分：op.binary / op.unary 的 op 选项固化为节点类型身份
+ * （op.add … op.or / op.negate / op.not，一符一类型），op 选项移除；端口与连线不变。
+ *
  * <p>纯函数：输入输出均为不可变文档；加载路径（资源包 loader / EprojectIo）统一调用。
  * 已是新格式的文档原样返回。
  */
@@ -116,8 +119,50 @@ public final class GraphMigrations {
         if (result.formatVersion() < 13) {
             result = migrateV12ToV13(result);
         }
+        if (result.formatVersion() < 14) {
+            result = migrateV13ToV14(result);
+        }
         return new GraphLibrary(GraphLibrary.CURRENT_FORMAT_VERSION, result.kind(), result.main(),
                 result.graphs());
+    }
+
+    // ---------- v13 → v14：操作符节点拆分 ----------
+
+    /**
+     * v14 单操作符节点（用户决策 2026-08-16）：op.binary / op.unary 的 op 选项
+     * 固化为节点类型身份（op.add / op.subtract / … / op.negate / op.not），选项移除；
+     * 端口 id（a/b/out）与连线不变。未知或缺失 op 按旧默认回落（binary → "+"，unary → "-"）。
+     */
+    private static GraphLibrary migrateV13ToV14(GraphLibrary library) {
+        Map<String, GraphData> graphs = new LinkedHashMap<>();
+        for (Map.Entry<String, GraphData> entry : library.graphs().entrySet()) {
+            GraphData g = entry.getValue();
+            List<NodeInstance> nodes = new ArrayList<>(g.nodes().size());
+            for (NodeInstance node : g.nodes()) {
+                nodes.add(migrateOpNode(node));
+            }
+            graphs.put(entry.getKey(), new GraphData(nodes, g.wires(), g.variables(),
+                    g.placemats(), g.stickyNotes(), g.graphInterface()));
+        }
+        return new GraphLibrary(14, library.kind(), library.main(), graphs);
+    }
+
+    private static NodeInstance migrateOpNode(NodeInstance node) {
+        boolean binary = node.type().equals("op.binary");
+        boolean unary = node.type().equals("op.unary");
+        if (!binary && !unary) {
+            return node;
+        }
+        NodeType opType = binary
+                ? NodeTypes.binaryOp(optionString(node, "op", "+"))
+                : NodeTypes.unaryOp(optionString(node, "op", "-"));
+        if (opType == null) {
+            // 未知符号：回落旧默认（binary → op.add，unary → op.negate）
+            opType = binary ? NodeTypes.binaryOp("+") : NodeTypes.unaryOp("-");
+        }
+        Map<String, JsonElement> options = new LinkedHashMap<>(node.options());
+        options.remove("op");
+        return new NodeInstance(node.uid(), opType.id(), node.x(), node.y(), options, node.constants());
     }
 
     // ---------- v12 → v13：执行时机事件化 ----------

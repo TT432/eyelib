@@ -8,6 +8,8 @@ import io.github.tt432.eyelib.molang.compiler.frontend.ast.MolangAst;
 import io.github.tt432.eyelib.molang.compiler.frontend.ast.SourceSpan;
 import io.github.tt432.eyelib.nodegraph.Diagnostic;
 import io.github.tt432.eyelib.nodegraph.NodeInstance;
+import io.github.tt432.eyelib.nodegraph.NodeType;
+import io.github.tt432.eyelib.nodegraph.NodeTypes;
 import io.github.tt432.eyelib.nodegraph.PortRef;
 import io.github.tt432.eyelib.nodegraph.StickyNote;
 import io.github.tt432.eyelib.nodegraph.Wire;
@@ -30,7 +32,7 @@ import org.jspecify.annotations.Nullable;
  *   <li>数字字面量 → const.number（整数值 → const.int）；字符串 → const.string；true/false → const.bool；
  *       例外：赋值语句的值是常量字面量时不建 const 节点，直接内联为 set 节点 value 端口的行内值；</li>
  *   <li>{@code a op b} / {@code op a} / {@code c ? a : b} / {@code a ?? b}
- *       → op.binary / op.unary / op.ternary / op.null_coalesce；</li>
+ *       → op.&lt;操作符&gt;（一符一类型，如 op.add/op.negate，v14）/ op.ternary / op.null_coalesce；</li>
  *   <li>{@code variable.x} → variable 节点（name 不带根）；{@code temp.x} / {@code context.x}
  *       → temp.get / context.get
  *       （q./v./t./c. 别名经 {@link MolangRootAliasCanonicalizer} 归一，temp/context 的 name 存带根全名）；</li>
@@ -420,12 +422,20 @@ public final class MolangDecompiler {
             return expr(b, grouping.expression());
         }
         if (expr instanceof MolangAst.UnaryExpr unary) {
-            String uid = b.addNode("op.unary", ImportGraphBuilder.opts("op", unary.operator()));
+            NodeType opType = NodeTypes.unaryOp(unary.operator());
+            if (opType == null) {
+                return b.unsupported(unary, "不支持的一元运算符 '" + unary.operator() + "'");
+            }
+            String uid = b.addNode(opType.id(), Map.of());
             b.wireFrom(expr(b, unary.expression()), uid, "a");
             return new PortRef(uid, "out");
         }
         if (expr instanceof MolangAst.BinaryExpr binary) {
-            String uid = b.addNode("op.binary", ImportGraphBuilder.opts("op", binary.operator()));
+            NodeType opType = NodeTypes.binaryOp(binary.operator());
+            if (opType == null) {
+                return b.unsupported(binary, "不支持的二元运算符 '" + binary.operator() + "'");
+            }
+            String uid = b.addNode(opType.id(), Map.of());
             b.wireFrom(expr(b, binary.left()), uid, "a");
             b.wireFrom(expr(b, binary.right()), uid, "b");
             return new PortRef(uid, "out");
