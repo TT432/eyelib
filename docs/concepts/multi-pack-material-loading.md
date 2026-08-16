@@ -74,6 +74,11 @@ PackRepository（选中、排序）
   回落自动规则（最高 memoryPerformanceTier、同 tier 取最后）并报
   `SUBPACK_OVERRIDE_UNKNOWN` 警告。subpack 改变加载内容，关闭界面时触发资源重载；
   toggle/slider/dropdown 由 molang 即时读取，无需重载。
+- **设置控件形态**（2026-08-16 第三批）：slider → `AbstractSliderButton`
+  （step 网格）；dropdown → 自绘 `DropdownWidget`（收起态显示当前值 + ▼，
+  点击展开屏幕级弹出层——列表剪刀域画不下，渲染/命中都在
+  `BedrockPackSettingsScreen` 层做：底部放不下向上展开、超 7 条滚轮滚动、
+  ESC/点外收层）；toggle → CycleButton 开关（vanilla 惯例）。
 - **molang 查询**（client/molang/MolangQuery，官方语义）：
   `query.is_pack_setting_enabled(name)`（toggle）、
   `query.is_pack_setting_selected(name, selection)`（dropdown 字符串比较）、
