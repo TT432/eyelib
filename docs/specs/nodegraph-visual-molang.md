@@ -273,3 +273,51 @@ LDLib 1.20.1 为 SRG 名（Forge 1.20.1 reobf 生态），ModDevGradle legacyfor
 不作用于剪刀矩形（它把入参当屏幕坐标），导致整个绘制被剪空。修复：预览不做 scissor，
 渲染改用与 `GuiGraphics.innerBlit` 同款的 Tesselator + position_tex 直接 drawWithShader 路径，
 并加包围盒自动取景。ModelPreviewScreen 同病同药（其搜索赋值块被注释的预存 bug 一并修复）。
+
+## 8. 实施记录（2026-08-16）：未实现 molang 的图上 error 标记与 71 个缺失 query 补齐
+
+**起因**：导入 Actions & Stuff 悦灵后 Query Call 节点（`query.entity_biome_has_any_identifier`）
+out 端口显示 Any——该函数在 `MolangFunctionSignatures` 签名表有条目但 molang 映射树无实现，
+`MolangReturnTypes` 反射落空回落 ANY；更严重的是未注册 query 绑定为 `BoundUnknownExpr`，
+运行时**静默求值为 null**。
+
+**决策与落地**：
+1. **图上 error 标记**（用户要求）：query.call / math.call / exec.call 节点的 function 选项
+   判定未实现（`MolangImplementations.isImplemented`：映射树 findMethod/findField 落空且非
+   .emolang 自定义函数）时——节点标题追加红色「⚠ 未实现」（LDLib2 Label 支持 Component
+   颜色样式，已核实渲染管线）；并向 `DiagnosticsCenter` 报 `MOLANG_UNIMPLEMENTED` error
+   诊断（节点内按 function 值去重，防 defineNode 重跑刷屏；注意 DiagnosticsCenter 批次语义
+   为只保留最新一批，多节点增量上报会互相覆盖，属已知限制）。
+2. **71 个未实现 query 统一补齐**：以包数据实扫为准（113 客户端实体 + 2560 动画 + 650 AC
+   的 JSON 全量正则，diff 映射树），逐条对照官方 Query Functions 文档（bedrock.dev 镜像）
+   实现。分布：`bridge/molang/MolangBuiltInQuery` 46 个（实体状态类）、
+   `client/molang/MolangQuery` 13 个（官方标注仅客户端：biome/camera/cape/surface_particle 等）、
+   其余为带参签名表补登。JE 无对应数据源的按官方 "else 0/-1" 语义给中性值，description
+   逐一注明（先例：`graphics_mode_is_any`），不做静默近似。
+3. **版本差异收敛**（ADR-0016 §5/§6 门禁强制）：`EntityStatePort` 新增骆驼冲刺冷却
+   （`CamelAccessor`）与狼抖水（`WolfAccessor`）两个 mixin accessor；新建
+   `bridge/client/ClientEntityVisualPort` 收敛披风三版本分歧与 surface_particle 贴图数据
+   （26.1 渲染重写后 BlockModelShaper 不存在，surface_particle_* 在 26.1 回退全 0，待适配）。
+4. **签名表勘误**：`entity_biome_has_any_tag`（单数）→ 官方名 `entity_biome_has_any_tags`；
+   补登 armor_color_slot/camera_rotation/cooldown_time(_remaining)/has_armor_slot/
+   position_delta/relative_block_has_all_tags/rotation_to_camera 的带参签名。
+5. **防回归单测**：`MolangFunctionSignaturesCompletenessTest`——签名表每个内置函数必须
+   在映射树可解析（本类漂移的直接防线）。
+
+**验证证据**：1.20.1/1.21.1 编译绿、1.20.1 全量测试绿（含架构门禁与 refmap 条目）；
+运行时 71/71 `returnTypeOf` 非 ANY（surface_particle_* 为 OBJECT）；玩家实体实算
+`entity_biome_has_any_identifier('minecraft:plains')=1 / ('minecraft:desert')=0`、
+`entity_biome_has_any_tags('minecraft:is_overworld')=1`、
+`relative_block_has_all_tags(0,-1,0,'minecraft:dirt')=1`、`surface_particle_color`
+返回 struct（草方块平均色 r0.30 g0.28 b0.09 a1.0）等 24 条；编辑器 UI 树断言未实现节点
+标题为红样式「Query Call ⚠ 未实现」、已实现节点无标记、DiagnosticsCenter 收到 ERROR。
+
+**JE 无信号恒 0（均注明，非静默）**：is_avoiding_block / is_delayed_attacking /
+is_eating_mob / is_emoting / is_ghost / is_shield_powered / is_stunned / roll_counter /
+lie_amount / structural_integrity / get_animation_frame / is_persona_or_premium_skin /
+timer_flag_2 / timer_flag_3 / cooldown_time(_remaining)（JE 玩家冷却无槽位语义与总时长）/
+life_span（官方语义永生 0）/ ticks_since_last_kinetic_weapon_hit（官方语义 -1）。
+**近似（注明）**：is_shaking（完全冰冻）、is_jump_goal_jumping（=is_jumping）、
+body_x_rotation（实体 pitch）、is_on_screen（视距内近似，无视锥）、camera_rotation /
+rotation_to_camera（相机实体视角/眼位）、walk_distance（潜行不剔除）、
+surface_particle_*（贴图平均色 × 群系着色 / 图集原点 / 贴图尺寸）。

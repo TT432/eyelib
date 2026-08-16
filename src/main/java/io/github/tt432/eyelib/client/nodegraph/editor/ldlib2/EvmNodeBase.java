@@ -15,8 +15,11 @@ import com.lowdragmc.lowdraglib2.nodegraphtookit.model.node.PortModel;
 import com.lowdragmc.lowdraglib2.nodegraphtookit.model.node.definition.IOptionDefinitionContext;
 import com.lowdragmc.lowdraglib2.nodegraphtookit.model.node.definition.IPortDefinitionContext;
 import io.github.tt432.eyelib.client.nodegraph.AssetSuggestions;
+import io.github.tt432.eyelib.client.nodegraph.DiagnosticsCenter;
+import io.github.tt432.eyelib.client.nodegraph.MolangImplementations;
 import io.github.tt432.eyelib.client.nodegraph.preview.PreviewViewState;
 import io.github.tt432.eyelib.nodegraph.ColorValues;
+import io.github.tt432.eyelib.nodegraph.Diagnostic;
 import io.github.tt432.eyelib.nodegraph.InlineLiteral;
 import io.github.tt432.eyelib.nodegraph.NodeInstance;
 import io.github.tt432.eyelib.nodegraph.NodeOptionDef;
@@ -25,10 +28,12 @@ import io.github.tt432.eyelib.nodegraph.NodeTypes;
 import io.github.tt432.eyelib.nodegraph.PortDef;
 import io.github.tt432.eyelib.nodegraph.PortType;
 import io.github.tt432.eyelib.nodegraph.ShortNames;
+import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -69,7 +74,29 @@ public abstract class EvmNodeBase extends Node {
 
     @Override
     public Component getDisplayName() {
-        return Component.literal(EvmNodes.displayName(type().id()));
+        var base = Component.literal(EvmNodes.displayName(type().id()));
+        if (hasUnimplementedFunction()) {
+            // 颜色样式可用：节点标题经 LDLib2 Label（TextElement）渲染，其文本管线
+            // （TextUtilities.computeFormattedLines → LDLibFonts.drawText）在 vanilla
+            // Font.StringRenderOutput 与 LDTextLayoutCache 两条路径上均以 Component 内嵌
+            // style 颜色覆盖绘制色（已对照 1.20.1 Font 源码与 LDTextLayoutCache.emit 核实）
+            base.append(Component.literal(" ⚠ 未实现").withStyle(ChatFormatting.RED));
+        }
+        return base;
+    }
+
+    /**
+     * call 类节点的 function 是否指向未实现函数（图上错误标记与诊断上报的共用判定）；
+     * 非 call 节点 / 空 function → false。早期 define 阶段 nodeModel 可能为 null——
+     * {@link #effectiveFunction} 经 readStringOption 空安全回退 initialFunction，不会 NPE。
+     */
+    private boolean hasUnimplementedFunction() {
+        NodeType.Kind kind = type().kind();
+        if (kind != NodeType.Kind.QUERY_CALL && kind != NodeType.Kind.MATH_CALL
+                && kind != NodeType.Kind.EXEC_CALL) {
+            return false;
+        }
+        return !MolangImplementations.isImplemented(effectiveFunction());
     }
 
     /**
@@ -108,10 +135,7 @@ public abstract class EvmNodeBase extends Node {
             // 选项值未必可读（LDLib2 两阶段加载：define 后才回写保存值）——首选实时读，
             // 读不到回退翻译期写入的 initialFunction（见 EvmGraphTranslator.createNode）
             if (def.type() == NodeOptionDef.OptionType.LIST) {
-                String fn = readStringOption("function");
-                if (fn == null || fn.isEmpty()) {
-                    fn = initialFunction != null ? initialFunction : "";
-                }
+                String fn = effectiveFunction();
                 String listLabel = io.github.tt432.eyelib.nodegraph.MolangFunctionSignatures
                         .variadicListLabel(fn);
                 if (listLabel == null || ("args[...]".equals(listLabel) && isKnownZeroArgFunction(fn))) {
@@ -151,6 +175,15 @@ public abstract class EvmNodeBase extends Node {
     /** 翻译期注入域 function 值（define 期选项值不可读，见 onDefineOptions LIST 分支）。 */
     public void withInitialFunction(@Nullable String function) {
         this.initialFunction = function;
+    }
+
+    /** function 选项当前有效值：首选实时读，读不到/空串回退翻译期 initialFunction。 */
+    private String effectiveFunction() {
+        String fn = readStringOption("function");
+        if (fn == null || fn.isEmpty()) {
+            fn = initialFunction != null ? initialFunction : "";
+        }
+        return fn;
     }
 
     /** 零参内建函数（映射树可见参数 0）→ args 列表行不显示。 */
@@ -260,6 +293,51 @@ public abstract class EvmNodeBase extends Node {
                     .withDisplayName(Component.literal(port.label().orElse(port.id())));
             applyCapacity(builder.build(), port);
         }
+        // 未实现函数标记回写标题：CustomNodeModelImpl 只在 initCustomNode 时 setTitle 一次，
+        // function 选项变更触发的 defineNode 重跑需在此刷新标题（setTitle 内部等值短路，
+        // 且经 ChangeHint.STYLE 让 NodeTitleElement 更新 Label 文本）
+        var model = getNodeModel();
+        if (model != null) {
+            model.setTitle(getDisplayName());
+        }
+        reportUnimplementedDiagnostic();
+    }
+
+    /** 上一次检查的 function 值（变化时重新武装诊断上报）。 */
+    private @Nullable String lastCheckedFunction;
+    /** 上一次已上报诊断的 function 值（同一值只报一次，防 defineNode 重跑刷屏）。 */
+    private @Nullable String lastReportedUnimplementedFunction;
+
+    /**
+     * 未实现函数的 DiagnosticsCenter 上报（挂在 onDefinePorts 末尾，defineNode 重跑时执行）。
+     * 去重语义：function 值不变只报一次；function 变化（含变成已实现再变回）重新武装、可再报。
+     * 注意 DiagnosticsCenter 只保留最新一批——这里是节点级增量上报，会被下一批覆盖。
+     */
+    private void reportUnimplementedDiagnostic() {
+        NodeType.Kind kind = type().kind();
+        if (kind != NodeType.Kind.QUERY_CALL && kind != NodeType.Kind.MATH_CALL
+                && kind != NodeType.Kind.EXEC_CALL) {
+            return;
+        }
+        String fn = effectiveFunction();
+        if (!fn.equals(lastCheckedFunction)) {
+            lastCheckedFunction = fn;
+            lastReportedUnimplementedFunction = null;
+        }
+        if (fn.isEmpty() || MolangImplementations.isImplemented(fn)) {
+            return;
+        }
+        if (fn.equals(lastReportedUnimplementedFunction)) {
+            return;
+        }
+        lastReportedUnimplementedFunction = fn;
+        var model = getNodeModel();
+        String uid = model != null && model.getUid() != null ? model.getUid().toString() : null;
+        String message = "molang 函数未实现: " + fn + "（节点类型 " + type().id() + "）";
+        DiagnosticsCenter.report("evm-nodegraph", "节点 " + type().id(),
+                List.of(uid != null
+                        ? Diagnostic.error("MOLANG_UNIMPLEMENTED", message, uid)
+                        : Diagnostic.error("MOLANG_UNIMPLEMENTED", message)));
     }
 
     /**
@@ -271,10 +349,7 @@ public abstract class EvmNodeBase extends Node {
         NodeType.Kind kind = type().kind();
         if ((kind == NodeType.Kind.QUERY_CALL || kind == NodeType.Kind.MATH_CALL)
                 && "out".equals(port.id())) {
-            String fn = readStringOption("function");
-            if (fn == null || fn.isEmpty()) {
-                fn = initialFunction != null ? initialFunction : "";
-            }
+            String fn = effectiveFunction();
             return io.github.tt432.eyelib.client.nodegraph.MolangReturnTypes.returnTypeOf(fn);
         }
         return port.type();
