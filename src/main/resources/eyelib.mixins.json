@@ -11,6 +11,8 @@
   "refmap": "eyelib.refmap.json",
   //?}
   "mixins": [
+    "CamelAccessor",
+    "WolfAccessor",
     //? if !modern {
     "PoseStackAccessor",
     "LivingEntityAccessor",

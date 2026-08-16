@@ -60,6 +60,11 @@ public final class MolangFunctionSignatures {
         return custom != null ? custom : BUILT_IN.get(functionName);
     }
 
+    /** 内置表全部函数名（只读视图；完备性测试用，防签名表与映射树漂移）。 */
+    static java.util.Set<String> builtInNames() {
+        return BUILT_IN.keySet();
+    }
+
     /** 是否定长签名（定长函数的 args 列表选项无意义，编辑器隐藏之）。 */
     public static boolean isFixedArity(String functionName) {
         Signature sig = find(functionName);
@@ -184,18 +189,23 @@ public final class MolangFunctionSignatures {
 
         // ---------- query.*（33 个带参；按 bridge/molang/MolangBuiltInQuery 实现核对） ----------
         t.put("query.any", varArgs(num("value"), num("candidates")));
+        t.put("query.armor_color_slot", fixed(num("slot")));
         t.put("query.armor_texture_slot", fixed(num("slot")));
         t.put("query.bone_orientation_trs", fixed(str("bone")));
         t.put("query.bone_origin", fixed(str("bone")));
         t.put("query.boots_is", varArgs(str("items")));
         t.put("query.camera_distance_range_lerp", fixed(num("min"), num("max")));
+        t.put("query.camera_rotation", fixed(num("axis")));
         t.put("query.chestplate_is", varArgs(str("items")));
+        t.put("query.cooldown_time", varArgs(str("slots")));
+        t.put("query.cooldown_time_remaining", varArgs(str("slots")));
         t.put("query.equipped_item_any_tag", varArgs(str("slot"), str("tags")));
         t.put("query.entity_biome_has_any_identifier", varArgs(str("identifiers")));
-        t.put("query.entity_biome_has_any_tag", varArgs(str("tags")));
+        t.put("query.entity_biome_has_any_tags", varArgs(str("tags")));
         t.put("query.get_root_locator_offset", fixed(str("locator"), str("axis")));
         t.put("query.graphics_mode_is_any", varArgs(str("modes")));
         t.put("query.has_property", fixed(str("property")));
+        t.put("query.has_armor_slot", fixed(num("slot")));
         t.put("query.head_x_rotation", fixed(num("head")));
         t.put("query.head_y_rotation", fixed(num("head")));
         t.put("query.helmet_is", varArgs(str("items")));
@@ -215,9 +225,13 @@ public final class MolangFunctionSignatures {
         t.put("query.main_hand_is", varArgs(str("items")));
         t.put("query.off_hand_is", varArgs(str("items")));
         t.put("query.position", fixed(num("axis")));
+        t.put("query.position_delta", fixed(num("axis")));
         t.put("query.property", fixed(str("property")));
+        t.put("query.relative_block_has_all_tags",
+                varArgs(List.of(num("x"), num("y"), num("z")), str("tags")));
         t.put("query.relative_block_has_any_tag",
                 varArgs(List.of(num("x"), num("y"), num("z")), str("tags")));
+        t.put("query.rotation_to_camera", fixed(num("axis")));
 
         return Map.copyOf(t);
     }

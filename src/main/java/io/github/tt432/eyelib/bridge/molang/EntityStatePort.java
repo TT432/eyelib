@@ -1,7 +1,15 @@
 package io.github.tt432.eyelib.bridge.molang;
 
+import io.github.tt432.eyelib.mixin.CamelAccessor;
 import io.github.tt432.eyelib.mixin.LivingEntityAccessor;
+import io.github.tt432.eyelib.mixin.WolfAccessor;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.animal.camel.Camel;
+//? if <26.1 {
+import net.minecraft.world.entity.animal.Wolf;
+//?} else {
+import net.minecraft.world.entity.animal.wolf.Wolf;
+//?}
 import net.minecraft.world.entity.monster.Creeper;
 
 /**
@@ -36,5 +44,19 @@ public interface EntityStatePort {
         //?} else {
         return creeper.getSwelling(1F);
         //?}
+    }
+
+    /**
+     * @return 骆驼冲刺是否处于冷却（{@code dashCooldown} 三版本均 private，走 accessor）
+     */
+    static boolean camelHasDashCooldown(Camel camel) {
+        return ((CamelAccessor) camel).eyelib$getDashCooldown() > 0;
+    }
+
+    /**
+     * @return 狼是否正在抖掉身上的水（{@code isShaking} 三版本均 private，走 accessor）
+     */
+    static boolean wolfShakingWetness(Wolf wolf) {
+        return ((WolfAccessor) wolf).eyelib$isShaking();
     }
 }

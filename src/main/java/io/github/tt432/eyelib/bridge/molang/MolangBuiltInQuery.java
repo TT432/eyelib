@@ -37,6 +37,19 @@ import net.minecraft.world.entity.animal.equine.AbstractChestedHorse;
 import net.minecraft.world.entity.animal.equine.AbstractHorse;
 //?}
 import net.minecraft.world.entity.boss.wither.WitherBoss;
+import net.minecraft.world.entity.animal.allay.Allay;
+import net.minecraft.world.entity.animal.axolotl.Axolotl;
+import net.minecraft.world.entity.ambient.Bat;
+import net.minecraft.world.entity.animal.frog.Frog;
+import net.minecraft.world.entity.animal.sniffer.Sniffer;
+//? if <26.1 {
+import net.minecraft.world.entity.animal.Panda;
+import net.minecraft.world.entity.monster.SpellcasterIllager;
+//?} else {
+import net.minecraft.world.entity.animal.panda.Panda;
+import net.minecraft.world.entity.monster.illager.SpellcasterIllager;
+//?}
+import net.minecraft.world.entity.monster.piglin.Piglin;
 import net.minecraft.world.entity.monster.Creeper;
 import net.minecraft.world.entity.monster.EnderMan;
 import net.minecraft.world.entity.monster.Vex;
@@ -1095,6 +1108,404 @@ public interface MolangBuiltInQuery {
         ComponentStore store = ctx.componentStore();
         Number v = store.get("minecraft:scale");
         return v != null ? v.floatValue() : 1f;
+    }
+
+    // ==================== 2026-08-16 补齐：包数据实扫（113 实体 + 2560 动画 + 650 AC）中未实现的 query ====================
+    // 语义来源：Microsoft 官方 Molang Query Functions 文档（bedrock.dev 镜像逐条核对）。
+    // JE 无对应数据源的按官方 "else returns 0" 语义给中性值，description 逐一注明，不做静默近似。
+
+    @MolangFunction(value = "blocking", description = "正在格挡（盾）")
+    public static float blocking(MolangScope scope) {
+        return livingBool(scope, LivingEntity::isBlocking);
+    }
+
+    @MolangFunction(value = "death_ticks", description = "死亡动画已进行的 tick 数")
+    public static float deathTicks(MolangScope scope) {
+        return livingFloat(scope, l -> (float) l.deathTime);
+    }
+
+    @MolangFunction(value = "hurt_direction", description = "受伤方向")
+    public static float hurtDirection(MolangScope scope) {
+        return livingFloat(scope, LivingEntity::getHurtDir);
+    }
+
+    @MolangFunction(value = "has_head_gear", description = "头部盔甲槽有物品")
+    public static float hasHeadGear(MolangScope scope) {
+        return livingBool(scope, l -> !l.getItemBySlot(EquipmentSlot.HEAD).isEmpty());
+    }
+
+    @MolangFunction(value = "has_armor_slot", description = "指定盔甲槽有物品（0头1胸2腿3脚4身体）")
+    public static float hasArmorSlot(MolangScope scope, float slot) {
+        return livingBool(scope, l -> !armorStack(l, (int) slot).isEmpty());
+    }
+
+    @MolangFunction(value = "equipment_count", description = "已装备盔甲件数（不含手部；含动物身体槽/马铠）")
+    public static float equipmentCount(MolangScope scope) {
+        return livingFloat(scope, l -> {
+            int count = 0;
+            for (EquipmentSlot s : new EquipmentSlot[]{EquipmentSlot.FEET, EquipmentSlot.LEGS,
+                    EquipmentSlot.CHEST, EquipmentSlot.HEAD}) {
+                if (!l.getItemBySlot(s).isEmpty()) {
+                    count++;
+                }
+            }
+            if (!bodyArmor(l).isEmpty()) {
+                count++;
+            }
+            return (float) count;
+        });
+    }
+
+    @MolangFunction(value = "armor_color_slot", description = "指定盔甲槽护甲染色（打包 RGB int 以 float 返回；未染色/不可染色 → -1）")
+    public static float armorColorSlot(MolangScope scope, float slot) {
+        return livingFloat(scope, l -> {
+            ItemStack stack = armorStack(l, (int) slot);
+            if (stack.isEmpty()) {
+                return -1F;
+            }
+            //? if <1.20.6 {
+            return stack.getItem() instanceof net.minecraft.world.item.DyeableLeatherItem dyeable
+                    ? (float) dyeable.getColor(stack) : -1F;
+            //?} else {
+            return (float) net.minecraft.world.item.component.DyedItemColor.getOrDefault(stack, -1);
+            //?}
+        });
+    }
+
+    @MolangFunction(value = "is_attached_to_entity", description = "被拴绳拴在实体/栅栏上（BE attach ≈ JE leash）")
+    public static float isAttachedToEntity(MolangScope scope) {
+        return entityBool(scope, e -> e instanceof Mob mob && mob.isLeashed());
+    }
+
+    @MolangFunction(value = "is_admiring", description = "猪灵正在端详物品")
+    public static float isAdmiring(MolangScope scope) {
+        return entityBool(scope, e -> e instanceof Piglin piglin
+                && piglin.getBrain().hasMemoryValue(MemoryModuleType.ADMIRING_ITEM));
+    }
+
+    @MolangFunction(value = "is_casting", description = "灾厄施法者正在施法")
+    public static float isCasting(MolangScope scope) {
+        return entityBool(scope, e -> e instanceof SpellcasterIllager caster && caster.isCastingSpell());
+    }
+
+    @MolangFunction(value = "is_charged", description = "苦力怕已充能")
+    public static float isCharged(MolangScope scope) {
+        return entityBool(scope, e -> e instanceof Creeper creeper && creeper.isPowered());
+    }
+
+    @MolangFunction(value = "is_croaking", description = "青蛙正在鸣叫")
+    public static float isCroaking(MolangScope scope) {
+        return entityBool(scope, e -> e instanceof Frog frog && frog.croakAnimationState.isStarted());
+    }
+
+    @MolangFunction(value = "is_dancing", description = "悦灵正在跳舞")
+    public static float isDancing(MolangScope scope) {
+        return entityBool(scope, e -> e instanceof Allay allay && allay.isDancing());
+    }
+
+    @MolangFunction(value = "is_in_contact_with_water", description = "接触水（含雨/气泡柱；喷溅水瓶 JE 无信号不计）")
+    public static float isInContactWithWater(MolangScope scope) {
+        //? if <26.1 {
+        return entityBool(scope, e -> e.isInWaterOrRain() || e.isInWaterOrBubble());
+        //?} else {
+        return entityBool(scope, e -> e.isInWaterOrRain() || e.isInWater());
+        //?}
+    }
+
+    @MolangFunction(value = "is_in_lava", description = "在岩浆中")
+    public static float isInLava(MolangScope scope) {
+        return entityBool(scope, Entity::isInLava);
+    }
+
+    @MolangFunction(value = "is_interested", description = "狼正对食物/玩家歪头（interested）")
+    public static float isInterested(MolangScope scope) {
+        return entityBool(scope, e -> e instanceof Wolf wolf && wolf.isInterested());
+    }
+
+    @MolangFunction(value = "is_jump_goal_jumping", description = "跳跃目标跳跃中（JE 无 goal 区分，取生物跳跃标志，同 is_jumping）")
+    public static float isJumpGoalJumping(MolangScope scope) {
+        return livingBool(scope, EntityStatePort::isJumping);
+    }
+
+    @MolangFunction(value = "is_playing_dead", description = "美西螈正在装死")
+    public static float isPlayingDead(MolangScope scope) {
+        return entityBool(scope, e -> e instanceof Axolotl axolotl && axolotl.isPlayingDead());
+    }
+
+    @MolangFunction(value = "is_resting", description = "蝙蝠正在倒吊休息")
+    public static float isResting(MolangScope scope) {
+        return entityBool(scope, e -> e instanceof Bat bat && bat.isResting());
+    }
+
+    @MolangFunction(value = "is_searching", description = "嗅探兽正在搜寻")
+    public static float isSearching(MolangScope scope) {
+        return entityBool(scope, e -> e instanceof Sniffer sniffer && sniffer.isSearching());
+    }
+
+    @MolangFunction(value = "is_shaking", description = "发抖（官方文档描述缺失；JE 近似：完全冰冻）")
+    public static float isShaking(MolangScope scope) {
+        return entityBool(scope, Entity::isFullyFrozen);
+    }
+
+    @MolangFunction(value = "is_shaking_wetness", description = "狼正在抖掉身上的水")
+    public static float isShakingWetness(MolangScope scope) {
+        return entityBool(scope, e -> e instanceof Wolf wolf && EntityStatePort.wolfShakingWetness(wolf));
+    }
+
+    @MolangFunction(value = "is_spectator", description = "旁观模式")
+    public static float isSpectator(MolangScope scope) {
+        return entityBool(scope, Entity::isSpectator);
+    }
+
+    @MolangFunction(value = "is_using_item", description = "正在使用物品（拉弓/进食/举盾等）")
+    public static float isUsingItem(MolangScope scope) {
+        return livingBool(scope, LivingEntity::isUsingItem);
+    }
+
+    @MolangFunction(value = "item_in_use_duration", description = "当前物品已使用秒数")
+    public static float itemInUseDuration(MolangScope scope) {
+        return livingFloat(scope, l -> {
+            if (!l.isUsingItem()) {
+                return 0F;
+            }
+            ItemStack stack = l.getUseItem();
+            //? if <1.20.6 {
+            int max = stack.getUseDuration();
+            //?} else {
+            int max = stack.getUseDuration(l);
+            //?}
+            return (max - l.getUseItemRemainingTicks()) / 20F;
+        });
+    }
+
+    @MolangFunction(value = "main_hand_item_max_duration", description = "主手物品使用时长的最大秒数")
+    public static float mainHandItemMaxDuration(MolangScope scope) {
+        return livingFloat(scope, l -> {
+            ItemStack stack = l.getMainHandItem();
+            if (stack.isEmpty()) {
+                return 0F;
+            }
+            //? if <1.20.6 {
+            return stack.getUseDuration() / 20F;
+            //?} else {
+            return stack.getUseDuration(l) / 20F;
+            //?}
+        });
+    }
+
+    @MolangFunction(value = "position_delta", description = "本 tick 位移分量（0=x,1=y,2=z）")
+    public static float positionDelta(MolangScope scope, float axis) {
+        return entityFloat(scope, e -> switch ((int) axis) {
+            case 0 -> (float) (e.getX() - e.xo);
+            case 1 -> (float) (e.getY() - e.yo);
+            case 2 -> (float) (e.getZ() - e.zo);
+            default -> 0F;
+        });
+    }
+
+    @MolangFunction(value = "relative_block_has_all_tags", description = "实体相对位置的方块拥有全部给定标签")
+    public static float relativeBlockHasAllTags(MolangScope scope, float relX, float relY, float relZ, String... tags) {
+        return entityBool(scope, entity -> {
+            var level = entity.level();
+            var pos = entity.blockPosition().offset((int) relX, (int) relY, (int) relZ);
+            var blockState = level.getBlockState(pos);
+            for (String tag : tags) {
+                var tagKey = net.minecraft.tags.TagKey.create(Registries.BLOCK, ResourceLocationBridge.parseMc(tag));
+                if (!blockState.is(tagKey)) {
+                    return false;
+                }
+            }
+            return true;
+        });
+    }
+
+    @MolangFunction(value = "ride_body_y_rotation", description = "坐骑的身体 yaw 旋转")
+    public static float rideBodyYRotation(MolangScope scope) {
+        return entityFloat(scope, e -> e.getVehicle() instanceof LivingEntity vehicle
+                ? Mth.wrapDegrees(vehicle.yBodyRot) : 0F);
+    }
+
+    @MolangFunction(value = "sit_amount", description = "坐下程度（JE：熊猫坐姿插值；骆驼/驯养动物退化为 0/1）")
+    public static float sitAmount(MolangScope scope) {
+        return livingFloat(scope, l -> {
+            if (l instanceof Panda panda) {
+                return panda.getSitAmount(1.0F);
+            }
+            if (l instanceof Camel camel) {
+                return camel.isCamelVisuallySitting() ? 1F : 0F;
+            }
+            if (l instanceof TamableAnimal tamable) {
+                return tamable.isInSittingPose() ? 1F : 0F;
+            }
+            return 0F;
+        });
+    }
+
+    @MolangFunction(value = "sneeze_counter", description = "熊猫喷嚏计数器")
+    public static float sneezeCounter(MolangScope scope) {
+        return livingFloat(scope, l -> l instanceof Panda panda ? (float) panda.getSneezeCounter() : 0F);
+    }
+
+    @MolangFunction(value = "standing_scale", description = "直立程度（马扬起前蹄动画量）")
+    public static float standingScale(MolangScope scope) {
+        return livingFloat(scope, l -> l instanceof AbstractHorse horse ? horse.getStandAnim(1.0F) : 0F);
+    }
+
+    @MolangFunction(value = "tail_angle", description = "尾巴角度（狼）")
+    public static float tailAngle(MolangScope scope) {
+        return livingFloat(scope, l -> l instanceof Wolf wolf ? wolf.getTailAngle() : 0F);
+    }
+
+    @MolangFunction(value = "texture_frame_index", description = "经验球图标索引")
+    public static float textureFrameIndex(MolangScope scope) {
+        return entityFloat(scope, e -> e instanceof ExperienceOrb orb ? (float) orb.getIcon() : 0F);
+    }
+
+    @MolangFunction(value = "walk_distance", description = "累计行走距离（JE walkDist：着地累计；潜行不剔除，与 BE 略有差异）")
+    public static float walkDistance(MolangScope scope) {
+        return entityFloat(scope, e -> e.walkDist);
+    }
+
+    @MolangFunction(value = "time_stamp", description = "世界时间戳（JE 取 level gameTime，单位 tick）")
+    public static float timeStamp(MolangScope scope) {
+        return entityFloat(scope, e -> (float) e.level().getGameTime());
+    }
+
+    @MolangFunction(value = "has_dash_cooldown", description = "骆驼冲刺处于冷却")
+    public static float hasDashCooldown(MolangScope scope) {
+        return entityBool(scope, e -> e instanceof Camel camel && EntityStatePort.camelHasDashCooldown(camel));
+    }
+
+    @MolangFunction(value = "has_player_rider", description = "有玩家骑乘（任意座位）")
+    public static float hasPlayerRider(MolangScope scope) {
+        return entityBool(scope, e -> e.getPassengers().stream().anyMatch(p -> p instanceof Player));
+    }
+
+    @MolangFunction(value = "body_x_rotation", description = "身体 pitch 旋转（JE 无独立身体 pitch，取实体 pitch 近似）")
+    public static float bodyXPitch(MolangScope scope) {
+        return entityFloat(scope, Entity::getXRot);
+    }
+
+    @MolangFunction(value = "model_scale", description = "实体缩放（<1.20.6 无缩放属性恒 1；>=1.20.6 取 generic.scale）")
+    public static float modelScale(MolangScope scope) {
+        //? if <1.20.6 {
+        return 1F;
+        //?} else {
+        return livingFloat(scope, l -> (float) l.getAttributeValue(Attributes.SCALE));
+        //?}
+    }
+
+    // ---------- JE 无对应数据源，按官方 "else 0/-1" 语义给中性值（非静默：description 均注明） ----------
+
+    @MolangFunction(value = "is_avoiding_block", description = "正在逃离方块（JE 无该 goal 信号，恒 0）")
+    public static float isAvoidingBlock(MolangScope scope) {
+        return FALSE;
+    }
+
+    @MolangFunction(value = "is_delayed_attacking", description = "延迟攻击中（BE 专用攻击 goal，JE 无信号，恒 0）")
+    public static float isDelayedAttacking(MolangScope scope) {
+        return FALSE;
+    }
+
+    @MolangFunction(value = "is_eating_mob", description = "正在吞食生物（JE 无该 goal 信号，恒 0）")
+    public static float isEatingMob(MolangScope scope) {
+        return FALSE;
+    }
+
+    @MolangFunction(value = "is_emoting", description = "正在做表情动作（JE 无表情系统，恒 0）")
+    public static float isEmoting(MolangScope scope) {
+        return FALSE;
+    }
+
+    @MolangFunction(value = "is_ghost", description = "是幽灵实体（JE 1.20.1 无对应实体类型，恒 0）")
+    public static float isGhost(MolangScope scope) {
+        return FALSE;
+    }
+
+    @MolangFunction(value = "is_shield_powered", description = "持激活的充能盾（JE 1.20.1 无充能盾，恒 0）")
+    public static float isShieldPowered(MolangScope scope) {
+        return FALSE;
+    }
+
+    @MolangFunction(value = "is_stunned", description = "处于眩晕（JE 无眩晕状态，恒 0）")
+    public static float isStunned(MolangScope scope) {
+        return FALSE;
+    }
+
+    @MolangFunction(value = "roll_counter", description = "翻滚计数（JE 无翻滚机制，恒 0）")
+    public static float rollCounter(MolangScope scope) {
+        return 0F;
+    }
+
+    @MolangFunction(value = "lie_amount", description = "趴下程度（JE 无连续趴下动画量，恒 0）")
+    public static float lieAmount(MolangScope scope) {
+        return 0F;
+    }
+
+    @MolangFunction(value = "structural_integrity", description = "结构完整度（BE 劫掠兽机制，JE 无对应，恒 0）")
+    public static float structuralIntegrity(MolangScope scope) {
+        return 0F;
+    }
+
+    @MolangFunction(value = "get_animation_frame", description = "物品图标动画帧（JE 物品模型谓词体系无帧索引，恒 0）")
+    public static float getAnimationFrame(MolangScope scope) {
+        return 0F;
+    }
+
+    @MolangFunction(value = "is_persona_or_premium_skin", description = "玩家使用 persona/付费皮肤（JE 无 persona 体系，恒 0）")
+    public static float isPersonaOrPremiumSkin(MolangScope scope) {
+        return FALSE;
+    }
+
+    @MolangFunction(value = "timer_flag_2", description = "behavior.timer_flag_2 运行中（行为包计时器未同步到渲染侧，恒 0）")
+    public static float timerFlag2(MolangScope scope) {
+        return FALSE;
+    }
+
+    @MolangFunction(value = "timer_flag_3", description = "behavior.timer_flag_3 运行中（行为包计时器未同步到渲染侧，恒 0）")
+    public static float timerFlag3(MolangScope scope) {
+        return FALSE;
+    }
+
+    @MolangFunction(value = "cooldown_time", description = "物品冷却总时长（JE 玩家冷却仅记录剩余比例、无槽位语义，恒 0）")
+    public static float cooldownTime(MolangScope scope, String... slots) {
+        return 0F;
+    }
+
+    @MolangFunction(value = "cooldown_time_remaining", description = "物品冷却剩余秒数（JE 无槽位冷却语义，恒 0）")
+    public static float cooldownTimeRemaining(MolangScope scope, String... slots) {
+        return 0F;
+    }
+
+    @MolangFunction(value = "life_span", description = "有限寿命实体的寿命（官方：永生实体返回 0；JE 实体普遍永生，恒 0）")
+    public static float lifeSpan(MolangScope scope) {
+        return 0F;
+    }
+
+    @MolangFunction(value = "ticks_since_last_kinetic_weapon_hit", description = "动能武器命中距今 tick 数（JE 1.20.1 无动能武器；官方语义：未使用 → -1）")
+    public static float ticksSinceLastKineticWeaponHit(MolangScope scope) {
+        return -1F;
+    }
+
+    /** BE 盔甲槽位 → JE 物品栈（0头1胸2腿3脚4身体）。 */
+    private static ItemStack armorStack(LivingEntity living, int slot) {
+        return switch (slot) {
+            case 0 -> living.getItemBySlot(EquipmentSlot.HEAD);
+            case 1 -> living.getItemBySlot(EquipmentSlot.CHEST);
+            case 2 -> living.getItemBySlot(EquipmentSlot.LEGS);
+            case 3 -> living.getItemBySlot(EquipmentSlot.FEET);
+            default -> bodyArmor(living);
+        };
+    }
+
+    /** 动物身体槽护甲（<1.20.6 马铠独立栏位；>=1.20.6 EquipmentSlot.BODY）。 */
+    private static ItemStack bodyArmor(LivingEntity living) {
+        //? if <1.20.6 {
+        return living instanceof net.minecraft.world.entity.animal.horse.Horse horse
+                ? horse.getArmor() : ItemStack.EMPTY;
+        //?} else {
+        return living.getItemBySlot(EquipmentSlot.BODY);
+        //?}
     }
 
     @FunctionalInterface
