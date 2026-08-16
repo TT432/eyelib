@@ -57,6 +57,11 @@ public final class ParticleDefinitionRegistry {
         }
 
         @Override
+        public void remove(String id) {
+            particles.remove(Objects.requireNonNull(id, "id"));
+        }
+
+        @Override
         public void clear() {
             particles.clear();
         }

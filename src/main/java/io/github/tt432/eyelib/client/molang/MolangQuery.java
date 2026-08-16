@@ -196,7 +196,9 @@ public final class MolangQuery {
                 return false;
             }
             for (String id : identifiers) {
-                if (ResourceLocationBridge.parseMc(id).equals(key.location())) {
+                // ResourceKey.create + equals 两版同形（26.1 的 location()→identifier() 改名绕开）
+                if (key.equals(net.minecraft.resources.ResourceKey.create(
+                        Registries.BIOME, ResourceLocationBridge.parseMc(id)))) {
                     return true;
                 }
             }

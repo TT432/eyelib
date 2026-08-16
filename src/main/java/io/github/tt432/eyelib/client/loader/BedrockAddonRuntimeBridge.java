@@ -20,6 +20,8 @@ import io.github.tt432.eyelib.importer.animation.bedrock.BrAnimationEntrySchema;
 import io.github.tt432.eyelib.importer.animation.bedrock.BrAnimationSet;
 import io.github.tt432.eyelib.importer.animation.bedrock.controller.BrAnimationControllerSchema;
 import io.github.tt432.eyelib.importer.animation.bedrock.controller.BrAnimationControllerSet;
+import io.github.tt432.eyelib.model.Model;
+import io.github.tt432.eyelib.util.registry.Registry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,6 +41,53 @@ public final class BedrockAddonRuntimeBridge {
         replaceFromResourcePack(addon.aggregate().resourcePack());
     }
 
+    /**
+     * addon 叠加阴影表：manager → (key → 叠加前的原值，empty = 键原本不存在)。
+     * 包被禁用/移除或条目消失时，靠它把 putAll 型注册表恢复到叠加前状态。
+     */
+    private static final Map<Registry<?>, Map<String, Optional<?>>> SHADOWS = new IdentityHashMap<>();
+
+    @SuppressWarnings("unchecked")
+    private static <T> Map<String, Optional<T>> shadowOf(Registry<T> registry) {
+        return (Map<String, Optional<T>>) (Map<?, ?>) SHADOWS.computeIfAbsent(
+                registry, k -> new LinkedHashMap<String, Optional<?>>());
+    }
+
+    /**
+     * 叠加第一阶段：本轮不再提供的键退场——原值存在则恢复（等 {@link #applyOverlay}
+     * 写回），原本不存在则移除；仍提供的键保留原始阴影。恢复后注册表回到「基线 + 本轮
+     * 待叠加键的旧 addon 值已被剥离」状态，后续读取（如 RC part_visibility 规则的
+     * {@code INSTANCE.get} 回落）看到的是基线。
+     */
+    static <T> void beginOverlay(Registry<T> registry, Set<String> newKeys) {
+        Map<String, Optional<T>> shadow = shadowOf(registry);
+        List<String> removeKeys = new ArrayList<>();
+        Map<String, T> restore = new LinkedHashMap<>();
+        shadow.entrySet().removeIf(e -> {
+            if (newKeys.contains(e.getKey())) {
+                return false;
+            }
+            e.getValue().ifPresent(v -> restore.put(e.getKey(), v));
+            if (e.getValue().isEmpty()) {
+                removeKeys.add(e.getKey());
+            }
+            return true;
+        });
+        registry.removeAll(removeKeys);
+        registry.putAll(restore);
+    }
+
+    /** 叠加第二阶段：记录本轮键的原值阴影（不覆盖已有阴影），然后合并写入。 */
+    static <T> void applyOverlay(Registry<T> registry, Map<String, T> entries) {
+        if (entries.isEmpty()) {
+            return;
+        }
+        Map<String, Optional<T>> shadow = shadowOf(registry);
+        Map<String, T> current = registry.all();
+        entries.forEach((k, v) -> shadow.computeIfAbsent(k, kk -> Optional.ofNullable(current.get(kk))));
+        registry.putAll(entries);
+    }
+
     public static void replaceFromResourcePack(BedrockAddonSideAggregate resourcePack) {
         AnimationAssetRegistry.stageSchemas(resourcePack.animations(), resourcePack.animationControllers());
         AnimationAssetRegistry.stageAnimations(toRuntimeAnimations(resourcePack.animations()));
@@ -50,28 +99,39 @@ public final class BedrockAddonRuntimeBridge {
             resourcePack.clientEntities().values().forEach(entity -> flattened.put(entity.identifier(), entity));
             ClientEntityManager.INSTANCE.replaceAll(flattened);
         }
-        // 叠加附着物（与材质一致，保留 BrAttachableLoader 加载的 mod 自带条目）
+        // 叠加附着物（保留 BrAttachableLoader 加载的 mod 自带条目；阴影语义支持卸载）
         {
             java.util.LinkedHashMap<String, BrClientEntity> flattened = new java.util.LinkedHashMap<>();
             resourcePack.attachables()
                         .values()
                         .forEach(attachable -> flattened.put(attachable.identifier(), attachable));
-            AttachableManager.INSTANCE.putAll(flattened);
+            beginOverlay(AttachableManager.INSTANCE, flattened.keySet());
+            applyOverlay(AttachableManager.INSTANCE, flattened);
         }
-        // 叠加模型（与材质一致，保留 BrModelLoader 加载的 mod 自带条目）
-        ModelManager.INSTANCE.putAll(resourcePack.modelsView());
-        // 替换材质（叠加而非替换，保留 BrMaterialLoader 加载的 vanilla 条目）
+        // 叠加模型（保留 BrModelLoader 加载的 mod 自带条目；阴影语义支持卸载）
+        {
+            Map<String, Model> models = resourcePack.modelsView();
+            beginOverlay(ModelManager.INSTANCE, models.keySet());
+            applyOverlay(ModelManager.INSTANCE, models);
+        }
+        // 叠加材质（保留 BrMaterialLoader 加载的 vanilla 条目；阴影语义支持卸载）
         {
             var materials = toRuntimeMaterials(resourcePack.materialFiles());
             Map<String, BrMaterialEntry> materialBatch = new LinkedHashMap<>();
             for (BrMaterial value : materials.values()) {
                 value.materials().forEach(materialBatch::put);
             }
-            MaterialManager.INSTANCE.putAll(materialBatch);
+            beginOverlay(MaterialManager.INSTANCE, materialBatch.keySet());
+            applyOverlay(MaterialManager.INSTANCE, materialBatch);
         }
-        // 替换渲染控制器
+        // 替换渲染控制器（阴影语义支持卸载；part_visibility 规则读到的 live 值是基线）
         {
             var controllers = toRuntimeRenderControllers(resourcePack.renderControllerFiles());
+            Set<String> rcKeys = new java.util.HashSet<>();
+            for (RenderControllers value : controllers.values()) {
+                rcKeys.addAll(value.render_controllers().keySet());
+            }
+            beginOverlay(RenderControllerManager.INSTANCE, rcKeys);
             Map<String, RenderControllerEntry> controllerBatch = new LinkedHashMap<>();
             for (RenderControllers value : controllers.values()) {
                 value.render_controllers().forEach((key, entry) -> {
@@ -82,7 +142,7 @@ public final class BedrockAddonRuntimeBridge {
                     controllerBatch.put(key, entry);
                 });
             }
-            RenderControllerManager.INSTANCE.putAll(controllerBatch);
+            applyOverlay(RenderControllerManager.INSTANCE, controllerBatch);
         }
     }
 

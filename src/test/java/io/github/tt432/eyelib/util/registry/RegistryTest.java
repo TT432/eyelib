@@ -110,16 +110,72 @@ class RegistryTest {
         assertEquals(2, registry.names().size());
     }
 
+    @Test
+    void removeDeletesEntryAndPublishesNullData() {
+        RecordingPublisher publisher = new RecordingPublisher();
+        Registry<String> registry = new Registry<>("TestRegistry", publisher);
+        registry.put("entry", "value");
+
+        registry.remove("entry");
+
+        assertNull(registry.get("entry"));
+        assertEquals("TestRegistry", publisher.managerName);
+        assertEquals("entry", publisher.entryName);
+        assertNull(publisher.entryData);
+    }
+
+    @Test
+    void removeMissingKeyDoesNotPublish() {
+        RecordingPublisher publisher = new RecordingPublisher();
+        Registry<String> registry = new Registry<>("TestRegistry", publisher);
+
+        registry.remove("missing");
+
+        assertNull(publisher.managerName);
+    }
+
+    @Test
+    void removeAllDeletesMultipleAndPublishesSingleReplaced() {
+        RecordingPublisher publisher = new RecordingPublisher();
+        Registry<String> registry = new Registry<>("TestRegistry", publisher);
+        registry.put("a", "1");
+        registry.put("b", "2");
+        registry.put("c", "3");
+
+        registry.removeAll(java.util.List.of("a", "b", "missing"));
+
+        assertEquals(Map.of("c", "3"), registry.all());
+        assertEquals("TestRegistry", publisher.replacedManagerName);
+    }
+
+    @Test
+    void removeAllWithNoMatchingKeyDoesNotPublish() {
+        RecordingPublisher publisher = new RecordingPublisher();
+        Registry<String> registry = new Registry<>("TestRegistry", publisher);
+        registry.put("a", "1");
+
+        registry.removeAll(java.util.List.of("missing"));
+
+        assertEquals(Map.of("a", "1"), registry.all());
+        assertNull(publisher.replacedManagerName);
+    }
+
     private static final class RecordingPublisher implements ManagerEventPublisher {
         private @Nullable String managerName;
         private @Nullable String entryName;
         private @Nullable Object entryData;
+        private @Nullable String replacedManagerName;
 
         @Override
         public void publishManagerEntryChanged(String managerName, String entryName, Object entryData) {
             this.managerName = managerName;
             this.entryName = entryName;
             this.entryData = entryData;
+        }
+
+        @Override
+        public void publishManagerReplaced(String managerName) {
+            this.replacedManagerName = managerName;
         }
     }
 }

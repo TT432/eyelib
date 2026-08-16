@@ -62,6 +62,23 @@ public interface Repository<T> {
     }
 
     /**
+     * 移除一个条目；不存在的键忽略。
+     *
+     * @param id 字符串标识符
+     */
+    void remove(String id);
+
+    /**
+     * 批量移除条目（不存在的键忽略）。
+     * 默认逐条 {@link #remove}；实现可覆盖以做单次 copy-on-write 与单次事件发布。
+     *
+     * @param ids 待移除的字符串标识符
+     */
+    default void removeAll(Collection<String> ids) {
+        ids.forEach(this::remove);
+    }
+
+    /**
      * 清除所有条目。
      */
     void clear();

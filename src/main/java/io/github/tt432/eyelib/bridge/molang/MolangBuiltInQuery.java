@@ -1363,7 +1363,13 @@ public interface MolangBuiltInQuery {
 
     @MolangFunction(value = "walk_distance", description = "累计行走距离（JE walkDist：着地累计；潜行不剔除，与 BE 略有差异）")
     public static float walkDistance(MolangScope scope) {
+        //? if <26.1 {
         return entityFloat(scope, e -> e.walkDist);
+        //?} else {
+        // 26.1：walkDist 迁到 AbstractClientPlayer.avatarState()（仅玩家、仅客户端），非玩家无等价信号 → 0
+        return entityFloat(scope, e -> e instanceof net.minecraft.client.player.AbstractClientPlayer player
+                ? player.avatarState().getInterpolatedWalkDistance(1.0F) : 0F);
+        //?}
     }
 
     @MolangFunction(value = "time_stamp", description = "世界时间戳（JE 取 level gameTime，单位 tick）")

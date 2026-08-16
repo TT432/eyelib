@@ -66,6 +66,50 @@ public final class Registry<T> implements Repository<T> {
     }
 
     @Override
+    public void remove(String id) {
+        boolean[] removed = {false};
+        ref.updateAndGet(snap -> {
+            if (!snap.all().containsKey(id)) {
+                return snap;
+            }
+            Map<String, T> copy = new LinkedHashMap<>(snap.all());
+            copy.remove(id);
+            removed[0] = true;
+            return RegistrySnapshot.copyOf(copy);
+        });
+        if (removed[0]) {
+            publisher.publishManagerEntryChanged(managerName, id, null);
+        }
+    }
+
+    @Override
+    public void removeAll(Collection<String> ids) {
+        if (ids.isEmpty()) {
+            return;
+        }
+        boolean[] removed = {false};
+        ref.updateAndGet(snap -> {
+            Map<String, T> copy = null;
+            for (String id : ids) {
+                if (snap.all().containsKey(id)) {
+                    if (copy == null) {
+                        copy = new LinkedHashMap<>(snap.all());
+                    }
+                    copy.remove(id);
+                }
+            }
+            if (copy == null) {
+                return snap;
+            }
+            removed[0] = true;
+            return RegistrySnapshot.copyOf(copy);
+        });
+        if (removed[0]) {
+            publisher.publishManagerReplaced(managerName);
+        }
+    }
+
+    @Override
     public void clear() {
         ref.set(RegistrySnapshot.empty());
     }

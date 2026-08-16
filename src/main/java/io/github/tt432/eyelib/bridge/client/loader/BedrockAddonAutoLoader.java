@@ -1,6 +1,7 @@
 package io.github.tt432.eyelib.bridge.client.loader;
 
 import io.github.tt432.eyelib.bridge.ApplicationLifecyclePort;
+import io.github.tt432.eyelib.bridge.client.loader.adapter.BedrockPackResources;
 import io.github.tt432.eyelib.bridge.client.render.texture.adapter.NativeImageIO;
 import io.github.tt432.eyelib.importer.model.importer.AddonTextureRegistry;
 import io.github.tt432.eyelib.bridge.event.adapter.TextureChangedEvent;
@@ -11,8 +12,8 @@ import io.github.tt432.eyelib.importer.model.importer.ImportedImageData;
 import io.github.tt432.eyelib.particle.loading.ParticleResourcePublication;
 import net.minecraft.client.Minecraft;
 import net.minecraft.server.packs.resources.PreparableReloadListener;
-//? if <26.1 {
 import net.minecraft.server.packs.resources.ResourceManager;
+//? if <26.1 {
 import net.minecraft.util.profiling.ProfilerFiller;
 //?}
 //? if <1.20.6 {
@@ -24,19 +25,20 @@ import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.nio.file.DirectoryStream;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 
 /**
- * 扫描 resourcepacks/ 目录自动加载资源包侧 Bedrock 附加包资产。
+ * 资源重载时发布「原版包管理选中的」Bedrock 附加包资产。
+ * <p>
+ * 包发现/启用/排序归 {@code PackRepository}（{@link BedrockAddonPackFinder} 把
+ * resourcepacks/ 下 .mcpack/.mcaddon 注册为可选资源包）；本监听器只从
+ * {@code ResourceManager.listPacks()} 枚举选中的 {@link BedrockPackResources}，
+ * 按优先级顺序合并后一次性桥接发布——未选中任何包时发布空视图以卸载旧内容。
  *
  * @author TT432
  */
@@ -49,13 +51,9 @@ final class BedrockAddonAutoLoader implements PreparableReloadListener {
     public CompletableFuture<Void> reload(PreparationBarrier barrier, ResourceManager resourceManager,
                                           ProfilerFiller preparationsProfiler, ProfilerFiller reloadProfiler,
                                           Executor backgroundExecutor, Executor gameExecutor) {
-        return CompletableFuture.supplyAsync(this::loadAllAddons, backgroundExecutor)
+        return CompletableFuture.supplyAsync(() -> loadSelectedAddons(resourceManager), backgroundExecutor)
                                 .thenCompose(barrier::wait)
-                                .thenAcceptAsync(addons -> {
-                                    for (BedrockAddon addon : addons) {
-                                        bridgeAndPublish(addon);
-                                    }
-                                }, gameExecutor);
+                                .thenAcceptAsync(this::bridgeAndPublish, gameExecutor);
     }
     //?} else {
     @Override
@@ -64,38 +62,30 @@ final class BedrockAddonAutoLoader implements PreparableReloadListener {
             Executor taskExecutor,
             PreparableReloadListener.PreparationBarrier preparationBarrier,
             Executor reloadExecutor) {
-        return CompletableFuture.supplyAsync(this::loadAllAddons, reloadExecutor)
+        return CompletableFuture.supplyAsync(() -> loadSelectedAddons(currentReload.resourceManager()), reloadExecutor)
                                 .thenCompose(preparationBarrier::wait)
-                                .thenAcceptAsync(addons -> {
-                                    for (BedrockAddon addon : addons) {
-                                        bridgeAndPublish(addon);
-                                    }
-                                }, Minecraft.getInstance());
+                                .thenAcceptAsync(this::bridgeAndPublish, Minecraft.getInstance());
     }
     //?}
 
-    private List<BedrockAddon> loadAllAddons() {
+    /**
+     * 枚举原版包管理选中的 Bedrock 附加包（{@link BedrockPackResources} 实例，
+     * {@code listPacks()} 顺序 = 优先级底→顶，靠后覆盖靠前），解析后按
+     * {@link BedrockAddon#merge} 合并为单一视图。未选中任何包时返回全空 addon
+     * （发布侧据此卸载上一轮内容）。
+     */
+    private BedrockAddon loadSelectedAddons(ResourceManager resourceManager) {
         var addons = new ArrayList<BedrockAddon>();
-        Path resourcepacksDir = Minecraft.getInstance().gameDirectory.toPath().resolve("resourcepacks");
-        if (!Files.isDirectory(resourcepacksDir)) {
-            return addons;
-        }
-        try (DirectoryStream<Path> stream = Files.newDirectoryStream(resourcepacksDir, this::isAddonFormat)) {
-            for (Path addonFile : stream) {
-                BedrockAddon addon = loadOne(addonFile);
-                if (addon != null) {
-                    addons.add(addon);
-                }
-            }
-        } catch (IOException e) {
-            LOGGER.error("Failed to scan resourcepacks/ for addon packs", e);
-        }
-        return addons;
-    }
-
-    private boolean isAddonFormat(Path path) {
-        String name = path.getFileName().toString().toLowerCase(Locale.ROOT);
-        return Files.isRegularFile(path) && (name.endsWith(".mcpack") || name.endsWith(".mcaddon"));
+        resourceManager.listPacks()
+                .filter(BedrockPackResources.class::isInstance)
+                .map(BedrockPackResources.class::cast)
+                .forEach(pack -> {
+                    BedrockAddon addon = loadOne(pack.sourceFile());
+                    if (addon != null) {
+                        addons.add(addon);
+                    }
+                });
+        return BedrockAddon.merge(addons);
     }
 
     @Nullable
@@ -120,9 +110,8 @@ final class BedrockAddonAutoLoader implements PreparableReloadListener {
     }
 
     private void uploadAddonTextures(Map<String, ImportedImageData> textures) {
-        if (textures.isEmpty()) {
-            return;
-        }
+        // 先清后传：包被禁用/移除时陈旧纹理必须退场；合并视图外的键不再残留
+        AddonTextureRegistry.clear();
         // 注册到 AddonTextureRegistry，由 TextureManagerMixin 在 getTexture() 中按需创建 DynamicTexture。
         // .tga 路径自动归一化为 .png，使 MC 原版纹理加载机制能透明加载 .tga。
         textures.forEach((relativePath, imageData) -> {

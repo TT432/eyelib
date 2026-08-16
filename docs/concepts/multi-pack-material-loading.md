@@ -24,18 +24,30 @@ MC ResourceManager 扫描所有资源包
 
 ### 阶段2：Addon 加载 → BedrockAddonRuntimeBridge
 
+**2026-08-16 起：.mcpack/.mcaddon 走原版包管理。**
+`BedrockAddonPackFinder`（AddPackFindersEvent）把 resourcepacks/ 下每个 .mcpack/.mcaddon
+注册为可选 vanilla 客户端资源包（`file/<文件名>`，required=false，Position.TOP，
+选择持久化于 options.txt）；`BedrockAddonAutoLoader` 在资源重载时枚举
+`ResourceManager.listPacks()` 中选中的 `BedrockPackResources`，按包优先级（底→顶）
+`BedrockAddon.merge` 合并为单一视图后一次性桥接：
+
 ```
-BedrockAddonAutoLoader 扫描 resourcepacks/*.mcpack / *.mcaddon
-  → BedrockAddonLoader.load() 解析每个 addon
+PackRepository（选中、排序）
+  → BedrockAddonAutoLoader（listPacks 过滤 BedrockPackResources）
+  → BedrockAddonLoader.load() 解析每个选中 addon
+  → BedrockAddon.merge（后加载=高优先级覆盖，复用 fromPacks 合并规则）
   → BedrockAddonRuntimeBridge.replaceFromResourcePack()
-      → MaterialManager.INSTANCE::put  逐条叠加
+      → ClientEntityManager replaceAll（合并视图全量替换）
+      → Model/Attachable/Material/RenderControllerManager 阴影叠加
+        （记录每键原值；包禁用/移除时恢复基线或删除）
+      → MaterialManager.INSTANCE::put 语义由阴影叠加实现
 ```
 
 关键行为：
 
-- **`put()` = 增量叠加**：不清空，在阶段1的基础上逐条写入。同 key 覆盖。
-- 多个 addon → 按 `resourcepacks/` 目录扫描顺序逐个 bridge，**后加载的 addon 的同名条目覆盖先加载的**。
-- Bridge 注释明确写着「叠加而非替换，保留 BrMaterialLoader 加载的 vanilla 条目」——此前已修复的 bug（原来用 `replaceAll` 把 vanilla 清掉了，见材料继承陷阱）。
+- **未选中不加载**：默认未启用，需在资源包界面启用一次（原版语义）。
+- **禁用即卸载**：阴影叠加恢复基线；纹理先 clear 再传；动画/音效 staging 单槽替换。
+- **多包冲突**：按 PackRepository 选中顺序（界面上下拖动），高优先级包覆盖同 key 条目。
 
 ## 与 Bedrock 官方合并规则的差异
 
@@ -68,6 +80,6 @@ Bedrock 通过 `fancy.json`/`sad.json`/`common.json` 等质量配置文件显式
 |------|------|
 | Pack A 和 Pack B 都有 `entity.material`（同名路径） | MC 按优先级只取一个，另一个被丢弃 |
 | Pack A 有 `a.material`，Pack B 有 `b.material`，都定义了 `"foo:bar"` | 两者都被加载，`foo:bar` = 后迭代到的那个 |
-| .mcpack addon 的材质 | 在 `.material` 文件之后加载，`put()` 覆盖同名 key |
-| 两个 .mcpack 都有同名材质条目 | 后扫描到的 addon 覆盖前一个 |
+| .mcpack addon 的材质 | 在 `.material` 文件之后加载，叠加覆盖同名 key（阴影语义，禁用即恢复） |
+| 两个 .mcpack 都有同名材质条目 | 资源包界面排序靠上（高优先级）的覆盖 |
 | `+defines` 跨两个 pack 文件 | eyelib 不合并——每个 entry 独立 CODEC 解析，后迭代到的完全覆盖前一个 |

@@ -51,7 +51,7 @@ public final class AddonTextureRegistry {
     }
 
     /**
-     * 清空注册表（资源重载前调用）。
+     * 清空注册表（资源重载发布新纹理集前由 BedrockAddonAutoLoader 调用）。
      */
     public static void clear() {
         TEXTURES.clear();

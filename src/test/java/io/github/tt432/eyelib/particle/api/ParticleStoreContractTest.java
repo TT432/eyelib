@@ -55,6 +55,11 @@ class ParticleStoreContractTest {
         }
 
         @Override
+        public void remove(String id) {
+            particles.remove(id);
+        }
+
+        @Override
         public void clear() {
             particles.clear();
         }
