@@ -55,6 +55,14 @@ public final class BedrockAddonLoader {
     }
 
     public static BedrockAddon load(Path source) throws IOException {
+        return load(source, null);
+    }
+
+    /**
+     * @param subpackOverride 用户选择的 subpack 文件夹名（资源包设置界面）；
+     *                        null 或未知文件夹回落 {@link #defaultSubpack} 自动规则
+     */
+    public static BedrockAddon load(Path source, @Nullable String subpackOverride) throws IOException {
         List<PackFiles> packFilesList = new ArrayList<>();
         List<ZipFile> openZips = new ArrayList<>();
         List<Path> tempFiles = new ArrayList<>();
@@ -67,7 +75,7 @@ public final class BedrockAddonLoader {
             LinkedHashMap<String, BedrockUnmanagedResource> unmanagedResources = new LinkedHashMap<>();
 
             for (PackFiles pf : packFilesList) {
-                BedrockAddonPack pack = loadPack(pf.sourceName(), pf.entries());
+                BedrockAddonPack pack = loadPack(pf.sourceName(), pf.entries(), subpackOverride);
                 unsortedPacks.add(pack);
             }
 
@@ -94,8 +102,11 @@ public final class BedrockAddonLoader {
 
     // 子包选择
 
-    /** 按基岩版规则自动选择子包：取最高 memoryPerformanceTier，同 tier 取最后一个。 */
-    private static @Nullable String selectSubpack(List<BedrockPackManifest.Subpack> subpacks) {
+    /**
+     * 基岩版自动子包规则：取最高 memoryPerformanceTier，同 tier 取最后一个。
+     * 也是资源包设置界面里 subpack 滑块的默认档位。
+     */
+    public static @Nullable String defaultSubpack(List<BedrockPackManifest.Subpack> subpacks) {
         if (subpacks.isEmpty()) {
             return null;
         }
@@ -109,6 +120,19 @@ public final class BedrockAddonLoader {
             }
         }
         return lastBest;
+    }
+
+    /** 用户 override 命中 subpack 文件夹名时优先；否则回落 {@link #defaultSubpack}。 */
+    private static @Nullable String selectSubpack(List<BedrockPackManifest.Subpack> subpacks,
+                                                  @Nullable String subpackOverride) {
+        if (subpackOverride != null) {
+            for (BedrockPackManifest.Subpack sp : subpacks) {
+                if (sp.folderName().equals(subpackOverride)) {
+                    return subpackOverride;
+                }
+            }
+        }
+        return defaultSubpack(subpacks);
     }
 
     private static @Nullable String extractSubpackFolder(String relativePath) {
@@ -143,7 +167,8 @@ public final class BedrockAddonLoader {
      * @param sourceName 来源名称（用于警告/日志）
      * @param allEntries 包内所有文件条目
      */
-    private static BedrockAddonPack loadPack(String sourceName, List<FileEntry> allEntries) throws IOException {
+    private static BedrockAddonPack loadPack(String sourceName, List<FileEntry> allEntries,
+                                             @Nullable String subpackOverride) throws IOException {
         // 找到 manifest.json
         FileEntry manifestEntry = allEntries.stream()
                 .filter(e -> e.lowerEffectivePath().equals("manifest.json"))
@@ -152,10 +177,18 @@ public final class BedrockAddonLoader {
 
         JsonObject manifestJson = readJsonFile(manifestEntry);
         BedrockPackManifest manifest = BedrockPackManifest.parse(manifestJson);
-        String selectedSubpack = selectSubpack(manifest.subpacks());
+        String selectedSubpack = selectSubpack(manifest.subpacks(), subpackOverride);
         PackAccumulator acc = new PackAccumulator(sourceName);
 
         warnForUnmanagedManifestFields(sourceName, manifest, acc.warnings);
+        if (subpackOverride != null && !subpackOverride.equals(selectedSubpack)) {
+            acc.warnings.add(new BedrockAddonWarning(
+                    BedrockAddonWarningSeverity.WARNING,
+                    BedrockAddonWarningCode.SUBPACK_OVERRIDE_UNKNOWN,
+                    sourceName, "manifest.json",
+                    "Subpack override '" + subpackOverride + "' not found in manifest.subpacks, "
+                            + "falling back to auto selection: " + selectedSubpack));
+        }
 
         // 按子包过滤
         List<FileEntry> entries = allEntries.stream()

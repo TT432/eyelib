@@ -49,6 +49,39 @@ PackRepository（选中、排序）
 - **禁用即卸载**：阴影叠加恢复基线；纹理先 clear 再传；动画/音效 staging 单槽替换。
 - **多包冲突**：按 PackRepository 选中顺序（界面上下拖动），高优先级包覆盖同 key 条目。
 
+### 包图标与设置界面（2026-08-16 第二批）
+
+- **图标**：`BedrockPackResources.getRootResource("pack.png")` 桥接到包内
+  `pack_icon.png`（.mcaddon 回落 `resource_pack/pack_icon.png`），vanilla
+  `PackSelectionScreen.loadPackIcon` 自动注册为动态纹理；无图标回落 unknown_pack.png。
+- **设置按钮**：`PackEntryMixin`（client mixin，仅 <26.1）在资源包列表条目右侧
+  绘制齿轮（`assets/eyelib/textures/gui/pack_settings_gear.png`），点击打开
+  `BedrockPackSettingsScreen`（bridge/client/gui/adapter/）。仅当包声明了
+  subpacks 或非 label 的 settings 时显示。
+- **设置模型**（domain，importer/addon/）：
+  - `BedrockPackSetting`：manifest format_version 3 settings 的类型化解析
+    （label/toggle/slider/dropdown，官方文档《Create a Pack With Custom Settings》）。
+  - `BedrockPackSettingsStore`：用户选择持久化于
+    `config/eyelib/bedrock-pack-settings.json`，键 = 资源包文件名
+    （与 vanilla pack id `file/<文件名>` 同源）。
+  - `BedrockPackSettingsService`：重载时注册启用包的设置目录（底→顶），
+    molang 查询按顶→底解析第一个声明该设置名的包，用户选择优先于默认值。
+    已知近似：Bedrock 设置按包隔离，这里按设置名跨包解析（名字带命名空间，冲突概率低）。
+  - `BedrockPackSettingsCatalog` / `BedrockLangFile`：UI 用的目录解析
+    （manifest + subpacks + texts/en_US.lang 本地化表，行内 `\t#` 注释）。
+- **subpack 选择**：设置界面的 Subpack 循环按钮写入 store；
+  `BedrockAddonLoader.load(Path, subpackOverride)` 优先用户选择，未知文件夹
+  回落自动规则（最高 memoryPerformanceTier、同 tier 取最后）并报
+  `SUBPACK_OVERRIDE_UNKNOWN` 警告。subpack 改变加载内容，关闭界面时触发资源重载；
+  toggle/slider/dropdown 由 molang 即时读取，无需重载。
+- **molang 查询**（client/molang/MolangQuery，官方语义）：
+  `query.is_pack_setting_enabled(name)`（toggle）、
+  `query.is_pack_setting_selected(name, selection)`（dropdown 字符串比较）、
+  `query.get_pack_setting(name)`（slider 数值）。
+- **26.1 缺口**：PackEntryMixin 与 BedrockPackSettingsScreen 以 `//? if <26.1`
+  整体排除（26.1 输入/渲染体系重写，MouseButtonEvent/无经典 Screen.mouseClicked），
+  molang 查询与加载侧全版本生效。
+
 ## 与 Bedrock 官方合并规则的差异
 
 ### Bedrock 多文件合并规则

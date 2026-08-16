@@ -83,7 +83,43 @@ public final class BedrockPackResources implements net.minecraft.server.packs.Pa
 
     @Override
     public @Nullable IoSupplier<InputStream> getRootResource(String... elements) {
+        // vanilla 包列表图标读取 pack.png（PackSelectionScreen.loadPackIcon）；
+        // Bedrock 惯例图标是包根的 pack_icon.png（.mcaddon 在 resource_pack/ 下）——在此桥接。
+        if (elements.length == 1 && ("pack.png".equals(elements[0]) || "pack_icon.png".equals(elements[0]))) {
+            return iconSupplier(file);
+        }
         return null;
+    }
+
+    /** pack_icon.png 的 IoSupplier；无图标返回 null（vanilla 回落 unknown_pack.png）。 */
+    private static @Nullable IoSupplier<InputStream> iconSupplier(Path file) {
+        try {
+            ZipFile zip = new ZipFile(file.toFile());
+            ZipEntry entry = zip.getEntry("pack_icon.png");
+            if (entry == null) {
+                entry = zip.getEntry("resource_pack/pack_icon.png");
+            }
+            if (entry == null) {
+                zip.close();
+                return null;
+            }
+            ZipEntry finalEntry = entry;
+            return () -> {
+                // 每次 open 新 ZipFile：IoSupplier 可被多次调用，且关闭流时连同 zip 一起释放
+                ZipFile opened = new ZipFile(file.toFile());
+                InputStream in = opened.getInputStream(opened.getEntry(finalEntry.getName()));
+                return new java.io.FilterInputStream(in) {
+                    @Override
+                    public void close() throws IOException {
+                        super.close();
+                        opened.close();
+                    }
+                };
+            };
+        } catch (IOException e) {
+            LOGGER.warn("Failed to probe pack icon in {}: {}", file.getFileName(), e.toString());
+            return null;
+        }
     }
 
     //? if <26.1 {
@@ -207,28 +243,18 @@ public final class BedrockPackResources implements net.minecraft.server.packs.Pa
                 && value.chars().allMatch(c -> Character.isLetterOrDigit(c) || c == '.' || c == '_' || c == '-');
     }
 
-    /** texts/en_US.lang 的 key=value 表（# 注释与空行跳过；文件缺失返回 null）。 */
+    /** texts/en_US.lang 的 key=value 表（文件缺失返回 null）。 */
     private static @Nullable Map<String, String> readLangFile(ZipFile zip, String path) {
         ZipEntry entry = zip.getEntry(path);
         if (entry == null) {
             return null;
         }
-        Map<String, String> table = new java.util.HashMap<>();
         try (InputStream in = zip.getInputStream(entry)) {
-            for (String line : new String(in.readAllBytes(), StandardCharsets.UTF_8).split("\\R")) {
-                int eq = line.indexOf('=');
-                if (eq > 0 && !line.startsWith("#")) {
-                    String value = line.substring(eq + 1).replace('\t', ' ').trim();
-                    if (value.endsWith("#")) {
-                        value = value.substring(0, value.length() - 1).trim();
-                    }
-                    table.put(line.substring(0, eq).trim(), value);
-                }
-            }
+            return io.github.tt432.eyelib.importer.addon.BedrockLangFile.parse(
+                    new String(in.readAllBytes(), StandardCharsets.UTF_8));
         } catch (IOException e) {
             return null;
         }
-        return table;
     }
 
     private record ManifestInfo(String name, String description) {

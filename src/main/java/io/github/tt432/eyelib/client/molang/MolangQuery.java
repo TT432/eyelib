@@ -11,6 +11,7 @@ import io.github.tt432.eyelib.behavior.SyncedBehaviorState;
 import io.github.tt432.eyelib.behavior.component.MarkVariant;
 import io.github.tt432.eyelib.behavior.component.Variant;
 import io.github.tt432.eyelib.behavior.component.property.SkinId;
+import io.github.tt432.eyelib.importer.addon.BedrockPackSettingsService;
 import io.github.tt432.eyelib.molang.MolangScope;
 import io.github.tt432.eyelib.molang.mapping.api.HostRole;
 import io.github.tt432.eyelib.molang.mapping.api.HostRoles;
@@ -398,6 +399,21 @@ public final class MolangQuery {
                                                    .component(SkinId.class);
             return component != null ? (float) component.value() : 0;
         });
+    }
+
+    @MolangFunction(value = "is_pack_setting_enabled", description = "资源包设置开关（Bedrock manifest settings toggle；读 BedrockPackSettingsService，用户选择优先于默认值）")
+    public static float isPackSettingEnabled(MolangScope scope, String settingName) {
+        return BedrockPackSettingsService.isPackSettingEnabled(settingName) ? TRUE : FALSE;
+    }
+
+    @MolangFunction(value = "is_pack_setting_selected", description = "资源包设置下拉选中项匹配（Bedrock manifest settings dropdown；读 BedrockPackSettingsService）")
+    public static float isPackSettingSelected(MolangScope scope, String settingName, String selection) {
+        return BedrockPackSettingsService.isPackSettingSelected(settingName, selection) ? TRUE : FALSE;
+    }
+
+    @MolangFunction(value = "get_pack_setting", description = "资源包设置滑块值（Bedrock manifest settings slider；读 BedrockPackSettingsService）")
+    public static float getPackSetting(MolangScope scope, String settingName) {
+        return (float) BedrockPackSettingsService.packSettingValue(settingName);
     }
 
     @FunctionalInterface

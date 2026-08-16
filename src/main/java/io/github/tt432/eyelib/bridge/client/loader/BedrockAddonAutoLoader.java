@@ -7,7 +7,11 @@ import io.github.tt432.eyelib.importer.model.importer.AddonTextureRegistry;
 import io.github.tt432.eyelib.bridge.event.adapter.TextureChangedEvent;
 import io.github.tt432.eyelib.importer.addon.BedrockAddon;
 import io.github.tt432.eyelib.importer.addon.BedrockAddonLoader;
+import io.github.tt432.eyelib.importer.addon.BedrockAddonPack;
 import io.github.tt432.eyelib.importer.addon.BedrockAddonWarning;
+import io.github.tt432.eyelib.importer.addon.BedrockPackSetting;
+import io.github.tt432.eyelib.importer.addon.BedrockPackSettingsService;
+import io.github.tt432.eyelib.importer.addon.BedrockPackSettingsStore;
 import io.github.tt432.eyelib.importer.model.importer.ImportedImageData;
 import io.github.tt432.eyelib.particle.loading.ParticleResourcePublication;
 import net.minecraft.client.Minecraft;
@@ -27,6 +31,7 @@ import org.slf4j.LoggerFactory;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -75,7 +80,11 @@ final class BedrockAddonAutoLoader implements PreparableReloadListener {
      * （发布侧据此卸载上一轮内容）。
      */
     private BedrockAddon loadSelectedAddons(ResourceManager resourceManager) {
+        BedrockPackSettingsStore.ensureInitialized(Minecraft.getInstance().gameDirectory.toPath());
         var addons = new ArrayList<BedrockAddon>();
+        // 设置目录的包键 = 文件名（与 vanilla pack id "file/<name>"、store 键一致；
+        // 不能用 BedrockAddonPack.sourceName——zip 加载剥了扩展名）
+        var activeSettings = new ArrayList<BedrockPackSettingsService.ActivePack>();
         resourceManager.listPacks()
                 .filter(BedrockPackResources.class::isInstance)
                 .map(BedrockPackResources.class::cast)
@@ -83,8 +92,17 @@ final class BedrockAddonAutoLoader implements PreparableReloadListener {
                     BedrockAddon addon = loadOne(pack.sourceFile());
                     if (addon != null) {
                         addons.add(addon);
+                        String packKey = pack.sourceFile().getFileName().toString();
+                        for (BedrockAddonPack resourcePack : addon.resourcePacks()) {
+                            List<BedrockPackSetting> settings =
+                                    BedrockPackSetting.parseList(resourcePack.manifest().settings());
+                            if (!settings.isEmpty()) {
+                                activeSettings.add(new BedrockPackSettingsService.ActivePack(packKey, settings));
+                            }
+                        }
                     }
                 });
+        BedrockPackSettingsService.updateActivePacks(activeSettings);
         return BedrockAddon.merge(addons);
     }
 
@@ -92,7 +110,9 @@ final class BedrockAddonAutoLoader implements PreparableReloadListener {
     private BedrockAddon loadOne(Path addonFile) {
         LOGGER.info("Loading Bedrock addon from resourcepacks/: {}", addonFile.getFileName());
         try {
-            BedrockAddon addon = BedrockAddonLoader.load(addonFile);
+            String packKey = addonFile.getFileName().toString();
+            BedrockAddon addon = BedrockAddonLoader.load(
+                    addonFile, BedrockPackSettingsStore.subpackOverride(packKey).orElse(null));
             logWarnings(addon);
             return addon;
         } catch (Exception e) {

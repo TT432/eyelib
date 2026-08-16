@@ -30,6 +30,8 @@
   "client": [
     "client.TextureManagerMixin",
     //? if !modern {
+    "client.PackEntryMixin",
+    "client.AbstractSelectionListAccessor",
     "LivingEntityRendererAccessor",
     "HumanoidModelMixin",
     "client.ItemRendererMixin",

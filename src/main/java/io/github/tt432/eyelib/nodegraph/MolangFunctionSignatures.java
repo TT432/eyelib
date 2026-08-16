@@ -218,6 +218,7 @@ public final class MolangFunctionSignatures {
         t.put("query.is_owner_identifier_any", varArgs(str("identifiers")));
         t.put("query.is_pack_setting_enabled", fixed(str("setting")));
         t.put("query.is_pack_setting_selected", fixed(str("setting"), str("selection")));
+        t.put("query.get_pack_setting", fixed(str("setting")));
         t.put("query.is_riding_any_entity_of_type", varArgs(str("types")));
         t.put("query.itemIsCharged", fixed(str("hand")));
         t.put("query.item_slot_to_bone_name", fixed(str("slot")));

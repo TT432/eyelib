@@ -1049,16 +1049,6 @@ public interface MolangBuiltInQuery {
         return TRUE;
     }
 
-    @MolangFunction(value = "is_pack_setting_enabled", description = "资源包设置开关（Bedrock 客户端特性，Java 无等效数据源，始终返回 0）")
-    public static float isPackSettingEnabled(MolangScope scope, String settingName) {
-        return FALSE;
-    }
-
-    @MolangFunction(value = "is_pack_setting_selected", description = "资源包设置下拉选择（Bedrock 客户端特性，Java 无等效数据源，始终返回 0）")
-    public static float isPackSettingSelected(MolangScope scope, String settingName, String selection) {
-        return FALSE;
-    }
-
     @MolangFunction(value = "has_property", description = "实体属性存在检查（Bedrock 实体属性系统，Java 无等效数据源，始终返回 0）")
     public static float hasProperty(MolangScope scope, String propertyName) {
         return FALSE;
