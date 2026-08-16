@@ -68,17 +68,23 @@ PackRepository（选中、排序）
     molang 查询按顶→底解析第一个声明该设置名的包，用户选择优先于默认值。
     已知近似：Bedrock 设置按包隔离，这里按设置名跨包解析（名字带命名空间，冲突概率低）。
   - `BedrockPackSettingsCatalog` / `BedrockLangFile`：UI 用的目录解析
-    （manifest + subpacks + texts/en_US.lang 本地化表，行内 `\t#` 注释）。
-- **subpack 选择**：设置界面的 Subpack 循环按钮写入 store；
+    （manifest header.name + subpacks + settings + texts/en_US.lang 本地化表，
+    行内 `\t#` 注释）。
+- **subpack 选择**：设置界面的 subpack 离散滑块写入 store；
   `BedrockAddonLoader.load(Path, subpackOverride)` 优先用户选择，未知文件夹
   回落自动规则（最高 memoryPerformanceTier、同 tier 取最后）并报
   `SUBPACK_OVERRIDE_UNKNOWN` 警告。subpack 改变加载内容，关闭界面时触发资源重载；
   toggle/slider/dropdown 由 molang 即时读取，无需重载。
-- **设置控件形态**（2026-08-16 第三批）：slider → `AbstractSliderButton`
-  （step 网格）；dropdown → 自绘 `DropdownWidget`（收起态显示当前值 + ▼，
-  点击展开屏幕级弹出层——列表剪刀域画不下，渲染/命中都在
-  `BedrockPackSettingsScreen` 层做：底部放不下向上展开、超 7 条滚轮滚动、
-  ESC/点外收层）；toggle → CycleButton 开关（vanilla 惯例）。
+- **设置界面形态**（2026-08-16 第四批，对齐基岩版官方面板）：居中模态面板
+  （浅灰边框 + 深色内容区 + 包名标题 + 右上角 X），全宽可变高度行——
+  名称白字 + 描述灰字来自同一条 lang 值的内联 `§8` 分段（字体渲染原生着色，
+  `font.split` 换行）；toggle → 行首拨杆（off=左白块"O"深底 / on=右白块"I"灰底，
+  整行可点）；slider → 文本下方全宽滑杆（step 刻度 + 白色滑块，拖动实时更新、
+  松手落盘）；dropdown → 文本下方全宽浅灰框（当前值 + ▼），点击**内联展开**
+  选项列表（选项行带勾选框、选中项绿底白字，再点框体/选中后收层，同时只允许
+  一个展开）；subpack → 与基岩版一致的**离散滑块**（每档一刻度，文本实时显示
+  当前档位名称+描述，松手写 store）。界面不挂 vanilla widget 树，行渲染/命中/
+  滚动（滚轮 24px/格 + 右侧滚动条）全在 Screen 层自管理。
 - **molang 查询**（client/molang/MolangQuery，官方语义）：
   `query.is_pack_setting_enabled(name)`（toggle）、
   `query.is_pack_setting_selected(name, selection)`（dropdown 字符串比较）、

@@ -8,28 +8,32 @@ import io.github.tt432.eyelib.importer.addon.BedrockPackSettingsCatalog;
 import io.github.tt432.eyelib.importer.addon.BedrockPackSettingsStore;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.AbstractSliderButton;
-import net.minecraft.client.gui.components.AbstractWidget;
-import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.gui.components.ContainerObjectSelectionList;
-import net.minecraft.client.gui.components.CycleButton;
-import net.minecraft.client.gui.components.events.GuiEventListener;
-import net.minecraft.client.gui.narration.NarratableEntry;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
+import net.minecraft.util.FormattedCharSequence;
+import net.minecraft.util.Mth;
 import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Bedrock 附加包的设置界面（对应基岩版资源包条目上的齿轮按钮页面）。
- * <p>
- * 内容来自 {@link BedrockPackSettingsCatalog}：subpack 选择（基岩版滑块的等价物）
- * + manifest format_version 3 的 settings（label/toggle/slider/dropdown）。
+ * Bedrock 附加包的设置界面（对应基岩版资源包条目上的齿轮按钮页面），
+ * 视觉与交互对齐基岩版官方设置面板：
+ * <ul>
+ *   <li>居中模态面板：浅灰边框 + 深色内容区 + 顶部标题（包名）+ 右上角 X 关闭；</li>
+ *   <li>全宽行：名称白字 + 描述灰字（lang 值内联 {@code §8} 分段，字体渲染原生着色），
+ *       描述自动换行，行高随内容可变；</li>
+ *   <li>toggle → 行首小拨杆（off=左白块 "O" 深底 / on=右白块 "I" 灰底），整行可点；</li>
+ *   <li>slider → 文本下方全宽滑杆（带 step 刻度、白色滑块）；</li>
+ *   <li>dropdown → 文本下方全宽浅灰框（当前值 + ▼），点击展开内联选项列表
+ *       （选项行带勾选框，选中项绿底白字）；</li>
+ *   <li>subpack → 与基岩版一致的离散滑块（每档一个刻度），上方文本实时显示当前档位的
+ *       名称+描述。</li>
+ * </ul>
  * 设置值写穿到 {@link BedrockPackSettingsStore}（molang {@code query.*pack_setting*}
- * 即时生效）；subpack 改变的是加载内容，关闭界面时触发一次资源重载。
+ * 即时生效；slider 拖动过程中实时更新显示，松手时才落盘）；subpack 改变的是加载内容，
+ * 关闭界面时触发一次资源重载。
  * <p>
  * 26.1 未适配：输入/渲染体系重写（MouseButtonEvent、无经典 Screen.mouseClicked），
  * 本界面与 PackEntryMixin 同步以 {@code //? if <26.1} 整体排除。
@@ -37,229 +41,196 @@ import java.util.List;
  * @author TT432
  */
 public final class BedrockPackSettingsScreen extends Screen {
-    private static final int ROW_HEIGHT = 24;
-    private static final int WIDGET_WIDTH = 160;
-    /** 弹出层单选项行高与最大可见条数（超出滚动）。 */
-    private static final int POPUP_ROW_HEIGHT = 18;
-    private static final int POPUP_MAX_VISIBLE = 7;
+    private static final int PANEL_MAX_WIDTH = 500;
+    private static final int PANEL_MARGIN = 24;
+    private static final int PANEL_MIN_HEIGHT = 160;
+    private static final int TITLE_HEIGHT = 26;
+    private static final int CONTENT_PADDING = 12;
+    private static final int SCROLLBAR_WIDTH = 6;
+    private static final int LINE_HEIGHT = 10;
+    private static final int CONTROL_HEIGHT = 20;
+    private static final int TOGGLE_WIDTH = 28;
+    private static final int TOGGLE_HEIGHT = 14;
+    private static final int KNOB_WIDTH = 8;
+    private static final int KNOB_HEIGHT = 14;
+    private static final int SCROLL_STEP = 24;
 
     private final Screen parent;
     private final BedrockPackSettingsCatalog catalog;
     /** 打开界面时的生效 subpack（关闭时对比决定是否重载资源）。 */
     private final @Nullable String initialSubpack;
-    private SettingsList settingsList;
-    /** 当前展开的 dropdown；弹出层在屏幕级渲染/命中（列表剪刀域画不下）。 */
-    private @Nullable DropdownWidget openDropdown;
-    private int popupScrollOffset;
+
+    private final List<Row> rows = new ArrayList<>();
+    private int scrollOffset;
+    /** 展开中的下拉行（同时只允许一个，与基岩版一致）。 */
+    private @Nullable DropdownRow expandedDropdown;
+    /** 拖拽中的滑块行。 */
+    private @Nullable SliderRow draggingSlider;
+
+    // 面板几何（init 时计算）
+    private int panelX, panelY, panelW, panelH;
+    private int contentX, contentY, contentW, contentBottom;
 
     public BedrockPackSettingsScreen(Screen parent, BedrockPackSettingsCatalog catalog) {
-        super(Component.literal(catalog.displayText("pack.name")));
+        super(Component.literal(catalog.displayText(catalog.packName())));
         this.parent = parent;
         this.catalog = catalog;
         this.initialSubpack = BedrockPackSettingsStore.subpackOverride(catalog.packKey())
-                .orElse(BedrockAddonLoader.defaultSubpack(catalog.subpacks()));
+                .orElse(catalog.subpacks().isEmpty() ? null : BedrockAddonLoader.defaultSubpack(catalog.subpacks()));
     }
 
     @Override
     protected void init() {
-        this.openDropdown = null;
-        this.popupScrollOffset = 0;
         BedrockPackSettingsStore.ensureInitialized(Minecraft.getInstance().gameDirectory.toPath());
-        //? if <1.20.6 {
-        this.settingsList = new SettingsList(this.minecraft, this.width, this.height, 32, this.height - 40);
-        //?} else {
-        this.settingsList = new SettingsList(this.minecraft, this.width, this.height - 32 - 40, 32);
-        //?}
+        this.panelW = Math.min(PANEL_MAX_WIDTH, this.width - PANEL_MARGIN * 2);
+        this.panelH = Math.max(PANEL_MIN_HEIGHT,
+                Math.min(this.height - PANEL_MARGIN * 2, 340));
+        this.panelX = (this.width - panelW) / 2;
+        this.panelY = (this.height - panelH) / 2;
+        this.contentX = panelX + CONTENT_PADDING;
+        this.contentY = panelY + TITLE_HEIGHT;
+        this.contentW = panelW - CONTENT_PADDING * 2 - SCROLLBAR_WIDTH - 4;
+        this.contentBottom = panelY + panelH - 10;
+        this.expandedDropdown = null;
+        this.draggingSlider = null;
         buildRows();
-        this.addWidget(this.settingsList);
-        this.addRenderableWidget(Button.builder(CommonComponents.GUI_DONE, b -> this.onClose())
-                .bounds(this.width / 2 - 75, this.height - 28, 150, 20).build());
     }
 
     private void buildRows() {
+        rows.clear();
         String packKey = catalog.packKey();
         if (!catalog.subpacks().isEmpty()) {
-            List<BedrockPackManifest.Subpack> subpacks = catalog.subpacks();
-            CycleButton<String> button = CycleButton.builder((String folder) -> {
-                        String display = subpacks.stream()
-                                .filter(sp -> sp.folderName().equals(folder))
-                                .findFirst()
-                                .map(sp -> catalog.displayText(sp.name()))
-                                .orElse(folder);
-                        return Component.literal(display);
-                    })
-                    .withValues(subpacks.stream().map(BedrockPackManifest.Subpack::folderName).toList())
-                    .withInitialValue(initialSubpack != null ? initialSubpack : subpacks.get(0).folderName())
-                    .displayOnlyValue()
-                    .create(0, 0, WIDGET_WIDTH, 20, Component.literal("Subpack"),
-                            (btn, folder) -> BedrockPackSettingsStore.setSubpack(packKey, folder));
-            settingsList.addRow(Component.literal("Subpack"), button);
+            rows.add(new SubpackRow(packKey));
         }
         for (BedrockPackSetting setting : catalog.settings()) {
             switch (setting.type()) {
-                case LABEL -> settingsList.addRow(Component.literal(catalog.displayText(setting.text())), null);
-                case TOGGLE -> {
-                    boolean current = BedrockPackSettingsStore
-                            .toggleValue(packKey, setting.name())
-                            .orElse(setting.defaultBoolean());
-                    CycleButton<Boolean> button = CycleButton
-                            .onOffBuilder(current)
-                            .displayOnlyValue()
-                            .create(0, 0, WIDGET_WIDTH, 20,
-                                    Component.literal(catalog.displayText(setting.text())),
-                                    (btn, value) -> BedrockPackSettingsStore.setValue(packKey, setting.name(), value));
-                    settingsList.addRow(Component.literal(catalog.displayText(setting.text())), button);
-                }
+                case LABEL -> rows.add(new LabelRow(setting));
+                case TOGGLE -> rows.add(new ToggleRow(setting, packKey));
+                case SLIDER -> rows.add(new SettingSliderRow(setting, packKey));
                 case DROPDOWN -> {
-                    String current = BedrockPackSettingsStore
-                            .dropdownValue(packKey, setting.name())
-                            .orElse(setting.defaultOption());
-                    List<BedrockPackSetting.Option> options = setting.options();
-                    if (options.isEmpty()) {
-                        continue;
+                    if (!setting.options().isEmpty()) {
+                        rows.add(new DropdownRow(setting, packKey));
                     }
-                    String initial = options.stream().anyMatch(o -> o.name().equals(current))
-                            ? current : options.get(0).name();
-                    settingsList.addRow(Component.literal(catalog.displayText(setting.text())),
-                            new DropdownWidget(setting, options, packKey, initial));
-                }
-                case SLIDER -> {
-                    double current = BedrockPackSettingsStore
-                            .sliderValue(packKey, setting.name())
-                            .orElse(setting.clampedDefault());
-                    settingsList.addRow(null, new PackSettingSlider(setting, packKey, current));
                 }
             }
         }
+    }
+
+    private int totalHeight() {
+        int total = 0;
+        for (Row row : rows) {
+            total += row.height();
+        }
+        return total;
+    }
+
+    private int maxScroll() {
+        return Math.max(0, totalHeight() - (contentBottom - contentY));
     }
 
     @Override
-    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+    public void render(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
         //? if <1.20.6 {
-        this.renderDirtBackground(guiGraphics);
+        this.renderDirtBackground(g);
         //?} else {
-        this.renderMenuBackground(guiGraphics);
+        this.renderMenuBackground(g);
         //?}
-        this.settingsList.render(guiGraphics, mouseX, mouseY, partialTick);
-        guiGraphics.drawCenteredString(this.font, this.title, this.width / 2, 12, 0xFFFFFF);
-        super.render(guiGraphics, mouseX, mouseY, partialTick);
-        renderDropdownPopup(guiGraphics, mouseX, mouseY);
-    }
-
-    // ---------- dropdown 弹出层（屏幕级；列表剪刀域画不下展开项） ----------
-
-    private void openDropdownPopup(DropdownWidget widget) {
-        if (this.openDropdown == widget) {
-            this.openDropdown = null;
-            return;
-        }
-        this.openDropdown = widget;
-        // 让已选项落在可见窗口内
-        int selectedIndex = Math.max(0, widget.optionIndexOfSelected());
-        this.popupScrollOffset = Math.min(selectedIndex,
-                Math.max(0, widget.options().size() - POPUP_MAX_VISIBLE));
-    }
-
-    /** 弹出层矩形（x, y, height）；底部放不下时向上展开。 */
-    private int[] popupRect(DropdownWidget widget) {
-        int height = Math.min(widget.options().size(), POPUP_MAX_VISIBLE) * POPUP_ROW_HEIGHT;
-        int x = widget.getX();
-        int y = widget.getY() + widget.getHeight();
-        if (y + height > this.height - 4) {
-            y = widget.getY() - height;
-        }
-        return new int[]{x, y, height};
-    }
-
-    /** 鼠标位置对应的选项下标；不在弹出层内 → -1。 */
-    private int popupOptionIndexAt(DropdownWidget widget, double mouseX, double mouseY) {
-        int[] rect = popupRect(widget);
-        if (mouseX < rect[0] || mouseX >= rect[0] + widget.getWidth()
-                || mouseY < rect[1] || mouseY >= rect[1] + rect[2]) {
-            return -1;
-        }
-        int index = this.popupScrollOffset + (int) ((mouseY - rect[1]) / POPUP_ROW_HEIGHT);
-        return index < widget.options().size() ? index : -1;
-    }
-
-    private void renderDropdownPopup(GuiGraphics guiGraphics, int mouseX, int mouseY) {
-        DropdownWidget widget = this.openDropdown;
-        if (widget == null) {
-            return;
-        }
-        List<BedrockPackSetting.Option> options = widget.options();
-        int[] rect = popupRect(widget);
-        int x = rect[0];
-        int y = rect[1];
-        int height = rect[2];
-        int width = widget.getWidth();
-        guiGraphics.fill(x - 1, y - 1, x + width + 1, y + height + 1, 0xFFC0C0C0);
-        guiGraphics.fill(x, y, x + width, y + height, 0xF0101010);
-        int visible = Math.min(options.size(), POPUP_MAX_VISIBLE);
-        for (int i = this.popupScrollOffset; i < Math.min(options.size(), this.popupScrollOffset + visible); i++) {
-            int rowTop = y + (i - this.popupScrollOffset) * POPUP_ROW_HEIGHT;
-            boolean hovered = mouseX >= x && mouseX < x + width
-                    && mouseY >= rowTop && mouseY < rowTop + POPUP_ROW_HEIGHT;
-            if (hovered) {
-                guiGraphics.fill(x + 1, rowTop, x + width - 1, rowTop + POPUP_ROW_HEIGHT, 0x40FFFFFF);
+        // 面板：浅灰边框 + 深色内容区
+        g.fill(panelX - 3, panelY - 3, panelX + panelW + 3, panelY + panelH + 3, 0xFFC6C6C6);
+        g.fill(panelX - 1, panelY - 1, panelX + panelW + 1, panelY + panelH + 1, 0xFF101010);
+        g.fill(panelX, panelY, panelX + panelW, panelY + panelH, 0xF0181818);
+        // 标题 + X
+        g.drawCenteredString(this.font, this.title, panelX + panelW / 2, panelY + 8, 0xFFFFFF);
+        boolean xHover = mouseX >= panelX + panelW - 20 && mouseX < panelX + panelW - 6
+                && mouseY >= panelY + 6 && mouseY < panelY + 20;
+        g.drawString(this.font, "X", panelX + panelW - 15, panelY + 9, xHover ? 0xFFFF5555 : 0xFFFFFFFF);
+        // 内容区（剪刀域内可变高度行）
+        scrollOffset = Mth.clamp(scrollOffset, 0, maxScroll());
+        g.enableScissor(contentX - 2, contentY, panelX + panelW - CONTENT_PADDING + 2, contentBottom);
+        int y = contentY - scrollOffset;
+        for (Row row : rows) {
+            int h = row.height();
+            if (y + h > contentY && y < contentBottom) {
+                row.render(g, contentX, y, contentW, mouseX, mouseY);
             }
-            String text = catalog.displayText(options.get(i).text());
-            int color = options.get(i).name().equals(widget.selected()) ? 0xFFFFA0 : 0xE0E0E0;
-            guiGraphics.drawString(this.font,
-                    this.font.plainSubstrByWidth(text, width - 8),
-                    x + 4, rowTop + (POPUP_ROW_HEIGHT - 8) / 2, color);
+            y += h;
+        }
+        g.disableScissor();
+        // 滚动条
+        int viewH = contentBottom - contentY;
+        int total = totalHeight();
+        if (total > viewH) {
+            int trackX = panelX + panelW - 8;
+            g.fill(trackX, contentY, trackX + 3, contentBottom, 0xFF000000);
+            int knobH = Math.max(16, viewH * viewH / total);
+            int knobY = contentY + (int) ((long) scrollOffset * (viewH - knobH) / maxScroll());
+            g.fill(trackX, knobY, trackX + 3, knobY + knobH, 0xFFAAAAAA);
         }
     }
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        DropdownWidget widget = this.openDropdown;
-        if (widget != null) {
-            int index = popupOptionIndexAt(widget, mouseX, mouseY);
-            if (index >= 0) {
-                widget.select(widget.options().get(index).name());
+        // X 关闭
+        if (mouseX >= panelX + panelW - 20 && mouseX < panelX + panelW - 6
+                && mouseY >= panelY + 6 && mouseY < panelY + 20) {
+            onClose();
+            return true;
+        }
+        // 内容区：定位到行并派发；行内未消费也不穿透
+        if (mouseX >= contentX - 2 && mouseX < panelX + panelW - CONTENT_PADDING + 2
+                && mouseY >= contentY && mouseY < contentBottom) {
+            int y = contentY - scrollOffset;
+            for (Row row : rows) {
+                int h = row.height();
+                if (mouseY >= y && mouseY < y + h) {
+                    row.mouseClicked(mouseX, mouseY, contentX, y, contentW);
+                    return true;
+                }
+                y += h;
             }
-            this.openDropdown = null;
             return true;
         }
         return super.mouseClicked(mouseX, mouseY, button);
     }
 
-    /** 弹出层开启时的滚轮：层内滚动选项窗口，层外先收层。返回是否已消费。 */
-    private boolean dropdownScrolled(double mouseX, double mouseY, double delta) {
-        DropdownWidget widget = this.openDropdown;
-        if (widget == null) {
-            return false;
+    @Override
+    public boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
+        if (draggingSlider != null) {
+            draggingSlider.dragTo(mouseX);
+            return true;
         }
-        if (popupOptionIndexAt(widget, mouseX, mouseY) >= 0) {
-            int max = Math.max(0, widget.options().size() - POPUP_MAX_VISIBLE);
-            this.popupScrollOffset = Math.max(0, Math.min(max,
-                    this.popupScrollOffset - (int) Math.signum(delta)));
-        } else {
-            this.openDropdown = null;
+        return super.mouseDragged(mouseX, mouseY, button, dragX, dragY);
+    }
+
+    @Override
+    public boolean mouseReleased(double mouseX, double mouseY, int button) {
+        if (draggingSlider != null) {
+            draggingSlider.commit();
+            draggingSlider = null;
+            return true;
         }
-        return true;
+        return super.mouseReleased(mouseX, mouseY, button);
     }
 
     //? if <1.20.6 {
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double delta) {
-        return dropdownScrolled(mouseX, mouseY, delta) || super.mouseScrolled(mouseX, mouseY, delta);
+        return scroll(mouseX, mouseY, delta) || super.mouseScrolled(mouseX, mouseY, delta);
     }
     //?} else {
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
-        return dropdownScrolled(mouseX, mouseY, scrollY) || super.mouseScrolled(mouseX, mouseY, scrollX, scrollY);
+        return scroll(mouseX, mouseY, scrollY) || super.mouseScrolled(mouseX, mouseY, scrollX, scrollY);
     }
     //?}
 
-    @Override
-    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-        if (this.openDropdown != null && keyCode == 256) { // ESC：先收弹出层
-            this.openDropdown = null;
+    private boolean scroll(double mouseX, double mouseY, double delta) {
+        if (mouseX >= contentX - 2 && mouseX < panelX + panelW - CONTENT_PADDING + 2
+                && mouseY >= contentY && mouseY < contentBottom) {
+            scrollOffset = Mth.clamp(scrollOffset - (int) (delta * SCROLL_STEP), 0, maxScroll());
             return true;
         }
-        return super.keyPressed(keyCode, scanCode, modifiers);
+        return false;
     }
 
     @Override
@@ -278,173 +249,366 @@ public final class BedrockPackSettingsScreen extends Screen {
         return !java.util.Objects.equals(current, initialSubpack);
     }
 
-    /** dropdown 控件：收起态是显示当前值的按钮，点击由屏幕展开选项弹出层。 */
-    private final class DropdownWidget extends AbstractWidget {
+    /** 下拉箭头（▼）：三层递窄填充，避免字体缺字形。 */
+    private static void drawArrow(GuiGraphics g, int centerX, int topY, int color) {
+        g.fill(centerX - 5, topY, centerX + 5, topY + 2, color);
+        g.fill(centerX - 3, topY + 2, centerX + 3, topY + 4, color);
+        g.fill(centerX - 1, topY + 4, centerX + 1, topY + 6, color);
+    }
+
+    // ---------- 行 ----------
+
+    private abstract class Row {
+        abstract int height();
+
+        abstract void render(GuiGraphics g, int x, int y, int w, int mouseX, int mouseY);
+
+        /** 点击落在本行时调用；行可自此消费（x/y/w 为本行区域）。 */
+        boolean mouseClicked(double mouseX, double mouseY, int x, int y, int w) {
+            return true;
+        }
+
+        List<FormattedCharSequence> wrap(String text, int w) {
+            return font.split(Component.literal(text), Math.max(8, w));
+        }
+
+        int textHeight(String text, int w) {
+            return wrap(text, w).size() * LINE_HEIGHT;
+        }
+
+        /** 名称 §8描述 文本（§ 格式码由字体渲染原生着色）。 */
+        void drawText(GuiGraphics g, String text, int x, int y, int w) {
+            List<FormattedCharSequence> lines = wrap(text, w);
+            for (int i = 0; i < lines.size(); i++) {
+                g.drawString(font, lines.get(i), x, y + i * LINE_HEIGHT, 0xFFFFFF);
+            }
+        }
+    }
+
+    /** label 行：整行灰色说明文本。 */
+    private final class LabelRow extends Row {
+        private final String text;
+
+        LabelRow(BedrockPackSetting setting) {
+            this.text = catalog.displayText(setting.text());
+        }
+
+        @Override
+        int height() {
+            return textHeight(text, contentW) + 6;
+        }
+
+        @Override
+        void render(GuiGraphics g, int x, int y, int w, int mouseX, int mouseY) {
+            List<FormattedCharSequence> lines = wrap(text, w);
+            for (int i = 0; i < lines.size(); i++) {
+                g.drawString(font, lines.get(i), x, y + 2 + i * LINE_HEIGHT, 0xA0A0A0);
+            }
+        }
+    }
+
+    /** toggle 行：行首拨杆 + 名称/描述文本；整行可点。 */
+    private final class ToggleRow extends Row {
         private final BedrockPackSetting setting;
-        private final List<BedrockPackSetting.Option> options;
         private final String packKey;
+        private final String text;
+        private boolean value;
+
+        ToggleRow(BedrockPackSetting setting, String packKey) {
+            this.setting = setting;
+            this.packKey = packKey;
+            this.text = catalog.displayText(setting.text());
+            this.value = BedrockPackSettingsStore.toggleValue(packKey, setting.name())
+                    .orElse(setting.defaultBoolean());
+        }
+
+        @Override
+        int height() {
+            return Math.max(TOGGLE_HEIGHT, textHeight(text, contentW - TOGGLE_WIDTH - 10)) + 6;
+        }
+
+        @Override
+        void render(GuiGraphics g, int x, int y, int w, int mouseX, int mouseY) {
+            boolean hover = mouseX >= x && mouseX < x + w && mouseY >= y && mouseY < y + height();
+            // 拨杆：白描边；on=灰底右白块"I"，off=深底左白块"O"
+            int bx = x + 2;
+            int by = y + 3;
+            g.fill(bx - 1, by - 1, bx + TOGGLE_WIDTH + 1, by + TOGGLE_HEIGHT + 1,
+                    hover ? 0xFFFFFFFF : 0xFFB0B0B0);
+            g.fill(bx, by, bx + TOGGLE_WIDTH, by + TOGGLE_HEIGHT, value ? 0xFF7A7A7A : 0xFF141414);
+            int tabW = 10;
+            int tabX = value ? bx + TOGGLE_WIDTH - tabW - 2 : bx + 2;
+            g.fill(tabX, by + 2, tabX + tabW, by + TOGGLE_HEIGHT - 2, 0xFFE8E8E8);
+            g.drawString(font, value ? "I" : "O", tabX + 3, by + 4, 0xFF202020, false);
+            drawText(g, text, x + TOGGLE_WIDTH + 10, y + 3, w - TOGGLE_WIDTH - 10);
+        }
+
+        @Override
+        boolean mouseClicked(double mouseX, double mouseY, int x, int y, int w) {
+            value = !value;
+            BedrockPackSettingsStore.setValue(packKey, setting.name(), value);
+            return true;
+        }
+    }
+
+    /** slider 行基类：文本 + 全宽滑杆（刻度 + 白色滑块），拖动实时更新、松手落盘。 */
+    private abstract class SliderRow extends Row {
+        private boolean dragging;
+
+        abstract String text();
+
+        /** 离散档位数；&lt;=1 表示连续。 */
+        abstract int stepCount();
+
+        /** 当前值位置 0..1。 */
+        abstract double fraction();
+
+        abstract void applyFraction(double fraction);
+
+        /** 松手时持久化。 */
+        abstract void commit();
+
+        @Override
+        int height() {
+            return textHeight(text(), contentW) + CONTROL_HEIGHT + 8;
+        }
+
+        private int sliderTop(int y) {
+            return y + textHeight(text(), contentW) + 4;
+        }
+
+        private double fractionFromMouse(double mouseX, int x, int w) {
+            int trackX = x + 2;
+            int trackW = w - 4;
+            return Mth.clamp((mouseX - trackX - KNOB_WIDTH / 2.0) / (trackW - KNOB_WIDTH), 0.0, 1.0);
+        }
+
+        void dragTo(double mouseX) {
+            applyFraction(fractionFromMouse(mouseX, contentX, contentW));
+        }
+
+        @Override
+        void render(GuiGraphics g, int x, int y, int w, int mouseX, int mouseY) {
+            drawText(g, text(), x, y, w);
+            int top = sliderTop(y);
+            int trackX = x + 2;
+            int trackW = w - 4;
+            int cy = top + CONTROL_HEIGHT / 2;
+            boolean hover = mouseX >= trackX && mouseX < trackX + trackW
+                    && mouseY >= top && mouseY < top + CONTROL_HEIGHT;
+            // 轨道
+            g.fill(trackX, cy - 1, trackX + trackW, cy + 1, 0xFF5A5A5A);
+            // 刻度
+            int steps = stepCount();
+            if (steps > 1) {
+                for (int i = 0; i < steps; i++) {
+                    int tx = trackX + Math.round(i * (trackW - 1) / (float) (steps - 1));
+                    g.fill(tx, cy - 3, tx + 1, cy + 3, 0xFF8A8A8A);
+                }
+            }
+            // 滑块
+            int kx = trackX + Math.round((float) (fraction() * (trackW - KNOB_WIDTH)));
+            g.fill(kx - 1, cy - KNOB_HEIGHT / 2 - 1, kx + KNOB_WIDTH + 1, cy + KNOB_HEIGHT / 2 + 1, 0xFF303030);
+            g.fill(kx, cy - KNOB_HEIGHT / 2, kx + KNOB_WIDTH, cy + KNOB_HEIGHT / 2,
+                    dragging || hover ? 0xFFFFFFFF : 0xFFD8D8D8);
+        }
+
+        @Override
+        boolean mouseClicked(double mouseX, double mouseY, int x, int y, int w) {
+            int top = sliderTop(y);
+            if (mouseY >= top && mouseY < top + CONTROL_HEIGHT) {
+                this.dragging = true;
+                draggingSlider = this;
+                applyFraction(fractionFromMouse(mouseX, x, w));
+            }
+            return true;
+        }
+    }
+
+    /** 设置 slider 行：value(0..1) ↔ [min,max] 的 step 网格。 */
+    private final class SettingSliderRow extends SliderRow {
+        private final BedrockPackSetting setting;
+        private final String packKey;
+        private final String text;
+        private double value;
+
+        SettingSliderRow(BedrockPackSetting setting, String packKey) {
+            this.setting = setting;
+            this.packKey = packKey;
+            this.text = catalog.displayText(setting.text());
+            this.value = BedrockPackSettingsStore.sliderValue(packKey, setting.name())
+                    .orElse(setting.clampedDefault());
+        }
+
+        @Override
+        String text() {
+            return text;
+        }
+
+        @Override
+        int stepCount() {
+            double span = setting.max() - setting.min();
+            return setting.step() > 0 && span > 0 ? (int) Math.round(span / setting.step()) + 1 : 0;
+        }
+
+        @Override
+        double fraction() {
+            return (value - setting.min()) / Math.max(1e-9, setting.max() - setting.min());
+        }
+
+        @Override
+        void applyFraction(double fraction) {
+            value = setting.snapToStep(setting.min() + fraction * (setting.max() - setting.min()));
+        }
+
+        @Override
+        void commit() {
+            BedrockPackSettingsStore.setValue(packKey, setting.name(), value);
+        }
+    }
+
+    /** subpack 行：与基岩版一致的离散滑块，文本实时显示当前档位名称+描述。 */
+    private final class SubpackRow extends SliderRow {
+        private final String packKey;
+        private int index;
+
+        SubpackRow(String packKey) {
+            this.packKey = packKey;
+            String current = BedrockPackSettingsStore.subpackOverride(packKey)
+                    .orElse(BedrockAddonLoader.defaultSubpack(catalog.subpacks()));
+            int found = -1;
+            List<BedrockPackManifest.Subpack> subpacks = catalog.subpacks();
+            for (int i = 0; i < subpacks.size(); i++) {
+                if (subpacks.get(i).folderName().equals(current)) {
+                    found = i;
+                    break;
+                }
+            }
+            this.index = found >= 0 ? found : subpacks.size() - 1;
+        }
+
+        @Override
+        String text() {
+            return catalog.displayText(catalog.subpacks().get(index).name());
+        }
+
+        @Override
+        int stepCount() {
+            return catalog.subpacks().size();
+        }
+
+        @Override
+        double fraction() {
+            int n = catalog.subpacks().size();
+            return n > 1 ? index / (double) (n - 1) : 0.0;
+        }
+
+        @Override
+        void applyFraction(double fraction) {
+            int n = catalog.subpacks().size();
+            if (n > 1) {
+                index = Mth.clamp((int) Math.round(fraction * (n - 1)), 0, n - 1);
+            }
+        }
+
+        @Override
+        void commit() {
+            BedrockPackSettingsStore.setSubpack(packKey, catalog.subpacks().get(index).folderName());
+        }
+    }
+
+    /** dropdown 行：全宽浅灰框 + ▼；点击展开内联选项列表（勾选框，选中项绿底）。 */
+    private final class DropdownRow extends Row {
+        private final BedrockPackSetting setting;
+        private final String packKey;
+        private final String header;
         private String selected;
 
-        DropdownWidget(BedrockPackSetting setting, List<BedrockPackSetting.Option> options,
-                       String packKey, String selected) {
-            super(0, 0, WIDGET_WIDTH, 20, Component.empty());
+        DropdownRow(BedrockPackSetting setting, String packKey) {
             this.setting = setting;
-            this.options = options;
             this.packKey = packKey;
-            this.selected = selected;
-            updateMessage();
+            this.header = catalog.displayText(setting.text());
+            String current = BedrockPackSettingsStore.dropdownValue(packKey, setting.name())
+                    .orElse(setting.defaultOption());
+            List<BedrockPackSetting.Option> options = setting.options();
+            this.selected = options.stream().anyMatch(o -> o.name().equals(current))
+                    ? current : options.get(0).name();
         }
 
-        String selected() {
-            return selected;
+        private boolean expanded() {
+            return expandedDropdown == this;
         }
 
-        List<BedrockPackSetting.Option> options() {
-            return options;
+        private String optionDisplay(BedrockPackSetting.Option option) {
+            return catalog.displayText(option.text());
         }
 
-        int optionIndexOfSelected() {
-            for (int i = 0; i < options.size(); i++) {
-                if (options.get(i).name().equals(selected)) {
-                    return i;
-                }
-            }
-            return 0;
-        }
-
-        void select(String optionName) {
-            this.selected = optionName;
-            BedrockPackSettingsStore.setValue(packKey, setting.name(), optionName);
-            updateMessage();
-        }
-
-        private void updateMessage() {
-            String display = options.stream()
+        private String selectedDisplay() {
+            return setting.options().stream()
                     .filter(o -> o.name().equals(selected)).findFirst()
-                    .map(o -> catalog.displayText(o.text())).orElse(selected);
-            setMessage(Component.literal(display + " ▼"));
+                    .map(this::optionDisplay).orElse(selected);
+        }
+
+        private int boxTop(int y) {
+            return y + textHeight(header, contentW) + 2;
         }
 
         @Override
-        public void onClick(double mouseX, double mouseY) {
-            openDropdownPopup(this);
-        }
-
-        /** 自绘按钮外观：跨版本统一（1.20.1 九宫格贴图与 1.20.2+ blitSprite 不通用）。 */
-        @Override
-        protected void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
-            int x = getX();
-            int y = getY();
-            int w = getWidth();
-            int h = getHeight();
-            boolean hovered = isHoveredOrFocused();
-            guiGraphics.fill(x, y, x + w, y + h, 0xFF000000);
-            guiGraphics.fill(x + 1, y + 1, x + w - 1, y + h - 1, hovered ? 0xFF5A5A5A : 0xFF3C3C3C);
-            Component message = getMessage();
-            guiGraphics.drawString(font, message,
-                    x + (w - font.width(message)) / 2, y + (h - 8) / 2, 0xFFFFFF);
-        }
-
-        @Override
-        protected void updateWidgetNarration(
-                net.minecraft.client.gui.narration.NarrationElementOutput output) {
-            defaultButtonNarrationText(output);
-        }
-    }
-
-    /** slider 控件：value(0..1) ↔ [min,max] 的 step 网格。 */
-    private final class PackSettingSlider extends AbstractSliderButton {
-        private final BedrockPackSetting setting;
-        private final String packKey;
-
-        PackSettingSlider(BedrockPackSetting setting, String packKey, double current) {
-            super(0, 0, WIDGET_WIDTH, 20, Component.empty(),
-                    (setting.snapToStep(current) - setting.min()) / Math.max(1e-9, setting.max() - setting.min()));
-            this.setting = setting;
-            this.packKey = packKey;
-            updateMessage();
-        }
-
-        @Override
-        protected void updateMessage() {
-            double value = currentValue();
-            String rendered = setting.step() == Math.floor(setting.step())
-                    ? String.valueOf((long) value) : String.format(java.util.Locale.ROOT, "%.2f", value);
-            setMessage(Component.literal(catalog.displayText(setting.text()) + ": " + rendered));
-        }
-
-        @Override
-        protected void applyValue() {
-            BedrockPackSettingsStore.setValue(packKey, setting.name(), currentValue());
-        }
-
-        private double currentValue() {
-            return setting.snapToStep(setting.min() + this.value * (setting.max() - setting.min()));
-        }
-    }
-
-    /** 行：左侧标签 + 右侧控件（label 行无控件且整行文本）。 */
-    private final class SettingsList extends ContainerObjectSelectionList<SettingsList.Row> {
-        //? if <1.20.6 {
-        SettingsList(Minecraft minecraft, int width, int height, int y0, int y1) {
-            super(minecraft, width, height, y0, y1, ROW_HEIGHT);
-        }
-        //?} else {
-        SettingsList(Minecraft minecraft, int width, int height, int y) {
-            super(minecraft, width, height, y, ROW_HEIGHT);
-        }
-        //?}
-
-        @Override
-        public int getRowWidth() {
-            return Math.min(440, this.width - 20);
-        }
-
-        void addRow(@Nullable Component label, @Nullable AbstractWidget widget) {
-            addEntry(new Row(label, widget));
-        }
-
-        final class Row extends ContainerObjectSelectionList.Entry<Row> {
-            private final @Nullable Component label;
-            private final @Nullable AbstractWidget widget;
-
-            Row(@Nullable Component label, @Nullable AbstractWidget widget) {
-                this.label = label;
-                this.widget = widget;
+        int height() {
+            int h = textHeight(header, contentW) + 2 + CONTROL_HEIGHT + 4;
+            if (expanded()) {
+                h += setting.options().size() * CONTROL_HEIGHT;
             }
+            return h;
+        }
 
-            @Override
-            public void render(GuiGraphics guiGraphics, int index, int top, int left, int width, int height,
-                               int mouseX, int mouseY, boolean hovering, float partialTick) {
-                if (widget == null) {
-                    // label 行：整行文本（§ 格式码由字体渲染）
-                    Component text = label != null ? label : Component.empty();
-                    guiGraphics.drawString(font,
-                            net.minecraft.locale.Language.getInstance()
-                                    .getVisualOrder(font.substrByWidth(text, width - 8)),
-                            left + 4, top + (height - 8) / 2, 0xA0A0A0);
-                    return;
+        @Override
+        void render(GuiGraphics g, int x, int y, int w, int mouseX, int mouseY) {
+            drawText(g, header, x, y, w);
+            int top = boxTop(y);
+            boolean boxHover = mouseX >= x && mouseX < x + w && mouseY >= top && mouseY < top + CONTROL_HEIGHT;
+            // 收起框：浅灰底 + 深色当前值 + ▼
+            g.fill(x, top, x + w, top + CONTROL_HEIGHT, boxHover ? 0xFFD6D6D6 : 0xFFC6C6C6);
+            g.drawString(font, font.plainSubstrByWidth(selectedDisplay(), w - 24),
+                    x + 6, top + (CONTROL_HEIGHT - 8) / 2, 0xFF242424, false);
+            drawArrow(g, x + w - 12, top + (CONTROL_HEIGHT - 6) / 2, 0xFF242424);
+            // 展开选项列表
+            if (expanded()) {
+                List<BedrockPackSetting.Option> options = setting.options();
+                for (int i = 0; i < options.size(); i++) {
+                    int oy = top + CONTROL_HEIGHT + i * CONTROL_HEIGHT;
+                    boolean isSelected = options.get(i).name().equals(selected);
+                    boolean hover = mouseX >= x && mouseX < x + w && mouseY >= oy && mouseY < oy + CONTROL_HEIGHT;
+                    g.fill(x, oy, x + w, oy + CONTROL_HEIGHT,
+                            isSelected ? 0xFF1E8E1E : (hover ? 0xFF969696 : 0xFF7A7A7A));
+                    // 勾选框：白描边；选中=白实心，未选=深底
+                    int cbX = x + 6;
+                    int cbY = oy + (CONTROL_HEIGHT - 12) / 2;
+                    g.fill(cbX - 1, cbY - 1, cbX + 13, cbY + 13, 0xFFFFFFFF);
+                    g.fill(cbX, cbY, cbX + 12, cbY + 12, isSelected ? 0xFFFFFFFF : 0xFF1A1A1A);
+                    g.drawString(font, font.plainSubstrByWidth(optionDisplay(options.get(i)), w - 32),
+                            x + 24, oy + (CONTROL_HEIGHT - 8) / 2, 0xFFFFFFFF, false);
                 }
-                if (label != null) {
-                    guiGraphics.drawString(font,
-                            net.minecraft.locale.Language.getInstance()
-                                    .getVisualOrder(font.substrByWidth(label, width - WIDGET_WIDTH - 16)),
-                            left + 4, top + (height - 8) / 2, 0xFFFFFF);
+            }
+        }
+
+        @Override
+        boolean mouseClicked(double mouseX, double mouseY, int x, int y, int w) {
+            int top = boxTop(y);
+            if (mouseY >= top && mouseY < top + CONTROL_HEIGHT) {
+                expandedDropdown = expanded() ? null : this;
+                return true;
+            }
+            if (expanded()) {
+                int optionIndex = (int) ((mouseY - top - CONTROL_HEIGHT) / CONTROL_HEIGHT);
+                List<BedrockPackSetting.Option> options = setting.options();
+                if (optionIndex >= 0 && optionIndex < options.size()) {
+                    selected = options.get(optionIndex).name();
+                    BedrockPackSettingsStore.setValue(packKey, setting.name(), selected);
+                    expandedDropdown = null;
                 }
-                widget.setX(left + width - WIDGET_WIDTH - 4);
-                widget.setY(top + (height - 20) / 2);
-                widget.render(guiGraphics, mouseX, mouseY, partialTick);
             }
-
-            @Override
-            public List<? extends GuiEventListener> children() {
-                return widget != null ? List.of(widget) : List.of();
-            }
-
-            @Override
-            public List<? extends NarratableEntry> narratables() {
-                return widget != null ? List.of(widget) : List.of();
-            }
+            return true;
         }
     }
 }

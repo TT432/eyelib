@@ -26,6 +26,8 @@ import java.util.zip.ZipFile;
 public record BedrockPackSettingsCatalog(
         /** 包键（资源包文件名，与 vanilla pack id "file/&lt;name&gt;" 对应）。 */
         String packKey,
+        /** manifest header.name（通常为 lang 键，经 {@link #displayText} 解析后用于界面标题）。 */
+        String packName,
         List<BedrockPackManifest.Subpack> subpacks,
         List<BedrockPackSetting> settings,
         /** texts/en_US.lang 的 key→value 表（文件缺失为空表）。 */
@@ -50,6 +52,7 @@ public record BedrockPackSettingsCatalog(
             Map<String, String> lang = readLang(zip, prefix + "texts/en_US.lang");
             return new BedrockPackSettingsCatalog(
                     file.getFileName().toString(),
+                    manifest.header().name(),
                     manifest.subpacks(),
                     BedrockPackSetting.parseList(manifest.settings()),
                     lang);
