@@ -7,14 +7,17 @@ import io.github.tt432.eyelib.nodegraph.NodeInstance;
 import io.github.tt432.eyelib.nodegraph.NodeType;
 import io.github.tt432.eyelib.nodegraph.NodeTypes;
 import io.github.tt432.eyelib.nodegraph.PortDef;
+import io.github.tt432.eyelib.nodegraph.PortDirection;
 import io.github.tt432.eyelib.nodegraph.PortType;
 import io.github.tt432.eyelib.nodegraph.PortRef;
 import io.github.tt432.eyelib.nodegraph.VariableDecl;
 import io.github.tt432.eyelib.nodegraph.Wire;
 import org.jspecify.annotations.Nullable;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Deque;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -24,25 +27,31 @@ import java.util.Set;
 import java.util.regex.Pattern;
 
 /**
- * 导入期初始化赋值折叠（规格 nodegraph-init-default-fold）：「只写不读的常量初始化语句」
+ * 导入期初始化赋值折叠（规格 nodegraph-init-default-fold）：「常量初始化语句」
  * （{@code variable.x = 常量}，位于 event.initialize 链上，v13 事件模型）折叠为变量声明的默认值，
- * 删除 set_var 与 variable 节点。导入时无条件启用——判据严格到产物语义等价：
+ * 删除 set_var 与写入侧 variable 节点。导入时无条件启用——判据严格到产物语义等价：
  * 原语句经 initialize 链导出，折叠后经默认值导出，同进 scripts.initialize。
  *
  * <p>折叠条件（全部满足，任一不满足即跳过，宁漏勿错）：
  * <ul>
- *   <li>恰好一次写入（variable 节点唯一出边 → set_var.target）且零读取（无其它出边）；</li>
- * <li>写入值为常量：value 端口未连线（行内常量，缺省取端口默认值）或连线自 const.* 节点；</li>
+ *   <li>写入唯一：本 variable 节点唯一入边 → set_var.target，且同图同名 variable
+ *       节点均无写入通道（in 端口入边）；</li>
+ *   <li>读取不早于写入（读取允许存在）：每个读取的 exec 上下文（值链下游 exec 节点）
+ *       要么在 exec 流上可从 set 到达（读在写后），要么执行链不锚在 event.initialize
+ *       （pre_animation/纯值语境/悬空链均在 initialize 完成后才求值，恒观察到默认值）；
+ *       下游分叉到多个 exec 语境（时机歧义）拒绝；</li>
+ *   <li>写入值为常量：value 端口未连线（行内常量，缺省取端口默认值）或连线自 const.* 节点；</li>
  *   <li>从 set_var 沿 exec_in 反向的路径只经过 exec.set_var/exec.set_temp，
  *       链首挂在 event.initialize（pre_animation/动画链不折——常量虽值等价，
  *       但导出位置变化，严格等价不折）；</li>
  *   <li>变量名未以文本形式出现在任何行内 molang 常量中（variable.x / v.x 两种写法都挡）；</li>
- *   <li>同图无第二个同名 variable 节点（绑定无歧义）；声明已有不同默认值时不折。</li>
+ *   <li>声明已有不同默认值时不折。</li>
  * </ul>
  *
  * <p>等价性论证：折叠把写入从「链中位置」提前到「initialize 最前」（默认值导出为前置）。
- * 链上被跨越的语句若读取该变量必为图内读取（零读取已排除）或行内文本读取
- * （文本引用已排除），外部文件无法在 initialize 执行途中插入读取，故重排不可观测。
+ * 早于原写入位置的读取只可能存在于同一 initialize 链上游——「读取不早于写入」判据
+ * 已排除；其余读取（其它事件链/纯值语境）在原语义下也在 initialize 完成后求值，
+ * 此时变量已被写入常量，与默认值等价。文本引用图结构不可见，一律拒绝。
  */
 final class InitDefaultFolder {
     private InitDefaultFolder() {
@@ -89,6 +98,9 @@ final class InitDefaultFolder {
         Map<String, List<Wire>> fromOut = new LinkedHashMap<>();
         Map<String, Map<String, Wire>> into = new LinkedHashMap<>();
         Map<String, List<Wire>> intoVarIn = new LinkedHashMap<>();
+        // exec 邻接（from.port == exec_out）：前向用于「读在写后」可达性，反向用于锚点追溯
+        Map<String, List<String>> execFwd = new LinkedHashMap<>();
+        Map<String, List<String>> execBack = new LinkedHashMap<>();
         List<String> constantTexts = new ArrayList<>();
         for (NodeInstance n : nodes) {
             byUid.put(n.uid(), n);
@@ -104,12 +116,17 @@ final class InitDefaultFolder {
             if ("in".equals(w.to().port())) {
                 intoVarIn.computeIfAbsent(w.to().node(), k -> new ArrayList<>()).add(w);
             }
+            if ("exec_out".equals(w.from().port())) {
+                execFwd.computeIfAbsent(w.from().node(), k -> new ArrayList<>()).add(w.to().node());
+                execBack.computeIfAbsent(w.to().node(), k -> new ArrayList<>()).add(w.from().node());
+            }
         }
         for (NodeInstance v : nodes) {
             if (!"variable".equals(v.type())) {
                 continue;
             }
-            Candidate c = tryCandidate(v, byUid, fromOut, into, intoVarIn, constantTexts, existingDecls, folded);
+            Candidate c = tryCandidate(v, byUid, fromOut, into, intoVarIn, execFwd, execBack,
+                    constantTexts, existingDecls, folded);
             if (c != null) {
                 return c;
             }
@@ -122,6 +139,8 @@ final class InitDefaultFolder {
                                                     Map<String, List<Wire>> fromOut,
                                                     Map<String, Map<String, Wire>> into,
                                                     Map<String, List<Wire>> intoVarIn,
+                                                    Map<String, List<String>> execFwd,
+                                                    Map<String, List<String>> execBack,
                                                     List<String> constantTexts,
                                                     List<VariableDecl> existingDecls,
                                                     List<VariableDecl> folded) {
@@ -129,10 +148,7 @@ final class InitDefaultFolder {
         if (name.isBlank()) {
             return null;
         }
-        // 零读（v.out 无出线）+ 单写（v.in 唯一入线且来自 set_var.target）（v9 结构判据）
-        if (!fromOut.getOrDefault(v.uid(), List.of()).isEmpty()) {
-            return null;
-        }
+        // 单写（v.in 唯一入线且来自 set_var.target）（v9 结构判据）
         List<Wire> writes = intoVarIn.getOrDefault(v.uid(), List.of());
         if (writes.size() != 1 || !"target".equals(writes.get(0).from().port())) {
             return null;
@@ -141,10 +157,27 @@ final class InitDefaultFolder {
         if (set == null || !"exec.set_var".equals(set.type())) {
             return null;
         }
-        // 同名第二个 variable 节点 → 绑定歧义
+        // 同名其它 variable 节点：有第二个写入通道 → 不折；读边逐个查时机（读不早于写，
+        // 读边本身保留——声明带上默认值后读取照常读到同一常量）
         for (NodeInstance n : byUid.values()) {
-            if (!n.uid().equals(v.uid()) && "variable".equals(n.type())
-                    && stripRoot(n.optionString("name", "")).equals(name)) {
+            if (n.uid().equals(v.uid()) || !"variable".equals(n.type())
+                    || !stripRoot(n.optionString("name", "")).equals(name)) {
+                continue;
+            }
+            if (!intoVarIn.getOrDefault(n.uid(), List.of()).isEmpty()) {
+                return null;
+            }
+            for (Wire read : fromOut.getOrDefault(n.uid(), List.of())) {
+                if (!readCannotPrecedeInit(read.to().node(), set.uid(), byUid, fromOut,
+                        execFwd, execBack)) {
+                    return null;
+                }
+            }
+        }
+        // 本节点的读边同样要求读不早于写
+        for (Wire read : fromOut.getOrDefault(v.uid(), List.of())) {
+            if (!readCannotPrecedeInit(read.to().node(), set.uid(), byUid, fromOut,
+                    execFwd, execBack)) {
                 return null;
             }
         }
@@ -225,6 +258,108 @@ final class InitDefaultFolder {
         return false;
     }
 
+    // ---------- 读取时机判据 ----------
+
+    private static final NodeType.SubgraphResolver NO_SUBGRAPH = name -> Optional.empty();
+
+    /**
+     * 读取不可能早于 initialize 链上的写入：
+     * <ul>
+     *   <li>读取无 exec 语境（纯值使用：RC 表达式/animate 条件/根字段）→ 安全，
+     *       这些语境在 initialize 完成后才求值；下游分叉到多个 exec 语境 → 时机歧义，拒绝；</li>
+     *   <li>唯一 exec 语境可从 set 沿 exec 流到达 → 读在写后，安全；</li>
+     *   <li>否则仅当该语境的执行链不锚在 event.initialize 才安全（其它事件/悬空链
+     *       不可能在 initialize 完成前执行）；锚在 initialize 且不可达 → 可能先读后写，拒绝。</li>
+     * </ul>
+     */
+    private static boolean readCannotPrecedeInit(String consumerUid, String setUid,
+                                                 Map<String, NodeInstance> byUid,
+                                                 Map<String, List<Wire>> fromOut,
+                                                 Map<String, List<String>> execFwd,
+                                                 Map<String, List<String>> execBack) {
+        Set<String> contexts = new HashSet<>();
+        Deque<String> stack = new ArrayDeque<>();
+        Set<String> visited = new HashSet<>();
+        stack.push(consumerUid);
+        while (!stack.isEmpty()) {
+            String cur = stack.pop();
+            if (!visited.add(cur)) {
+                continue;
+            }
+            if (isExecNode(cur, byUid)) {
+                contexts.add(cur);
+                continue;
+            }
+            for (Wire w : fromOut.getOrDefault(cur, List.of())) {
+                stack.push(w.to().node());
+            }
+        }
+        if (contexts.size() > 1) {
+            return false;
+        }
+        if (contexts.isEmpty()) {
+            return true;
+        }
+        String context = contexts.iterator().next();
+        if (execReachable(setUid, context, execFwd)) {
+            return true;
+        }
+        return !hasEventAnchor(context, "event.initialize", byUid, execBack);
+    }
+
+    /** 节点是否 exec 节点（有 EXEC 输入端口）。 */
+    private static boolean isExecNode(String uid, Map<String, NodeInstance> byUid) {
+        NodeInstance node = byUid.get(uid);
+        if (node == null) {
+            return false;
+        }
+        Optional<NodeType> type = NodeTypes.get(node.type());
+        return type.isPresent() && type.get().inputsOf(node, NO_SUBGRAPH).stream()
+                .anyMatch(p -> p.direction() == PortDirection.IN && p.type() == PortType.EXEC);
+    }
+
+    /** exec 流前向可达性（先写后读判据）。 */
+    private static boolean execReachable(String from, String to, Map<String, List<String>> execFwd) {
+        Deque<String> stack = new ArrayDeque<>();
+        Set<String> visited = new HashSet<>();
+        stack.push(from);
+        while (!stack.isEmpty()) {
+            String cur = stack.pop();
+            if (cur.equals(to)) {
+                return true;
+            }
+            if (!visited.add(cur)) {
+                continue;
+            }
+            stack.addAll(execFwd.getOrDefault(cur, List.of()));
+        }
+        return false;
+    }
+
+    /** 沿 exec 流反向追溯，执行链是否锚在指定事件节点（任一前驱链锚中即算）。 */
+    private static boolean hasEventAnchor(String uid, String eventType,
+                                          Map<String, NodeInstance> byUid,
+                                          Map<String, List<String>> execBack) {
+        Deque<String> stack = new ArrayDeque<>();
+        Set<String> visited = new HashSet<>();
+        stack.push(uid);
+        while (!stack.isEmpty()) {
+            String cur = stack.pop();
+            if (!visited.add(cur)) {
+                continue;
+            }
+            NodeInstance node = byUid.get(cur);
+            if (node == null) {
+                continue;
+            }
+            if (eventType.equals(node.type())) {
+                return true;
+            }
+            stack.addAll(execBack.getOrDefault(cur, List.of()));
+        }
+        return false;
+    }
+
     // ---------- 应用 ----------
 
     private static void apply(Candidate c, List<NodeInstance> nodes, List<Wire> wires,
@@ -239,14 +374,18 @@ final class InitDefaultFolder {
                 execTargets.add(w.to());
             }
         }
-        wires.removeIf(w -> w.from().node().equals(c.setUid()) || w.to().node().equals(c.setUid())
-                || w.from().node().equals(c.refUid()) || w.to().node().equals(c.refUid()));
+        wires.removeIf(w -> w.from().node().equals(c.setUid()) || w.to().node().equals(c.setUid()));
         for (PortRef source : execSources) {
             for (PortRef target : execTargets) {
                 wires.add(new Wire(source, target));
             }
         }
-        nodes.removeIf(n -> n.uid().equals(c.setUid()) || n.uid().equals(c.refUid()));
+        nodes.removeIf(n -> n.uid().equals(c.setUid()));
+        // 写入侧 variable 节点：自带读边时保留为纯读节点（声明默认值承接其值），无读边才删除
+        boolean refHasReads = wires.stream().anyMatch(w -> w.from().node().equals(c.refUid()));
+        if (!refHasReads) {
+            nodes.removeIf(n -> n.uid().equals(c.refUid()));
+        }
         // 常量源节点变孤儿（无任何出边）则一并删除
         if (c.constUid() != null) {
             String constUid = c.constUid();

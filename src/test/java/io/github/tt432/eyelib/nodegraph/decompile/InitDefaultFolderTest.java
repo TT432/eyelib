@@ -152,9 +152,32 @@ class InitDefaultFolderTest {
                 decl(r, "x").orElseThrow().type());
     }
 
-    /** 负例：有读取（out 还有第二条边）→ 不折。 */
+    /** 负例：读取在同一 initialize 链上且先于写入（读 x 喂给链上前置 set_var）→ 不折。 */
     @Test
-    void skipsWhenVariableIsRead() {
+    void skipsWhenReadPrecedesWriteOnInitChain() {
+        List<NodeInstance> nodes = new ArrayList<>(List.of(
+                node("root", "entity.root"),
+                node("ev", "event.initialize"),
+                node("v", "variable", opts("name", "x")),
+                node("vy", "variable", opts("name", "y")),
+                node("sRead", "exec.set_var"),
+                node("s", "exec.set_var")));
+        List<Wire> wires = new ArrayList<>(List.of(
+                wire("s", "target", "v", "in"),
+                wire("sRead", "target", "vy", "in"),
+                wire("v", "out", "sRead", "value"),
+                wire("ev", "exec_out", "sRead", "exec_in"),
+                wire("sRead", "exec_out", "s", "exec_in")));
+
+        InitDefaultFolder.Result r = fold(nodes, wires);
+
+        assertTrue(r.foldedDecls().isEmpty());
+        assertTrue(hasNode(r, "s"));
+    }
+
+    /** 正例：读取在纯值语境（无 exec 下游，如 RC 表达式）→ initialize 完成后才求值，折叠。 */
+    @Test
+    void foldsWhenReadInValueOnlyContext() {
         List<NodeInstance> nodes = new ArrayList<>(List.of(
                 node("root", "entity.root"),
                 node("ev", "event.initialize"),
@@ -168,8 +191,116 @@ class InitDefaultFolderTest {
 
         InitDefaultFolder.Result r = fold(nodes, wires);
 
+        assertEquals(1, r.foldedDecls().size());
+        assertFalse(hasNode(r, "s"));
+        assertTrue(hasNode(r, "v")); // 自带读边 → 保留为纯读节点
+        assertTrue(hasWire(r, "v", "out", "q", "arg1")); // 读边不动
+    }
+
+    /** 正例（qpptaw 模式）：同名只读节点挂在 pre_animation 链上 → 读取必在 initialize
+     * 完成后，折叠照常；读节点与读边原样保留（声明默认值承接写入）。 */
+    @Test
+    void foldsWhenReadOnPreAnimationChain() {
+        List<NodeInstance> nodes = new ArrayList<>(List.of(
+                node("root", "entity.root"),
+                node("ev", "event.initialize"),
+                node("evPre", "event.pre_animation"),
+                node("v", "variable", opts("name", "x")),
+                node("vRead", "variable", opts("name", "x")),
+                node("vy", "variable", opts("name", "y")),
+                node("s", "exec.set_var"),
+                node("sCopy", "exec.set_var")));
+        List<Wire> wires = new ArrayList<>(List.of(
+                wire("s", "target", "v", "in"),
+                wire("ev", "exec_out", "s", "exec_in"),
+                wire("vRead", "out", "sCopy", "value"),
+                wire("sCopy", "target", "vy", "in"),
+                wire("evPre", "exec_out", "sCopy", "exec_in")));
+
+        InitDefaultFolder.Result r = fold(nodes, wires);
+
+        VariableDecl d = decl(r, "x").orElseThrow();
+        assertEquals(new JsonPrimitive(0), d.defaultValue().orElseThrow());
+        assertFalse(hasNode(r, "v"));
+        assertFalse(hasNode(r, "s"));
+        assertTrue(hasNode(r, "vRead")); // 读取节点保留，照常读声明默认值
+        assertTrue(hasWire(r, "vRead", "out", "sCopy", "value"));
+        assertTrue(hasWire(r, "evPre", "exec_out", "sCopy", "exec_in"));
+        // y 的写在 pre_animation 链且值非常量 → 不折
+        assertTrue(decl(r, "y").isEmpty());
+        assertTrue(hasNode(r, "sCopy"));
+    }
+
+    /** 正例：读取在同一 initialize 链上但位于写入之后（读可达）→ 折叠；
+     * 写入侧 variable 节点自带读边时保留为纯读节点。 */
+    @Test
+    void foldsWhenReadFollowsWriteOnInitChain() {
+        List<NodeInstance> nodes = new ArrayList<>(List.of(
+                node("root", "entity.root"),
+                node("ev", "event.initialize"),
+                node("v", "variable", opts("name", "x")),
+                node("vy", "variable", opts("name", "y")),
+                node("s", "exec.set_var"),
+                node("sRead", "exec.set_var")));
+        List<Wire> wires = new ArrayList<>(List.of(
+                wire("s", "target", "v", "in"),
+                wire("sRead", "target", "vy", "in"),
+                wire("v", "out", "sRead", "value"),
+                wire("ev", "exec_out", "s", "exec_in"),
+                wire("s", "exec_out", "sRead", "exec_in")));
+
+        InitDefaultFolder.Result r = fold(nodes, wires);
+
+        assertTrue(decl(r, "x").isPresent());
+        assertFalse(hasNode(r, "s"));
+        assertTrue(hasNode(r, "v")); // 自带读边 → 保留为纯读节点
+        assertTrue(hasWire(r, "v", "out", "sRead", "value")); // 读边不动
+        // exec 旁路：ev → sRead 直连
+        assertTrue(hasWire(r, "ev", "exec_out", "sRead", "exec_in"));
+        // y 的值仍是变量读取（非常量）→ 不折
+        assertTrue(decl(r, "y").isEmpty());
+    }
+
+    /** 正例：同名孤立 variable 节点（无写无读）不阻挡折叠。 */
+    @Test
+    void foldsDespiteOrphanSameNameNode() {
+        List<NodeInstance> nodes = new ArrayList<>(List.of(
+                node("root", "entity.root"),
+                node("ev", "event.initialize"),
+                node("v1", "variable", opts("name", "x")),
+                node("v2", "variable", opts("name", "x")),
+                node("s", "exec.set_var")));
+        List<Wire> wires = new ArrayList<>(List.of(
+                wire("s", "target", "v1", "in"),
+                wire("ev", "exec_out", "s", "exec_in")));
+
+        InitDefaultFolder.Result r = fold(nodes, wires);
+
+        assertEquals(1, r.foldedDecls().size());
+        assertFalse(hasNode(r, "v1"));
+        assertFalse(hasNode(r, "s"));
+        assertTrue(hasNode(r, "v2")); // 孤立节点保留
+    }
+
+    /** 负例：同名节点带第二个写入通道（多处写入）→ 不折。 */
+    @Test
+    void skipsWhenSecondWriteExists() {
+        List<NodeInstance> nodes = new ArrayList<>(List.of(
+                node("root", "entity.root"),
+                node("ev", "event.initialize"),
+                node("v1", "variable", opts("name", "x")),
+                node("v2", "variable", opts("name", "x")),
+                node("s1", "exec.set_var"),
+                node("s2", "exec.set_var")));
+        List<Wire> wires = new ArrayList<>(List.of(
+                wire("s1", "target", "v1", "in"),
+                wire("s2", "target", "v2", "in"),
+                wire("ev", "exec_out", "s1", "exec_in"),
+                wire("s1", "exec_out", "s2", "exec_in")));
+
+        InitDefaultFolder.Result r = fold(nodes, wires);
+
         assertTrue(r.foldedDecls().isEmpty());
-        assertTrue(hasNode(r, "s"));
     }
 
     /** 负例：值连线自非 const 节点（表达式）→ 不折。 */
@@ -243,24 +374,6 @@ class InitDefaultFolderTest {
                 wire("s", "target", "v", "in"),
                 wire("ev", "exec_out", "s", "exec_in"),
                 wire("s", "exec_out", "lit", "exec_in")));
-
-        InitDefaultFolder.Result r = fold(nodes, wires);
-
-        assertTrue(r.foldedDecls().isEmpty());
-    }
-
-    /** 负例：同名第二个 variable 节点 → 绑定歧义，不折。 */
-    @Test
-    void skipsAmbiguousBinding() {
-        List<NodeInstance> nodes = new ArrayList<>(List.of(
-                node("root", "entity.root"),
-                node("ev", "event.initialize"),
-                node("v1", "variable", opts("name", "x")),
-                node("v2", "variable", opts("name", "x")),
-                node("s", "exec.set_var")));
-        List<Wire> wires = new ArrayList<>(List.of(
-                wire("s", "target", "v1", "in"),
-                wire("ev", "exec_out", "s", "exec_in")));
 
         InitDefaultFolder.Result r = fold(nodes, wires);
 
