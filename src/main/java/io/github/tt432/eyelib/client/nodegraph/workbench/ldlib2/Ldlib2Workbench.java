@@ -123,6 +123,11 @@ public final class Ldlib2Workbench {
         com.lowdragmc.lowdraglib2.gui.ui.Style.defaultPipeline(view.canvas.getStyle(),
                 style -> style.backgroundTexture(
                         new com.lowdragmc.lowdraglib2.gui.texture.ColorRectTexture(0xFF191919)));
+        // BLOCK 级别连线不绘制（WireElement 对 BLOCK 直接跳过），缩略全景时图结构不可读。
+        // 阈值压 0 = 永不触发 BLOCK（pixelScale 恒 > 0），缩到最小保持 SIMPLIFIED：
+        // 节点平块 + 标题条 + 连线。style 机制（用户指定），root 与子图潜入视图统一生效。
+        com.lowdragmc.lowdraglib2.gui.ui.Style.defaultPipeline(view.graphView.getGraphViewStyle(),
+                style -> style.lodBlockPixelScale(0f));
         return view;
     }
 
