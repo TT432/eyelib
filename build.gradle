@@ -401,8 +401,8 @@ dependencies {
     if (isLegacyForge) {
         // LDLib2 1.20.1 Forge fork（TT432/LDLib2-1.20.1-Forge，third_party/LDLib2 submodule 构建）：SRG 名，modId=ldlib2，
         // -all.jar 内嵌 yoga/taffy，kotlin-stdlib 需显式补（fastutil 由 MC 提供）。
-        modLdlibCompile "com.github.tt432:ldlib2-forge-1.20.1:2.2.34+forge.1.20.1-fork.4"
-        modLocalRuntime "com.github.tt432:ldlib2-forge-1.20.1:2.2.34+forge.1.20.1-fork.4"
+        modLdlibCompile "com.github.tt432:ldlib2-forge-1.20.1:2.2.34+forge.1.20.1-fork.5"
+        modLocalRuntime "com.github.tt432:ldlib2-forge-1.20.1:2.2.34+forge.1.20.1-fork.5"
         compileOnly "org.jetbrains.kotlin:kotlin-stdlib:2.1.20"
         // 移植版 mods.toml 强制前置 kotlinforforge [4.11.0,)。
         modLocalRuntime "maven.modrinth:kotlin-for-forge:4.11.0"
