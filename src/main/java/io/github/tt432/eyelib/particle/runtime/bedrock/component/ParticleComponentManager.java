@@ -83,10 +83,28 @@ public final class ParticleComponentManager {
         register("particle_motion_parametric", "particle_motion", ComponentTarget.PARTICLE, ParticleMotionParametric.CODEC);
     }
 
+    /**
+     * 组件解码结果按 definition 缓存：组件实现均为无状态 record，
+     * per-particle / per-emitter 状态只存在于 ParticleAccess / blackboard 中。
+     * 弱键保证资源重载产生的新 definition 不会滞留旧解码结果。
+     */
+    private static final Map<ParticleDefinition, List<EmitterParticleComponent>> EMITTER_CACHE =
+            java.util.Collections.synchronizedMap(new java.util.WeakHashMap<>());
+    private static final Map<ParticleDefinition, List<ParticleParticleComponent>> PARTICLE_CACHE =
+            java.util.Collections.synchronizedMap(new java.util.WeakHashMap<>());
+
     private ParticleComponentManager() {
     }
 
     public static List<EmitterParticleComponent> emitterComponents(ParticleDefinition definition) {
+        return EMITTER_CACHE.computeIfAbsent(definition, ParticleComponentManager::decodeEmitterComponents);
+    }
+
+    public static List<ParticleParticleComponent> particleComponents(ParticleDefinition definition) {
+        return PARTICLE_CACHE.computeIfAbsent(definition, ParticleComponentManager::decodeParticleComponents);
+    }
+
+    private static List<EmitterParticleComponent> decodeEmitterComponents(ParticleDefinition definition) {
         List<EmitterParticleComponent> components = new ArrayList<>();
         definition.rawComponents().forEach((key, value) -> decode(key, value)
                 .filter(EmitterParticleComponent.class::isInstance)
@@ -95,7 +113,7 @@ public final class ParticleComponentManager {
         return List.copyOf(components);
     }
 
-    public static List<ParticleParticleComponent> particleComponents(ParticleDefinition definition) {
+    private static List<ParticleParticleComponent> decodeParticleComponents(ParticleDefinition definition) {
         List<ParticleParticleComponent> components = new ArrayList<>();
         definition.rawComponents().forEach((key, value) -> decode(key, value)
                 .filter(ParticleParticleComponent.class::isInstance)

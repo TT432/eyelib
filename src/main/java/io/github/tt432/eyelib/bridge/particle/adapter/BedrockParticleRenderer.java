@@ -5,6 +5,7 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import io.github.tt432.eyelib.material.port.PortRenderPass;
 import io.github.tt432.eyelib.util.PortResourceLocation;
 import io.github.tt432.eyelib.material.render.RenderTypeResolver;
+import io.github.tt432.eyelib.particle.runtime.ParticleDefinition;
 import io.github.tt432.eyelib.particle.runtime.bedrock.BedrockParticleEmitter;
 import io.github.tt432.eyelib.particle.runtime.bedrock.BedrockParticleInstance;
 import io.github.tt432.eyelib.particle.runtime.bedrock.component.ParticleComponentManager;
@@ -41,6 +42,7 @@ import org.joml.Vector3f;
 import org.joml.Vector4f;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Minecraft render-buffer adapter for module-owned Bedrock particle instances.
@@ -53,51 +55,76 @@ public final class BedrockParticleRenderer implements ParticleRenderManager.Part
         this.poseStack = poseStack;
     }
 
+    /**
+     * 每 definition 缓存一次渲染所需的静态数据：组件三元组与 RenderType。
+     * 此前每个粒子每帧都会重新 decode 全部组件（含 molang 编译）并重建 RenderType，
+     * 占渲染线程 ~73%。组件实现均为无状态 record，缓存安全。
+     */
+    private static final Map<ParticleDefinition, CachedRender> RENDER_CACHE =
+            java.util.Collections.synchronizedMap(new java.util.WeakHashMap<>());
+
     @Override
     public void render(BedrockParticleInstance particle) {
-        String material = particle.emitter().definition().material();
-        RenderTypeResolver.EntityRenderTypeData factory = RenderTypeResolver.resolveParticle(material);
-        //? if <1.20.6 {
-        net.minecraft.resources.ResourceLocation texture = new net.minecraft.resources.ResourceLocation(particle.emitter().definition().texture()).withSuffix(".png");
-        //?} elif <26.1 {
-        net.minecraft.resources.ResourceLocation texture = net.minecraft.resources.ResourceLocation.parse(particle.emitter().definition().texture()).withSuffix(".png");
-        //?} else {
-        net.minecraft.resources.Identifier texture = net.minecraft.resources.Identifier.parse(particle.emitter().definition().texture()).withSuffix(".png");
-        //?}
-        PortRenderPass pass = factory.factory().apply(PortResourceLocation.of(texture.getNamespace(), texture.getPath()));
+        CachedRender cached = RENDER_CACHE.computeIfAbsent(particle.emitter().definition(), CachedRender::create);
         //? if <26.1 {
-        VertexConsumer buffer = Minecraft.getInstance().renderBuffers().bufferSource().getBuffer(
-                switch (pass.transparency()) {
-                    case SOLID -> net.minecraft.client.renderer.RenderType.entitySolid(texture);
-                    case ALPHA_TEST -> pass.disableCulling()
-                            ? net.minecraft.client.renderer.RenderType.entityCutoutNoCull(texture)
-                            : net.minecraft.client.renderer.RenderType.entityCutout(texture);
-                    case TRANSLUCENT, ADDITIVE -> net.minecraft.client.renderer.RenderType.entityTranslucent(texture);
-                    case TRANSLUCENT_EMISSIVE -> net.minecraft.client.renderer.RenderType.entityTranslucentEmissive(texture);
-                }
-        );
-        render(particle, poseStack, buffer);
+        VertexConsumer buffer = Minecraft.getInstance().renderBuffers().bufferSource()
+                .getBuffer((net.minecraft.client.renderer.RenderType) cached.renderType());
         //?} else {
-        VertexConsumer buffer = Minecraft.getInstance().renderBuffers().bufferSource().getBuffer(
-                switch (pass.transparency()) {
-                    case SOLID -> net.minecraft.client.renderer.rendertype.RenderTypes.entitySolid(texture);
-                    case ALPHA_TEST -> pass.disableCulling()
-                            ? net.minecraft.client.renderer.rendertype.RenderTypes.entityCutout(texture)
-                            : net.minecraft.client.renderer.rendertype.RenderTypes.entityCutoutCull(texture);
-                    case TRANSLUCENT, ADDITIVE -> net.minecraft.client.renderer.rendertype.RenderTypes.entityTranslucent(texture);
-                    case TRANSLUCENT_EMISSIVE -> net.minecraft.client.renderer.rendertype.RenderTypes.entityTranslucentEmissive(texture);
-                }
-        );
-        render(particle, poseStack, buffer);
+        VertexConsumer buffer = Minecraft.getInstance().renderBuffers().bufferSource()
+                .getBuffer((net.minecraft.client.renderer.rendertype.RenderType) cached.renderType());
         //?}
+        render(particle, poseStack, buffer, cached);
     }
 
-    private static void render(BedrockParticleInstance particle, PoseStack poseStack, VertexConsumer vertexConsumer) {
+    private record CachedRender(
+            @Nullable ParticleAppearanceBillboard billboard,
+            @Nullable ParticleAppearanceLighting lighting,
+            @Nullable ParticleAppearanceTinting tinting,
+            Object renderType
+    ) {
+        private static CachedRender create(ParticleDefinition definition) {
+            List<ParticleParticleComponent> components = ParticleComponentManager.particleComponents(definition);
+            ParticleAppearanceBillboard billboard = component(components, ParticleAppearanceBillboard.class);
+            ParticleAppearanceLighting lighting = component(components, ParticleAppearanceLighting.class);
+            ParticleAppearanceTinting tinting = component(components, ParticleAppearanceTinting.class);
+
+            RenderTypeResolver.EntityRenderTypeData factory = RenderTypeResolver.resolveParticle(definition.material());
+            //? if <1.20.6 {
+            net.minecraft.resources.ResourceLocation texture = new net.minecraft.resources.ResourceLocation(definition.texture()).withSuffix(".png");
+            //?} elif <26.1 {
+            net.minecraft.resources.ResourceLocation texture = net.minecraft.resources.ResourceLocation.parse(definition.texture()).withSuffix(".png");
+            //?} else {
+            net.minecraft.resources.Identifier texture = net.minecraft.resources.Identifier.parse(definition.texture()).withSuffix(".png");
+            //?}
+            PortRenderPass pass = factory.factory().apply(PortResourceLocation.of(texture.getNamespace(), texture.getPath()));
+            //? if <26.1 {
+            Object renderType = switch (pass.transparency()) {
+                case SOLID -> net.minecraft.client.renderer.RenderType.entitySolid(texture);
+                case ALPHA_TEST -> pass.disableCulling()
+                        ? net.minecraft.client.renderer.RenderType.entityCutoutNoCull(texture)
+                        : net.minecraft.client.renderer.RenderType.entityCutout(texture);
+                case TRANSLUCENT, ADDITIVE -> net.minecraft.client.renderer.RenderType.entityTranslucent(texture);
+                case TRANSLUCENT_EMISSIVE -> net.minecraft.client.renderer.RenderType.entityTranslucentEmissive(texture);
+            };
+            //?} else {
+            Object renderType = switch (pass.transparency()) {
+                case SOLID -> net.minecraft.client.renderer.rendertype.RenderTypes.entitySolid(texture);
+                case ALPHA_TEST -> pass.disableCulling()
+                        ? net.minecraft.client.renderer.rendertype.RenderTypes.entityCutout(texture)
+                        : net.minecraft.client.renderer.rendertype.RenderTypes.entityCutoutCull(texture);
+                case TRANSLUCENT, ADDITIVE -> net.minecraft.client.renderer.rendertype.RenderTypes.entityTranslucent(texture);
+                case TRANSLUCENT_EMISSIVE -> net.minecraft.client.renderer.rendertype.RenderTypes.entityTranslucentEmissive(texture);
+            };
+            //?}
+            return new CachedRender(billboard, lighting, tinting, renderType);
+        }
+    }
+
+    private static void render(BedrockParticleInstance particle, PoseStack poseStack, VertexConsumer vertexConsumer, CachedRender cached) {
         BedrockParticleEmitter emitter = particle.emitter();
-        List<ParticleParticleComponent> components = ParticleComponentManager.particleComponents(emitter.definition());
-        ParticleAppearanceBillboard billboard = component(components, ParticleAppearanceBillboard.class);
-        ParticleAppearanceLighting lighting = component(components, ParticleAppearanceLighting.class);
-        ParticleAppearanceTinting tinting = component(components, ParticleAppearanceTinting.class);
+        ParticleAppearanceBillboard billboard = cached.billboard();
+        ParticleAppearanceLighting lighting = cached.lighting();
+        ParticleAppearanceTinting tinting = cached.tinting();
 
         poseStack.pushPose();
         //? if <26.1 {
