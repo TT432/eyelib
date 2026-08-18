@@ -723,7 +723,18 @@ public final class BedrockAddonLoader {
                                           BedrockUnmanagedReason reason,
                                           boolean parseFailure,
                                           @Nullable String parseMessage) throws IOException {
-        BedrockResourceContent content = readContent(entry);
+        // 非托管资源本身也可能是 JSON 家族（UNKNOWN_JSON 等）：严格 Gson 解析失败
+        // （Bedrock 允许 JSONC 注释/尾逗号）时降级为原文文本保留，单文件不毁整包
+        BedrockResourceContent content;
+        boolean contentDegraded = false;
+        try {
+            content = readContent(entry);
+        } catch (RuntimeException contentException) {
+            content = new BedrockResourceContent.TextContent(readString(entry));
+            contentDegraded = true;
+            acc.warnings.add(warn(BedrockAddonWarningCode.SCHEMA_PARSE_FAILED, entry.relativePath(),
+                    "unmanaged content parse failed, retained as raw text: " + contentException.getMessage()));
+        }
         acc.unmanagedResources.put(entry.relativePath(),
                 new BedrockUnmanagedResource(entry.family(), entry.relativePath(), content, reason));
         acc.warnings.add(new BedrockAddonWarning(
@@ -732,7 +743,8 @@ public final class BedrockAddonLoader {
                 acc.sourceName(), entry.relativePath(),
                 parseFailure
                         ? "Managed family parse failed; retained as unmanaged because: " + parseMessage
-                        : "Resource is retained but unmanaged because: " + reason));
+                        : "Resource is retained but unmanaged because: " + reason
+                                + (contentDegraded ? " (content kept as raw text)" : "")));
     }
 
     // Manifest

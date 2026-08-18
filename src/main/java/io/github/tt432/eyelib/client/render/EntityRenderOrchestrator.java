@@ -181,6 +181,12 @@ public final class EntityRenderOrchestrator {
 
                     ClientEntityComponent clientEntityComponent = cap.getClientEntityComponent();
 
+                    // addon 卸载/换包后注册表代际变化：按 id 重新解析 clientEntity，
+                    // 管理器中已无此 id 时回落 vanilla（else 分支清空组件与 RC 状态）
+                    if (clientEntityComponent.isStale(ClientEntityManager.INSTANCE.generation())) {
+                        setupClientEntity(entity, cap).forEach(Runnable::run);
+                    }
+
                     AnimationEffects effects = new AnimationEffects();
                     scope.set("variable.partial_tick", plan.partialTick());
                     scope.set("variable.attack_time", ((float) entity.swingTime) / entity.getCurrentSwingDuration());
@@ -537,22 +543,24 @@ public final class EntityRenderOrchestrator {
 
     public static List<Runnable> setupClientEntity(String entityId, RenderData<?> cap) {
         ClientEntityComponent clientEntityComponent = cap.getClientEntityComponent();
-        BrClientEntity clientEntity = clientEntityComponent.getClientEntity();
+        long generation = ClientEntityManager.INSTANCE.generation();
 
-        if (clientEntity == null) {
-            clientEntity = ClientEntityManager.INSTANCE.get(entityId.toString());
+        // 注册表代际变化（addon 卸载/换包/mod 重注册）时重新解析：
+        // 解析结果为 null 也会记录代际——vanilla 实体不再每次 setup 都查表，
+        // 已卸载 addon 的实体回落 vanilla 渲染。
+        if (clientEntityComponent.isStale(generation)) {
+            BrClientEntity clientEntity = ClientEntityManager.INSTANCE.get(entityId.toString());
             if (clientEntity == null) {
                 String alias = JE_TO_BE_ENTITY_ALIAS.get(entityId.toString());
                 if (alias != null) {
                     clientEntity = ClientEntityManager.INSTANCE.get(alias);
                 }
             }
-            if (clientEntity != null) {
-                clientEntityComponent.setClientEntity(clientEntity);
-            }
+            clientEntityComponent.setClientEntity(clientEntity);
+            clientEntityComponent.markResolvedFrom(generation);
         }
 
-        return setupClientEntity(clientEntity, cap);
+        return setupClientEntity(clientEntityComponent.getClientEntity(), cap);
     }
 
     public static List<Runnable> setupClientEntity(@Nullable BrClientEntity clientEntity, RenderData<?> cap) {
@@ -561,6 +569,8 @@ public final class EntityRenderOrchestrator {
         List<Runnable> syncedActions = new ArrayList<>();
         if (clientEntityComponent.getClientEntity() == null && clientEntity != null) {
             clientEntityComponent.setClientEntity(clientEntity);
+            // 外部显式指定视为对当前注册表代际的解析结果，避免 id 解析路径下帧将其当作过期缓存覆盖
+            clientEntityComponent.markResolvedFrom(ClientEntityManager.INSTANCE.generation());
         }
 
         boolean clientEntityChanged = clientEntityComponent.consumeChanged();

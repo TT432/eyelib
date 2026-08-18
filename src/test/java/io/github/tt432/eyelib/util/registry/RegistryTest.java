@@ -100,6 +100,44 @@ class RegistryTest {
     }
 
     @Test
+    void generationIncrementsOnEveryMutation() {
+        Registry<String> registry = new Registry<>("TestRegistry", ManagerEventPublisher.NOOP);
+        long initial = registry.generation();
+
+        registry.put("a", "1");
+        assertEquals(initial + 1, registry.generation());
+
+        registry.putAll(Map.of("b", "2"));
+        assertEquals(initial + 2, registry.generation());
+
+        registry.replaceAll(Map.of("c", "3"));
+        assertEquals(initial + 3, registry.generation());
+
+        registry.remove("c");
+        assertEquals(initial + 4, registry.generation());
+
+        registry.clear();
+        assertEquals(initial + 5, registry.generation());
+    }
+
+    @Test
+    void generationUnchangedOnReadsAndNoOpMutations() {
+        Registry<String> registry = new Registry<>("TestRegistry", ManagerEventPublisher.NOOP);
+        registry.put("a", "1");
+        long generation = registry.generation();
+
+        registry.get("a");
+        registry.all();
+        registry.names();
+        registry.snapshot();
+        registry.remove("missing");
+        registry.removeAll(java.util.List.of("missing"));
+        registry.putAll(Map.of());
+
+        assertEquals(generation, registry.generation());
+    }
+
+    @Test
     void namesReturnsAllRegisteredIds() {
         Registry<String> registry = new Registry<>("TestRegistry", ManagerEventPublisher.NOOP);
         registry.put("a", "1");

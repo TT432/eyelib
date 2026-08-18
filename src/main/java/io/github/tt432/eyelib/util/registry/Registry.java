@@ -19,6 +19,7 @@ public final class Registry<T> implements Repository<T> {
     private final AtomicReference<RegistrySnapshot<T>> ref;
     private final ManagerEventPublisher publisher;
     private final String managerName;
+    private final java.util.concurrent.atomic.AtomicLong generation = new java.util.concurrent.atomic.AtomicLong();
 
     public Registry(String managerName, ManagerEventPublisher publisher) {
         this.managerName = managerName;
@@ -44,6 +45,7 @@ public final class Registry<T> implements Repository<T> {
     @Override
     public void put(String id, T value) {
         ref.updateAndGet(snap -> snap.with(id, value));
+        generation.incrementAndGet();
         publisher.publishManagerEntryChanged(managerName, id, value);
     }
 
@@ -57,12 +59,14 @@ public final class Registry<T> implements Repository<T> {
             merged.putAll(entries);
             return RegistrySnapshot.copyOf(merged);
         });
+        generation.incrementAndGet();
         publisher.publishManagerReplaced(managerName);
     }
 
     @Override
     public void replaceAll(Map<String, ? extends T> replacement) {
         ref.set(RegistrySnapshot.copyOf(replacement));
+        generation.incrementAndGet();
     }
 
     @Override
@@ -78,6 +82,7 @@ public final class Registry<T> implements Repository<T> {
             return RegistrySnapshot.copyOf(copy);
         });
         if (removed[0]) {
+            generation.incrementAndGet();
             publisher.publishManagerEntryChanged(managerName, id, null);
         }
     }
@@ -105,6 +110,7 @@ public final class Registry<T> implements Repository<T> {
             return RegistrySnapshot.copyOf(copy);
         });
         if (removed[0]) {
+            generation.incrementAndGet();
             publisher.publishManagerReplaced(managerName);
         }
     }
@@ -112,6 +118,15 @@ public final class Registry<T> implements Repository<T> {
     @Override
     public void clear() {
         ref.set(RegistrySnapshot.empty());
+        generation.incrementAndGet();
+    }
+
+    /**
+     * 单调递增的变更代际：每次内容变更 +1，读操作不影响。
+     * 供缓存方（如按实体缓存解析结果的组件）比较代际做失效重解析。
+     */
+    public long generation() {
+        return generation.get();
     }
 
     public RegistrySnapshot<T> snapshot() {
