@@ -37,6 +37,11 @@ public final class RegistrySnapshot<T> {
 
     @Nullable
     public T get(String id) {
+        // EMPTY 快照底层是 Map.of()（ImmutableCollections.MapN），对 null 键抛 NPE，
+        // 与 HashMap 语义无异的 get(null) -> null 才是注册中心契约。
+        if (id == null) {
+            return null;
+        }
         return entries.get(id);
     }
 

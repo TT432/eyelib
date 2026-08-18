@@ -90,6 +90,18 @@ class RegistryTest {
     }
 
     @Test
+    void getWithNullIdReturnsNullEvenOnEmptySnapshot() {
+        // 崩溃回归：空快照底层为 Map.of()，ImmutableCollections.MapN.get 对 null 键抛 NPE
+        //（motions4mod CameraManager 每帧 get(null)，重载后快照为空时崩溃）。
+        Registry<String> empty = new Registry<>("TestRegistry", ManagerEventPublisher.NOOP);
+        assertNull(empty.get(null));
+
+        Registry<String> nonEmpty = new Registry<>("TestRegistry", ManagerEventPublisher.NOOP);
+        nonEmpty.put("entry", "value");
+        assertNull(nonEmpty.get(null));
+    }
+
+    @Test
     void replaceAllDoesNotPublishEvent() {
         RecordingPublisher publisher = new RecordingPublisher();
         Registry<String> registry = new Registry<>("TestRegistry", publisher);
