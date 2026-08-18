@@ -2,7 +2,7 @@
 
 **Status:** Accepted  
 **Context:** During hands-on module separation refactoring work, several recurring anti-patterns were discovered that caused wasted effort or breakage.  
-**Decision:** Document 8 known pitfalls with symptoms, root causes, and prevention strategies. Organize by severity: Critical, Moderate, Minor.  
+**Decision:** Document 9 known pitfalls with symptoms, root causes, and prevention strategies. Organize by severity: Critical, Moderate, Minor.  
 **Consequences:** Contributors and AI assistants have a reference to avoid common mistakes during refactoring.
 
 ---
@@ -65,15 +65,23 @@ Lessons learned from the module separation milestones. These patterns were disco
 
 **Prevention:** Run `clean build` before deletion phases to ensure `bin/` matches `src/`.
 
+### 7. Uncaught Exceptions in NeoForge Render-Loop Event Listeners Propagate
+
+**Symptom:** An NPE in a third-party `RenderFrameEvent.Pre` listener (motions4mod `CameraManager`, crash export 2026-08-18) propagated through `EventBus.post` (bus 8.0.5, NeoForge 21.1.x) and crashed the client instead of being logged and skipped.
+
+**Why:** NeoForge bus 8.x does not swallow listener exceptions on render-loop events. Listeners ordered after the throwing one silently skip that frame; when the throw repeats every frame (e.g., a null-key registry lookup during the empty-snapshot window of an F3+T reload), per-frame subsystems such as eyelib's `ParticleRenderHooks` recycling stall before the eventual crash.
+
+**Prevention:** Never let a per-frame listener throw on expected runtime states (null lookups, empty registries); registry getters must tolerate null keys (see `RegistrySnapshot.get`). When diagnosing "recycling/render hook stopped", check the log for exceptions thrown by other listeners of the same event first.
+
 ## Minor
 
-### 7. Stale Module Name in README
+### 8. Stale Module Name in README
 
 **Symptom:** README still references `eyelib-processor` (old name before v1.4 rename).
 
 **Prevention:** Full-text search for `eyelib-processor` (not containing `eyelib-preprocessing`) across all documentation.
 
-### 8. Deleting Legacy Compatibility Pointer README
+### 9. Deleting Legacy Compatibility Pointer README
 
 **Symptom:** `mixin/README.md` looks short and appears to be "empty/obsolete."
 

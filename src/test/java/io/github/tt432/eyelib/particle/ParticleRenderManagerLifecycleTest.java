@@ -101,6 +101,47 @@ class ParticleRenderManagerLifecycleTest {
         assertEquals(0, manager.getParticleCount());
     }
 
+    @Test
+    void updateEmitterPoseSkipsSubmitForUnknownOrRemovedEmitters() {
+        // 动画层每帧对全部历史登记调 updatePose；判活缺失时渲染线程任务队列随
+        // 动画循环次数线性膨胀（2026-08-18 反馈）。契约：未知/已移除 id 不提交任务。
+        java.util.concurrent.atomic.AtomicInteger submitted = new java.util.concurrent.atomic.AtomicInteger();
+        ParticleRenderManager manager = new ParticleRenderManager(action -> {
+            submitted.incrementAndGet();
+            action.run();
+        });
+        FakeEnvironment environment = new FakeEnvironment();
+
+        manager.updateEmitterPose("missing", new Matrix4f());
+        assertEquals(0, submitted.get(), "unknown id must not submit");
+
+        manager.spawnEmitter("e", emitter(environment, manager));
+        manager.updateEmitterPose("e", new Matrix4f());
+        assertEquals(2, submitted.get(), "live emitter accepts spawn + pose submits");
+
+        manager.removeEmitter("e");
+        manager.updateEmitterPose("e", new Matrix4f());
+        assertEquals(3, submitted.get(), "explicitly removed id must not submit");
+    }
+
+    @Test
+    void updateEmitterPoseStopsSubmittingAfterRenderTickPurge() {
+        java.util.concurrent.atomic.AtomicInteger submitted = new java.util.concurrent.atomic.AtomicInteger();
+        ParticleRenderManager manager = new ParticleRenderManager(action -> {
+            submitted.incrementAndGet();
+            action.run();
+        });
+        FakeEnvironment environment = new FakeEnvironment();
+        BedrockParticleEmitter emitter = emitter(environment, manager);
+        manager.spawnEmitter("e", emitter);
+
+        emitter.remove();
+        manager.onRenderTickStart();
+
+        manager.updateEmitterPose("e", new Matrix4f());
+        assertEquals(1, submitted.get(), "purged (expired) emitter must not accept pose submits");
+    }
+
     private static BedrockParticleEmitter emitter(FakeEnvironment environment, ParticleRenderManager manager) {
         return new BedrockParticleRuntime(definition(), environment, manager::spawnParticle)
                 .createEmitter(Optional.of(new MolangScope()), new Vector3f());

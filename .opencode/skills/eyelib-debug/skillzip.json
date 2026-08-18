@@ -381,6 +381,46 @@
           "Be0fac01c059079ea"
         ],
         "locked": false
+      },
+      {
+        "id": "C1",
+        "scope": "root/eyelib-调试与渲染诊断/eval-语法",
+        "modality": "must",
+        "predicate": "/eval（mcmcp_execute）脚本本体直接在 Render thread 上同步执行（ScriptEvalService → BlockableEventLoop.doRunTask）",
+        "spans": [
+          "Beb3c85362cf2a7cc"
+        ],
+        "locked": false
+      },
+      {
+        "id": "C2",
+        "scope": "root/eyelib-调试与渲染诊断/eval-语法",
+        "modality": "must_not",
+        "predicate": "禁止在 eval 体内 minecraft.execute(...) 后用 CountDownLatch 等阻塞原语等待任务完成——execute 的任务排在同一渲染线程，阻塞等待自死锁，只能 mcmcp_close",
+        "spans": [
+          "B61af6a40d15002fe"
+        ],
+        "locked": false
+      },
+      {
+        "id": "C3",
+        "scope": "root/eyelib-调试与渲染诊断/eval-语法",
+        "modality": "must",
+        "predicate": "UI/屏幕操作直接同步写在 eval 体内，不要绕道 execute",
+        "spans": [
+          "B9c7d15bfd4670469"
+        ],
+        "locked": false
+      },
+      {
+        "id": "C4",
+        "scope": "root/eyelib-调试与渲染诊断/eval-语法",
+        "modality": "prefer",
+        "predicate": "超过 HTTP 超时（10s）的重操作仍在渲染线程继续跑完，后续 eval 读取其写下的状态即可",
+        "spans": [
+          "B9fbc6ba93319e083"
+        ],
+        "locked": false
       }
     ],
     "workflow": [
@@ -827,7 +867,8 @@
       }
     ],
     "output": {
-      "fields": []
+      "fields": [],
+      "termination": []
     },
     "evidence": [
       {
@@ -1333,10 +1374,15 @@
     "B85914653bb314215": "| Bedrock 路径 | MC Java 类 | 注入？ |\n|---|---|---|\n| `controller.render.item_default`（手持） | `ItemInHandRenderer.renderItem()` | ✅ |\n| `controller.render.armor`（穿戴） | `HumanoidModel.renderArmor()` | ❌ |\n| `minecraft:icon`（GUI/掉落） | `ItemRenderer`（实体渲染器，非物品渲染器） | ❌ |",
     "B135d3d215786a13f": "常见错误：混入 `net.minecraft.client.renderer.entity.ItemRenderer`——该类渲染物品实体和 GUI，不处理手持物品。手持走 `ItemInHandRenderer`。",
     "Be0fac01c059079ea": "正确注入点：",
-    "Bc99c70fb9c1e12c9": "```java\n@Mixin(ItemInHandRenderer.class)\npublic class ItemInHandRendererMixin {\n    @Inject(method = \"renderItem\", at = @At(\"HEAD\"), cancellable = true)\n    private void onRenderItem(LivingEntity entity, ItemStack stack,\n            ItemDisplayContext context, boolean left, PoseStack pose,\n            MultiBufferSource buffer, int light, CallbackInfo ci) {\n        // 检查 attachable，渲染自定义模型，ci.cancel()\n    }\n}\n```"
+    "Bc99c70fb9c1e12c9": "```java\n@Mixin(ItemInHandRenderer.class)\npublic class ItemInHandRendererMixin {\n    @Inject(method = \"renderItem\", at = @At(\"HEAD\"), cancellable = true)\n    private void onRenderItem(LivingEntity entity, ItemStack stack,\n            ItemDisplayContext context, boolean left, PoseStack pose,\n            MultiBufferSource buffer, int light, CallbackInfo ci) {\n        // 检查 attachable，渲染自定义模型，ci.cancel()\n    }\n}\n```",
+    "Bc046c7d69cc625c4": "## /eval 线程模型（2026-08-16 jstack 实证）",
+    "Beb3c85362cf2a7cc": "- `/eval`（mcmcp_execute）脚本本体直接在 **Render thread** 上同步执行（ScriptEvalService → BlockableEventLoop.doRunTask）。",
+    "B61af6a40d15002fe": "- 禁止在 eval 体内 `minecraft.execute(...)` 后用 `CountDownLatch` 等阻塞原语等待任务完成——execute 的任务排在同一渲染线程，阻塞等待让渲染线程永久 park，自死锁，只能 mcmcp_close。",
+    "B9c7d15bfd4670469": "- UI/屏幕操作直接同步写在 eval 体内，不要绕道 execute。",
+    "B9fbc6ba93319e083": "- 超过 HTTP 超时（10s）的重操作：脚本仍在渲染线程继续跑完，后续 eval 读取其写下的状态即可。"
   },
   "stats": {
-    "patches": 2,
+    "patches": 3,
     "repacks": 0,
     "lastRepackAt": "2026-08-13T09:01:43.054Z",
     "totalSavedTokens": 0
@@ -1353,9 +1399,15 @@
       "operation": "AUDIT",
       "summary": "restored 11 missing spans as locked residual",
       "savingTokens": 0
+    },
+    {
+      "ts": "2026-08-18T19:44:34.598Z",
+      "operation": "EXTEND",
+      "summary": "EXTEND: +4 rules, +0 workflow, +0 tools, +0 fields",
+      "savingTokens": 0
     }
   ],
   "createdAt": "2026-08-13T09:01:43.054Z",
-  "updatedAt": "2026-08-13T09:06:03.010Z",
+  "updatedAt": "2026-08-18T19:44:34.613Z",
   "frontMatterRaw": "---\nname: eyelib-debug\ndescription: Eyelib 客户端调试——mcmcp 拓展启动客户端、/eval 执行代码、渲染诊断 Phase、实体操作。Use when debugging rendering, executing /eval code, or diagnosing entity issues.\nlicense: MIT\ncompatibility: opencode\nmetadata:\n  author: https://github.com/TT432\n  version: \"1.0.0\"\n  tags: eyelib, debug, mcp, eval, rendering\n  related-skills: eyelib, eyelib-build, eyelib-renderdoc, eyelib-clientsmoke, mcmcp\n---"
 }

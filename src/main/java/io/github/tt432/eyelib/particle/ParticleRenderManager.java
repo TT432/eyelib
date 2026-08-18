@@ -22,10 +22,18 @@ import java.util.function.Predicate;
 /** @author TT432 */
 public final class ParticleRenderManager {
     private final Object2ObjectMap<String, BedrockParticleEmitter> emitters = new Object2ObjectOpenHashMap<>();
+    /** 活发射器 id 的并发可见视图：updateEmitterPose 提交前判活（见该方法注释）。 */
+    private final java.util.Set<String> liveEmitterIds = java.util.concurrent.ConcurrentHashMap.newKeySet();
     private final ObjectList<BedrockParticleInstance> particles = new ObjectArrayList<>();
     private final ParticleClientRuntimeServices runtimeServices;
 
-    private final Predicate<Map.Entry<String, BedrockParticleEmitter>> removeEmitters = entry -> entry.getValue().removed();
+    private final Predicate<Map.Entry<String, BedrockParticleEmitter>> removeEmitters = entry -> {
+        if (entry.getValue().removed()) {
+            liveEmitterIds.remove(entry.getKey());
+            return true;
+        }
+        return false;
+    };
     private final Consumer<BedrockParticleEmitter> renderEmitters = BedrockParticleEmitter::onRenderFrame;
     private final Predicate<BedrockParticleInstance> removeParticles = BedrockParticleInstance::removed;
     private final Consumer<BedrockParticleInstance> renderParticles = BedrockParticleInstance::onRenderFrame;
@@ -50,12 +58,19 @@ public final class ParticleRenderManager {
                 return;
             }
             emitters.put(id, emitter);
+            liveEmitterIds.add(id);
         });
     }
 
     public void updateEmitterPose(String id, Matrix4fc pose) {
         Objects.requireNonNull(id, "id");
-        Matrix4f poseCopy = new Matrix4f(Objects.requireNonNull(pose, "pose"));
+        Objects.requireNonNull(pose, "pose");
+        // 提交前判活：动画层对全部历史登记（含发射器已死的条目）每帧调本方法，
+        // 不判活会让渲染线程任务队列随动画循环次数线性膨胀（2026-08-18 反馈）。
+        if (!liveEmitterIds.contains(id)) {
+            return;
+        }
+        Matrix4f poseCopy = new Matrix4f(pose);
         runtimeServices.submit(() -> {
             BedrockParticleEmitter emitter = emitters.get(id);
             if (emitter != null) {
@@ -66,6 +81,7 @@ public final class ParticleRenderManager {
 
     public void removeEmitter(String id) {
         Objects.requireNonNull(id, "id");
+        liveEmitterIds.remove(id);
         runtimeServices.submit(() -> emitters.remove(id));
     }
 
@@ -92,6 +108,7 @@ public final class ParticleRenderManager {
 
     public void clear() {
         emitters.clear();
+        liveEmitterIds.clear();
         particles.clear();
     }
 

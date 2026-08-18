@@ -32,6 +32,10 @@ Eyelib 客户端调试：用 mcmcp 拓展启动 MC 客户端、/eval 执行 Java
   - /eval 只传方法体，不包 Object run(...) { }；服务端自动包装并注入 Minecraft minecraft、LocalPlayer player、ClientLevel level 三参数，直接使用、不要重新声明。
   - PREFER AIDebugServer 使用 JDK 自带编译器（非 Janino），支持完整 Java 语法：var、lambda、Map.of()、while、多行 if return 均可。
   - eval 代码在游戏工作目录（versions/<node>/run/）执行；访问项目文件必须用绝对路径。
+  - /eval（mcmcp_execute）脚本本体直接在 Render thread 上同步执行（ScriptEvalService → BlockableEventLoop.doRunTask）
+  - NEVER 禁止在 eval 体内 minecraft.execute(...) 后用 CountDownLatch 等阻塞原语等待任务完成——execute 的任务排在同一渲染线程，阻塞等待自死锁，只能 mcmcp_close
+  - UI/屏幕操作直接同步写在 eval 体内，不要绕道 execute
+  - PREFER 超过 HTTP 超时（10s）的重操作仍在渲染线程继续跑完，后续 eval 读取其写下的状态即可
 - When 实体操作:
   - 拉近实体用 setPos，不用 teleportTo——后者只在 ServerLevel 生效。
 - When 原则:
@@ -96,7 +100,6 @@ Eyelib 客户端调试：用 mcmcp 拓展启动 MC 客户端、/eval 执行 Java
 23. 26.1.2 偶发 IllegalStateException: Not building! 已有护栏（DeferredRenderSink.submit 丢弃该段几何 + ERROR 日志，不崩客户端）；根因未定位，下次复现时：1) 取护栏日志中的 consumer 身份；2) 在 BufferSource.endBatch 处下条件断点对照是谁结束的该 builder [fallback]
 
 <!-- locked residual (verbatim, do not edit) -->
-
 ```powershell
 # 查端口占用
 netstat -ano | findstr 25999
@@ -113,7 +116,6 @@ Set-Location E:\_ideaProjects\qylEyelib
 'return "hello";' | curl.exe -s --proxy http://127.0.0.1:10808 `
     -X POST http://localhost:25999/eval -H "Content-Type: text/plain" -d "@-"
 ```
-
 ```
 当前问题：<一句话>
 
@@ -127,35 +129,27 @@ Set-Location E:\_ideaProjects\qylEyelib
 ```
 mcmcp_execute(code='net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance(); net.minecraft.world.entity.Entity target = mc.level.getEntity(250); double distSq = mc.player.distanceToSqr(target); return "distSq=" + distSq + " shouldRender=" + target.shouldRender(mc.player.getX(), mc.player.getY(), mc.player.getZ());')
 ```
-
 ```
 mcmcp_execute(code='return io.github.tt432.eyelib.client.manager.ClientEntityManager.INSTANCE.get("minecraft:slime") == null ? "BR_NULL" : "BR_OK";')
 ```
-
 ```
 mcmcp_execute(code='Object cap = io.github.tt432.eyelib.capability.RenderData.getComponent(target); java.util.List comps = (java.util.List) cap.getClass().getMethod("getModelComponents").invoke(cap); return "comps=" + comps.size();')
 ```
-
 ```
 mcmcp_execute(code='Object cap = io.github.tt432.eyelib.capability.RenderData.getComponent(target); java.lang.reflect.Field f = cap.getClass().getDeclaredField("useBuiltInRenderSystem"); f.setAccessible(true); boolean ub = f.getBoolean(cap); return "useBuiltIn=" + ub + " renderer=" + minecraft.getEntityRenderDispatcher().getRenderer(target).getClass().getSimpleName();')
 ```
-
 ```
 mcmcp_execute(code='return "GL_PROGRAM=" + org.lwjgl.opengl.GL20.glGetInteger(org.lwjgl.opengl.GL20.GL_CURRENT_PROGRAM);')
 ```
-
 ```
 mcmcp_execute(code='Object cap = io.github.tt432.eyelib.capability.RenderData.getComponent(target); java.util.List comps = (java.util.List) cap.getClass().getMethod("getModelComponents").invoke(cap); for (int i=0; i<comps.size(); i++) { Object comp = comps.get(i); Object info = comp.getClass().getMethod("getSerializableInfo").invoke(comp); String model = (String) info.getClass().getMethod("model").invoke(info); ... }')
 ```
-
 ```
 mcmcp_execute(code='net.minecraft.world.entity.Mob slime = (net.minecraft.world.entity.Mob) net.minecraft.world.entity.EntityType.SLIME.create(minecraft.getSingleplayerServer().overworld()); slime.setPos(minecraft.player.getX(), minecraft.player.getY(), minecraft.player.getZ() + 3); minecraft.getSingleplayerServer().overworld().addFreshEntity(slime); return "ok";')
 ```
-
 ```
 mcmcp_execute(code='target.setPos(minecraft.player.getX() + 3, minecraft.player.getY(), minecraft.player.getZ() + 3); return "ok";')
 ```
-
 ```
 mcmcp_execute(code='net.minecraft.client.gui.screens.TitleScreen ts = (net.minecraft.client.gui.screens.TitleScreen) mc.screen; ((net.minecraft.client.gui.components.Button) ts.children().get(0)).onPress(); return "ok";')
 ```
@@ -165,7 +159,6 @@ org.apache.logging.log4j.core.config.Configurator.setLevel(
     org.apache.logging.log4j.Level.DEBUG
 );
 ```
-
 ```java
 @Mixin(ItemInHandRenderer.class)
 public class ItemInHandRendererMixin {
@@ -177,7 +170,6 @@ public class ItemInHandRendererMixin {
     }
 }
 ```
-
 | # | 特征 | 验证 | 预期 |
 |---|---|---|---|
 | A | 实体在渲染距离内 | Phase 0 shouldRender() | true |
