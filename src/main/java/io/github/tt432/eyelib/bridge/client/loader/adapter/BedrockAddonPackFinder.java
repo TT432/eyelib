@@ -22,7 +22,9 @@ import java.nio.file.Path;
 /**
  * 把 resourcepacks/ 下的 .mcpack/.mcaddon 注册为 vanilla 客户端资源包（每文件一个），
  * 使其接受 {@code PackRepository} 原版管理：资源包界面可见、可启用/禁用/排序，
- * 选择持久化在 options.txt。注册为可选包（required=false，Position.TOP），默认未选中。
+ * 选择持久化在 options.txt。注册为可选包（required=false，Position.TOP），默认未选中；
+ * clientsmoke 运行（{@code clientsmoke.enabled=true}）下强制 required——smoke 使用全新
+ * run 目录且无人工选择，需保证 resourcepacks/ 下包全部加载。
  * <p>
  * 包内容不经过 vanilla 资源视图（见 {@link BedrockPackResources} 类文档）；
  * 选中集合由 {@link BedrockAddonAutoLoader} 在资源重载时经 ResourceManager 枚举。
@@ -62,11 +64,14 @@ public final class BedrockAddonPackFinder {
 
     private static @Nullable Pack createPack(Path file) {
         BedrockPackResources resources = BedrockPackResources.of(file);
+        // clientsmoke 运行不读 options.txt 的人工选择（全新 run 目录无 options.txt），
+        // 强制 required 以恢复 c0e8575f 前「resourcepacks/ 下包全部加载」的测试语义
+        boolean required = Boolean.getBoolean("clientsmoke.enabled");
         //? if <1.20.6 {
         return Pack.readMetaAndCreate(
                 BedrockPackResources.packIdOf(file),
                 resources.title(),
-                false,
+                required,
                 id -> resources,
                 PackType.CLIENT_RESOURCES,
                 Pack.Position.TOP,
@@ -93,7 +98,7 @@ public final class BedrockAddonPackFinder {
                         resources.title(), PackSource.DEFAULT, java.util.Optional.empty()),
                 supplier,
                 PackType.CLIENT_RESOURCES,
-                new net.minecraft.server.packs.PackSelectionConfig(false, Pack.Position.TOP, false));
+                new net.minecraft.server.packs.PackSelectionConfig(required, Pack.Position.TOP, false));
         //?}
     }
 }

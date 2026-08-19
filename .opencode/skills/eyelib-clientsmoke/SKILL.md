@@ -28,6 +28,7 @@ Eyelib Clientsmoke 客户端烟雾测试——@ClientSmoke 注解、三层测试
 - When 常见陷阱:
   - MaterialManager 的 key 使用 `name:base` 格式——.mcpack 中的 key 是 `entity_nocull:entity` 而不是 `entity_nocull`
   - ResourceLocation 用 `new ResourceLocation(ns, path)` 构造——MC 1.20.1 没有 fromNamespaceAndPath
+  - [when 实体捕获测试挂 renderCount] 实体捕获测试挂 renderCount did not increase 时：c0e8575f 起 .mcpack 注册为 vanilla 可选资源包、默认未选中；clientsmoke 全新 run 目录无 options.txt → a&s 不加载 → ClientEntityManager 空。修复：BedrockAddonPackFinder 在 clientsmoke.enabled=true 时把包注册为 required（2026-08-19 实证，勿回退）；诊断先看日志有无 "Loading Bedrock addon from resourcepacks/" 行
 - When 启用 clientsmoke:
   - 在 build.gradle 的 client run 配置中设置 systemProperty 'clientsmoke.enabled'='true' 才会执行测试；该属性默认 false，不加则状态机进入 IDLE 不执行任何测试
   - PREFER 同时设置 systemProperty 'clientsmoke.autoExit'='false' 可让测试结束后客户端保持开启

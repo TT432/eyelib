@@ -123,6 +123,17 @@
           "B4c2d9d3abc94f6d8"
         ],
         "locked": false
+      },
+      {
+        "id": "C1",
+        "scope": "root/eyelib-clientsmoke-测试/常见陷阱",
+        "modality": "must",
+        "predicate": "实体捕获测试挂 renderCount did not increase 时：c0e8575f 起 .mcpack 注册为 vanilla 可选资源包、默认未选中；clientsmoke 全新 run 目录无 options.txt → a&s 不加载 → ClientEntityManager 空。修复：BedrockAddonPackFinder 在 clientsmoke.enabled=true 时把包注册为 required（2026-08-19 实证，勿回退）；诊断先看日志有无 \"Loading Bedrock addon from resourcepacks/\" 行",
+        "guard": "实体捕获测试挂 renderCount",
+        "spans": [
+          "Bfd6e79309a55feaa"
+        ],
+        "locked": false
       }
     ],
     "workflow": [
@@ -172,6 +183,7 @@
       }
     ],
     "output": {
+      "type": "clientsmoke 报告文件",
       "fields": [
         {
           "name": "report-YYYYMMDD-HHmmss.json",
@@ -198,7 +210,6 @@
           ]
         }
       ],
-      "type": "clientsmoke 报告文件",
       "termination": [
         "状态机推进到 REPORT 阶段后报告已写出"
       ],
@@ -353,10 +364,11 @@
     "B0a64f0693ab5d91f": "常见陷阱",
     "Bc1b6d75384689d91": "**MaterialManager key 用 `name:base` 格式**：`.mcpack` 中的 key 是 `entity_nocull:entity` 不是 `entity_nocull`",
     "Bd7ad489ae10c52dc": "**不能和 `mcmcp_enter_world` 同时使用**：clientsmoke 自己创建世界，手动 enter_world 会冲突",
-    "B4c2d9d3abc94f6d8": "**`ResourceLocation` 用 `new ResourceLocation(ns, path)`**：MC 1.20.1 没有 `fromNamespaceAndPath`"
+    "B4c2d9d3abc94f6d8": "**`ResourceLocation` 用 `new ResourceLocation(ns, path)`**：MC 1.20.1 没有 `fromNamespaceAndPath`",
+    "Bfd6e79309a55feaa": "- [when 实体捕获测试挂 renderCount] c0e8575f 起 .mcpack 注册为 vanilla 可选资源包、默认未选中；clientsmoke 全新 run 目录无 options.txt → a&s 不加载 → ClientEntityManager 空 → *CaptureSmoke 挂 \"was not rendered by the Eyelib pipeline (renderCount did not increase)\"。修复：BedrockAddonPackFinder 在 clientsmoke.enabled=true 时把包注册为 required（2026-08-19 实证，勿回退）；诊断先看日志有无 \"Loading Bedrock addon from resourcepacks/\" 行。"
   },
   "stats": {
-    "patches": 2,
+    "patches": 3,
     "repacks": 0,
     "lastRepackAt": "2026-08-13T08:53:51.157Z",
     "totalSavedTokens": 0
@@ -373,9 +385,15 @@
       "operation": "AUDIT",
       "summary": "restored 3 missing spans as locked residual",
       "savingTokens": 0
+    },
+    {
+      "ts": "2026-08-19T06:32:26.182Z",
+      "operation": "EXTEND",
+      "summary": "EXTEND: +1 rules, +0 workflow, +0 tools, +0 fields",
+      "savingTokens": 0
     }
   ],
   "createdAt": "2026-08-13T08:53:51.157Z",
-  "updatedAt": "2026-08-13T08:59:21.895Z",
+  "updatedAt": "2026-08-19T06:32:26.194Z",
   "frontMatterRaw": "---\nname: eyelib-clientsmoke\ndescription: Eyelib Clientsmoke 客户端烟雾测试——@ClientSmoke 注解、三层架构、运行、报告。Use when writing or running clientsmoke tests.\nlicense: MIT\ncompatibility: opencode\nmetadata:\n  author: https://github.com/TT432\n  version: \"1.0.0\"\n  tags: eyelib, testing, clientsmoke, mc\n  related-skills: eyelib, eyelib-build, eyelib-debug\n---"
 }
