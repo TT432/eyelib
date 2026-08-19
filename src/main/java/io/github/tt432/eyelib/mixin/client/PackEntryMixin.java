@@ -9,6 +9,7 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.packs.PackSelectionModel;
 import net.minecraft.client.gui.screens.packs.TransferableSelectionList;
 import net.minecraft.resources.ResourceLocation;
+import org.jspecify.annotations.Nullable;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -48,15 +49,19 @@ public abstract class PackEntryMixin {
 
     @Shadow
     @Final
+    @SuppressWarnings("NullAway") // @Shadow 字段由目标类初始化
     private PackSelectionModel.Entry pack;
     @Shadow
     @Final
+    @SuppressWarnings("NullAway")
     protected Minecraft minecraft;
     @Shadow
     @Final
+    @SuppressWarnings("NullAway")
     private TransferableSelectionList parent;
 
     @Unique
+    @Nullable
     private BedrockPackSettingsCatalog eyelib$catalog;
     @Unique
     private boolean eyelib$catalogResolved;
@@ -101,7 +106,7 @@ public abstract class PackEntryMixin {
 
     /** 惰性解析设置目录（每条目实例一次 zip 读取；无可配置内容 → null）。 */
     @Unique
-    private BedrockPackSettingsCatalog eyelib$settingsCatalog() {
+    private @Nullable BedrockPackSettingsCatalog eyelib$settingsCatalog() {
         if (!eyelib$catalogResolved) {
             eyelib$catalogResolved = true;
             String id = pack.getId();

@@ -3,6 +3,7 @@ package io.github.tt432.eyelib.molang.compiler.binding;
 import io.github.tt432.eyelib.molang.compiler.common.MolangRootAliasCanonicalizer;
 import io.github.tt432.eyelib.molang.compiler.frontend.ast.MolangAst;
 import io.github.tt432.eyelib.molang.compiler.frontend.ast.SourceSpan;
+import org.jspecify.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.ArrayDeque;
 import java.util.Deque;
@@ -33,7 +34,7 @@ public final class MolangBinder {
      * {@code MemberAccess(MemberAccess(ArrowAccess(a, b), c), d)}，而语义上
      * {@code a->b.c.d = v} ≡ {@code a->(b.c.d = v)}。返回 {@code null} = 目标中无箭头。
      */
-    private static MolangAst.ArrowAccessExpr hoistArrow(MolangAst.Expr expr) {
+    private static MolangAst.@Nullable ArrowAccessExpr hoistArrow(MolangAst.Expr expr) {
         if (expr instanceof MolangAst.ArrowAccessExpr arrow) {
             return arrow;
         }

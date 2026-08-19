@@ -126,8 +126,11 @@ public final class Ldlib2Workbench {
         // BLOCK 级别连线不绘制（WireElement 对 BLOCK 直接跳过），缩略全景时图结构不可读。
         // 阈值压 0 = 永不触发 BLOCK（pixelScale 恒 > 0），缩到最小保持 SIMPLIFIED：
         // 节点平块 + 标题条 + 连线。style 机制（用户指定），root 与子图潜入视图统一生效。
+        // 仅 <26.1：LDLib2 26.1.2.33 尚无 lodBlockPixelScale style API，该节点保留上游行为。
+        //? if <26.1 {
         com.lowdragmc.lowdraglib2.gui.ui.Style.defaultPipeline(view.graphView.getGraphViewStyle(),
                 style -> style.lodBlockPixelScale(0f));
+        //?}
         return view;
     }
 

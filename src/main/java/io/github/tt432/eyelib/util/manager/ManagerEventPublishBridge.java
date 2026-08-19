@@ -1,6 +1,7 @@
 package io.github.tt432.eyelib.util.manager;
 
 import io.github.tt432.eyelib.util.manager.ManagerEventPublisher;
+import org.jspecify.annotations.Nullable;
 /**
  * @author TT432
  */
@@ -18,7 +19,7 @@ public final class ManagerEventPublishBridge {
         publisher = ManagerEventPublisher.NOOP;
     }
 
-    public static void publishManagerEntryChanged(String managerName, String entryName, Object entryData) {
+    public static void publishManagerEntryChanged(String managerName, String entryName, @Nullable Object entryData) {
         publisher.publishManagerEntryChanged(managerName, entryName, entryData);
     }
 

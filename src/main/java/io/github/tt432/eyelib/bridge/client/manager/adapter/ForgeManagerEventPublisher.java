@@ -3,6 +3,7 @@ package io.github.tt432.eyelib.bridge.client.manager.adapter;
 import io.github.tt432.eyelib.bridge.event.adapter.ManagerEntryChangedEvent;
 import io.github.tt432.eyelib.bridge.event.adapter.ManagerReplacedEvent;
 import io.github.tt432.eyelib.util.manager.ManagerEventPublisher;
+import org.jspecify.annotations.Nullable;
 //? if <1.20.6 {
 import net.minecraftforge.common.MinecraftForge;
 //?} else {
@@ -13,7 +14,7 @@ import net.neoforged.neoforge.common.NeoForge;
  */
 public final class ForgeManagerEventPublisher implements ManagerEventPublisher {
     @Override
-    public void publishManagerEntryChanged(String managerName, String entryName, Object entryData) {
+    public void publishManagerEntryChanged(String managerName, String entryName, @Nullable Object entryData) {
         //? if <1.20.6 {
         MinecraftForge.EVENT_BUS.post(new ManagerEntryChangedEvent(managerName, entryName, entryData));
         //?} else {

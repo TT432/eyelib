@@ -1,6 +1,8 @@
 //? if >=1.20.1 {
 package io.github.tt432.eyelib.client.nodegraph.workbench.ldlib2;
 
+import org.jspecify.annotations.Nullable;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -81,7 +83,7 @@ public final class VariableDisplayGrouping {
     }
 
     /** 名字的最长点分前缀 object 父（无 → null）。 */
-    private static <T> T parentOf(String name, Map<String, T> objectByName) {
+    private static <T> @Nullable T parentOf(String name, Map<String, T> objectByName) {
         for (int i = name.lastIndexOf('.'); i > 0; i = name.lastIndexOf('.', i - 1)) {
             T parent = objectByName.get(name.substring(0, i));
             if (parent != null) {

@@ -158,7 +158,7 @@ public final class GraphMigrations {
                 : NodeTypes.unaryOp(optionString(node, "op", "-"));
         if (opType == null) {
             // 未知符号：回落旧默认（binary → op.add，unary → op.negate）
-            opType = binary ? NodeTypes.binaryOp("+") : NodeTypes.unaryOp("-");
+            opType = java.util.Objects.requireNonNull(binary ? NodeTypes.binaryOp("+") : NodeTypes.unaryOp("-"));
         }
         Map<String, JsonElement> options = new LinkedHashMap<>(node.options());
         options.remove("op");

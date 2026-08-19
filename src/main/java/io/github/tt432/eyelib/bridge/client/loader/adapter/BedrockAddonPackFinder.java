@@ -10,6 +10,7 @@ import net.minecraftforge.event.AddPackFindersEvent;
 //?} else {
 import net.neoforged.neoforge.event.AddPackFindersEvent;
 //?}
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,7 +60,7 @@ public final class BedrockAddonPackFinder {
         }
     }
 
-    private static Pack createPack(Path file) {
+    private static @Nullable Pack createPack(Path file) {
         BedrockPackResources resources = BedrockPackResources.of(file);
         //? if <1.20.6 {
         return Pack.readMetaAndCreate(

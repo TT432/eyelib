@@ -16,6 +16,7 @@ import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Bedrock 附加包的设置界面（对应基岩版资源包条目上的齿轮按钮页面），
@@ -105,10 +106,20 @@ public final class BedrockPackSettingsScreen extends Screen {
         for (BedrockPackSetting setting : catalog.settings()) {
             switch (setting.type()) {
                 case LABEL -> rows.add(new LabelRow(setting));
-                case TOGGLE -> rows.add(new ToggleRow(setting, packKey));
-                case SLIDER -> rows.add(new SettingSliderRow(setting, packKey));
+                // 交互控件必须有 name 才能持久化；无名条目（非法 manifest）跳过，
+                // 与 dropdown 空选项跳过同理
+                case TOGGLE -> {
+                    if (setting.name() != null) {
+                        rows.add(new ToggleRow(setting, packKey));
+                    }
+                }
+                case SLIDER -> {
+                    if (setting.name() != null) {
+                        rows.add(new SettingSliderRow(setting, packKey));
+                    }
+                }
                 case DROPDOWN -> {
-                    if (!setting.options().isEmpty()) {
+                    if (setting.name() != null && !setting.options().isEmpty()) {
                         rows.add(new DropdownRow(setting, packKey));
                     }
                 }
@@ -311,14 +322,16 @@ public final class BedrockPackSettingsScreen extends Screen {
     private final class ToggleRow extends Row {
         private final BedrockPackSetting setting;
         private final String packKey;
+        private final String name;
         private final String text;
         private boolean value;
 
         ToggleRow(BedrockPackSetting setting, String packKey) {
             this.setting = setting;
             this.packKey = packKey;
+            this.name = Objects.requireNonNull(setting.name(), "toggle setting name");
             this.text = catalog.displayText(setting.text());
-            this.value = BedrockPackSettingsStore.toggleValue(packKey, setting.name())
+            this.value = BedrockPackSettingsStore.toggleValue(packKey, name)
                     .orElse(setting.defaultBoolean());
         }
 
@@ -346,7 +359,7 @@ public final class BedrockPackSettingsScreen extends Screen {
         @Override
         boolean mouseClicked(double mouseX, double mouseY, int x, int y, int w) {
             value = !value;
-            BedrockPackSettingsStore.setValue(packKey, setting.name(), value);
+            BedrockPackSettingsStore.setValue(packKey, name, value);
             return true;
         }
     }
@@ -429,14 +442,16 @@ public final class BedrockPackSettingsScreen extends Screen {
     private final class SettingSliderRow extends SliderRow {
         private final BedrockPackSetting setting;
         private final String packKey;
+        private final String name;
         private final String text;
         private double value;
 
         SettingSliderRow(BedrockPackSetting setting, String packKey) {
             this.setting = setting;
             this.packKey = packKey;
+            this.name = Objects.requireNonNull(setting.name(), "slider setting name");
             this.text = catalog.displayText(setting.text());
-            this.value = BedrockPackSettingsStore.sliderValue(packKey, setting.name())
+            this.value = BedrockPackSettingsStore.sliderValue(packKey, name)
                     .orElse(setting.clampedDefault());
         }
 
@@ -463,7 +478,7 @@ public final class BedrockPackSettingsScreen extends Screen {
 
         @Override
         void commit() {
-            BedrockPackSettingsStore.setValue(packKey, setting.name(), value);
+            BedrockPackSettingsStore.setValue(packKey, name, value);
         }
     }
 
@@ -521,17 +536,19 @@ public final class BedrockPackSettingsScreen extends Screen {
     private final class DropdownRow extends Row {
         private final BedrockPackSetting setting;
         private final String packKey;
+        private final String name;
         private final String header;
         private String selected;
 
         DropdownRow(BedrockPackSetting setting, String packKey) {
             this.setting = setting;
             this.packKey = packKey;
+            this.name = Objects.requireNonNull(setting.name(), "dropdown setting name");
             this.header = catalog.displayText(setting.text());
-            String current = BedrockPackSettingsStore.dropdownValue(packKey, setting.name())
-                    .orElse(setting.defaultOption());
             List<BedrockPackSetting.Option> options = setting.options();
-            this.selected = options.stream().anyMatch(o -> o.name().equals(current))
+            String current = BedrockPackSettingsStore.dropdownValue(packKey, name)
+                    .orElse(setting.defaultOption());
+            this.selected = current != null && options.stream().anyMatch(o -> o.name().equals(current))
                     ? current : options.get(0).name();
         }
 
@@ -604,7 +621,7 @@ public final class BedrockPackSettingsScreen extends Screen {
                 List<BedrockPackSetting.Option> options = setting.options();
                 if (optionIndex >= 0 && optionIndex < options.size()) {
                     selected = options.get(optionIndex).name();
-                    BedrockPackSettingsStore.setValue(packKey, setting.name(), selected);
+                    BedrockPackSettingsStore.setValue(packKey, name, selected);
                     expandedDropdown = null;
                 }
             }
