@@ -294,6 +294,11 @@ public final class MolangQuery {
         return entityBool(scope, io.github.tt432.eyelib.bridge.client.ClientEntityVisualPort::hasCape);
     }
 
+    @MolangFunction(value = "is_slim", description = "玩家皮肤为 slim（3px 手臂）模型（eyelib 扩展，BE 无官方同名 query；非玩家恒 0）")
+    public static float isSlim(MolangScope scope) {
+        return entityBool(scope, io.github.tt432.eyelib.bridge.client.ClientEntityVisualPort::isSlim);
+    }
+
     @MolangFunction(value = "state_time", description = "动画控制器当前状态的进行时间（仅 AC 上下文有效；与 anim_time 的 AC 分支同源）")
     public static float stateTime(MolangScope scope) {
         return scope.getHostContext().get(HostRoles.CONTROLLER_DATA)

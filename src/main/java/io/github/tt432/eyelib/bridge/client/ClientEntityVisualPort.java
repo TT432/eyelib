@@ -38,6 +38,24 @@ public interface ClientEntityVisualPort {
     }
 
     /**
+     * @return 玩家皮肤是否为 slim（3px 手臂）模型（1.20.1 {@code getModelName()} /
+     * 1.21.x {@code getSkin().model() == PlayerSkin.Model.SLIM} /
+     * 26.1 {@code PlayerModelType.SLIM}）；非玩家恒 false
+     */
+    static boolean isSlim(Entity entity) {
+        if (!(entity instanceof AbstractClientPlayer player)) {
+            return false;
+        }
+        //? if <1.20.6 {
+        return "slim".equals(player.getModelName());
+        //?} elif <26.1 {
+        return player.getSkin().model() == net.minecraft.client.resources.PlayerSkin.Model.SLIM;
+        //?} else {
+        return player.getSkin().model() == net.minecraft.world.entity.player.PlayerModelType.SLIM;
+        //?}
+    }
+
+    /**
      * 方块表面粒子贴图数据（BE {@code query.surface_particle_*} 语义所需）。
      *
      * @param r/g/b/a 粒子贴图平均色 × 群系着色（0..1；JE 近似，BE 取引擎粒子色）
