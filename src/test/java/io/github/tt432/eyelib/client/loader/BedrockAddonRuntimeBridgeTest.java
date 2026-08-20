@@ -4,13 +4,12 @@ import com.google.gson.JsonParser;
 import com.mojang.serialization.JsonOps;
 import io.github.tt432.eyelib.TestCodecUtil;
 import io.github.tt432.eyelib.animation.AnimationLookup;
-import io.github.tt432.eyelib.animation.AnimationLookup;
-import io.github.tt432.eyelib.animation.AnimationRegistries;
 import io.github.tt432.eyelib.client.manager.AttachableManager;
 import io.github.tt432.eyelib.client.manager.ClientEntityManager;
 import io.github.tt432.eyelib.client.manager.MaterialManager;
 import io.github.tt432.eyelib.client.manager.ModelManager;
 import io.github.tt432.eyelib.client.manager.RenderControllerManager;
+import io.github.tt432.eyelib.client.registry.AnimationAssetRegistry;
 import io.github.tt432.eyelib.client.registry.SpawnRuleRegistry;
 import io.github.tt432.eyelib.importer.addon.BedrockAddon;
 import io.github.tt432.eyelib.importer.addon.BedrockAddonAggregate;
@@ -39,7 +38,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class BedrockAddonRuntimeBridgeTest {
     @AfterEach
     void tearDown() {
-        AnimationRegistries.animation().clear();
+        AnimationAssetRegistry.resetStaging();
         ClientEntityManager.INSTANCE.clear();
         AttachableManager.INSTANCE.clear();
         ModelManager.INSTANCE.clear();

@@ -33,6 +33,6 @@ public class BrAnimationLoader extends BrResourcesLoader {
                 LoaderParsingOps.parseBySourceKey(pObject, BrAnimationSet.CODEC, LOGGER, "animation");
         Map<String, BrAnimation> parsedAnimations = new HashMap<>();
         parsedSchemaSets.forEach((location, schemaSet) -> parsedAnimations.put(location, BrAnimation.fromSchemaSet(schemaSet)));
-        AnimationAssetRegistry.stageAnimations(parsedAnimations);
+        AnimationAssetRegistry.stageAnimations("br-animation-loader", parsedAnimations);
     }
 }

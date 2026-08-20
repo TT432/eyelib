@@ -90,8 +90,8 @@ public final class BedrockAddonRuntimeBridge {
 
     public static void replaceFromResourcePack(BedrockAddonSideAggregate resourcePack) {
         AnimationAssetRegistry.stageSchemas(resourcePack.animations(), resourcePack.animationControllers());
-        AnimationAssetRegistry.stageAnimations(toRuntimeAnimations(resourcePack.animations()));
-        AnimationAssetRegistry.stageControllers(toRuntimeAnimationControllers(resourcePack.animationControllers()));
+        AnimationAssetRegistry.stageAnimations(ADDON_SOURCE_KEY, toRuntimeAnimations(resourcePack.animations()));
+        AnimationAssetRegistry.stageControllers(ADDON_SOURCE_KEY, toRuntimeAnimationControllers(resourcePack.animationControllers()));
         SoundAssetRegistry.stageSounds(resourcePack.soundDefinitionFiles(), resourcePack.soundFiles());
         // 叠加客户端实体（保留 BrClientEntityLoader 加载的 mod 自带条目；阴影语义支持卸载）
         {

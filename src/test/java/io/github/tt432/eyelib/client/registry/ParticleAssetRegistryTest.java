@@ -22,7 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 class ParticleAssetRegistryTest {
     @AfterEach
     void tearDown() {
-        ParticleDefinitionRegistry.store().clear();
+        ParticleResourcePublication.resetStaging();
     }
 
     @Test
@@ -39,6 +39,7 @@ class ParticleAssetRegistryTest {
                 JsonParser.parseString(particleJson("eyelib:description_identifier")));
 
         ParticleResourcePublication.replaceFromJsonResources(
+                "test",
                 sourceKeyedParticles,
                 LoggerFactory.getLogger(ParticleAssetRegistryTest.class)
         );
@@ -60,6 +61,7 @@ class ParticleAssetRegistryTest {
 
     private static io.github.tt432.eyelib.particle.runtime.ParticleDefinition moduleDefinition(String identifier) {
         ParticleResourcePublication.replaceFromJsonResources(
+                "test",
                 Map.of(identifier, JsonParser.parseString(particleJson(identifier))),
                 LoggerFactory.getLogger(ParticleAssetRegistryTest.class)
         );

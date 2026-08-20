@@ -206,7 +206,7 @@ public final class NodegraphBuildService {
             return new BuildResult(diagnostics, null);
         }
         BrAnimationControllers controllers = BrAnimationControllers.fromSchemaSet(parsed.result().orElseThrow());
-        AnimationAssetRegistry.stageControllers(Map.of(library.main(), controllers));
+        AnimationAssetRegistry.stageControllers("nodegraph", Map.of(library.main(), controllers));
         LOGGER.info("[nodegraph] staged animation controller(s) from library {}", library.main());
         return new BuildResult(diagnostics, library.main());
     }

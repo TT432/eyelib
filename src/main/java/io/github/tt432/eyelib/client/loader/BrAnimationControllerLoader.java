@@ -33,6 +33,6 @@ public class BrAnimationControllerLoader extends BrResourcesLoader {
                 LoaderParsingOps.parseBySourceKey(pObject, BrAnimationControllerSet.CODEC, LOGGER, "animation controller");
         LinkedHashMap<String, BrAnimationControllers> parsedControllers = new LinkedHashMap<>();
         parsedSchemaSets.forEach((location, schemaSet) -> parsedControllers.put(location, BrAnimationControllers.fromSchemaSet(schemaSet)));
-        AnimationAssetRegistry.stageControllers(parsedControllers);
+        AnimationAssetRegistry.stageControllers("br-animation-controller-loader", parsedControllers);
     }
 }

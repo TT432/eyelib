@@ -20,14 +20,23 @@ import java.util.function.Function;
  */
 /** @author TT432 */
 public final class ParticleResourcePublication {
+    /**
+     * 按来源分槽的暂存：sourceKey → 该来源本轮解析出的定义。多个写入方（mod 资源加载器、
+     * bedrock addon 桥、GUI 导入）各自替换自己的槽位，互不抹除；flush 时按「最近一次
+     * 暂存者靠后、同名 id 后者胜」合并后整体替换注册表。空映射 = 该来源本轮无贡献（卸载语义）。
+     */
+    private static final Map<Object, Map<String, ParticleDefinition>> STAGED_DEFINITIONS = new LinkedHashMap<>();
+
     private ParticleResourcePublication() {
     }
 
-    public static ParticleLoadReport replaceFromJsonResources(Map<String, JsonElement> resources, Logger logger) {
+    public static ParticleLoadReport replaceFromJsonResources(Object sourceKey, Map<String, JsonElement> resources, Logger logger) {
+        Objects.requireNonNull(sourceKey, "sourceKey");
         Objects.requireNonNull(resources, "resources");
         Objects.requireNonNull(logger, "logger");
 
         return replaceFromResources(
+                sourceKey,
                 resources,
                 json -> BrParticle.CODEC.parse(JsonOps.INSTANCE, Objects.requireNonNull(json, "json"))
                         .flatMap(ParticleDefinitionAdapter::fromSchema),
@@ -35,11 +44,13 @@ public final class ParticleResourcePublication {
         );
     }
 
-    public static ParticleLoadReport replaceFromSchemas(Map<String, BrParticle> resources, Logger logger) {
+    public static ParticleLoadReport replaceFromSchemas(Object sourceKey, Map<String, BrParticle> resources, Logger logger) {
+        Objects.requireNonNull(sourceKey, "sourceKey");
         Objects.requireNonNull(resources, "resources");
         Objects.requireNonNull(logger, "logger");
 
         return replaceFromResources(
+                sourceKey,
                 resources,
                 schema -> ParticleDefinitionAdapter.fromSchema(Objects.requireNonNull(schema, "schema")),
                 logger
@@ -47,6 +58,7 @@ public final class ParticleResourcePublication {
     }
 
     private static <T> ParticleLoadReport replaceFromResources(
+            Object sourceKey,
             Map<String, T> resources,
             Function<T, DataResult<ParticleDefinition>> parser,
             Logger logger
@@ -71,7 +83,11 @@ public final class ParticleResourcePublication {
             }, () -> recordFailure(checkedSourceId, result, logger, failures));
         });
 
-        ParticleDefinitionRegistry.publisher().replaceParticles(definitions.values());
+        STAGED_DEFINITIONS.remove(sourceKey);
+        STAGED_DEFINITIONS.put(sourceKey, definitions);
+        LinkedHashMap<String, ParticleDefinition> merged = new LinkedHashMap<>();
+        STAGED_DEFINITIONS.values().forEach(merged::putAll);
+        ParticleDefinitionRegistry.publisher().replaceParticles(merged.values());
         return new ParticleLoadReport(
                 processedSourceIds,
                 List.copyOf(definitions.keySet()),
@@ -100,6 +116,12 @@ public final class ParticleResourcePublication {
             recordFailure(sourceId, result, logger, failures);
             return new ParticleLoadReport(List.of(sourceId), List.of(), failures, List.of());
         });
+    }
+
+    /** 测试钩子：清空全部来源槽位与注册表。 */
+    public static void resetStaging() {
+        STAGED_DEFINITIONS.clear();
+        ParticleDefinitionRegistry.store().clear();
     }
 
     private static void recordFailure(String sourceId, DataResult<?> result, Logger logger,

@@ -55,7 +55,7 @@ public final class ManagerResourceImportPlanner {
             BedrockAddon addonValue = addon.get();
             BedrockAddonRuntimeBridge.replaceFromAddon(addonValue);
             io.github.tt432.eyelib.bridge.client.sound.AddonSoundPort.triggerSoundReload();
-            ParticleResourcePublication.replaceFromSchemas(addonValue.aggregate()
+            ParticleResourcePublication.replaceFromSchemas("manager-import", addonValue.aggregate()
                                                                      .resourcePack()
                                                                      .particleFiles(), logger);
             loadAddonTextures(addonValue.aggregate().textures());
@@ -98,8 +98,8 @@ public final class ManagerResourceImportPlanner {
                 )),
                 LOGGER
         );
-        AnimationAssetRegistry.stageAnimations(animations);
-        AnimationAssetRegistry.stageControllers(animationControllers);
+        AnimationAssetRegistry.stageAnimations("manager-import", animations);
+        AnimationAssetRegistry.stageControllers("manager-import", animationControllers);
 
         Map<String, RenderControllers> renderControllers = ManagerResourceBatchPlanner.loadStructuredFiles(
                 basePath,
@@ -131,7 +131,7 @@ public final class ManagerResourceImportPlanner {
         );
         LinkedHashMap<String, com.google.gson.JsonElement> particleResources = new LinkedHashMap<>();
         particleResources.putAll(particles);
-        ParticleResourcePublication.replaceFromJsonResources(particleResources, logger);
+        ParticleResourcePublication.replaceFromJsonResources("manager-import", particleResources, logger);
 
         Map<String, BrClientEntity> parsedEntities = ManagerResourceBatchPlanner.loadStructuredFiles(
                 basePath,

@@ -4,7 +4,6 @@ import com.google.gson.JsonParser;
 import com.mojang.serialization.JsonOps;
 import io.github.tt432.eyelib.TestCodecUtil;
 import io.github.tt432.eyelib.animation.AnimationLookup;
-import io.github.tt432.eyelib.animation.AnimationRegistries;
 import io.github.tt432.eyelib.animation.bedrock.BrAnimation;
 import io.github.tt432.eyelib.animation.bedrock.controller.BrAnimationControllers;
 import org.junit.jupiter.api.AfterEach;
@@ -19,7 +18,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 class ClientAssetRegistryTest {
     @AfterEach
     void tearDown() {
-        AnimationRegistries.animation().clear();
+        AnimationAssetRegistry.resetStaging();
     }
 
     @Test
@@ -46,8 +45,8 @@ class ClientAssetRegistryTest {
                 }
                 """)));
 
-        AnimationAssetRegistry.stageAnimations(Map.of("animations", animation));
-        AnimationAssetRegistry.stageControllers(Map.of("controllers", controllers));
+        AnimationAssetRegistry.stageAnimations("test", Map.of("animations", animation));
+        AnimationAssetRegistry.stageControllers("test", Map.of("controllers", controllers));
 
         assertNotNull(AnimationLookup.get("animation.test.idle"));
         assertNotNull(AnimationLookup.get("controller.animation.test"));

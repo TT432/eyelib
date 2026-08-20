@@ -31,6 +31,6 @@ public class BrParticleLoader extends BrResourcesLoader {
 
     @Override
     protected void applyJson(Map<String, JsonElement> pObject, ResourceManager pResourceManager, ProfilerFiller pProfiler) {
-        ParticleResourcePublication.replaceFromJsonResources(pObject, LOGGER);
+        ParticleResourcePublication.replaceFromJsonResources("br-particle-loader", pObject, LOGGER);
     }
 }

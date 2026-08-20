@@ -21,12 +21,12 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class ParticleResourcePublicationTest {
     @BeforeEach
     void clearRegistry() {
-        ParticleDefinitionRegistry.store().clear();
+        ParticleResourcePublication.resetStaging();
     }
 
     @Test
     void sourceKeyIsNotPublishedAsActiveIdentifier() {
-        ParticleLoadReport report = ParticleResourcePublication.replaceFromJsonResources(resources(
+        ParticleLoadReport report = ParticleResourcePublication.replaceFromJsonResources("test", resources(
                 Map.entry("eyelib:source_first", particleJson("eyelib:first_description")),
                 Map.entry("eyelib:source_second", particleJson("eyelib:second_description"))
         ), LoggerFactory.getLogger(ParticleResourcePublicationTest.class));
@@ -40,11 +40,11 @@ class ParticleResourcePublicationTest {
 
     @Test
     void fullReplacementRemovesStaleEntries() {
-        ParticleResourcePublication.replaceFromJsonResources(resources(
+        ParticleResourcePublication.replaceFromJsonResources("test", resources(
                 Map.entry("eyelib:initial", particleJson("eyelib:stale"))
         ), LoggerFactory.getLogger(ParticleResourcePublicationTest.class));
 
-        ParticleResourcePublication.replaceFromJsonResources(resources(
+        ParticleResourcePublication.replaceFromJsonResources("test", resources(
                 Map.entry("eyelib:source_first", particleJson("eyelib:first_description")),
                 Map.entry("eyelib:source_second", particleJson("eyelib:second_description"))
         ), LoggerFactory.getLogger(ParticleResourcePublicationTest.class));
@@ -56,7 +56,7 @@ class ParticleResourcePublicationTest {
 
     @Test
     void replacementOrderFollowsValidDefinitionConversionOrder() {
-        ParticleLoadReport report = ParticleResourcePublication.replaceFromJsonResources(resources(
+        ParticleLoadReport report = ParticleResourcePublication.replaceFromJsonResources("test", resources(
                 Map.entry("eyelib:source_second", particleJson("eyelib:second_description")),
                 Map.entry("eyelib:source_first", particleJson("eyelib:first_description"))
         ), LoggerFactory.getLogger(ParticleResourcePublicationTest.class));
@@ -68,7 +68,7 @@ class ParticleResourcePublicationTest {
 
     @Test
     void duplicateIdentifiersAreReportedAndLaterDefinitionReplacesEarlierEntry() {
-        ParticleLoadReport report = ParticleResourcePublication.replaceFromJsonResources(resources(
+        ParticleLoadReport report = ParticleResourcePublication.replaceFromJsonResources("test", resources(
                 Map.entry("eyelib:source_first", particleJson("eyelib:duplicate_description", "textures/particle/first")),
                 Map.entry("eyelib:source_second", particleJson("eyelib:duplicate_description", "textures/particle/second"))
         ), LoggerFactory.getLogger(ParticleResourcePublicationTest.class));
@@ -82,11 +82,11 @@ class ParticleResourcePublicationTest {
 
     @Test
     void invalidResourceIsReportedAndSkippedWhileValidEntriesReplaceStore() {
-        ParticleResourcePublication.replaceFromJsonResources(resources(
+        ParticleResourcePublication.replaceFromJsonResources("test", resources(
                 Map.entry("eyelib:stale_source", particleJson("eyelib:stale"))
         ), LoggerFactory.getLogger(ParticleResourcePublicationTest.class));
 
-        ParticleLoadReport report = ParticleResourcePublication.replaceFromJsonResources(resources(
+        ParticleLoadReport report = ParticleResourcePublication.replaceFromJsonResources("test", resources(
                 Map.entry("eyelib:valid_source", particleJson("eyelib:valid_description")),
                 Map.entry("eyelib:invalid_source", invalidParticleJson())
         ), LoggerFactory.getLogger(ParticleResourcePublicationTest.class));
@@ -98,6 +98,59 @@ class ParticleResourcePublicationTest {
         assertFalse(ParticleDefinitionRegistry.store().all().containsKey("eyelib:stale"));
         assertNotNull(ParticleDefinitionRegistry.store().get("eyelib:valid_description"));
         assertNull(ParticleDefinitionRegistry.store().get("eyelib:invalid_source"));
+    }
+
+    /** 未选中 addon 包时桥发布空替换，mod 基线粒子必须保留。 */
+    @Test
+    void emptyReplacementFromAnotherSourceKeepsBaseline() {
+        ParticleResourcePublication.replaceFromJsonResources("br-particle-loader", resources(
+                Map.entry("eyelib:baseline_source", particleJson("eyelib:baseline"))
+        ), LoggerFactory.getLogger(ParticleResourcePublicationTest.class));
+
+        ParticleResourcePublication.replaceFromJsonResources("bedrock-addon", resources(),
+                LoggerFactory.getLogger(ParticleResourcePublicationTest.class));
+
+        assertNotNull(ParticleDefinitionRegistry.store().get("eyelib:baseline"));
+    }
+
+    /** 同一来源再替换只清自己的陈旧条目，其他来源不受影响。 */
+    @Test
+    void restagingSourceRemovesOnlyItsOwnEntries() {
+        ParticleResourcePublication.replaceFromJsonResources("br-particle-loader", resources(
+                Map.entry("eyelib:stale_source", particleJson("eyelib:stale"))
+        ), LoggerFactory.getLogger(ParticleResourcePublicationTest.class));
+        ParticleResourcePublication.replaceFromJsonResources("bedrock-addon", resources(
+                Map.entry("eyelib:addon_source", particleJson("eyelib:addon"))
+        ), LoggerFactory.getLogger(ParticleResourcePublicationTest.class));
+
+        ParticleResourcePublication.replaceFromJsonResources("br-particle-loader", resources(
+                Map.entry("eyelib:fresh_source", particleJson("eyelib:fresh"))
+        ), LoggerFactory.getLogger(ParticleResourcePublicationTest.class));
+
+        assertNull(ParticleDefinitionRegistry.store().get("eyelib:stale"));
+        assertNotNull(ParticleDefinitionRegistry.store().get("eyelib:fresh"));
+        assertNotNull(ParticleDefinitionRegistry.store().get("eyelib:addon"));
+    }
+
+    /** 同名 id 跨来源冲突时最近一次替换的来源胜出；再替换回原来源则恢复。 */
+    @Test
+    void laterStagedSourceWinsOnCrossSourceIdConflict() {
+        ParticleResourcePublication.replaceFromJsonResources("br-particle-loader", resources(
+                Map.entry("eyelib:mod_source", particleJson("eyelib:shared", "textures/particle/mod"))
+        ), LoggerFactory.getLogger(ParticleResourcePublicationTest.class));
+        ParticleResourcePublication.replaceFromJsonResources("bedrock-addon", resources(
+                Map.entry("eyelib:addon_source", particleJson("eyelib:shared", "textures/particle/addon"))
+        ), LoggerFactory.getLogger(ParticleResourcePublicationTest.class));
+
+        assertEquals("textures/particle/addon",
+                ParticleDefinitionRegistry.store().get("eyelib:shared").texture());
+
+        ParticleResourcePublication.replaceFromJsonResources("br-particle-loader", resources(
+                Map.entry("eyelib:mod_source", particleJson("eyelib:shared", "textures/particle/mod"))
+        ), LoggerFactory.getLogger(ParticleResourcePublicationTest.class));
+
+        assertEquals("textures/particle/mod",
+                ParticleDefinitionRegistry.store().get("eyelib:shared").texture());
     }
 
     @SafeVarargs

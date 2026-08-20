@@ -17,12 +17,13 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 class ParticleRuntimeDelegationBoundaryTest {
     @AfterEach
     void clearParticles() {
-        ParticleDefinitionRegistry.store().clear();
+        ParticleResourcePublication.resetStaging();
     }
 
     @Test
     void spawnServiceBuildsModuleRuntimeAndDelegatesToModuleRenderManager() throws IOException {
         ParticleResourcePublication.replaceFromJsonResources(
+                "test",
                 Map.of("particles/runtime.particle", JsonParser.parseString(particleJson("eyelib:runtime_particle"))),
                 LoggerFactory.getLogger(ParticleRuntimeDelegationBoundaryTest.class)
         );

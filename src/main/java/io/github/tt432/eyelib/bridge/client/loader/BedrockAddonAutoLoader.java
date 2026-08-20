@@ -125,7 +125,7 @@ final class BedrockAddonAutoLoader implements PreparableReloadListener {
         ApplicationLifecyclePort port = ApplicationLifecyclePort.get();
         if (port != null) port.onAddonParsed(addon);
         ParticleResourcePublication.replaceFromSchemas(
-                addon.aggregate().resourcePack().particleFiles(), LOGGER);
+                "bedrock-addon", addon.aggregate().resourcePack().particleFiles(), LOGGER);
         uploadAddonTextures(addon.aggregate().textures());
     }
 

@@ -42,13 +42,20 @@ PackRepository（选中、排序）
       → Model/Attachable/Material/RenderControllerManager 阴影叠加
         （记录每键原值；包禁用/移除时恢复基线或删除）
       → MaterialManager.INSTANCE::put 语义由阴影叠加实现
+      → 动画/动画控制器：AnimationAssetRegistry 按来源分槽暂存（2026-08-20 修复：
+        此前 staging 单槽整体替换，addon 空视图会清掉 BrAnimationLoader/
+        BrAnimationControllerLoader 的 mod 基线，客户端动画/AC 全部解析不到）
+      → 粒子：ParticleResourcePublication 按来源分槽暂存（同日修复，同上）
 ```
 
 关键行为：
 
 - **未选中不加载**：默认未启用，需在资源包界面启用一次（原版语义）。
-- **禁用即卸载**：阴影叠加恢复基线；纹理先 clear 再传；动画/音效 staging 单槽替换。
+- **禁用即卸载**：管理器阴影叠加恢复基线；纹理先 clear 再传；动画/粒子按来源
+  分槽暂存——addon 槽位置空只卸载 addon 自己的贡献，mod 基线槽位不动；
+  音效 staging 仍单槽替换（无 mod 基线源，无冲突）。
 - **多包冲突**：按 PackRepository 选中顺序（界面上下拖动），高优先级包覆盖同 key 条目。
+- **同 id 跨来源冲突**：最近一次暂存的来源胜出（动画/粒子均是）。
 
 ### 包图标与设置界面（2026-08-16 第二批）
 
