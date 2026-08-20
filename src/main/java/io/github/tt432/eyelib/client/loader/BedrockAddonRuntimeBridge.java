@@ -93,11 +93,12 @@ public final class BedrockAddonRuntimeBridge {
         AnimationAssetRegistry.stageAnimations(toRuntimeAnimations(resourcePack.animations()));
         AnimationAssetRegistry.stageControllers(toRuntimeAnimationControllers(resourcePack.animationControllers()));
         SoundAssetRegistry.stageSounds(resourcePack.soundDefinitionFiles(), resourcePack.soundFiles());
-        // 替换客户端实体
+        // 叠加客户端实体（保留 BrClientEntityLoader 加载的 mod 自带条目；阴影语义支持卸载）
         {
             java.util.LinkedHashMap<String, BrClientEntity> flattened = new java.util.LinkedHashMap<>();
             resourcePack.clientEntities().values().forEach(entity -> flattened.put(entity.identifier(), entity));
-            ClientEntityManager.INSTANCE.replaceAll(flattened);
+            beginOverlay(ClientEntityManager.INSTANCE, flattened.keySet());
+            applyOverlay(ClientEntityManager.INSTANCE, flattened);
         }
         // 叠加附着物（保留 BrAttachableLoader 加载的 mod 自带条目；阴影语义支持卸载）
         {

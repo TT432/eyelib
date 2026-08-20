@@ -32,6 +32,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /** @author TT432 */
@@ -141,6 +142,56 @@ class BedrockAddonRuntimeBridgeTest {
         assertNotNull(MaterialManager.INSTANCE.get("entity_alphatest"));
         assertNotNull(RenderControllerManager.INSTANCE.get("controller.render.test"));
         assertTrue(RenderControllerManager.INSTANCE.get("controller.render.test").ignoreLighting());
+    }
+
+    /**
+     * 回归：未选中任何 addon 包时发布会携带空 aggregate，客户端实体必须保留
+     * {@code BrClientEntityLoader} 加载的 mod 基线条目（replaceAll 语义曾把基线全清，
+     * 导致 SetEntityClientEntity 恒解析失败）。
+     */
+    @Test
+    void emptyAggregateDoesNotWipeModBaselineClientEntities() {
+        BrClientEntity baseline = testEntity("modid:baseline_entity");
+        ClientEntityManager.INSTANCE.put(baseline.identifier(), baseline);
+
+        BedrockAddon noPackSelected = new BedrockAddon(List.of(), List.of(), new LinkedHashMap<>(),
+                new BedrockAddonAggregate(BedrockAddonSideAggregate.empty(), BedrockAddonSideAggregate.empty()));
+        BedrockAddonRuntimeBridge.replaceFromAddon(noPackSelected);
+
+        assertEquals(baseline, ClientEntityManager.INSTANCE.get(baseline.identifier()));
+    }
+
+    /**
+     * addon 实体在叠加轮生效、空轮卸载：覆盖基线键时恢复原值，纯 addon 键被移除。
+     */
+    @Test
+    void addonClientEntityOverlayAndUnloadRoundTrip() {
+        BrClientEntity baseline = testEntity("modid:baseline_entity");
+        ClientEntityManager.INSTANCE.put(baseline.identifier(), baseline);
+
+        BrClientEntity override = testEntity("modid:baseline_entity");
+        BrClientEntity addonOnly = testEntity("addon:extra_entity");
+        LinkedHashMap<String, BrClientEntity> roundEntities = new LinkedHashMap<>();
+        roundEntities.put(override.identifier(), override);
+        roundEntities.put(addonOnly.identifier(), addonOnly);
+        BedrockAddonSideAggregate round = new BedrockAddonSideAggregate(
+                new LinkedHashMap<>(), new LinkedHashMap<>(), roundEntities, new LinkedHashMap<>(),
+                new LinkedHashMap<>(), new LinkedHashMap<>(), new LinkedHashMap<>(), new LinkedHashMap<>(),
+                new LinkedHashMap<>(), new LinkedHashMap<>(), new LinkedHashMap<>(), new LinkedHashMap<>(),
+                new LinkedHashMap<>(), new LinkedHashMap<>(), new LinkedHashMap<>(), new LinkedHashMap<>(),
+                new LinkedHashMap<>(), new LinkedHashMap<>(), new LinkedHashMap<>(), new LinkedHashMap<>(),
+                new LinkedHashMap<>(), new LinkedHashMap<>());
+        BedrockAddonRuntimeBridge.replaceFromAddon(new BedrockAddon(List.of(), List.of(), new LinkedHashMap<>(),
+                new BedrockAddonAggregate(round, BedrockAddonSideAggregate.empty())));
+
+        assertEquals(override, ClientEntityManager.INSTANCE.get(override.identifier()));
+        assertEquals(addonOnly, ClientEntityManager.INSTANCE.get(addonOnly.identifier()));
+
+        BedrockAddonRuntimeBridge.replaceFromAddon(new BedrockAddon(List.of(), List.of(), new LinkedHashMap<>(),
+                new BedrockAddonAggregate(BedrockAddonSideAggregate.empty(), BedrockAddonSideAggregate.empty())));
+
+        assertEquals(baseline, ClientEntityManager.INSTANCE.get(baseline.identifier()));
+        assertNull(ClientEntityManager.INSTANCE.get(addonOnly.identifier()));
     }
 
     private static BrClientEntity testEntity(String identifier) {

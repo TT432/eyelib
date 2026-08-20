@@ -37,7 +37,8 @@ PackRepository（选中、排序）
   → BedrockAddonLoader.load() 解析每个选中 addon
   → BedrockAddon.merge（后加载=高优先级覆盖，复用 fromPacks 合并规则）
   → BedrockAddonRuntimeBridge.replaceFromResourcePack()
-      → ClientEntityManager replaceAll（合并视图全量替换）
+      → ClientEntityManager 阴影叠加（2026-08-20 修复：此前 replaceAll 会在
+        未选中任何包发布空视图时清掉 BrClientEntityLoader 加载的 mod 基线实体）
       → Model/Attachable/Material/RenderControllerManager 阴影叠加
         （记录每键原值；包禁用/移除时恢复基线或删除）
       → MaterialManager.INSTANCE::put 语义由阴影叠加实现
