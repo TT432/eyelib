@@ -74,6 +74,7 @@
 | 0026 | RenderController 内联进实体画布 | Accepted |
 | 0027 | COLOR 复合端口类型与 ANY 内联字面值 | Accepted (2026-08-04) |
 | 0028 | ldlib1 退役，节点图编辑器全版本统一 LDLib2 | Accepted (2026-08-07) |
+| 0029 | 执行时机事件化（Event 节点） | Accepted (2026-08-15) |
 
 ## 核心原则
 
