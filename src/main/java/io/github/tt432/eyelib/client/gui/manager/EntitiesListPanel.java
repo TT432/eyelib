@@ -134,7 +134,7 @@ public final class EntitiesListPanel extends UIScrollPanel {
             buttons.add(new EntityButton(
                     entry.id(),
                     entry.description(),
-                    "eyelib:icons/entities/" + entry.id().replace(":", "/")
+                    "eyelib:textures/gui/sprites/icons/entities/" + entry.id().replace(":", "/") + ".png"
             ));
         }
         return List.copyOf(buttons);

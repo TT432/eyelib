@@ -60,11 +60,11 @@ public final class EyelibManagerScreen implements UIScreen {
         int y3 = Math.round(board + padding * 2 + h * 2);
 
         widgets = List.of(
-                action(x1, y1, w, h, "动画", "eyelib:icons/animation",
+                action(x1, y1, w, h, "动画", "eyelib:textures/gui/sprites/icons/animation.png",
                         () -> ManagerImportActions.importAnimation(LOGGER)),
-                action(x1, y2, w, h, "动画控制器", "eyelib:icons/animation_controller",
+                action(x1, y2, w, h, "动画控制器", "eyelib:textures/gui/sprites/icons/animation_controller.png",
                         () -> ManagerImportActions.importAnimationController(LOGGER)),
-                new DragTargetWidget(x2, y1, w, h, new GuiAnimator(5), "eyelib:icons/folder", "监控资源文件夹",
+                new DragTargetWidget(x2, y1, w, h, new GuiAnimator(5), "eyelib:textures/gui/sprites/icons/folder.png", "监控资源文件夹",
                         (mx, my, b) -> {
                             if (hover(x2, y1, w, h, mx, my)) {
                                 folderSession.chooseFolder(LOGGER);
@@ -72,14 +72,14 @@ public final class EyelibManagerScreen implements UIScreen {
                             }
                             return false;
                         }),
-                action(x2, y2, w, h, "渲染控制器", "eyelib:icons/render_controller",
+                action(x2, y2, w, h, "渲染控制器", "eyelib:textures/gui/sprites/icons/render_controller.png",
                         () -> ManagerImportActions.importRenderController(LOGGER)),
-                new DragTargetWidget(x2, y3, w, h, new GuiAnimator(5), "eyelib:icons/entity", "客户端实体",
+                new DragTargetWidget(x2, y3, w, h, new GuiAnimator(5), "eyelib:textures/gui/sprites/icons/entity.png", "客户端实体",
                         (mx, my, b) -> {
                             ManagerScreenLauncher.openEntitiesScreen();
                             return true;
                         }),
-                action(x1, y3, w, h, "节点图", "eyelib:icons/nodegraph",
+                action(x1, y3, w, h, "节点图", "eyelib:textures/gui/sprites/icons/nodegraph.png",
                         () -> io.github.tt432.eyelib.client.nodegraph.NodegraphGate.openEditor(null))
         );
         for (UIWidget widget : widgets) {

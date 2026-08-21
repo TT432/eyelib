@@ -95,6 +95,49 @@ public final class MCGraphics implements UIGraphics {
     }
 
     @Override
+    public void blitScaled(PortResourceLocation texture, int x, int y, int w, int h, int texW, int texH) {
+        //? if <26.1 {
+        blitRegion(texture, x, y, w, h, 0, 0, texW, texH, texW, texH);
+        //?} else {
+        throw new UnsupportedOperationException("26.1 GUI rendering not yet supported");
+        //?}
+    }
+
+    @Override
+    public void blitNineSlice(PortResourceLocation texture, int x, int y, int w, int h, int texW, int texH, int border) {
+        //? if <26.1 {
+        int b = border;
+        int cw = texW - 2 * b, ch = texH - 2 * b;
+        int dw = w - 2 * b, dh = h - 2 * b;
+        // 四角
+        blitRegion(texture, x, y, b, b, 0, 0, b, b, texW, texH);
+        blitRegion(texture, x + w - b, y, b, b, texW - b, 0, b, b, texW, texH);
+        blitRegion(texture, x, y + h - b, b, b, 0, texH - b, b, b, texW, texH);
+        blitRegion(texture, x + w - b, y + h - b, b, b, texW - b, texH - b, b, b, texW, texH);
+        // 四边
+        blitRegion(texture, x + b, y, dw, b, b, 0, cw, b, texW, texH);
+        blitRegion(texture, x + b, y + h - b, dw, b, b, texH - b, cw, b, texW, texH);
+        blitRegion(texture, x, y + b, b, dh, 0, b, b, ch, texW, texH);
+        blitRegion(texture, x + w - b, y + b, b, dh, texW - b, b, b, ch, texW, texH);
+        // 中心
+        blitRegion(texture, x + b, y + b, dw, dh, b, b, cw, ch, texW, texH);
+        //?} else {
+        throw new UnsupportedOperationException("26.1 GUI rendering not yet supported");
+        //?}
+    }
+
+    //? if <26.1 {
+    private void blitRegion(PortResourceLocation texture, int x, int y, int w, int h,
+                            float u, float v, int regionW, int regionH, int texW, int texH) {
+        //? if <1.20.6 {
+        gg.blit(new ResourceLocation(texture.namespace(), texture.path()), x, y, w, h, u, v, regionW, regionH, texW, texH);
+        //?} else {
+        gg.blit(ResourceLocation.fromNamespaceAndPath(texture.namespace(), texture.path()), x, y, w, h, u, v, regionW, regionH, texW, texH);
+        //?}
+    }
+    //?}
+
+    @Override
     public void fill(int x1, int y1, int x2, int y2, int color) {
         gg.fill(x1, y1, x2, y2, color);
     }

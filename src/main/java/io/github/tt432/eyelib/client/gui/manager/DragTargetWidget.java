@@ -56,10 +56,10 @@ final class DragTargetWidget implements UIWidget {
     public void render(UIGraphics gfx, int mouseX, int mouseY, float partialTick) {
         var a = animator.getTime(ClientTickPort.getTick(), partialTick, hover(mouseX, mouseY));
 
-        gfx.blit(PortResourceLocation.parse("eyelib:gui_bg_nine"), x, y, 0, 0, w, h);
+        gfx.blitNineSlice(PortResourceLocation.parse("eyelib:textures/gui/sprites/gui_bg_nine.png"), x, y, w, h, 16, 16, 4);
         gfx.enableBlend();
         gfx.setShaderColor(1, 1, 1, a);
-        gfx.blit(PortResourceLocation.parse("eyelib:gui_bg_nine_selected"), x, y, 0, 0, w, h);
+        gfx.blitNineSlice(PortResourceLocation.parse("eyelib:textures/gui/sprites/gui_bg_nine_selected.png"), x, y, w, h, 16, 16, 4);
         gfx.disableBlend();
         gfx.setShaderColor(1, 1, 1, 1);
 
@@ -69,7 +69,7 @@ final class DragTargetWidget implements UIWidget {
 
         if (icon != null) {
             iconOffset = iconSize / 2;
-            gfx.blit(PortResourceLocation.parse(icon), x + w / 2 - iconOffset, y + h / 2 - iconOffset - th / 2, 0, 0, iconSize, iconSize);
+            gfx.blitScaled(PortResourceLocation.parse(icon), x + w / 2 - iconOffset, y + h / 2 - iconOffset - th / 2, iconSize, iconSize, 16, 16);
         }
 
         int tw = gfx.textWidth(title);

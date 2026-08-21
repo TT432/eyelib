@@ -12,12 +12,12 @@ public final class EntityButtonRenderer {
     private EntityButtonRenderer() {}
 
     public static void render(UIGraphics gfx, int x, int y, int size, float alpha, EntityButton button) {
-        gfx.blit(PortResourceLocation.parse("eyelib:gui_bg_nine"), x, y, 0, 0, size, size);
+        gfx.blitNineSlice(PortResourceLocation.parse("eyelib:textures/gui/sprites/gui_bg_nine.png"), x, y, size, size, 16, 16, 4);
         gfx.enableBlend();
         gfx.setShaderColor(1, 1, 1, alpha);
-        gfx.blit(PortResourceLocation.parse("eyelib:gui_bg_nine_selected"), x, y, 0, 0, size, size);
+        gfx.blitNineSlice(PortResourceLocation.parse("eyelib:textures/gui/sprites/gui_bg_nine_selected.png"), x, y, size, size, 16, 16, 4);
         gfx.disableBlend();
         gfx.setShaderColor(1, 1, 1, 1);
-        gfx.blit(PortResourceLocation.parse(button.icon()), x + 4, y + 4, 0, 0, size - 8, size - 8);
+        gfx.blitScaled(PortResourceLocation.parse(button.icon()), x + 4, y + 4, size - 8, size - 8, 16, 16);
     }
 }

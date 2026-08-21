@@ -21,6 +21,15 @@ public interface UIGraphics {
 
     void blit(PortResourceLocation texture, int x, int y, int u, int v, int w, int h);
 
+    /**
+     * 整张纹理拉伸绘制到 w×h 区域。调用方提供纹理像素尺寸用于 UV 归一化
+     * （1.20.1 无 GUI sprite atlas，无法自动获知纹理尺寸）。
+     */
+    void blitScaled(PortResourceLocation texture, int x, int y, int w, int h, int texW, int texH);
+
+    /** 九宫格拉伸：四角保持原样，边/中心拉伸。border 为四边等宽像素。 */
+    void blitNineSlice(PortResourceLocation texture, int x, int y, int w, int h, int texW, int texH, int border);
+
     void fill(int x1, int y1, int x2, int y2, int color);
 
     void fillGradient(int x1, int y1, int x2, int y2, int fromColor, int toColor);
