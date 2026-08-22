@@ -19,15 +19,21 @@ import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Array;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Molang 运行时方法调用和成员访问支持。
@@ -37,6 +43,34 @@ import java.util.Set;
 public final class MolangRuntimeSupport {
     private static final Logger LOGGER = LoggerFactory.getLogger(MolangRuntimeSupport.class);
     private static final Set<String> WARNED_MISSING = Collections.synchronizedSet(new HashSet<>());
+
+    // Method/Field → MethodHandle 缓存：unreflect 只做一次访问检查，热路径 invokeWithArguments
+    // 走 LambdaForm 而非每次 Method.invoke 的反射桥。Optional.empty = 不可 unreflect，回退反射。
+    private static final ConcurrentHashMap<Method, Optional<MethodHandle>> METHOD_HANDLES = new ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<Field, Optional<MethodHandle>> FIELD_GETTERS = new ConcurrentHashMap<>();
+    private static final MolangObject[] NO_ARGS = new MolangObject[0];
+
+    private static Optional<MethodHandle> methodHandleOf(Method method) {
+        return METHOD_HANDLES.computeIfAbsent(method, m -> {
+            try {
+                // asFixedArity：varargs 方法的尾数组由 invokeMethod 手工打包，
+                // 固定元数后 invokeWithArguments 不再做变参收集（与 Method.invoke 语义一致）。
+                return Optional.of(MethodHandles.publicLookup().unreflect(m).asFixedArity());
+            } catch (IllegalAccessException e) {
+                return Optional.empty();
+            }
+        });
+    }
+
+    private static Optional<MethodHandle> fieldGetterOf(Field field) {
+        return FIELD_GETTERS.computeIfAbsent(field, f -> {
+            try {
+                return Optional.of(MethodHandles.publicLookup().unreflectGetter(f));
+            } catch (IllegalAccessException e) {
+                return Optional.empty();
+            }
+        });
+    }
 
     private static final Set<MolangFunction.ParameterRole> HOST_ROLES_FULL =
             Collections.unmodifiableSet(EnumSet.of(
@@ -93,8 +127,17 @@ public final class MolangRuntimeSupport {
 
         var fieldData = mappingTree.findField(dottedName);
         if (fieldData != null) {
+            Field field = fieldData.field();
+            Optional<MethodHandle> getter = fieldGetterOf(field);
+            if (getter.isPresent()) {
+                try {
+                    return wrapJavaResult(getter.get().invokeWithArguments());
+                } catch (Throwable ignored) {
+                    return MolangNull.INSTANCE;
+                }
+            }
             try {
-                return wrapJavaResult(fieldData.field().get(null));
+                return wrapJavaResult(field.get(null));
             } catch (IllegalAccessException ignored) {
                 return MolangNull.INSTANCE;
             }
@@ -111,7 +154,7 @@ public final class MolangRuntimeSupport {
                 return MolangNull.INSTANCE;
             }
             if (functionInfo != null) {
-                return invokeMethod(functionInfo, scope, List.of());
+                return invokeMethod(functionInfo, scope, NO_ARGS);
             }
         }
 
@@ -125,13 +168,20 @@ public final class MolangRuntimeSupport {
 
         MolangMappingTree mappingTree = MolangMappingRegistries.mappingTree();
 
-        List<MolangObject> visibleArgs = new ArrayList<>();
-        List<VisibleArgumentKind> callShape = new ArrayList<>();
-        if (argValues != null) {
-            for (MolangObject argValue : argValues) {
-                visibleArgs.add(argValue);
-                callShape.add(callShapeKind(argValue));
+        // 调用形（STRING/NUMBER 序列）直接由参数数组生成：零参走 List.of() 零分配，
+        // 非零参单个数组视图；可见参数本身沿用原数组，不再复制进 ArrayList。
+        MolangObject[] visibleArgs;
+        List<VisibleArgumentKind> callShape;
+        if (argValues == null || argValues.length == 0) {
+            visibleArgs = NO_ARGS;
+            callShape = List.of();
+        } else {
+            visibleArgs = argValues;
+            VisibleArgumentKind[] kinds = new VisibleArgumentKind[argValues.length];
+            for (int i = 0; i < argValues.length; i++) {
+                kinds[i] = callShapeKind(argValues[i]);
             }
+            callShape = Arrays.asList(kinds);
         }
 
         Set<MolangFunction.ParameterRole> hostRoles = computeAvailableHostRoles(scope);
@@ -140,14 +190,14 @@ public final class MolangRuntimeSupport {
             functionInfo = mappingTree.selectQueryVariant(methodName, callShape, hostRoles);
         } catch (Exception e) {
             warnMissing(methodName);
-            if (visibleArgs.isEmpty()) {
+            if (visibleArgs.length == 0) {
                 return scope.get(methodName);
             }
             return MolangNull.INSTANCE;
         }
         if (functionInfo == null) {
             warnMissing(methodName);
-            if (visibleArgs.isEmpty()) {
+            if (visibleArgs.length == 0) {
                 return scope.get(methodName);
             }
             return MolangNull.INSTANCE;
@@ -192,7 +242,7 @@ public final class MolangRuntimeSupport {
                 : HOST_ROLES_MINIMAL;
     }
 
-    private static MolangObject invokeMethod(FunctionInfo functionInfo, MolangScope scope, List<MolangObject> visibleArgValues) {
+    private static MolangObject invokeMethod(FunctionInfo functionInfo, MolangScope scope, MolangObject[] visibleArgValues) {
         Method method = functionInfo.method();
         List<FunctionParameterRole> paramRoles = functionInfo.parameterRoles();
         Object[] args = new Object[method.getParameterCount()];
@@ -214,10 +264,10 @@ public final class MolangRuntimeSupport {
             }
             Object argValue = switch (role.role()) {
                 case VISIBLE_ARG -> {
-                    if (visibleIdx >= visibleArgValues.size()) {
+                    if (visibleIdx >= visibleArgValues.length) {
                         yield role.parameterType().isPrimitive() ? defaultPrimitive(role.parameterType()) : null;
                     }
-                    MolangObject val = visibleArgValues.get(visibleIdx++);
+                    MolangObject val = visibleArgValues[visibleIdx++];
                     yield convertMolangValue(val, role.parameterType());
                 }
                 case RECEIVER, INJECTED_HOST -> scope.getHostContext().get(role.parameterType()).orElse(null);
@@ -234,10 +284,10 @@ public final class MolangRuntimeSupport {
             Class<?> varArgArrayType = method.getParameterTypes()[varArgSlot];
             Class<?> varArgComponent = varArgArrayType.getComponentType();
             if (varArgComponent != null) {
-                int varArgCount = Math.max(0, visibleArgValues.size() - visibleIdx);
+                int varArgCount = Math.max(0, visibleArgValues.length - visibleIdx);
                 Object packed = Array.newInstance(varArgComponent, varArgCount);
                 for (int i = 0; i < varArgCount; i++) {
-                    Object converted = convertMolangValue(visibleArgValues.get(visibleIdx + i), varArgComponent);
+                    Object converted = convertMolangValue(visibleArgValues[visibleIdx + i], varArgComponent);
                     if (converted == null && varArgComponent.isPrimitive()) {
                         converted = defaultPrimitive(varArgComponent);
                     }
@@ -247,6 +297,14 @@ public final class MolangRuntimeSupport {
             }
         }
 
+        Optional<MethodHandle> handle = methodHandleOf(method);
+        if (handle.isPresent()) {
+            try {
+                return wrapJavaResult(handle.get().invokeWithArguments(args));
+            } catch (Throwable ignored) {
+                return MolangNull.INSTANCE;
+            }
+        }
         try {
             return wrapJavaResult(method.invoke(null, args));
         } catch (InvocationTargetException | IllegalAccessException ignored) {

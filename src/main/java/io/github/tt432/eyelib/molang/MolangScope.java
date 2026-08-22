@@ -116,8 +116,6 @@ public final class MolangScope {
     // 点分名按「根键 + 成员路径」解析：molang 根前缀（variable./temp./context./query./math.）
     // 的根键取前两段（variable.qpptaw.r → 根 variable.qpptaw、路径 r），其余点名取首段。
     // 两段名（variable.foo）整名即根键——简单变量的存取路径与 struct 引入前完全一致。
-    private static final java.util.List<String> STRUCT_ROOTS =
-            java.util.List.of("variable", "temp", "context", "query", "math");
 
     /** 根键：无点 → 整名；molang 根前缀 → 前两段；其余 → 首段。 */
     private static String rootKeyOf(String name) {
@@ -125,11 +123,25 @@ public final class MolangScope {
         if (firstDot < 0) {
             return name;
         }
-        if (STRUCT_ROOTS.contains(name.substring(0, firstDot))) {
+        if (isMolangRootPrefix(name, firstDot)) {
             int secondDot = name.indexOf('.', firstDot + 1);
             return secondDot < 0 ? name : name.substring(0, secondDot);
         }
         return name.substring(0, firstDot);
+    }
+
+    /**
+     * 首段是否为 molang 根前缀。用「长度分派 + startsWith」替代 substring + List.contains：
+     * 前缀名是常量集合，按首段长度一步排除绝大多数名字，命中时零分配。
+     */
+    private static boolean isMolangRootPrefix(String name, int firstDot) {
+        return switch (firstDot) {
+            case 4 -> name.startsWith("temp") || name.startsWith("math");
+            case 5 -> name.startsWith("query");
+            case 7 -> name.startsWith("context");
+            case 8 -> name.startsWith("variable");
+            default -> false;
+        };
     }
 
     /** 根值按剩余成员路径下降；路径为空 → 根本身；任一层缺失/非标量 → null。 */
