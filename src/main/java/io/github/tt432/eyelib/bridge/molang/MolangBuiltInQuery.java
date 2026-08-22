@@ -1564,7 +1564,7 @@ public interface MolangBuiltInQuery {
     private static boolean portBool(MolangScope scope, String key) {
         return scope.getHostContext().get(HostRoles.PORT_ENTITY)
                     .map(pe -> {
-                        Object val = pe.getQueryProperties().get(key);
+                        Object val = pe.queryProperty(key);
                         return val instanceof Boolean b && b;
                     })
                     .orElse(false);
@@ -1572,7 +1572,7 @@ public interface MolangBuiltInQuery {
 
     private static Optional<Float> portFloat(MolangScope scope, String key) {
         return scope.getHostContext().get(HostRoles.PORT_ENTITY)
-                    .map(pe -> pe.getQueryProperties().get(key))
+                    .map(pe -> pe.queryProperty(key))
                     .filter(val -> val instanceof Number)
                     .map(val -> ((Number) val).floatValue());
     }

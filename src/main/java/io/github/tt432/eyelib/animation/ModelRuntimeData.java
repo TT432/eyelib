@@ -62,19 +62,28 @@ public final class ModelRuntimeData {
         return entries;
     }
 
+    /** 共享只读占位：未动画骨骼的零值 Entry。调用方不得修改返回值。 */
+    private static final Entry IDENTITY = new Entry();
+
+    /**
+     * 读取 Entry；未注册（无动画）的骨骼返回共享的 {@link #IDENTITY} 零值实例，不分配。
+     * 返回值仅可读取；需要写入请用 {@link #getData(int)}。
+     */
     public Entry getOrDefault(int id) {
-        return entries.containsKey(id) ? entries.get(id) : new Entry();
+        Entry entry = entries.get(id);
+        return entry != null ? entry : IDENTITY;
     }
 
     /**
-     * init + offset
+     * init + offset。未动画骨骼（无 Entry）直接返回 bind pose，零分配。
      */
     public Vector3fc position(Model.Bone bone) {
-        return getOrDefault(bone.id()).position.add(bone.position(), new Vector3f());
+        Entry entry = entries.get(bone.id());
+        return entry == null ? bone.position() : entry.position.add(bone.position(), new Vector3f());
     }
 
     public void position(Model.Bone bone, float x, float y, float z) {
-        getOrDefault(bone.id()).position.set(x, y, z);
+        getData(bone.id()).position.set(x, y, z);
     }
 
     public void position(Model.Bone bone, Vector3fc pos) {
@@ -82,14 +91,15 @@ public final class ModelRuntimeData {
     }
 
     /**
-     * init + offset
+     * init + offset。未动画骨骼（无 Entry）直接返回 bind rotation，零分配。
      */
     public Vector3fc rotation(Model.Bone bone) {
-        return getOrDefault(bone.id()).rotation.add(bone.rotation(), new Vector3f());
+        Entry entry = entries.get(bone.id());
+        return entry == null ? bone.rotation() : entry.rotation.add(bone.rotation(), new Vector3f());
     }
 
     public void rotation(Model.Bone bone, float x, float y, float z) {
-        getOrDefault(bone.id()).rotation.set(x, y, z);
+        getData(bone.id()).rotation.set(x, y, z);
     }
 
     public void rotation(Model.Bone bone, Vector3fc rotation) {
@@ -97,14 +107,15 @@ public final class ModelRuntimeData {
     }
 
     /**
-     * init + offset
+     * init + offset。未动画骨骼（无 Entry）直接返回 bind scale，零分配。
      */
     public Vector3fc scale(Model.Bone bone) {
-        return getOrDefault(bone.id()).scale.mul(bone.scale(), new Vector3f());
+        Entry entry = entries.get(bone.id());
+        return entry == null ? bone.scale() : entry.scale.mul(bone.scale(), new Vector3f());
     }
 
     public void scale(Model.Bone bone, float x, float y, float z) {
-        getOrDefault(bone.id()).scale.set(x, y, z);
+        getData(bone.id()).scale.set(x, y, z);
     }
 
     public void scale(Model.Bone bone, Vector3fc scale) {

@@ -36,7 +36,7 @@ public class CollectLocatorModelVisitor extends ModelVisitor {
         last.pose().rotateZYX(rotation.z(), rotation.y(), rotation.x());
 
         Matrix4f locatorPose = PoseStackPort.getLastPoseMatrix(poseStack);
-        context.<Map<String, Matrix4f>>orCreate("locators", new HashMap<>())
+        context.<Map<String, Matrix4f>>orCreate("locators", HashMap::new)
                .put(locator.name(), locatorPose);
         poseStack.popPose();
     }

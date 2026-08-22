@@ -13,10 +13,13 @@ import net.minecraft.world.entity.LivingEntity;
 import org.joml.Matrix4f;
 import org.jspecify.annotations.Nullable;
 
+import java.lang.reflect.Method;
 import java.util.List;
 
 /**
  * locator 世界坐标解析的 bridge 实现，通过反射访问 RenderData 的 model components。
+ * 反射只为绕开 bridge → capability 的模块依赖；Class/Method 全部启动期缓存，
+ * 热路径无 Class.forName / getMethod 查找。
  *
  * @author TT432
  */
@@ -64,9 +67,13 @@ public interface AnimationLocatorResolver {
         ModelRuntimeData data = scope.getHostContext().get(HostRoles.MODEL_RUNTIME_DATA)
                 .orElse(ModelRuntimeData.EMPTY);
         try {
-            List<?> components = (List<?>) renderData.getClass().getMethod("getModelComponents").invoke(renderData);
+            List<?> components = (List<?>) Refs.GET_MODEL_COMPONENTS.invoke(renderData);
             for (Object component : components) {
-                Object value = component.getClass().getMethod("getModel").invoke(component);
+                Method getModel = GET_MODEL.get(component.getClass());
+                if (getModel == null) {
+                    continue;
+                }
+                Object value = getModel.invoke(component);
                 if (value instanceof Model model) {
                     var resolved = ModelPoseTransforms.resolveLocatorPose(model, data, locatorName, entityPose);
                     if (resolved.isPresent()) {
@@ -80,16 +87,47 @@ public interface AnimationLocatorResolver {
         return entityPose;
     }
 
-    @SuppressWarnings({"rawtypes", "unchecked"})
     private static @Nullable Object renderData(MolangScope scope, Entity entity) {
+        Object scoped = scope.getHostContext().get(Refs.RENDER_DATA_CLASS).orElse(null);
+        if (scoped != null) {
+            return scoped;
+        }
         try {
-            Class renderDataClass = Class.forName("io.github.tt432.eyelib.capability.RenderData");
-            Object scoped = scope.getHostContext().get(renderDataClass).orElse(null);
-            return scoped != null
-                    ? scoped
-                    : renderDataClass.getMethod("getComponent", Entity.class).invoke(null, entity);
+            return Refs.GET_COMPONENT.invoke(null, entity);
         } catch (ReflectiveOperationException ignored) {
             return null;
         }
     }
+
+    /** 启动期一次性解析的反射引用。 */
+    final class Refs {
+        static final Class<?> RENDER_DATA_CLASS;
+        static final Method GET_COMPONENT;
+        static final Method GET_MODEL_COMPONENTS;
+
+        static {
+            try {
+                RENDER_DATA_CLASS = Class.forName("io.github.tt432.eyelib.capability.RenderData");
+                GET_COMPONENT = RENDER_DATA_CLASS.getMethod("getComponent", Entity.class);
+                GET_MODEL_COMPONENTS = RENDER_DATA_CLASS.getMethod("getModelComponents");
+            } catch (ReflectiveOperationException e) {
+                throw new ExceptionInInitializerError(e);
+            }
+        }
+
+        private Refs() {
+        }
+    }
+
+    /** 各组件实现类的 getModel 方法缓存（组件类集合封闭且少量）。 */
+    ClassValue<@Nullable Method> GET_MODEL = new ClassValue<>() {
+        @Override
+        protected @Nullable Method computeValue(Class<?> type) {
+            try {
+                return type.getMethod("getModel");
+            } catch (NoSuchMethodException e) {
+                return null;
+            }
+        }
+    };
 }

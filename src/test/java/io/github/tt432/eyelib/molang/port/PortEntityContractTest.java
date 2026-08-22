@@ -19,7 +19,7 @@ class PortEntityContractTest {
 
     private static PortEntity entity(Map<String, Object> props) {
         return new PortEntity() {
-            public Map<String, Object> getQueryProperties() { return props; }
+            public Object queryProperty(String key) { return props.get(key); }
             public float getX() { return 0; }
             public float getY() { return 0; }
             public float getZ() { return 0; }
@@ -34,8 +34,8 @@ class PortEntityContractTest {
         PortEntity baby = entity(Map.of("is_baby", true));
         PortEntity adult = entity(Map.of("is_baby", false));
 
-        assertTrue((Boolean) baby.getQueryProperties().get("is_baby"));
-        assertFalse((Boolean) adult.getQueryProperties().get("is_baby"));
+        assertTrue((Boolean) baby.queryProperty("is_baby"));
+        assertFalse((Boolean) adult.queryProperty("is_baby"));
     }
 
     @Test
@@ -45,10 +45,10 @@ class PortEntityContractTest {
         PortEntity shearedSheep = entity(Map.of("is_sheep", true, "is_sheared", true));
         PortEntity wolf = entity(Map.of("is_sheep", false));
 
-        assertTrue((Boolean) sheep.getQueryProperties().get("is_sheep"));
-        assertFalse((Boolean) sheep.getQueryProperties().get("is_sheared"));
-        assertTrue((Boolean) shearedSheep.getQueryProperties().get("is_sheared"));
-        assertFalse((Boolean) wolf.getQueryProperties().get("is_sheep"));
+        assertTrue((Boolean) sheep.queryProperty("is_sheep"));
+        assertFalse((Boolean) sheep.queryProperty("is_sheared"));
+        assertTrue((Boolean) shearedSheep.queryProperty("is_sheared"));
+        assertFalse((Boolean) wolf.queryProperty("is_sheep"));
     }
 
     @Test
@@ -57,33 +57,22 @@ class PortEntityContractTest {
         PortEntity grounded = entity(Map.of("is_on_ground", true));
         PortEntity airborne = entity(Map.of("is_on_ground", false));
 
-        assertTrue((Boolean) grounded.getQueryProperties().get("is_on_ground"));
-        assertFalse((Boolean) airborne.getQueryProperties().get("is_on_ground"));
+        assertTrue((Boolean) grounded.queryProperty("is_on_ground"));
+        assertFalse((Boolean) airborne.queryProperty("is_on_ground"));
     }
 
     @Test
     @DisplayName("PortEntity: is_in_water")
     void portEntityInWater() {
         PortEntity inWater = entity(Map.of("is_in_water", true));
-        assertTrue((Boolean) inWater.getQueryProperties().get("is_in_water"));
+        assertTrue((Boolean) inWater.queryProperty("is_in_water"));
     }
 
     @Test
-    @DisplayName("PortEntity: 属性 Map 不可变且 key/value 不为 null")
-    void portEntityMapIsWellFormed() {
-        PortEntity entity = entity(Map.of(
-                "is_sheep", true,
-                "is_baby", false,
-                "pos_x", 10.0f
-        ));
-
-        Map<String, Object> props = entity.getQueryProperties();
-        assertNotNull(props);
-        assertEquals(3, props.size());
-        props.forEach((k, v) -> {
-            assertNotNull(k, "key 不应为 null");
-            assertNotNull(v, "value 不应为 null");
-        });
+    @DisplayName("PortEntity: 未知键返回 null")
+    void portEntityUnknownKeyReturnsNull() {
+        PortEntity entity = entity(Map.of("is_sheep", true));
+        assertNull(entity.queryProperty("not_a_query"));
     }
 
     @Test
@@ -91,30 +80,15 @@ class PortEntityContractTest {
     void portEntityPositionIsFloat() {
         PortEntity entity = entity(Map.of("pos_x", 1.5f, "pos_y", 64.0f, "pos_z", -3.0f));
 
-        assertEquals(1.5f, (Float) entity.getQueryProperties().get("pos_x"), 0.001f);
-        assertEquals(64.0f, (Float) entity.getQueryProperties().get("pos_y"), 0.001f);
-        assertEquals(-3.0f, (Float) entity.getQueryProperties().get("pos_z"), 0.001f);
+        assertEquals(1.5f, (Float) entity.queryProperty("pos_x"), 0.001f);
+        assertEquals(64.0f, (Float) entity.queryProperty("pos_y"), 0.001f);
+        assertEquals(-3.0f, (Float) entity.queryProperty("pos_z"), 0.001f);
     }
 
     @Test
-    @DisplayName("PortEntity: EntityPortAdapter 18 属性一致性检查 — key 命名用 snake_case")
+    @DisplayName("PortEntity: EntityPortAdapter 查询键命名用 snake_case")
     void portEntityKeysUseSnakeCase() {
-        PortEntity entity = entity(Map.of(
-                "is_sheep", true,
-                "is_wolf", false,
-                "is_creeper", false,
-                "is_vex", false,
-                "is_warden", false,
-                "is_baby", false,
-                "on_fire", false,
-                "is_on_ground", true,
-                "is_in_water", false,
-                "is_riding", false
-        ));
-
-        Map<String, Object> props = entity.getQueryProperties();
-        // 所有 key 应为 lower_snake_case（Bedrock 约定）
-        props.keySet().forEach(key ->
+        EntityPortAdapter.QUERY_KEYS.forEach(key ->
                 assertTrue(key.matches("[a-z_]+"), "key 应为 lower_snake_case: " + key));
     }
 

@@ -133,7 +133,7 @@ public class ModelVisitor {
     protected static void applyBoneTranslate(
             ModelVisitContext context, PoseStack poseStack, Model.Bone bone, ModelRuntimeData data
     ) {
-        context.<Int2ObjectMap<PoseStack.Pose>>orCreate("bones", new Int2ObjectOpenHashMap<>())
+        context.<Int2ObjectMap<PoseStack.Pose>>orCreate("bones", Int2ObjectOpenHashMap::new)
                .compute(bone.id(), (n, pose) -> {
                    if (pose == null) {
                        PoseStack.Pose last = poseStack.last();

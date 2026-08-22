@@ -336,7 +336,7 @@ public final class EntityRenderOrchestrator {
                                      LivingEntity renderTarget, int light) {
         PoseStack poseStack = new PoseStack();
         var locators = context
-                              .<Int2ObjectMap<PoseStack.Pose>>orCreate("bones", new Int2ObjectOpenHashMap<>());
+                              .<Int2ObjectMap<PoseStack.Pose>>orCreate("bones", Int2ObjectOpenHashMap::new);
         // 收集的骨骼姿态为「绕 pivot 的动画变换」，不包含 pivot 平移（applyBoneTranslate 中 +pivot/-pivot 抵消）。
         // attachable 需要附着到骨骼原点，必须补回骨骼 pivot 平移。
         var bindBones = collectBindBones(action.renderData());
@@ -463,8 +463,7 @@ public final class EntityRenderOrchestrator {
                                                                                    PoseStack capturedPose = RenderPorts.get().renderSystemPort().createPoseStackFromMatrix(pose.pose());
                                                                                    RenderParams renderParams = buildRenderParams(capturedPose, data, modelComponent, output, consumer);
                                                                                    RenderHelper renderHelper = RenderHelper.start()
-                                                                                           .render(renderParams, model, cast(finalTickedInfos))
-                                                                                           .collectLocators(model, finalTickedInfos);
+                                                                                           .render(renderParams, model, cast(finalTickedInfos));
                                                                                    data.extraRender().render(renderHelper.getContext(), data);
                                                                                });
                                                                                data.sink().flush();
@@ -472,8 +471,7 @@ public final class EntityRenderOrchestrator {
                                                                                // 无有效 renderPass：仍收集 locator（consumer=null 时 visitor 跳过顶点写入）
                                                                                 RenderParams renderParams = buildRenderParams(data.poseStack(), data, modelComponent, null, null);
                                                                                RenderHelper renderHelper = RenderHelper.start()
-                                                                                       .render(renderParams, model, cast(finalTickedInfos))
-                                                                                       .collectLocators(model, finalTickedInfos);
+                                                                                       .render(renderParams, model, cast(finalTickedInfos));
                                                                                data.extraRender().render(renderHelper.getContext(), data);
                                                                            }
 

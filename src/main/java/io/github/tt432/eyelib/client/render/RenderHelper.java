@@ -10,7 +10,6 @@ import io.github.tt432.eyelib.client.model.DFSModel;
 import io.github.tt432.eyelib.bridge.client.render.bake.ModelBakePort;
 import io.github.tt432.eyelib.bridge.material.ResourceLocationBridge;
 import io.github.tt432.eyelib.client.render.visitor.ActiveModelRenderVisitors;
-import io.github.tt432.eyelib.client.render.visitor.BuiltInBrModelRenderVisitors;
 import io.github.tt432.eyelib.model.ModelVisitContext;
 import io.github.tt432.eyelib.animation.ModelRuntimeData;
 import io.github.tt432.eyelib.model.Model;
@@ -35,11 +34,6 @@ public class RenderHelper {
         ModelBakeInvalidationHooks.install();
         installInvalidationListener();
         return new RenderHelper();
-    }
-
-    @SuppressWarnings("unchecked")
-    private static <T> T cast(Object o) {
-        return (T) o;
     }
 
     private static final Map<String, DFSModel> dfsModels = new HashMap<>();
@@ -82,14 +76,9 @@ public class RenderHelper {
                     ResourceLocationBridge.toMc(params.texture()), ResourceLocationBridge.toMc(meshTexture)));
         }
 
-        dfsModel(model).visit(params, context, ActiveModelRenderVisitors.RENDER_VISITOR, infos, new DFSModel.StateMachine());
+        // 单遍 DFS：渲染与 locator 收集合并（原 collectLocators 第二遍遍历已并入 RENDER_WITH_LOCATOR）
+        dfsModel(model).visit(params, context, ActiveModelRenderVisitors.RENDER_WITH_LOCATOR, infos, new DFSModel.StateMachine());
 
-        return this;
-    }
-
-    public RenderHelper collectLocators(Model model, ModelRuntimeData infos) {
-        if (params != null)
-            dfsModel(model).visit(params, context, BuiltInBrModelRenderVisitors.COLLECT_LOCATOR, cast(infos), new DFSModel.StateMachine());
         return this;
     }
 
@@ -116,7 +105,8 @@ public class RenderHelper {
         }
 
         locators.forEach((name, matrix) -> {
-            if (name.split("_t_")[0].equals(visitorName)) {
+            // 等价于 name.split("_t_")[0].equals(visitorName)，零分配
+            if (name.equals(visitorName) || (name.startsWith(visitorName) && name.startsWith("_t_", visitorName.length()))) {
                 PoseStack poseStack = RenderPorts.get().renderSystemPort().createPoseStackFromMatrix(matrix);
                 render(params.withPoseStack(poseStack), model, infos);
             }

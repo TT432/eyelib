@@ -48,7 +48,8 @@ public final class BedrockParticleEmitter implements EmitterParticleComponent.Em
     private float random3;
     private float random4;
 
-    private final MolangScope molangScope = new MolangScope();
+    // emitter 仅在渲染线程访问（见 ParticleRenderManager：全部操作经 runtimeServices.submit 汇入渲染线程）
+    private final MolangScope molangScope = MolangScope.singleThreaded();
     private final ParticleBlackboard blackboard = new ParticleBlackboard();
 
     BedrockParticleEmitter(

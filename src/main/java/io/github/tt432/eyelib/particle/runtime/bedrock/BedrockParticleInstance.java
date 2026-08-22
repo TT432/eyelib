@@ -19,7 +19,8 @@ public final class BedrockParticleInstance implements ParticleParticleComponent.
     private final BedrockParticleEmitter emitter;
     private final Vector3f position = new Vector3f();
     private final Vector3f velocity = new Vector3f();
-    private final MolangScope molangScope = new MolangScope();
+    // 粒子实例仅在渲染线程访问（spawn/pose 均经 runtimeServices.submit 汇入渲染线程）
+    private final MolangScope molangScope = MolangScope.singleThreaded();
     private final ParticleBlackboard blackboard = new ParticleBlackboard();
     private final ParticleTimer timer;
     private final List<ParticleParticleComponent> components;

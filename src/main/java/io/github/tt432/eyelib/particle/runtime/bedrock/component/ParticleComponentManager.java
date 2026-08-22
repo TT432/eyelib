@@ -87,11 +87,12 @@ public final class ParticleComponentManager {
      * 组件解码结果按 definition 缓存：组件实现均为无状态 record，
      * per-particle / per-emitter 状态只存在于 ParticleAccess / blackboard 中。
      * 弱键保证资源重载产生的新 definition 不会滞留旧解码结果。
+     * 访问全部在渲染线程（粒子/emitter 生命周期经 runtimeServices.submit 串行化），无需同步。
      */
     private static final Map<ParticleDefinition, List<EmitterParticleComponent>> EMITTER_CACHE =
-            java.util.Collections.synchronizedMap(new java.util.WeakHashMap<>());
+            new java.util.WeakHashMap<>();
     private static final Map<ParticleDefinition, List<ParticleParticleComponent>> PARTICLE_CACHE =
-            java.util.Collections.synchronizedMap(new java.util.WeakHashMap<>());
+            new java.util.WeakHashMap<>();
 
     private ParticleComponentManager() {
     }

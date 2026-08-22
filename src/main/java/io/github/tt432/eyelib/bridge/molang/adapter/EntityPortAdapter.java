@@ -24,8 +24,6 @@ import net.minecraft.world.entity.animal.equine.AbstractChestedHorse;
 import net.minecraft.world.entity.animal.equine.AbstractHorse;
 import net.minecraft.world.entity.npc.villager.Villager;
 //?}
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * 将 MC Entity 适配为 PortEntity，提供 Bedrock Molang 查询属性。
@@ -101,49 +99,58 @@ public final class EntityPortAdapter {
                 || !entity.level().noCollision(entity, entity.getBoundingBox().move(0.0, -1.0E-3, 0.0));
     }
 
+    /** 支持的 Bedrock 查询属性键（PortEntityImpl.queryProperty 实现的键集合）。 */
+    public static final java.util.Set<String> QUERY_KEYS = java.util.Set.of(
+            "is_sheep", "is_wolf", "is_creeper", "is_vex", "is_warden", "is_villager",
+            "is_camel", "is_wither", "is_enderman", "is_player",
+            "is_baby", "is_sleeping", "is_sprinting",
+            "on_fire", "is_on_ground", "is_in_water", "is_riding",
+            "is_sheared", "is_angry", "is_saddled", "is_carrying_block", "is_chested",
+            "is_powered", "is_standing", "is_charging", "is_tamed",
+            "pos_x", "pos_y", "pos_z");
+
     private record PortEntityImpl(Entity entity) implements PortEntity {
         @Override
-        public Map<String, Object> getQueryProperties() {
-            Map<String, Object> props = new HashMap<>();
-            // 实体类型标记
-            props.put("is_sheep", entity instanceof Sheep);
-            props.put("is_wolf", entity instanceof Wolf);
-            props.put("is_creeper", entity instanceof net.minecraft.world.entity.monster.Creeper);
-            props.put("is_vex", entity instanceof net.minecraft.world.entity.monster.Vex);
-            props.put("is_warden", entity instanceof net.minecraft.world.entity.monster.warden.Warden);
-            props.put("is_villager", entity instanceof Villager);
-            props.put("is_camel", entity instanceof net.minecraft.world.entity.animal.camel.Camel);
-            props.put("is_wither", entity instanceof net.minecraft.world.entity.boss.wither.WitherBoss);
-            props.put("is_enderman", entity instanceof net.minecraft.world.entity.monster.EnderMan);
-            props.put("is_player", entity instanceof net.minecraft.world.entity.player.Player);
-            // LivingEntity 属性
+        public @Nullable Object queryProperty(String key) {
             boolean living = entity instanceof net.minecraft.world.entity.LivingEntity;
-            props.put("is_baby", living && ((net.minecraft.world.entity.LivingEntity) entity).isBaby());
-            props.put("is_sleeping", living && ((net.minecraft.world.entity.LivingEntity) entity).isSleeping());
-            props.put("is_sprinting", living && ((net.minecraft.world.entity.LivingEntity) entity).isSprinting());
-            // 通用实体属性
-            props.put("on_fire", entity.isOnFire());
-            props.put("is_on_ground", isOnGround(entity));
-            props.put("is_in_water", entity.isInWater());
-            props.put("is_riding", entity.isPassenger());
-            // 实体特定行为属性
-            if (living) {
-                var le = (net.minecraft.world.entity.LivingEntity) entity;
-                props.put("is_sheared", le instanceof Sheep s && s.isSheared());
-                props.put("is_angry", le instanceof net.minecraft.world.entity.NeutralMob nm && nm.isAngry());
-                props.put("is_saddled", le instanceof AbstractHorse ah && ah.isSaddled());
-                props.put("is_carrying_block", le instanceof net.minecraft.world.entity.monster.EnderMan em && em.getCarriedBlock() != null);
-                props.put("is_chested", le instanceof AbstractChestedHorse ach && ach.hasChest());
-                props.put("is_powered", isPowered(le));
-                props.put("is_standing", le instanceof AbstractHorse ah && ah.isStanding());
-                props.put("is_charging", le instanceof net.minecraft.world.entity.monster.Vex v && v.isCharging());
-                props.put("is_tamed", le instanceof net.minecraft.world.entity.TamableAnimal ta && ta.isTame());
-            }
-            // 位置
-            props.put("pos_x", (float) entity.getX());
-            props.put("pos_y", (float) entity.getY());
-            props.put("pos_z", (float) entity.getZ());
-            return props;
+            return switch (key) {
+                // 实体类型标记
+                case "is_sheep" -> entity instanceof Sheep;
+                case "is_wolf" -> entity instanceof Wolf;
+                case "is_creeper" -> entity instanceof net.minecraft.world.entity.monster.Creeper;
+                case "is_vex" -> entity instanceof net.minecraft.world.entity.monster.Vex;
+                case "is_warden" -> entity instanceof net.minecraft.world.entity.monster.warden.Warden;
+                case "is_villager" -> entity instanceof Villager;
+                case "is_camel" -> entity instanceof net.minecraft.world.entity.animal.camel.Camel;
+                case "is_wither" -> entity instanceof net.minecraft.world.entity.boss.wither.WitherBoss;
+                case "is_enderman" -> entity instanceof net.minecraft.world.entity.monster.EnderMan;
+                case "is_player" -> entity instanceof net.minecraft.world.entity.player.Player;
+                // LivingEntity 属性
+                case "is_baby" -> living && ((net.minecraft.world.entity.LivingEntity) entity).isBaby();
+                case "is_sleeping" -> living && ((net.minecraft.world.entity.LivingEntity) entity).isSleeping();
+                case "is_sprinting" -> living && ((net.minecraft.world.entity.LivingEntity) entity).isSprinting();
+                // 通用实体属性
+                case "on_fire" -> entity.isOnFire();
+                case "is_on_ground" -> isOnGround(entity);
+                case "is_in_water" -> entity.isInWater();
+                case "is_riding" -> entity.isPassenger();
+                // 实体特定行为属性
+                case "is_sheared" -> entity instanceof Sheep s && s.isSheared();
+                case "is_angry" -> entity instanceof net.minecraft.world.entity.NeutralMob nm && nm.isAngry();
+                case "is_saddled" -> entity instanceof AbstractHorse ah && ah.isSaddled();
+                case "is_carrying_block" ->
+                        entity instanceof net.minecraft.world.entity.monster.EnderMan em && em.getCarriedBlock() != null;
+                case "is_chested" -> entity instanceof AbstractChestedHorse ach && ach.hasChest();
+                case "is_powered" -> living && isPowered((net.minecraft.world.entity.LivingEntity) entity);
+                case "is_standing" -> entity instanceof AbstractHorse ah && ah.isStanding();
+                case "is_charging" -> entity instanceof net.minecraft.world.entity.monster.Vex v && v.isCharging();
+                case "is_tamed" -> entity instanceof net.minecraft.world.entity.TamableAnimal ta && ta.isTame();
+                // 位置
+                case "pos_x" -> (float) entity.getX();
+                case "pos_y" -> (float) entity.getY();
+                case "pos_z" -> (float) entity.getZ();
+                default -> null;
+            };
         }
 
         @Override

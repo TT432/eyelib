@@ -59,9 +59,10 @@ public final class BedrockParticleRenderer implements ParticleRenderManager.Part
      * 每 definition 缓存一次渲染所需的静态数据：组件三元组与 RenderType。
      * 此前每个粒子每帧都会重新 decode 全部组件（含 molang 编译）并重建 RenderType，
      * 占渲染线程 ~73%。组件实现均为无状态 record，缓存安全。
+     * 访问全部发生在渲染线程（ParticleRenderManager 经 runtimeServices.submit 串行化），
+     * 故用普通 WeakHashMap，无同步开销；弱键保证资源重载后旧 definition 条目被回收。
      */
-    private static final Map<ParticleDefinition, CachedRender> RENDER_CACHE =
-            java.util.Collections.synchronizedMap(new java.util.WeakHashMap<>());
+    private static final Map<ParticleDefinition, CachedRender> RENDER_CACHE = new java.util.WeakHashMap<>();
 
     @Override
     public void render(BedrockParticleInstance particle) {

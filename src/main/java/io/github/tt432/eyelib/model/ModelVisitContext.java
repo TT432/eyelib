@@ -31,6 +31,14 @@ public final class ModelVisitContext {
         return (T) data.computeIfAbsent(key, s -> value);
     }
 
+    /**
+     * 惰性版本：键不存在时才调用 supplier 构造默认值，避免命中路径的无效分配。
+     */
+    @SuppressWarnings("unchecked")
+    public <T> T orCreate(String key, java.util.function.Supplier<T> supplier) {
+        return (T) data.computeIfAbsent(key, s -> supplier.get());
+    }
+
     public void clear() {
         data.clear();
     }

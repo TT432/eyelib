@@ -10,6 +10,8 @@ import io.github.tt432.eyelib.molang.type.MolangStruct;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -20,8 +22,27 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author TT432
  */
 public final class MolangScope {
-    private final Map<Class<?>, Object> hostContextStore = new ConcurrentHashMap<>();
-    private final Map<HostRole<?>, Object> hostRoleStore = new ConcurrentHashMap<>();
+    private final Map<Class<?>, Object> hostContextStore;
+    private final Map<HostRole<?>, Object> hostRoleStore;
+
+    public MolangScope() {
+        this(true);
+    }
+
+    private MolangScope(boolean concurrent) {
+        hostContextStore = concurrent ? new ConcurrentHashMap<>() : new HashMap<>();
+        hostRoleStore = concurrent ? new ConcurrentHashMap<>() : new HashMap<>();
+        cache = concurrent ? new ConcurrentHashMap<>() : new HashMap<>();
+        tempKeys = concurrent ? ConcurrentHashMap.newKeySet() : new HashSet<>();
+    }
+
+    /**
+     * 单线程 scope：宿主线程固定（如粒子运行时的渲染线程），
+     * 内部存储退化为普通 HashMap/HashSet，消除每实例 4 个并发结构的开销。
+     */
+    public static MolangScope singleThreaded() {
+        return new MolangScope(false);
+    }
 
     private final HostContext hostContext = new HostContext() {
         @Override
@@ -102,11 +123,11 @@ public final class MolangScope {
         float get();
     }
 
-    private final Map<String, MolangObject> cache = new ConcurrentHashMap<>();
+    private final Map<String, MolangObject> cache;
 
     // temp.* 键登记（BE 语义：temp.* 仅在当前表达式求值内有效，见 clearTempVariables）。
     // 与 cache 同源写入/移除，localEntries 视图天然包含 temp 条目。
-    private final java.util.Set<String> tempKeys = ConcurrentHashMap.newKeySet();
+    private final java.util.Set<String> tempKeys;
 
     private static boolean isTempKey(String name) {
         return name.startsWith("temp.");
