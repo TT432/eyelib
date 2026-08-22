@@ -115,6 +115,28 @@ public class AnimationComponent {
         }
     }
 
+    /**
+     * 批量替换（replaceAll/putAll/clear，无逐条事件）时整体失效：所有在场组件的
+     * serializableInfo 置空，下一次 setup 按新注册表重建动画数据。否则 F3+T 后
+     * 在场实体继续播放旧关键帧/控制器，仅重生或重进世界才生效。
+     */
+    public static void onManagerReplaced(String managerName) {
+        if (!AnimationLookup.managerName().equals(managerName)) {
+            return;
+        }
+
+        Set<AnimationComponent> snapshot;
+        synchronized (INSTANCES) {
+            snapshot = new HashSet<>(INSTANCES);
+        }
+
+        for (AnimationComponent component : snapshot) {
+            if (component != null) {
+                component.serializableInfo = null;
+            }
+        }
+    }
+
     private void invalidateSerializableInfoIfUsingAnimation(String animationName) {
         for (Animation animation : animate.keySet()) {
             if (animation.name().equals(animationName)) {

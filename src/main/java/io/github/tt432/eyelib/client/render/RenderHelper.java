@@ -5,6 +5,7 @@ import io.github.tt432.eyelib.bridge.client.render.adapter.RenderPorts;
 import io.github.tt432.eyelib.client.model.ModelBakeInvalidationHooks;
 import io.github.tt432.eyelib.bridge.event.ManagerEventPort;
 import io.github.tt432.eyelib.bridge.event.ManagerEntryChangedEventPublisher;
+import io.github.tt432.eyelib.bridge.event.ManagerReplacedEventPublisher;
 import io.github.tt432.eyelib.client.manager.ModelManager;
 import io.github.tt432.eyelib.client.model.DFSModel;
 import io.github.tt432.eyelib.bridge.client.render.bake.ModelBakePort;
@@ -56,6 +57,12 @@ public class RenderHelper {
         ManagerEntryChangedEventPublisher.<ManagerEventPort>addListener(e -> {
             if (e.getManagerName().equals(ModelManager.class.getSimpleName()))
                 dfsModels.remove(e.getEntryName());
+        });
+        // 批量替换（replaceAll/putAll）无逐条事件：按管理器整体失效，否则 F3+T 后
+        // 同名模型继续渲染旧几何。
+        ManagerReplacedEventPublisher.addListener(managerName -> {
+            if (managerName.equals(ModelManager.class.getSimpleName()))
+                dfsModels.clear();
         });
     }
 

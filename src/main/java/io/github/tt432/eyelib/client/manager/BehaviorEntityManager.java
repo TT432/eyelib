@@ -7,7 +7,7 @@ import io.github.tt432.eyelib.util.registry.Registry;
 /** @author TT432 */
 public final class BehaviorEntityManager {
     public static final Registry<BehaviorEntity> INSTANCE =
-            new Registry<>("BehaviorEntityManager", ManagerEventPublishBridge::publishManagerEntryChanged);
+            new Registry<>("BehaviorEntityManager", ManagerEventPublishBridge.publisher());
 
     private BehaviorEntityManager() {
     }

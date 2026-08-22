@@ -102,13 +102,28 @@ class RegistryTest {
     }
 
     @Test
-    void replaceAllDoesNotPublishEvent() {
+    void replaceAllPublishesReplacedEvent() {
         RecordingPublisher publisher = new RecordingPublisher();
         Registry<String> registry = new Registry<>("TestRegistry", publisher);
 
         registry.replaceAll(Map.of("entry", "value"));
 
-        assertNull(publisher.managerName);
+        // 整表替换无逐条事件，但必须发布批量替换事件——否则只订阅
+        // ManagerEntryChangedEvent 的缓存（烘焙模型/DFS/动画组件）永不失效
+        assertEquals("TestRegistry", publisher.replacedManagerName);
+        assertNull(publisher.entryName);
+    }
+
+    @Test
+    void clearPublishesReplacedEvent() {
+        RecordingPublisher publisher = new RecordingPublisher();
+        Registry<String> registry = new Registry<>("TestRegistry", publisher);
+        registry.put("entry", "value");
+
+        registry.clear();
+
+        assertTrue(registry.all().isEmpty());
+        assertEquals("TestRegistry", publisher.replacedManagerName);
     }
 
     @Test

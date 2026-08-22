@@ -1,6 +1,7 @@
 package io.github.tt432.eyelib.mixin.client;
 
 import com.mojang.blaze3d.platform.NativeImage;
+import io.github.tt432.eyelib.bridge.client.render.texture.EyelibTextureManagerAccess;
 import io.github.tt432.eyelib.bridge.client.render.texture.adapter.NativeImageIO;
 import io.github.tt432.eyelib.importer.model.importer.AddonTextureRegistry;
 import io.github.tt432.eyelib.importer.model.importer.ImportedImageData;
@@ -30,7 +31,23 @@ import java.util.Map;
  * @author TT432
  */
 @Mixin(TextureManager.class)
-public abstract class TextureManagerMixin {
+public abstract class TextureManagerMixin implements EyelibTextureManagerAccess {
+
+    /**
+     * 驱逐 byPath 中路径匹配的 DynamicTexture（close 释放 GL 后移除）。
+     * 仅 eyelib 生成的纹理（addon 基图、clamped/、_color_mask/）是 DynamicTexture 且会被
+     * 谓词命中；vanilla SimpleTexture 由原版重载自行处理，不动。
+     */
+    @Override
+    public void eyelib$evictTextures(java.util.function.Predicate<String> pathFilter) {
+        this.byPath.entrySet().removeIf(entry -> {
+            if (!(entry.getValue() instanceof DynamicTexture) || !pathFilter.test(entry.getKey().getPath())) {
+                return false;
+            }
+            entry.getValue().close();
+            return true;
+        });
+    }
 
     //? if <26.1 {
     @Shadow

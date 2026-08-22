@@ -76,4 +76,13 @@ public interface NativeImagePort {
     static void loadAndUpload(String textureKey, InputStream inputStream) throws IOException {
         NativeImageIO.loadAndUpload(textureKey, inputStream);
     }
+
+    /**
+     * 基图替换后驱逐 clamped/_color_mask 派生纹理并清颜色掩码缓存，
+     * 使下一帧按新基图重新派生。基图本身由 register 替换语义覆盖，无需驱逐。
+     */
+    static void evictDerivedTextures() {
+        NativeImageIO.clearColorMaskCache();
+        NativeImageIO.evictTexturesMatching(NativeImageIO::isEyelibDerivedTexturePath);
+    }
 }

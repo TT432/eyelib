@@ -45,6 +45,26 @@ class AnimationComponentRuntimeInvalidationTest {
         assertNull(component.getSerializableInfo());
     }
 
+    @Test
+    void managerReplacedInvalidatesSerializableInfoForAllComponents() {
+        AnimationRegistries.animation().put("animation.walk", new TestAnimation("animation.walk"));
+
+        AnimationComponent component = new AnimationComponent();
+        component.setup(
+                Map.of("controller.main", "animation.walk"),
+                Map.of("controller.main", MolangValue.ONE)
+        );
+
+        assertNotNull(component.getSerializableInfo());
+
+        AnimationComponent.onManagerReplaced("OtherManager");
+        assertNotNull(component.getSerializableInfo());
+
+        // 批量替换（资源重载整表写入）无逐条事件：所有在场组件整体失效
+        AnimationComponent.onManagerReplaced(AnimationLookup.managerName());
+        assertNull(component.getSerializableInfo());
+    }
+
     private record TestAnimation(String name) implements Animation {
         @Override
         public void onFinish(Object data) {

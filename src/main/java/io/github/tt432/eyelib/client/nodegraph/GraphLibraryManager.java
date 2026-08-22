@@ -11,7 +11,7 @@ import io.github.tt432.eyelib.util.registry.Registry;
  */
 public final class GraphLibraryManager {
     public static final Registry<GraphLibrary> INSTANCE =
-            new Registry<>("GraphLibraryManager", ManagerEventPublishBridge::publishManagerEntryChanged);
+            new Registry<>("GraphLibraryManager", ManagerEventPublishBridge.publisher());
 
     private GraphLibraryManager() {
     }

@@ -202,6 +202,8 @@ public final class ManagerResourceImportPlanner {
             }
         });
 
+        // 基图已由 register 替换语义覆盖；clamped/_color_mask 派生与颜色掩码缓存需显式失效
+        NativeImagePort.evictDerivedTextures();
         TextureChangedEventPublisher.post();
     }
 
@@ -273,6 +275,7 @@ public final class ManagerResourceImportPlanner {
                     try (InputStream inputStream = Files.newInputStream(file)) {
                         NativeImagePort.loadAndUpload(ManagerResourceReloadPlan.toTextureKey(basePath, file), inputStream);
                     }
+                    NativeImagePort.evictDerivedTextures();
                     TextureChangedEventPublisher.post();
                 }
                 case UNSUPPORTED -> {
@@ -295,6 +298,7 @@ public final class ManagerResourceImportPlanner {
         });
 
         if (!pngFiles.isEmpty()) {
+            NativeImagePort.evictDerivedTextures();
             TextureChangedEventPublisher.post();
         }
     }

@@ -41,6 +41,11 @@ public abstract class ModelBakeInfo<Info, BM> {
         modelCache.remove(modelName);
     }
 
+    /** 批量替换（资源重载整表写入）时整体失效。 */
+    public void invalidateAll() {
+        modelCache.clear();
+    }
+
     //? if <26.1 {
     protected abstract Info getBakeInfo(Model model, boolean isSolid, ResourceLocation texture);
     //?} else {

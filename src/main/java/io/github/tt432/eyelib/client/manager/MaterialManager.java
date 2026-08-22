@@ -7,7 +7,7 @@ import io.github.tt432.eyelib.util.registry.Registry;
 /** @author TT432 */
 public final class MaterialManager {
     public static final Registry<BrMaterialEntry> INSTANCE =
-            new Registry<>("MaterialManager", ManagerEventPublishBridge::publishManagerEntryChanged);
+            new Registry<>("MaterialManager", ManagerEventPublishBridge.publisher());
 
     private MaterialManager() {
     }

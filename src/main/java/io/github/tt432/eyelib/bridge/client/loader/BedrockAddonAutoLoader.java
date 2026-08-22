@@ -131,12 +131,21 @@ final class BedrockAddonAutoLoader implements PreparableReloadListener {
 
     private void uploadAddonTextures(Map<String, ImportedImageData> textures) {
         // 先清后传：包被禁用/移除时陈旧纹理必须退场；合并视图外的键不再残留
+        java.util.Set<String> previousKeys = AddonTextureRegistry.keys();
         AddonTextureRegistry.clear();
         // 注册到 AddonTextureRegistry，由 TextureManagerMixin 在 getTexture() 中按需创建 DynamicTexture。
         // .tga 路径自动归一化为 .png，使 MC 原版纹理加载机制能透明加载 .tga。
         textures.forEach((relativePath, imageData) -> {
             AddonTextureRegistry.put(relativePath.toLowerCase(Locale.ROOT), imageData);
         });
+        // vanilla 重载对 DynamicTexture 是 no-op（DynamicTexture.load 空实现，1.20.1 反编译实证），
+        // TextureManagerMixin 又在 byPath 命中时短路——必须主动驱逐 byPath 中的 addon 基图
+        // （新旧键并集）与 clamped/_color_mask 派生纹理，下一次 getTexture 才按新数据重建。
+        java.util.Set<String> stalePaths = new java.util.HashSet<>(previousKeys);
+        stalePaths.addAll(AddonTextureRegistry.keys());
+        NativeImageIO.clearColorMaskCache();
+        NativeImageIO.evictTexturesMatching(path -> stalePaths.contains(path)
+                || NativeImageIO.isEyelibDerivedTexturePath(path));
         //? if <1.20.6 {
         MinecraftForge.EVENT_BUS.post(new TextureChangedEvent());
         //?} else {

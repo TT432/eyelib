@@ -17,6 +17,11 @@ public interface ModelBakePort {
         TwoSideModelBakeInfo.INSTANCE.invalidateModel(entryName);
     }
 
+    /** 批量替换（资源重载整表写入）时失效全部烘焙缓存。 */
+    static void twoSideInvalidateAll() {
+        TwoSideModelBakeInfo.INSTANCE.invalidateAll();
+    }
+
     //? if <26.1 {
     static TwoSideModelBakeInfo.TwoSideInfoMap twoSideGetBakeInfo(Model model, boolean isSolid, ResourceLocation texture) {
         return TwoSideModelBakeInfo.INSTANCE.getBakeInfo(model, isSolid, texture);

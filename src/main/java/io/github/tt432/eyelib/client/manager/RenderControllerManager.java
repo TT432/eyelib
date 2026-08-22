@@ -7,7 +7,7 @@ import io.github.tt432.eyelib.util.registry.Registry;
 /** @author TT432 */
 public final class RenderControllerManager {
     public static final Registry<RenderControllerEntry> INSTANCE =
-            new Registry<>("RenderControllerManager", ManagerEventPublishBridge::publishManagerEntryChanged);
+            new Registry<>("RenderControllerManager", ManagerEventPublishBridge.publisher());
 
     private RenderControllerManager() {
     }

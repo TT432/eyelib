@@ -67,6 +67,7 @@ public final class Registry<T> implements Repository<T> {
     public void replaceAll(Map<String, ? extends T> replacement) {
         ref.set(RegistrySnapshot.copyOf(replacement));
         generation.incrementAndGet();
+        publisher.publishManagerReplaced(managerName);
     }
 
     @Override
@@ -119,6 +120,7 @@ public final class Registry<T> implements Repository<T> {
     public void clear() {
         ref.set(RegistrySnapshot.empty());
         generation.incrementAndGet();
+        publisher.publishManagerReplaced(managerName);
     }
 
     /**

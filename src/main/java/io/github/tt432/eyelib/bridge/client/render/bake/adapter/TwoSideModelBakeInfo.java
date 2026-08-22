@@ -43,6 +43,13 @@ public class TwoSideModelBakeInfo extends ModelBakeInfo<TwoSideModelBakeInfo.Two
     }
 
     @Override
+    public void invalidateAll() {
+        super.invalidateAll();
+        cache.clear();
+        bakedCache.clear();
+    }
+
+    @Override
     //? if <26.1 {
     public TwoSideInfoMap getBakeInfo(Model model, boolean isSolid, ResourceLocation texture) {
     //?} else {

@@ -1,6 +1,7 @@
 package io.github.tt432.eyelib.bridge.client.render.texture.adapter;
 
 import com.mojang.blaze3d.platform.NativeImage;
+import io.github.tt432.eyelib.bridge.client.render.texture.EyelibTextureManagerAccess;
 import io.github.tt432.eyelib.importer.model.importer.ImportedImageData;
 import io.github.tt432.eyelib.util.color.ColorEncodings;
 import lombok.experimental.UtilityClass;
@@ -185,6 +186,37 @@ public class NativeImageIO {
 
     public void loadAndUpload(String textureKey, InputStream inputStream) throws IOException {
         upload(textureKey, load(inputStream));
+    }
+
+    /**
+     * eyelib 派生纹理路径判定：clamped/（alpha 二值化副本）与 _color_mask/（颜色掩码副本）。
+     * 基图更换后这些派生必须驱逐，否则从陈旧基图回读生成。
+     */
+    public static boolean isEyelibDerivedTexturePath(String path) {
+        return path.startsWith("clamped/") || path.startsWith("_color_mask/");
+    }
+
+    /**
+     * 按路径谓词驱逐 TextureManager 中的 eyelib DynamicTexture（主线程执行；
+     * 非主线程调用转投 {@code minecraft.execute}）。谓词作用于 path 段（无命名空间）。
+     */
+    public void evictTexturesMatching(java.util.function.Predicate<String> pathFilter) {
+        Minecraft minecraft = Minecraft.getInstance();
+        Runnable task = () -> {
+            if (minecraft.getTextureManager() instanceof EyelibTextureManagerAccess access) {
+                access.eyelib$evictTextures(pathFilter);
+            }
+        };
+        if (minecraft.isSameThread()) {
+            task.run();
+        } else {
+            minecraft.execute(task);
+        }
+    }
+
+    /** 颜色掩码派生纹理缓存随基图更换整体失效。 */
+    public void clearColorMaskCache() {
+        COLOR_MASK_CACHE.clear();
     }
 
     public void uploadFromImportedImageData(String textureKey, ImportedImageData imageData) {

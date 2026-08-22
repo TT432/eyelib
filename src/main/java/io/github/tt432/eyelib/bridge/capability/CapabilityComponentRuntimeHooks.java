@@ -2,6 +2,7 @@ package io.github.tt432.eyelib.bridge.capability;
 
 import io.github.tt432.eyelib.bridge.ApplicationLifecyclePort;
 import io.github.tt432.eyelib.bridge.event.adapter.ManagerEntryChangedEvent;
+import io.github.tt432.eyelib.bridge.event.adapter.ManagerReplacedEvent;
 import io.github.tt432.eyelib.bridge.event.adapter.TextureChangedEvent;
 import io.github.tt432.eyelib.animation.AnimationComponent;
 //? if <1.20.6 {
@@ -34,6 +35,11 @@ public final class CapabilityComponentRuntimeHooks {
     @SubscribeEvent
     public static void onManagerEntryChanged(ManagerEntryChangedEvent event) {
         AnimationComponent.onManagerEntryChanged(event.getManagerName(), event.getEntryName());
+    }
+
+    @SubscribeEvent
+    public static void onManagerReplaced(ManagerReplacedEvent event) {
+        AnimationComponent.onManagerReplaced(event.getManagerName());
     }
 }
 

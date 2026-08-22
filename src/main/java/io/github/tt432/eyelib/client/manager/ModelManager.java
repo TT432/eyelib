@@ -7,7 +7,7 @@ import io.github.tt432.eyelib.util.registry.Registry;
 /** @author TT432 */
 public final class ModelManager {
     public static final Registry<Model> INSTANCE =
-            new Registry<>("ModelManager", ManagerEventPublishBridge::publishManagerEntryChanged);
+            new Registry<>("ModelManager", ManagerEventPublishBridge.publisher());
 
     private ModelManager() {
     }
