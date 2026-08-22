@@ -216,7 +216,7 @@ public record ComponentGroup(
                 return DataResult.success(ops.empty());
             }
         };
-    });
+    }, v -> v instanceof RawComponent ? RawComponent.CODEC : null);
 
     public static final Codec<ComponentGroup> CODEC = DISPATCH_CODEC
             .xmap(ComponentGroup::new, ComponentGroup::components);

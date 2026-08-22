@@ -21,6 +21,8 @@ public record Add(
     public void eval(EntityBehaviorData data) {
         if (data.getBehavior().isPresent()) {
             data.getComponentGroups().addAll(component_groups().stream().map(s -> data.getBehavior().map(b -> b.component_groups().get(s)).orElse(ComponentGroup.EMPTY)).toList());
+            // Bedrock 语义：add 立即生效，同一事件树内后续 filter/节点必须读到新组件
+            data.setup();
         }
     }
 }

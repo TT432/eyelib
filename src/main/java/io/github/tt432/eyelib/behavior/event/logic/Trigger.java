@@ -6,6 +6,7 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.eyelib.behavior.EntityBehaviorData;
 import io.github.tt432.eyelib.behavior.event.filter.Filter;
 import io.github.tt432.eyelib.behavior.event.filter.Subject;
+import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Optional;
@@ -25,6 +26,7 @@ import java.util.function.Function;
  * @param target 目标主体（self / other 等），默认 self
  * @author TT432
  */
+@Slf4j
 public record Trigger(
         @Nullable Filter filter,
         String event,
@@ -44,6 +46,13 @@ public record Trigger(
             t -> t.filter == null && t.target == Subject.self ? Either.left(t.event) : Either.right(t)
     );
 
+    /**
+     * trigger 递归深度上限：addon 可手写环形 trigger（A→B→A），不加保护会在 spawn 求值时
+     * StackOverflowError。事件树求值始终在单线程内完成，用 ThreadLocal 计数即可。
+     */
+    private static final int MAX_TRIGGER_DEPTH = 32;
+    private static final ThreadLocal<int[]> TRIGGER_DEPTH = ThreadLocal.withInitial(() -> new int[1]);
+
     @Override
     public void eval(EntityBehaviorData data) {
         // 检查 filter 门控
@@ -51,12 +60,23 @@ public record Trigger(
             return;
         }
 
+        int[] depth = TRIGGER_DEPTH.get();
+        if (depth[0] >= MAX_TRIGGER_DEPTH) {
+            log.warn("Trigger event '{}' exceeded max recursion depth {}, possible cyclic trigger chain", event, MAX_TRIGGER_DEPTH);
+            return;
+        }
+
         // 仅实现 self target 情况，跨实体 target 交由后续阶段实现
-        data.getBehavior().ifPresent(b -> {
-            LogicNode targetEvent = b.events().get(event);
-            if (targetEvent != null) {
-                targetEvent.eval(data);
-            }
-        });
+        depth[0]++;
+        try {
+            data.getBehavior().ifPresent(b -> {
+                LogicNode targetEvent = b.events().get(event);
+                if (targetEvent != null) {
+                    targetEvent.eval(data);
+                }
+            });
+        } finally {
+            depth[0]--;
+        }
     }
 }

@@ -25,7 +25,7 @@ import java.util.function.Supplier;
 /**
  * Bridge 侧数据附属类型注册中心。
  * domain 类型（EntityBehaviorData/SyncedBehaviorState）直接声明；
- * application 类型（RenderData/ItemInHandRenderData）由 {@link io.github.tt432.eyelib.capability.AttachableDataTypes} 调用 {@link #register} 注册。
+ * application 类型（RenderData）由 {@link io.github.tt432.eyelib.capability.AttachableDataTypes} 调用 {@link #register} 注册。
  *
  * @author TT432
  */

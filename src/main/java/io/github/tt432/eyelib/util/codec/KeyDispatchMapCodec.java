@@ -6,6 +6,7 @@ import com.mojang.datafixers.util.Unit;
 import com.mojang.serialization.*;
 import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,8 +22,18 @@ import java.util.stream.Stream;
  */
 public record KeyDispatchMapCodec<K, V>(
         Codec<K> keyCodec,
-        Function<K, Codec<? extends V>> elementCodec
+        Function<K, Codec<? extends V>> elementCodec,
+        /**
+         * 可选的编码期值分派：优先于 {@link #elementCodec} 按值实例选择编码器。
+         * 用于 RawComponent 这类"键命中 typed codec、但值是原始 JSON 兜底"的场景，
+         * 避免对值做强转导致 ClassCastException。
+         */
+        @Nullable Function<V, @Nullable Codec<? extends V>> valueCodec
 ) implements Codec<Map<K, V>> {
+
+    public KeyDispatchMapCodec(Codec<K> keyCodec, Function<K, Codec<? extends V>> elementCodec) {
+        this(keyCodec, elementCodec, null);
+    }
 
     private static final Logger LOGGER = LoggerFactory.getLogger(KeyDispatchMapCodec.class);
 
@@ -78,7 +89,11 @@ public record KeyDispatchMapCodec<K, V>(
     @SuppressWarnings("unchecked")
     <T> RecordBuilder<T> encode(final Map<K, V> input, final DynamicOps<T> ops, final RecordBuilder<T> prefix) {
         for (final Map.Entry<K, V> entry : input.entrySet()) {
-            prefix.add(keyCodec().encodeStart(ops, entry.getKey()), ((Codec<V>) elementCodec.apply(entry.getKey())).encodeStart(ops, entry.getValue()));
+            Codec<? extends V> valueEncoder = valueCodec != null ? valueCodec.apply(entry.getValue()) : null;
+            if (valueEncoder == null) {
+                valueEncoder = elementCodec.apply(entry.getKey());
+            }
+            prefix.add(keyCodec().encodeStart(ops, entry.getKey()), ((Codec<V>) valueEncoder).encodeStart(ops, entry.getValue()));
         }
         return prefix;
     }

@@ -21,6 +21,8 @@ public record Remove(
     public void eval(EntityBehaviorData data) {
         if (data.getBehavior().isPresent()) {
             data.getComponentGroups().removeAll(component_groups().stream().map(s -> data.getBehavior().map(b -> b.component_groups().get(s)).orElse(ComponentGroup.EMPTY)).toList());
+            // 与 Add 对称：remove 立即生效，重建组件索引
+            data.setup();
         }
     }
 }

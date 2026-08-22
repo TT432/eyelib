@@ -50,8 +50,8 @@ public final class BehaviorSpawnApplicator {
                 : new ArrayList<>();
         EntityBehaviorData data = new EntityBehaviorData(Optional.of(be), groups);
         if (spawnEvent != null) {
+            // Add/Remove 节点自身维护组件索引（eval 内 setup），此处无需重复重建
             spawnEvent.eval(data);
-            data.setup();
         }
 
         Variant variant = data.component(Variant.class);

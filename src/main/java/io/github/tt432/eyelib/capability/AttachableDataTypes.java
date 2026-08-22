@@ -16,7 +16,4 @@ public final class AttachableDataTypes {
 
     public static final Supplier<DataAttachmentType<RenderData<Object>>> RENDER_DATA =
             DataAttachmentPort.register("render_data", RenderData::new, () -> RenderData.codec());
-
-    public static final Supplier<DataAttachmentType<ItemInHandRenderData>> ITEM_IN_HAND_RENDER_DATA =
-            DataAttachmentPort.register("item_in_hand_render_data", ItemInHandRenderData::empty, () -> ItemInHandRenderData.CODEC);
 }
