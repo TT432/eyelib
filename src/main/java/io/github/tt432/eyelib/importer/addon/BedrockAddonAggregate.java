@@ -88,11 +88,9 @@ public record BedrockAddonAggregate(
             } else {
                 var merged = new LinkedHashMap<String, BrRenderControllerEntry>(oldRC.renderControllers());
                 newRC.renderControllers().forEach((name, entry) -> {
-                    BrRenderControllerEntry exist = merged.get(name);
-                    if (exist != null && exist.partVisibility().size() > entry.partVisibility().size()) {
-                        return;
+                    if (BrRenderControllers.incomingWins(merged.get(name), entry, rc -> rc.partVisibility().size())) {
+                        merged.put(name, entry);
                     }
-                    merged.put(name, entry);
                 });
                 renderControllerFiles.put(key, new BrRenderControllers(merged));
             }

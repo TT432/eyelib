@@ -629,11 +629,9 @@ public final class BedrockAddonLoader {
         }
         var merged = new LinkedHashMap<>(previous.renderControllers());
         for (Map.Entry<String, BrRenderControllerEntry> e : controllers.entrySet()) {
-            BrRenderControllerEntry existing = merged.get(e.getKey());
-            if (existing != null && existing.partVisibility().size() > e.getValue().partVisibility().size()) {
-                continue;
+            if (BrRenderControllers.incomingWins(merged.get(e.getKey()), e.getValue(), rc -> rc.partVisibility().size())) {
+                merged.put(e.getKey(), e.getValue());
             }
-            merged.put(e.getKey(), e.getValue());
         }
         files.put(effectivePath, new BrRenderControllers(Map.copyOf(merged)));
     }
@@ -926,7 +924,7 @@ public final class BedrockAddonLoader {
     /** 从 FileEntry 读取 JSON 对象。优先从 Supplier 获取数据，否则读磁盘文件。 */
     private static JsonObject readJsonFile(FileEntry entry) throws IOException {
         if (entry.dataSupplier() != null) {
-            return JsonParser.parseString(new String(entry.dataSupplier().get(), StandardCharsets.UTF_8)).getAsJsonObject();
+            return parseJsonLenient(new String(entry.dataSupplier().get(), StandardCharsets.UTF_8)).getAsJsonObject();
         }
         // FileEntry 不变量：dataSupplier 为 null 时 file 必非空（fromPath 工厂保证）
         return readJsonFile(Objects.requireNonNull(entry.file()));
@@ -935,7 +933,7 @@ public final class BedrockAddonLoader {
     /** 从 FileEntry 读取任意 JSON 元素。优先从 Supplier 获取数据，否则读磁盘文件。 */
     private static JsonElement readJsonElement(FileEntry entry) throws IOException {
         if (entry.dataSupplier() != null) {
-            return JsonParser.parseString(new String(entry.dataSupplier().get(), StandardCharsets.UTF_8));
+            return parseJsonLenient(new String(entry.dataSupplier().get(), StandardCharsets.UTF_8));
         }
         // FileEntry 不变量：dataSupplier 为 null 时 file 必非空（fromPath 工厂保证）
         return readJsonElement(Objects.requireNonNull(entry.file()));
@@ -966,19 +964,26 @@ public final class BedrockAddonLoader {
 
     private static JsonObject readJsonFile(Path path) throws IOException {
         try (Reader reader = Files.newBufferedReader(path, StandardCharsets.UTF_8)) {
-            return JsonParser.parseReader(reader).getAsJsonObject();
+            return parseJsonLenient(reader).getAsJsonObject();
         }
     }
 
     private static JsonElement readJsonElement(Path path) throws IOException {
         try (Reader reader = Files.newBufferedReader(path, StandardCharsets.UTF_8)) {
-            return JsonParser.parseReader(reader);
+            return parseJsonLenient(reader);
         }
     }
 
+    /**
+     * Bedrock 生态 JSON 普遍带注释/尾逗号（JSONC），所有 typed 解析统一走 lenient，
+     * 与 brarchive 分支保持一致。
+     */
     private static JsonElement parseJsonLenient(String json) {
-        var stringReader = new java.io.StringReader(json);
-        var jsonReader = new com.google.gson.stream.JsonReader(stringReader);
+        return parseJsonLenient(new java.io.StringReader(json));
+    }
+
+    private static JsonElement parseJsonLenient(Reader reader) {
+        var jsonReader = new com.google.gson.stream.JsonReader(reader);
         jsonReader.setLenient(true);
         return JsonParser.parseReader(jsonReader);
     }

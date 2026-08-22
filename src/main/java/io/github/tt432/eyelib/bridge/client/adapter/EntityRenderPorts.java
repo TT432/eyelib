@@ -32,12 +32,6 @@ public final class EntityRenderPorts {
     private EntityRenderPorts() {}
 
     @FunctionalInterface
-    public interface RenderBufferPort {
-        void renderEntities(float partialTick, double camX, double camY, double camZ,
-                            PoseStack poseStack, MultiBufferSource.BufferSource bufferSource);
-    }
-
-    @FunctionalInterface
     public interface RenderEntityPort {
         boolean render(RenderEntityParams params);
     }

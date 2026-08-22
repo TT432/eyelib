@@ -91,7 +91,6 @@ public final class EntityRenderOrchestrator {
 
     public static void wirePorts() {
         RenderPorts.install(
-                EntityRenderOrchestrator::renderEntities,
                 EntityRenderOrchestrator::renderEntityFromParams,
                 EntityRenderOrchestrator::setup
         );
@@ -237,54 +236,34 @@ public final class EntityRenderOrchestrator {
         }
     }
 
-    static void renderEntities(float partialTick, double camX, double camY, double camZ,
-                               PoseStack rootPoseStack, MultiBufferSource.BufferSource bufferSource) {
-        //? if <26.1 {
-        entities().forEach(e -> {
-            if (!(e instanceof LivingEntity entity)) return;
-
+    static boolean renderEntityFromParams(RenderEntityParams params) {
+        try {
+            LivingEntity entity = (LivingEntity) params.entity();
             var cap = RenderData.getComponent(entity);
-            if (cap == null || !cap.isUseBuiltInRenderSystem()) return;
+            if (!cap.isUseBuiltInRenderSystem()) return false;
 
-            try {
-                rootPoseStack.pushPose();
-                rootPoseStack.translate(
-                        Mth.lerp(partialTick, entity.xOld, entity.getX()) - camX,
-                        Mth.lerp(partialTick, entity.yOld, entity.getY()) - camY,
-                        Mth.lerp(partialTick, entity.zOld, entity.getZ()) - camZ);
-                SimpleRenderAction.builder(bufferSource, io.github.tt432.eyelib.bridge.client.render.RenderSink.of(bufferSource), rootPoseStack, cap, partialTick)
-                                  .entity(entity)
-                                  .animation(cap.getAnimationComponent())
-                                  .build()
-                                  .render();
-                rootPoseStack.popPose();
-            } catch (Throwable t) {
-                errorCount++;
-                if (errorCount <= 1) {
-                    var sw = new java.io.StringWriter();
-                    t.printStackTrace(new java.io.PrintWriter(sw));
-                    lastError = sw.toString();
-                }
-                try { rootPoseStack.popPose(); } catch (Throwable ignored2) {}
-                try { bufferSource.endBatch(); } catch (Throwable ignored3) {}
-            }
-        });
-        //?}
+            return SimpleRenderAction.builder(params.multiBufferSource(), params.sink(), params.poseStack(), cap, params.partialTick())
+                    .entity(entity)
+                    .animation(cap.getAnimationComponent())
+                    .overlay(params.overlay())
+                    .light(params.packedLight())
+                    .extraRender((context, action) -> renderItemInHand(context, action, entity, action.packedLight()))
+                    .build()
+                    .render();
+        } catch (Throwable t) {
+            recordError(t);
+            throw t;
+        }
     }
 
-    static boolean renderEntityFromParams(RenderEntityParams params) {
-        LivingEntity entity = (LivingEntity) params.entity();
-        var cap = RenderData.getComponent(entity);
-        if (!cap.isUseBuiltInRenderSystem()) return false;
-
-        return SimpleRenderAction.builder(params.multiBufferSource(), params.sink(), params.poseStack(), cap, params.partialTick())
-                .entity(entity)
-                .animation(cap.getAnimationComponent())
-                .overlay(params.overlay())
-                .light(params.packedLight())
-                .extraRender((context, action) -> renderItemInHand(context, action, entity, action.packedLight()))
-                .build()
-                .render();
+    /** 记录首个渲染失败供 dev 诊断（benchmark/smoke 经 getErrorCount/getLastError 消费）；异常继续上抛。 */
+    private static void recordError(Throwable t) {
+        errorCount++;
+        if (errorCount <= 1) {
+            var sw = new java.io.StringWriter();
+            t.printStackTrace(new java.io.PrintWriter(sw));
+            lastError = sw.toString();
+        }
     }
 
     static List<Runnable> setup(Entity entity) {

@@ -137,10 +137,10 @@ public final class BedrockAddonRuntimeBridge {
             for (RenderControllers value : controllers.values()) {
                 value.render_controllers().forEach((key, entry) -> {
                     RenderControllerEntry existing = controllerBatch.getOrDefault(key, RenderControllerManager.INSTANCE.get(key));
-                    if (existing != null && existing.part_visibility().size() > entry.part_visibility().size()) {
-                        return;
+                    if (io.github.tt432.eyelib.importer.render.controller.BrRenderControllers
+                            .incomingWins(existing, entry, rc -> rc.part_visibility().size())) {
+                        controllerBatch.put(key, entry);
                     }
-                    controllerBatch.put(key, entry);
                 });
             }
             applyOverlay(RenderControllerManager.INSTANCE, controllerBatch);

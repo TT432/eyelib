@@ -8,17 +8,15 @@ import java.util.concurrent.atomic.AtomicReference;
 public interface RenderPorts {
     AtomicReference<@Nullable RenderPorts> HOLDER = new AtomicReference<>();
 
-    EntityRenderPorts.RenderBufferPort renderBufferPort();
     EntityRenderPorts.RenderEntityPort renderEntityPort();
     EntityRenderPorts.SetupClientEntityPort setupClientEntityPort();
     EntityRenderPorts.RenderSystemPort renderSystemPort();
 
     static RenderPorts install(
-            EntityRenderPorts.RenderBufferPort renderBufferPort,
             EntityRenderPorts.RenderEntityPort renderEntityPort,
             EntityRenderPorts.SetupClientEntityPort setupClientEntityPort
     ) {
-        RenderPortsImpl ports = new RenderPortsImpl(renderBufferPort, renderEntityPort, setupClientEntityPort);
+        RenderPortsImpl ports = new RenderPortsImpl(renderEntityPort, setupClientEntityPort);
         HOLDER.set(ports);
         return ports;
     }

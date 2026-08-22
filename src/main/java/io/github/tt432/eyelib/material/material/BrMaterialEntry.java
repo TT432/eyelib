@@ -18,18 +18,12 @@ import io.github.tt432.eyelib.material.shared.VertexFormatElementEnum;
 import io.github.tt432.eyelib.material.port.PortRenderPass;
 import io.github.tt432.eyelib.util.PortResourceLocation;
 import io.github.tt432.eyelib.util.PortStringRepresentable;
-import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.GL14;
 import org.slf4j.Logger;
-
-import static org.lwjgl.opengl.GL11.GL_BACK;
-import static org.lwjgl.opengl.GL11.GL_FRONT;
-import static org.lwjgl.opengl.GL20.*;
 
 /**
  * 运行时Bedrock材质条目，在shared纯数据类型之上叠加GL行为。
  * CODEC委托{@code shared.BrMaterialEntry.CODEC}进行序列化；
- * 运行时GL行为（{@link ApplyAble}、{@link ModifyAble}默认方法、{@link #getRenderType(PortResourceLocation)}）仅在此定义。
+ * 运行时GL行为（{@link ModifyAble}默认方法、{@link #getRenderType(PortResourceLocation)}）仅在此定义。
  *
  * @author TT432
  */
@@ -212,77 +206,18 @@ public record BrMaterialEntry(
         }
     }
 
-    public interface ApplyAble {
-        void apply(BrMaterialEntry material, Map<String, BrMaterialEntry> materials);
-    }
-
     public record Blend(
             Optional<BlendFactor> blendSrc,
             Optional<BlendFactor> blendDst,
             Optional<BlendFactor> alphaSrc,
             Optional<BlendFactor> alphaDst
-    ) implements ApplyAble {
+    ) {
         public static final MapCodec<Blend> CODEC = RecordCodecBuilder.mapCodec(ins -> ins.group(
                 BlendFactor.CODEC.optionalFieldOf("blendSrc").forGetter(Blend::blendSrc),
                 BlendFactor.CODEC.optionalFieldOf("blendDst").forGetter(Blend::blendDst),
                 BlendFactor.CODEC.optionalFieldOf("alphaSrc").forGetter(Blend::alphaSrc),
                 BlendFactor.CODEC.optionalFieldOf("alphaDst").forGetter(Blend::alphaDst)
         ).apply(ins, Blend::new));
-
-        private BlendFactor sblendSrc(BrMaterialEntry material, Map<String, BrMaterialEntry> materials, Set<String> visited) {
-            if (!visited.add(material.name())) {
-                throw new IllegalStateException("Circular material inheritance detected involving: " + material.name());
-            }
-            var base = materials.get(material.base());
-            try {
-                return blendSrc.orElseGet(() -> base != null ? base.blend.sblendSrc(base, materials, visited) : BlendFactor.SourceAlpha);
-            } finally {
-                visited.remove(material.name());
-            }
-        }
-
-        private BlendFactor sblendDst(BrMaterialEntry material, Map<String, BrMaterialEntry> materials, Set<String> visited) {
-            if (!visited.add(material.name())) {
-                throw new IllegalStateException("Circular material inheritance detected involving: " + material.name());
-            }
-            var base = materials.get(material.base());
-            try {
-                return blendDst.orElseGet(() -> base != null ? base.blend.sblendDst(base, materials, visited) : BlendFactor.OneMinusSrcAlpha);
-            } finally {
-                visited.remove(material.name());
-            }
-        }
-
-        private BlendFactor salphaSrc(BrMaterialEntry material, Map<String, BrMaterialEntry> materials, Set<String> visited) {
-            if (!visited.add(material.name())) {
-                throw new IllegalStateException("Circular material inheritance detected involving: " + material.name());
-            }
-            var base = materials.get(material.base());
-            try {
-                return alphaSrc.orElseGet(() -> base != null ? base.blend.salphaSrc(base, materials, visited) : BlendFactor.One);
-            } finally {
-                visited.remove(material.name());
-            }
-        }
-
-        private BlendFactor salphaDst(BrMaterialEntry material, Map<String, BrMaterialEntry> materials, Set<String> visited) {
-            if (!visited.add(material.name())) {
-                throw new IllegalStateException("Circular material inheritance detected involving: " + material.name());
-            }
-            var base = materials.get(material.base());
-            try {
-                return alphaDst.orElseGet(() -> base != null ? base.blend.salphaDst(base, materials, visited) : BlendFactor.OneMinusSrcAlpha);
-            } finally {
-                visited.remove(material.name());
-            }
-        }
-
-        @Override
-        public void apply(BrMaterialEntry material, Map<String, BrMaterialEntry> materials) {
-            Set<String> visited = new HashSet<>();
-            GL14.glBlendFuncSeparate(sblendSrc(material, materials, visited).factor, sblendDst(material, materials, visited).factor,
-                    salphaSrc(material, materials, visited).factor, salphaDst(material, materials, visited).factor);
-        }
     }
 
     public record Stencil(
@@ -292,7 +227,7 @@ public record BrMaterialEntry(
             Optional<Integer> stencilWriteMask,
             Optional<Face> frontFace,
             Optional<Face> backFace
-    ) implements ApplyAble {
+    ) {
         public static final MapCodec<Stencil> CODEC = RecordCodecBuilder.mapCodec(ins -> ins.group(
                 Codec.INT.optionalFieldOf("stencilRef").forGetter(Stencil::stencilRef),
                 Codec.INT.optionalFieldOf("stencilRefOverride").forGetter(Stencil::stencilRefOverride),
@@ -301,109 +236,6 @@ public record BrMaterialEntry(
                 Face.CODEC.optionalFieldOf("frontFace").forGetter(Stencil::frontFace),
                 Face.CODEC.optionalFieldOf("backFace").forGetter(Stencil::backFace)
         ).apply(ins, Stencil::new));
-
-        int sStencilRef(BrMaterialEntry material, Map<String, BrMaterialEntry> materials, Set<String> visited) {
-            if (!visited.add(material.name())) {
-                throw new IllegalStateException("Circular material inheritance detected involving: " + material.name());
-            }
-            var base = materials.get(material.base());
-            try {
-                return stencilRef.orElseGet(() -> base != null ? base.stencil.sStencilRef(base, materials, visited) : 0);
-            } finally {
-                visited.remove(material.name());
-            }
-        }
-
-        int sStencilRefOverride(BrMaterialEntry material, Map<String, BrMaterialEntry> materials, Set<String> visited) {
-            if (!visited.add(material.name())) {
-                throw new IllegalStateException("Circular material inheritance detected involving: " + material.name());
-            }
-            var base = materials.get(material.base());
-            try {
-                return stencilRefOverride.orElseGet(() -> base != null ? base.stencil.sStencilRefOverride(base, materials, visited) : 0);
-            } finally {
-                visited.remove(material.name());
-            }
-        }
-
-        int sStencilReadMask(BrMaterialEntry material, Map<String, BrMaterialEntry> materials, Set<String> visited) {
-            if (!visited.add(material.name())) {
-                throw new IllegalStateException("Circular material inheritance detected involving: " + material.name());
-            }
-            var base = materials.get(material.base());
-            try {
-                return stencilReadMask.orElseGet(() -> base != null ? base.stencil.sStencilReadMask(base, materials, visited) : 0xFF);
-            } finally {
-                visited.remove(material.name());
-            }
-        }
-
-        int sStencilWriteMask(BrMaterialEntry material, Map<String, BrMaterialEntry> materials, Set<String> visited) {
-            if (!visited.add(material.name())) {
-                throw new IllegalStateException("Circular material inheritance detected involving: " + material.name());
-            }
-            var base = materials.get(material.base());
-            try {
-                return stencilWriteMask.orElseGet(() -> base != null ? base.stencil.sStencilWriteMask(base, materials, visited) : 0xFF);
-            } finally {
-                visited.remove(material.name());
-            }
-        }
-
-        Face sFrontFace(BrMaterialEntry material, Map<String, BrMaterialEntry> materials, Set<String> visited) {
-            if (!visited.add(material.name())) {
-                throw new IllegalStateException("Circular material inheritance detected involving: " + material.name());
-            }
-            var base = materials.get(material.base());
-            try {
-                return frontFace.orElseGet(() -> base != null ? base.stencil.sFrontFace(base, materials, visited) : Face.DEFAULT_FRONT);
-            } finally {
-                visited.remove(material.name());
-            }
-        }
-
-        Face sBackFace(BrMaterialEntry material, Map<String, BrMaterialEntry> materials, Set<String> visited) {
-            if (!visited.add(material.name())) {
-                throw new IllegalStateException("Circular material inheritance detected involving: " + material.name());
-            }
-            var base = materials.get(material.base());
-            try {
-                return backFace.orElseGet(() -> base != null ? base.stencil.sBackFace(base, materials, visited) : Face.DEFAULT_BACK);
-            } finally {
-                visited.remove(material.name());
-            }
-        }
-
-        @Override
-        public void apply(BrMaterialEntry material, Map<String, BrMaterialEntry> materials) {
-            Set<String> visited = new HashSet<>();
-            int ref = sStencilRefOverride(material, materials, visited);
-            int mask = sStencilReadMask(material, materials, visited);
-            int writeMask = sStencilWriteMask(material, materials, visited);
-
-            Face front = sFrontFace(material, materials, visited);
-            Face back = sBackFace(material, materials, visited);
-
-            // 设置模板测试函数和引用值
-            glStencilFuncSeparate(GL_FRONT, front.stencilFunc().value, ref, mask);
-            glStencilFuncSeparate(GL_BACK, back.stencilFunc().value, ref, mask);
-
-            // 设置模板测试通过/失败操作
-            glStencilOpSeparate(GL_FRONT,
-                    front.stencilFailOp().value,
-                    front.stencilDepthFailOp().value,
-                    front.stencilPassOp().value
-            );
-            glStencilOpSeparate(GL_BACK,
-                    back.stencilFailOp().value,
-                    back.stencilDepthFailOp().value,
-                    back.stencilPassOp().value
-            );
-
-            // 设置写掩码
-            glStencilMaskSeparate(GL_FRONT, writeMask);
-            glStencilMaskSeparate(GL_BACK, writeMask);
-        }
     }
 
     /**

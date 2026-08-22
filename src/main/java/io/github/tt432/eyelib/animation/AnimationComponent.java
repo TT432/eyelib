@@ -147,7 +147,6 @@ public class AnimationComponent {
             }
         });
 
-        new HashMap<>();
         for (var s : this.animate.keySet()) {
             if (s == null) continue;
             var data = s.createData();

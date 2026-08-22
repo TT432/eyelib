@@ -48,7 +48,6 @@ final class BrClipExecutor {
             var boneName = boneEntry.getIntKey();
             var boneAnim = boneEntry.getValue();
             var renderInfoEntry = infos.getData(boneName);
-            if (renderInfoEntry == null) return;
 
             // 空通道短路：无关键帧的通道跳过 `this` 计算与采样。
             boolean hasRotation = boneAnim.hasRotation();
