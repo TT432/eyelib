@@ -38,6 +38,8 @@ public class EntityStatisticsHandler {
         Vec3 pos = entity.position();
         var x = pos.x - entity.xo;
         var z = pos.z - entity.zo;
+        if (x == 0 && z == 0) return;
+
         EntityStatistics data = DataAttachmentHelper.getOrCreate(DataAttachmentTypeRegistry.ENTITY_STATISTICS.get(), entity);
         EntityStatistics updated = EntityStatisticsUpdater.updateDistanceWalked(data, x, z);
         DataAttachmentHelper.setLocal(DataAttachmentTypeRegistry.ENTITY_STATISTICS.get(), entity, updated);

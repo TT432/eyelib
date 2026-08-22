@@ -36,6 +36,10 @@ public final class BehaviorEntityRegistry {
         return Map.copyOf(new LinkedHashMap<>(ENTITIES));
     }
 
+    public static boolean isEmpty() {
+        return ENTITIES.isEmpty();
+    }
+
     public static void clear() {
         ENTITIES.clear();
     }

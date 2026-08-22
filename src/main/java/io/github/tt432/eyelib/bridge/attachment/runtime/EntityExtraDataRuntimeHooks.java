@@ -2,6 +2,7 @@ package io.github.tt432.eyelib.bridge.attachment.runtime;
 
 import io.github.tt432.eyelib.util.entitydata.ExtraEntityDataUpdater;
 import io.github.tt432.eyelib.util.entitydata.ExtraEntityData;
+import io.github.tt432.eyelib.behavior.BehaviorEntityRegistry;
 import io.github.tt432.eyelib.bridge.attachment.dataattach.mc.DataAttachmentHelper;
 import io.github.tt432.eyelib.bridge.attachment.dataattach.mc.adapter.DataAttachmentTypeRegistry;
 import io.github.tt432.eyelib.bridge.attachment.network.adapter.DataAttachmentSyncRuntime;
@@ -53,6 +54,8 @@ public final class EntityExtraDataRuntimeHooks {
     //?} else {
     public static void onLivingTick(EntityTickEvent.Pre event) {
     //?}
+        // 无行为包时没有任何查询消费这些标志，跳过全部观察成本。
+        if (BehaviorEntityRegistry.isEmpty()) return;
         //? if <26.1 {
         if (event.getEntity().level().isClientSide || !(event.getEntity() instanceof Mob mob)) {
         //?} else {

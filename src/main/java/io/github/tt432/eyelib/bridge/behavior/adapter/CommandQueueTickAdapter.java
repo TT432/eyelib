@@ -1,6 +1,7 @@
 package io.github.tt432.eyelib.bridge.behavior.adapter;
 
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import io.github.tt432.eyelib.behavior.BehaviorEntityRegistry;
 import io.github.tt432.eyelib.behavior.EntityBehaviorData;
 import io.github.tt432.eyelib.bridge.attachment.dataattach.mc.DataAttachmentHelper;
 import io.github.tt432.eyelib.bridge.capability.EyelibAttachableData;
@@ -48,6 +49,8 @@ public final class CommandQueueTickAdapter {
     public static void onEvent(EntityTickEvent.Post event) {
     //?}
         Entity entity = event.getEntity();
+        // 无行为包时不存在 ENTITY_BEHAVIOR_DATA 附件与入队命令，全局短路。
+        if (BehaviorEntityRegistry.isEmpty()) return;
         // 仅逻辑服务端执行命令：客户端 tick（含单机集成服务器共享对象）不消费队列，
         // 避免命令重复执行。
         if (!(entity.level() instanceof net.minecraft.server.level.ServerLevel)) return;
