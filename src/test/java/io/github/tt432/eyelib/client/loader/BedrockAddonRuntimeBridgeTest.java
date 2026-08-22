@@ -17,7 +17,7 @@ import io.github.tt432.eyelib.importer.addon.BedrockAddonSideAggregate;
 import io.github.tt432.eyelib.importer.animation.bedrock.BrAnimationSet;
 import io.github.tt432.eyelib.importer.animation.bedrock.controller.BrAnimationControllerSet;
 import io.github.tt432.eyelib.importer.entity.BrClientEntity;
-import io.github.tt432.eyelib.importer.material.BrMaterial;
+import io.github.tt432.eyelib.material.shared.BrMaterial;
 import io.github.tt432.eyelib.model.Model;
 import io.github.tt432.eyelib.importer.render.controller.BrRenderControllers;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;

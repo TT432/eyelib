@@ -9,7 +9,7 @@ import io.github.tt432.eyelib.importer.animation.bedrock.controller.BrAnimationC
 import io.github.tt432.eyelib.importer.block.BrBlock;
 import io.github.tt432.eyelib.importer.entity.BrClientEntity;
 import io.github.tt432.eyelib.importer.item.BrItem;
-import io.github.tt432.eyelib.importer.material.BrMaterialEntry;
+import io.github.tt432.eyelib.material.shared.BrMaterialEntry;
 import io.github.tt432.eyelib.importer.recipe.BrRecipe;
 import io.github.tt432.eyelib.model.Model;
 import io.github.tt432.eyelib.importer.particle.BrParticle;
@@ -59,7 +59,7 @@ public record BedrockAddonAggregate(
         var textureMetadataFiles = new java.util.LinkedHashMap<String, BrTextureMetadataFile>();
         var renderControllerFiles = new java.util.LinkedHashMap<String, io.github.tt432.eyelib.importer.render.controller.BrRenderControllers>();
         var particleFiles = new java.util.LinkedHashMap<String, BrParticle>();
-        var materialFiles = new java.util.LinkedHashMap<String, io.github.tt432.eyelib.importer.material.BrMaterial>();
+        var materialFiles = new java.util.LinkedHashMap<String, io.github.tt432.eyelib.material.shared.BrMaterial>();
         var spawnRulesFiles = new java.util.LinkedHashMap<String, BrSpawnRule>();
         var lootTableFiles = new java.util.LinkedHashMap<String, BrLootTable>();
         var itemFiles = new java.util.LinkedHashMap<String, BrItem>();
@@ -239,7 +239,7 @@ public record BedrockAddonAggregate(
         return resourcePack.particleFiles();
     }
 
-    public Map<String, io.github.tt432.eyelib.importer.material.BrMaterial> materialFiles() {
+    public Map<String, io.github.tt432.eyelib.material.shared.BrMaterial> materialFiles() {
         return resourcePack.materialFiles();
     }
 

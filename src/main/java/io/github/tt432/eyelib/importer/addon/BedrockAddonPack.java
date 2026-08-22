@@ -5,7 +5,7 @@ import io.github.tt432.eyelib.importer.animation.bedrock.controller.BrAnimationC
 import io.github.tt432.eyelib.importer.block.BrBlock;
 import io.github.tt432.eyelib.importer.entity.BrClientEntity;
 import io.github.tt432.eyelib.importer.item.BrItem;
-import io.github.tt432.eyelib.importer.material.BrMaterial;
+import io.github.tt432.eyelib.material.shared.BrMaterial;
 import io.github.tt432.eyelib.importer.model.importer.ImportedImageData;
 import io.github.tt432.eyelib.importer.particle.BrParticle;
 import io.github.tt432.eyelib.importer.recipe.BrRecipe;

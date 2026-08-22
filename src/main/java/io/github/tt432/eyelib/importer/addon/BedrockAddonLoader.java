@@ -14,8 +14,8 @@ import io.github.tt432.eyelib.importer.animation.bedrock.controller.BrAnimationC
 import io.github.tt432.eyelib.importer.block.BrBlock;
 import io.github.tt432.eyelib.importer.entity.BrClientEntity;
 import io.github.tt432.eyelib.importer.item.BrItem;
-import io.github.tt432.eyelib.importer.material.BrMaterial;
-import io.github.tt432.eyelib.importer.material.BrMaterialEntry;
+import io.github.tt432.eyelib.material.shared.BrMaterial;
+import io.github.tt432.eyelib.material.shared.BrMaterialEntry;
 import io.github.tt432.eyelib.importer.model.importer.BedrockGeometryImporter;
 import io.github.tt432.eyelib.importer.model.importer.ImportedImageData;
 import io.github.tt432.eyelib.importer.model.importer.ModelImporter;
@@ -643,12 +643,12 @@ public final class BedrockAddonLoader {
                                         Map<String, BrMaterialEntry> materials) {
         BrMaterial previous = files.get(effectivePath);
         if (previous == null) {
-            files.put(effectivePath, new BrMaterial(new LinkedHashMap<>(materials)));
+            files.put(effectivePath, new BrMaterial(null, new LinkedHashMap<>(materials)));
             return;
         }
         var merged = new LinkedHashMap<>(previous.materials());
         merged.putAll(materials);
-        files.put(effectivePath, new BrMaterial(merged));
+        files.put(effectivePath, new BrMaterial(null, merged));
     }
 
     // BrArchive 低级解析
