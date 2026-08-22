@@ -83,6 +83,9 @@ public final class EntityRenderOrchestrator {
     private static volatile int errorCount = 0;
     private static volatile @Nullable String lastError = null;
 
+    /** 渲染帧序号，onRenderStage 每帧递增；用于同帧内 setup/tick 去重（见 TickStage 条件重估短路）。 */
+    private static long frameCounter = 0;
+
     private EntityRenderOrchestrator() {
     }
 
@@ -140,6 +143,7 @@ public final class EntityRenderOrchestrator {
 
     @OnRenderStage
     public static void onRenderStage(float partialTick, double camX, double camY, double camZ) {
+        frameCounter++;
         PIPELINE.run(new FramePlan(partialTick, camX, camY, camZ));
     }
 
@@ -214,9 +218,12 @@ public final class EntityRenderOrchestrator {
                     RootAnimationParticleSpawner.flushOrphaned(
                             cap.getAnimationComponent(), ParticlePort.getSpawnAdapter());
 
-                    // RC 条件动态重估：条件翻转时重建组件（BE 语义为逐帧评估）
+                    // RC 条件动态重估：条件翻转时重建组件（BE 语义为逐帧评估）。
+                    // 本帧 SetupStage 已做过完整 setup（含条件求值与掩码写入）的实体跳过——
+                    // 同帧内 scope 状态对条件求值无中间变化，重估必然命中同一掩码。
                     var ce = clientEntityComponent.getClientEntity();
                     if (ce != null && !ce.renderControllerConditions().isEmpty()
+                            && cap.getRenderControllerComponent().setupFrameStamp() != frameCounter
                             && evalConditionMask(ce, scope)
                                != cap.getRenderControllerComponent().conditionMask()) {
                         setupClientEntity(ce, cap).forEach(Runnable::run);
@@ -594,7 +601,14 @@ public final class EntityRenderOrchestrator {
             components.clear();
             BrClientEntity ce = appliedClientEntity;
 
+            // texture./geometry./material. 短名仅随 clientEntity/scope 变化，守卫内一次性注入（原每帧重建）
+            MolangScope scope = cap.getScope();
+            if (scope != null && clientEntityComponent.consumeStaticScopeInit(scope)) {
+                RenderControllerEntry.initStaticScope(scope, ce);
+            }
+
             int conditionMask = 0;
+            int modelVersion = clientEntityComponent.getModelVersion();
             for (int i = 0; i < ce.render_controllers().size(); i++) {
                 String renderController = ce.render_controllers().get(i);
                 io.github.tt432.eyelib.molang.MolangValue condition = ce.renderControllerConditions()
@@ -606,10 +620,11 @@ public final class EntityRenderOrchestrator {
                 RenderControllerEntry renderControllerEntry = RenderControllerManager.INSTANCE.get(renderController);
                 RenderControllerComponent.Slot renderControllerSlot = renderControllerComponent.syncSlot(i, renderControllerEntry);
                 if (renderControllerEntry != null && cap.getScope() != null)
-                    components.addAll(renderControllerEntry.setupModel(cap.getScope(), appliedClientEntity, clientEntityComponent.getModels(), renderControllerSlot, syncedActions));
+                    components.addAll(renderControllerEntry.setupModel(cap.getScope(), appliedClientEntity, clientEntityComponent.getModels(), modelVersion, renderControllerSlot, syncedActions));
             }
             renderControllerComponent.setConditionMask(conditionMask);
             renderControllerComponent.trim(ce.render_controllers().size());
+            renderControllerComponent.markSetupFrame(frameCounter);
 
             if (components.isEmpty() && !ce.geometry().isEmpty()) {
                 var entry = ce.geometry().entrySet().stream().findFirst().orElse(null);

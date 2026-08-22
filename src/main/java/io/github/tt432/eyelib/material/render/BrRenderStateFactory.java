@@ -2,6 +2,9 @@ package io.github.tt432.eyelib.material.render;
 
 import io.github.tt432.eyelib.material.gl.GLStates;
 import io.github.tt432.eyelib.material.material.ResolvedBrMaterial;
+import java.util.Collections;
+import java.util.IdentityHashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
@@ -14,7 +17,29 @@ public final class BrRenderStateFactory {
     private BrRenderStateFactory() {
     }
 
+    /**
+     * ResolvedBrMaterial → BrRenderState 记忆化（identity 键：解析结果由 BrMaterialResolver 全局缓存，
+     * 同一材质代际内实例唯一）。原实现每次调用重建 7 个对象，渲染热路径每帧每组件触发 2 次。
+     * 材质重载（onAddonParsed）时经 {@link #clearCache()} 失效。
+     */
+    private static final Map<ResolvedBrMaterial, BrRenderState> CACHE =
+            Collections.synchronizedMap(new IdentityHashMap<>());
+
+    public static void clearCache() {
+        CACHE.clear();
+    }
+
     public static BrRenderState from(ResolvedBrMaterial material) {
+        BrRenderState cached = CACHE.get(material);
+        if (cached != null) {
+            return cached;
+        }
+        BrRenderState computed = compute(material);
+        CACHE.put(material, computed);
+        return computed;
+    }
+
+    private static BrRenderState compute(ResolvedBrMaterial material) {
         boolean blending = material.hasState(GLStates.Blending);
         boolean alphaTest = material.hasDefine("ALPHA_TEST") || material.hasDefine("TINTED_ALPHA_TEST");
         boolean emissive = material.hasDefine("USE_EMISSIVE") || material.hasDefine("USE_ONLY_EMISSIVE");
@@ -50,7 +75,8 @@ public final class BrRenderStateFactory {
                 material.hasState(GLStates.EnableStencilTest) ? Optional.of(material.stencil()) : Optional.empty(),
                 true,
                 true,
-                Set.copyOf(material.defines()),
+                // ResolvedBrMaterial.defines 已是 Set.copyOf 不可变副本（BrMaterialResolver.computeResolve），直接引用
+                material.defines(),
                 material.hasShaders(),
                 emissive
         );

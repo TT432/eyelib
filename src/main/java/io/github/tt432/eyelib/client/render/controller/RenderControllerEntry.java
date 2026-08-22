@@ -85,17 +85,12 @@ public record RenderControllerEntry(
                       .toList();
     }
 
-    public void initArrays(MolangScope scope, BrClientEntity clientEntity) {
-        for (Map<String, List<String>> value : arrays.values()) {
-            value.forEach((name, list) -> {
-                List<MolangDynamicObject> result = new ArrayList<>();
-                for (String s : list) {
-                    result.add(new MolangDynamicObject(() -> scope.get(s.toLowerCase(Locale.ROOT))));
-                }
-                scope.set(name.toLowerCase(Locale.ROOT), new MolangArray<>(result));
-            });
-        }
-
+    /**
+     * 注入 clientEntity 的 texture./geometry./material. 短名到 scope。
+     * 这些值仅随 clientEntity 变化，由 {@link ClientEntityComponent#consumeStaticScopeInit} 守卫，
+     * 不再逐帧执行（原 initArrays 每帧重建全部字符串与 MolangObject）。
+     */
+    public static void initStaticScope(MolangScope scope, BrClientEntity clientEntity) {
         clientEntity.textures().forEach((name, value) -> {
             scope.set("texture." + name.toLowerCase(Locale.ROOT), new MolangString(value));
         });
@@ -109,11 +104,28 @@ public record RenderControllerEntry(
         });
     }
 
+    /**
+     * 注入本 RC 的 arrays 定义到 scope。BE 语义上后求值的 RC 可覆盖同名 array（随条件翻转变化），
+     * 故保留在逐帧 setupModel 路径；RC 未定义 arrays 时为零成本空循环。
+     * 冒烟测试构造独立 scope 时与 {@link #initStaticScope} 配合使用。
+     */
+    public void initArrays(MolangScope scope) {
+        for (Map<String, List<String>> value : arrays.values()) {
+            value.forEach((name, list) -> {
+                List<MolangDynamicObject> result = new ArrayList<>();
+                for (String s : list) {
+                    result.add(new MolangDynamicObject(() -> scope.get(s.toLowerCase(Locale.ROOT))));
+                }
+                scope.set(name.toLowerCase(Locale.ROOT), new MolangArray<>(result));
+            });
+        }
+    }
+
     public List<ModelComponent> setupModel(MolangScope scope, BrClientEntity entity,
-                                           Collection<Model> models,
+                                           Collection<Model> models, int modelVersion,
                                            RenderControllerComponent.Slot renderControllerSlot,
                                            List<Runnable> syncedActions) {
-        initArrays(scope, entity);
+        initArrays(scope);
 
         var geometryResult = get(scope, geometry, "geometry", entity.geometry());
         if ("minecraft:null".equals(geometryResult)) {
@@ -124,15 +136,8 @@ public record RenderControllerEntry(
 
         List<ModelComponent> components = new ArrayList<>();
 
-        // 收集所有骨骼
-        Set<Integer> allBoneIds = new HashSet<>();
-        for (Model model : models) {
-            if (model != null) {
-                for (int id : model.allBones().keySet()) {
-                    if (id >= 0) allBoneIds.add(id);
-                }
-            }
-        }
+        // 收集所有骨骼（按 modelVersion 缓存：骨骼集合静态）
+        Set<Integer> allBoneIds = renderControllerSlot.allBoneIds(models, modelVersion);
 
         // 按 materials 数组顺序处理所有槽位，后面覆盖前面（Bedrock "Saddle will override Mane" 语义）
         // boneId → materialName
@@ -141,7 +146,7 @@ public record RenderControllerEntry(
         for (var entry : materials) {
             String pattern = entry.key();
             String materialName = get(scope, entry.value(), "material", entity.materials());
-            Set<Integer> matchedBones = matchBonePattern(pattern, models);
+            Set<Integer> matchedBones = renderControllerSlot.matchBones(pattern, models, modelVersion);
 
             for (int boneId : matchedBones) {
                 boneMaterialMap.put(boneId, materialName);
@@ -158,15 +163,20 @@ public record RenderControllerEntry(
             materialBoneGroups.computeIfAbsent(entry.getValue(), k -> new LinkedHashSet<>()).add(entry.getKey());
         }
 
-        // 预计算全局 part_visibility（只构造一次，所有组件复用）
-        renderControllerSlot.runtime().setup(models, this);
+        // 预计算全局 part_visibility（按 modelVersion 缓存，所有组件复用）
+        renderControllerSlot.runtime().setup(modelVersion, models, this);
 
         boolean needReloadTexture = renderControllerSlot.needsTextureReload();
 
         float[] rcColor = evalRcColor(scope);
 
         // texture_meshes 体素化贴图（BE 语义：形状由 mesh 短名指定的贴图决定，与图层无关）
-        PortResourceLocation meshTexture = resolveMeshTexture(models, entity, geometryResult);
+        // 按 (modelVersion, 几何名) 缓存：模型与实体纹理表静态，仅几何选择可逐帧变化
+        final String geometryName = geometryResult;
+        PortResourceLocation meshTexture = renderControllerSlot
+                .meshTexture(geometryName, modelVersion,
+                             () -> Optional.ofNullable(resolveMeshTexture(models, entity, geometryName)))
+                .orElse(null);
 
         // 每组骨骼先解析各自的图层纹理列表（texture.material 注入依赖组材质）
         // BE 语义：textures 数组 = 多图层，按数组顺序逐层渲染同一几何（先底层后顶层），不做贴图合并
@@ -202,9 +212,12 @@ public record RenderControllerEntry(
                 comp.setRcColor(rcColor);
                 comp.setMeshTexture(meshTexture);
 
-                Int2BooleanOpenHashMap vis = buildVisibility(allBoneIds, visibleBones);
+                // 直接构建进组件的可见性表（原实现先建临时表再 putAll 复制，多一次分配+拷贝）
+                Int2BooleanOpenHashMap vis = comp.getPartVisibility();
+                for (int id : allBoneIds) {
+                    vis.put(id, visibleBones.contains(id));
+                }
                 renderControllerSlot.runtime().evalPartVisibility(vis, scope);
-                comp.getPartVisibility().putAll(vis);
 
                 components.add(comp);
             }
@@ -244,27 +257,97 @@ public record RenderControllerEntry(
     }
 
     /**
+     * 材质语义标志（multitexture/alphatest/emissive/colorMask）合并计算 + 按 matMap 实例锚定的缓存。
+     * 原实现每个判定方法各自做 find + resolve（含失败后缀/全表扫描），每帧每材质组重复 4 次。
+     * 稳态渲染期间 matMap 不变（Registry COW），缓存命中后零扫描。
+     */
+    private record MaterialFlags(boolean multitexture, boolean alphatest, boolean emissive, boolean colorMask) {
+    }
+
+    private static volatile Map<String, BrMaterialEntry> flagsMatMap = null;
+    private static volatile Map<String, MaterialFlags> flagsCache = Map.of();
+
+    private static MaterialFlags flagsOf(String materialName) {
+        Map<String, BrMaterialEntry> matMap = MaterialManager.INSTANCE.all();
+        if (matMap != flagsMatMap) {
+            flagsMatMap = matMap;
+            flagsCache = new HashMap<>();
+        }
+        MaterialFlags cached = flagsCache.get(materialName);
+        if (cached == null) {
+            cached = computeFlags(materialName, matMap);
+            flagsCache.put(materialName, cached);
+        }
+        return cached;
+    }
+
+    private static MaterialFlags computeFlags(String materialName, Map<String, BrMaterialEntry> matMap) {
+        BrMaterialEntry entry = BrMaterialResolver.find(matMap, materialName).orElse(null);
+        boolean colorMask = entry != null && hasDefineOrFallback(entry, matMap, "USE_COLOR_MASK");
+        boolean emissive = entry != null && hasDefineOrFallback(entry, matMap, "USE_EMISSIVE", "USE_ONLY_EMISSIVE");
+        boolean multitextureDefine = entry != null && hasDefineOrFallback(entry, matMap, "MASKED_MULTITEXTURE");
+        String lower = materialName.toLowerCase(Locale.ROOT);
+        boolean multitexture = colorMask || lower.contains("multitexture") || lower.contains("masked")
+                || multitextureDefine;
+        boolean alphatest = findAlphatestEntry(matMap, materialName)
+                .map(e -> io.github.tt432.eyelib.bridge.material.RenderTypeResolver.isAlphaTest(e, matMap))
+                .orElse(false);
+        return new MaterialFlags(multitexture, alphatest, emissive, colorMask);
+    }
+
+    /** resolve 命中循环继承等异常时回退到 entry 自身 defines.add 扫描（与原各判定方法的兜底一致）。 */
+    private static boolean hasDefineOrFallback(BrMaterialEntry entry, Map<String, BrMaterialEntry> matMap,
+                                               String... defines) {
+        try {
+            var resolved = BrMaterialResolver.resolve(entry, matMap);
+            for (String define : defines) {
+                if (resolved.hasDefine(define)) {
+                    return true;
+                }
+            }
+            return false;
+        } catch (IllegalStateException exception) {
+            return entry.defines().add().stream().flatMap(Collection::stream).anyMatch(d -> {
+                for (String define : defines) {
+                    if (define.equals(d)) {
+                        return true;
+                    }
+                }
+                return false;
+            });
+        }
+    }
+
+    /** alphatest 判定的专用查找：直接命中 → 冒号后缀匹配 → name 字段匹配（与历史实现一致）。 */
+    private static Optional<BrMaterialEntry> findAlphatestEntry(Map<String, BrMaterialEntry> matMap, String materialName) {
+        BrMaterialEntry entry = matMap.get(materialName);
+        if (entry == null) {
+            for (var e : matMap.entrySet()) {
+                String key = e.getKey();
+                int idx = key.lastIndexOf(':');
+                if (idx >= 0 && key.substring(idx + 1).equals(materialName)) {
+                    entry = e.getValue();
+                    break;
+                }
+            }
+        }
+        if (entry == null) {
+            for (var e : matMap.entrySet()) {
+                if (e.getValue().name().equals(materialName)) {
+                    entry = e.getValue();
+                    break;
+                }
+            }
+        }
+        return Optional.ofNullable(entry);
+    }
+
+    /**
      * 判断材质是否支持多图层纹理（BE multitexture/masked 材质族，多采样器）。
      * 命中途径：USE_COLOR_MASK / MASKED_MULTITEXTURE define，或名称含 multitexture/masked。
      */
     private static boolean isMultitextureMaterial(String materialName) {
-        if (usesColorMask(materialName)) {
-            return true;
-        }
-        String name = materialName.toLowerCase(Locale.ROOT);
-        if (name.contains("multitexture") || name.contains("masked")) {
-            return true;
-        }
-        var matMap = MaterialManager.INSTANCE.all();
-        var entry = BrMaterialResolver.find(matMap, materialName).orElse(null);
-        if (entry == null) {
-            return false;
-        }
-        try {
-            return BrMaterialResolver.resolve(entry, matMap).hasDefine("MASKED_MULTITEXTURE");
-        } catch (IllegalStateException exception) {
-            return entry.defines().add().stream().flatMap(Collection::stream).anyMatch("MASKED_MULTITEXTURE"::equals);
-        }
+        return flagsOf(materialName).multitexture();
     }
 
     /**
@@ -366,77 +449,24 @@ public record RenderControllerEntry(
     }
 
     /**
-     * 判断材质是否为 alphatest（非 blending）。
-     * alphatest 材质需要 clamp alpha 以解决 MC cutout shader threshold 0.5
-     * 丢弃 Bedrock 低 alpha 像素的问题。
-     */
-    /**
      * 判断材质是否为发光材质（解析链上含 USE_EMISSIVE / USE_ONLY_EMISSIVE define）。
      * 发光材质的纹理 alpha 是掩码而非半透明，需二值化以防 MC 着色器按阈值丢弃。
      */
     private static boolean isEmissiveMaterial(String materialName) {
-        var matMap = MaterialManager.INSTANCE.all();
-        var entry = BrMaterialResolver.find(matMap, materialName).orElse(null);
-        if (entry == null) {
-            return false;
-        }
-        try {
-            var resolved = BrMaterialResolver.resolve(entry, matMap);
-            return resolved.hasDefine("USE_EMISSIVE") || resolved.hasDefine("USE_ONLY_EMISSIVE");
-        } catch (IllegalStateException exception) {
-            return entry.defines().add().stream().flatMap(Collection::stream)
-                        .anyMatch(d -> "USE_EMISSIVE".equals(d) || "USE_ONLY_EMISSIVE".equals(d));
-        }
-    }
-
-    private static boolean isAlphatestMaterial(String materialName) {
-        var matMap = MaterialManager.INSTANCE.all();
-        var entry = matMap.get(materialName);
-        if (entry == null) {
-            // 尝试 suffix 查找
-            for (var e : matMap.entrySet()) {
-                String key = e.getKey();
-                int idx = key.lastIndexOf(':');
-                if (idx >= 0 && key.substring(idx + 1).equals(materialName)) {
-                    entry = e.getValue();
-                    break;
-                }
-            }
-        }
-        if (entry == null) {
-            // 尝试 name 字段查找
-            for (var e : matMap.entrySet()) {
-                if (e.getValue().name().equals(materialName)) {
-                    entry = e.getValue();
-                    break;
-                }
-            }
-        }
-        return entry != null && io.github.tt432.eyelib.bridge.material.RenderTypeResolver.isAlphaTest(entry, matMap);
-    }
-
-    private static boolean usesColorMask(String materialName) {
-        var matMap = MaterialManager.INSTANCE.all();
-        var entry = BrMaterialResolver.find(matMap, materialName).orElse(null);
-        if (entry == null) {
-            return false;
-        }
-        try {
-            return BrMaterialResolver.resolve(entry, matMap).hasDefine("USE_COLOR_MASK");
-        } catch (IllegalStateException exception) {
-            return entry.defines().add().stream().flatMap(Collection::stream).anyMatch("USE_COLOR_MASK"::equals);
-        }
+        return flagsOf(materialName).emissive();
     }
 
     /**
-     * 构建partVisibility：全骨骼初始为false，仅指定集合设为true。
+     * 判断材质是否为 alphatest（非 blending）。
+     * alphatest 材质需要 clamp alpha 以解决 MC cutout shader threshold 0.5
+     * 丢弃 Bedrock 低 alpha 像素的问题。
      */
-    private static Int2BooleanOpenHashMap buildVisibility(Set<Integer> allBoneIds, Set<Integer> visibleBones) {
-        Int2BooleanOpenHashMap vis = new Int2BooleanOpenHashMap();
-        for (int id : allBoneIds) {
-            vis.put(id, visibleBones.contains(id));
-        }
-        return vis;
+    private static boolean isAlphatestMaterial(String materialName) {
+        return flagsOf(materialName).alphatest();
+    }
+
+    private static boolean usesColorMask(String materialName) {
+        return flagsOf(materialName).colorMask();
     }
 
     /**
@@ -455,7 +485,7 @@ public record RenderControllerEntry(
                 || (isPrefix ? boneName.startsWith(lookup) : boneName.equals(lookup));
     }
 
-    private static Set<Integer> matchBonePattern(String pattern, Collection<Model> models) {
+    public static Set<Integer> matchBonePattern(String pattern, Collection<Model> models) {
         Set<Integer> result = new HashSet<>();
         for (Model model : models) {
             if (model == null) continue;

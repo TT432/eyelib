@@ -112,7 +112,30 @@ public interface RenderTypeResolver {
     }
 
     public static PortRenderPass resolve(PortResourceLocation texture, ResolvedBrMaterial material) {
-        return BrRenderTypeFactory.create(texture, BrRenderStateFactory.from(material));
+        Map<PortResourceLocation, PortRenderPass> byTexture = RESOLVED_PASS_CACHE.get(material);
+        if (byTexture != null) {
+            PortRenderPass cached = byTexture.get(texture);
+            if (cached != null) {
+                return cached;
+            }
+        }
+        PortRenderPass created = BrRenderTypeFactory.create(texture, BrRenderStateFactory.from(material));
+        RESOLVED_PASS_CACHE.computeIfAbsent(material, m -> new ConcurrentHashMap<>()).put(texture, created);
+        return created;
+    }
+
+    /**
+     * (ResolvedBrMaterial identity, texture) → PortRenderPass 缓存。
+     * ResolvedBrMaterial 由 BrMaterialResolver 全局缓存（同一材质代际内实例唯一），
+     * 渲染热路径每帧每组件的 Key/BridgeRenderPass 分配由此消除。
+     */
+    Map<ResolvedBrMaterial, Map<PortResourceLocation, PortRenderPass>> RESOLVED_PASS_CACHE =
+            java.util.Collections.synchronizedMap(new java.util.IdentityHashMap<>());
+
+    /** 材质代际更换（addon 重载）后清空派生缓存：pass 缓存与 BrRenderState 记忆化。 */
+    static void clearDerivedCaches() {
+        RESOLVED_PASS_CACHE.clear();
+        BrRenderStateFactory.clearCache();
     }
 
     public static boolean isSolid(ResolvedBrMaterial material) {

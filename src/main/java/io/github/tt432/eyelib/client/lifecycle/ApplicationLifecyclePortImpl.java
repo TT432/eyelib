@@ -51,6 +51,8 @@ public final class ApplicationLifecyclePortImpl implements ApplicationLifecycleP
     @Override
     public void onAddonParsed(BedrockAddon addon) {
         BedrockAddonRuntimeBridge.replaceFromAddon(addon);
+        // 材质表代际更换：清空由 ResolvedBrMaterial 身份键控的派生缓存
+        io.github.tt432.eyelib.bridge.material.RenderTypeResolver.clearDerivedCaches();
         io.github.tt432.eyelib.bridge.client.sound.AddonSoundPort.triggerSoundReload();
     }
 }

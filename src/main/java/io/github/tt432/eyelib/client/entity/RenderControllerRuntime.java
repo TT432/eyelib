@@ -20,6 +20,10 @@ import java.util.Collection;
 public class RenderControllerRuntime {
     @Nullable
     private Int2ObjectMap<ReferenceList<MolangValue>> partVisibility;
+    /** partVisibility 预计算的来源版本：models 内容与 RC 实例不变时跳过重算（骨骼集合与 pattern 均静态）。 */
+    private int cachedModelVersion = -1;
+    @Nullable
+    private RenderControllerEntry cachedRenderController;
 
     /**
      * 应用预计算的part_visibility条件到指定可见性映射。
@@ -40,7 +44,13 @@ public class RenderControllerRuntime {
         }
     }
 
-    public void setup(Collection<Model> models, RenderControllerEntry renderController) {
+    public void setup(int modelVersion, Collection<Model> models, RenderControllerEntry renderController) {
+        if (cachedModelVersion == modelVersion && cachedRenderController == renderController && partVisibility != null) {
+            return;
+        }
+        cachedModelVersion = modelVersion;
+        cachedRenderController = renderController;
+
         Int2ObjectOpenHashMap<ReferenceList<MolangValue>> part = new Int2ObjectOpenHashMap<>();
         partVisibility = part;
         models.stream().filter(java.util.Objects::nonNull).forEach(model -> {

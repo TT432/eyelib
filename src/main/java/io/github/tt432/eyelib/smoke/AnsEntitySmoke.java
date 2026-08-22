@@ -196,7 +196,8 @@ public class AnsEntitySmoke {
             }
 
             MolangScope rcScope = new MolangScope();
-            rcEntry.initArrays(rcScope, entity);
+            RenderControllerEntry.initStaticScope(rcScope, entity);
+            rcEntry.initArrays(rcScope);
 
             tryEval(errors, entityId, rcName + ".geometry", () -> rcEntry.geometry().getObject(rcScope));
 

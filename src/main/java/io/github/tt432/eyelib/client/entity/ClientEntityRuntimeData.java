@@ -17,6 +17,10 @@ import java.util.Collections;
 public class ClientEntityRuntimeData {
     private final ModelResolver modelResolver;
     final Object2ObjectMap<String, Model> models = new Object2ObjectOpenHashMap<>();
+    /** models() 的缓存视图：live view 包裹，sync 重建 models 内容时自动反映，避免每次调用新分配。 */
+    private final Collection<Model> modelsView = Collections.unmodifiableCollection(models.values());
+    /** models 内容的版本号；sync 实际重建时递增，供骨骼匹配/part_visibility 等派生缓存按版本失效。 */
+    private int modelVersion;
     @Nullable
     private BrClientEntity appliedClientEntity;
 
@@ -35,6 +39,7 @@ public class ClientEntityRuntimeData {
 
         appliedClientEntity = clientEntity;
         models.clear();
+        modelVersion++;
 
         if (clientEntity == null) {
             return true;
@@ -48,6 +53,11 @@ public class ClientEntityRuntimeData {
     }
 
     public Collection<Model> models() {
-        return Collections.unmodifiableCollection(models.values());
+        return modelsView;
+    }
+
+    /** models 内容版本；RC 槽位缓存（骨骼匹配、part_visibility 预计算）按此失效。 */
+    public int modelVersion() {
+        return modelVersion;
     }
 }
