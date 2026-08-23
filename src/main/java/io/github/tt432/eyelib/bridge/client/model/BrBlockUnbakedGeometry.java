@@ -50,9 +50,10 @@ import java.util.function.Function;
 /**
  * 把 eyelib Bedrock 模型烘焙为 vanilla BakedModel（区块网格 / 物品渲染共用）。
  *
- * <p>坐标约定：eyelib 模型空间为 0..1 块单位，{@link ModelVisitor#visitPreModel}
- * 绕原点转 Y180° 后落到 [-1,0]x/z；这里预置 {@code modelState · translate(1,0,1)}，
- * 组合后顶点落在 vanilla 方块空间 [0,1]³，朝向与实体/attachable 渲染一致。</p>
+ * <p>坐标约定：importer 把 Blockbench/Bedrock 的 x 取反，模型空间为 x∈[-1,0]、
+ * y∈[0,h]、z∈[0,1] 块单位；{@link ModelVisitor#visitPreModel} 绕原点转 Y180°
+ * （x,z 同时取反），故预置 {@code modelState · translate(0,0,1)}，组合后顶点落在
+ * vanilla 方块空间 [0,1]³，朝向与实体/attachable 渲染一致。</p>
  *
  * <p>纹理走 vanilla 图集：模型 JSON 的 {@code textures.texture} 解析为
  * {@link TextureAtlasSprite}，UV（已归一 0..1）经 {@link TextureAtlasSprite#getU}/{@link #getV}
@@ -88,8 +89,9 @@ public class BrBlockUnbakedGeometry extends SimpleUnbakedGeometry<BrBlockUnbaked
 
         PoseStack poseStack = new PoseStack();
         poseStack.pushPose();
-        // 预置 modelState · T(1,0,1)；visitPreModel 再右乘 R180 → 最终 = modelState · T · R180 · 骨骼 · 顶点
-        poseStack.last().pose().set(new Matrix4f(modelTransform.getRotation().getMatrix()).translate(1, 0, 1));
+        // 预置 modelState · T(0,0,1)；visitPreModel 再右乘 R180 → 最终 = modelState · T · R180 · 骨骼 · 顶点
+        // 模型空间 x∈[-1,0]/z∈[0,1]，R180 后 x∈[0,1]/z∈[-1,0]，T(0,0,1) 把 z 抬回 [0,1]
+        poseStack.last().pose().set(new Matrix4f(modelTransform.getRotation().getMatrix()).translate(0, 0, 1));
         poseStack.last().normal().set(new Matrix3f(modelTransform.getRotation().getNormalMatrix()));
 
         ModelRenderer.render(RenderParams.noRender(poseStack), model, ModelRuntimeData.EMPTY,
