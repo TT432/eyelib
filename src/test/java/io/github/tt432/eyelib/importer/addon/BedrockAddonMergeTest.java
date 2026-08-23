@@ -91,6 +91,8 @@ class BedrockAddonMergeTest {
                 new LinkedHashMap<>(), // soundIndexFiles
                 new LinkedHashMap<>(), // soundDefinitionFiles
                 new LinkedHashMap<>(), // languageFiles
+                new LinkedHashMap<>(), // fogFiles
+                new LinkedHashMap<>(), // uiFiles
                 new LinkedHashMap<>(), // behaviorEntityFiles
                 soundFiles,            // soundFiles
                 new LinkedHashMap<>(), // textureIndexFiles

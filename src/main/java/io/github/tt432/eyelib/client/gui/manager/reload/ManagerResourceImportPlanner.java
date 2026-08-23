@@ -5,6 +5,8 @@ import com.google.gson.JsonObject;
 import io.github.tt432.eyelib.animation.bedrock.BrAnimation;
 import io.github.tt432.eyelib.animation.bedrock.controller.BrAnimationControllers;
 import io.github.tt432.eyelib.bridge.client.render.texture.NativeImagePort;
+import io.github.tt432.eyelib.bridge.client.sound.AddonSoundPort;
+import io.github.tt432.eyelib.bridge.client.language.AddonLangPort;
 import io.github.tt432.eyelib.bridge.event.TextureChangedEventPublisher;
 import io.github.tt432.eyelib.util.codec.CodecOps;
 import io.github.tt432.eyelib.client.loader.BedrockAddonRuntimeBridge;
@@ -18,6 +20,15 @@ import io.github.tt432.eyelib.client.render.controller.RenderControllerEntry;
 import io.github.tt432.eyelib.client.render.controller.RenderControllers;
 import io.github.tt432.eyelib.importer.addon.BedrockAddon;
 import io.github.tt432.eyelib.importer.addon.BedrockAddonLoader;
+import io.github.tt432.eyelib.importer.addon.BedrockBinaryAsset;
+import io.github.tt432.eyelib.importer.addon.BrSoundDefinitions;
+import io.github.tt432.eyelib.importer.addon.BrLanguageFile;
+import io.github.tt432.eyelib.importer.addon.BrFog;
+import io.github.tt432.eyelib.importer.addon.BrUiFile;
+import io.github.tt432.eyelib.importer.addon.FogAssetRegistry;
+import io.github.tt432.eyelib.importer.addon.LangAssetRegistry;
+import io.github.tt432.eyelib.importer.addon.SoundAssetRegistry;
+import io.github.tt432.eyelib.importer.addon.UiAssetRegistry;
 import io.github.tt432.eyelib.importer.animation.bedrock.BrAnimationSet;
 import io.github.tt432.eyelib.importer.animation.bedrock.controller.BrAnimationControllerSet;
 import io.github.tt432.eyelib.importer.entity.BrClientEntity;
@@ -54,7 +65,8 @@ public final class ManagerResourceImportPlanner {
         if (addon.isPresent()) {
             BedrockAddon addonValue = addon.get();
             BedrockAddonRuntimeBridge.replaceFromAddon(addonValue);
-            io.github.tt432.eyelib.bridge.client.sound.AddonSoundPort.triggerSoundReload();
+            AddonSoundPort.triggerSoundReload();
+            AddonLangPort.triggerLangReload();
             ParticleResourcePublication.replaceFromSchemas("manager-import", addonValue.aggregate()
                                                                      .resourcePack()
                                                                      .particleFiles(), logger);
@@ -187,6 +199,115 @@ public final class ManagerResourceImportPlanner {
         }
 
         loadTextures(basePath);
+        reloadSoundsFromDisk(basePath, logger);
+        reloadLangsFromDisk(basePath, logger);
+        reloadFogsFromDisk(basePath, logger);
+        reloadUiFilesFromDisk(basePath, logger);
+    }
+
+    /** 重扫 fogs/ 子树并整体替换 FogAssetRegistry（按 identifier 键控）。无激活 fog 时不影响 vanilla 雾。 */
+    private static void reloadFogsFromDisk(Path basePath, Logger logger) {
+        List<Path> fogPaths = ManagerResourceBatchPlanner.collectFogFiles(basePath, logger);
+
+        Map<String, BrFog> fogsById = new LinkedHashMap<>();
+        for (Path fogPath : fogPaths) {
+            try {
+                BrFog fog = BrFog.parse(GSON.fromJson(Files.readString(fogPath, StandardCharsets.UTF_8), JsonObject.class));
+                fogsById.put(fog.identifier(), fog);
+            } catch (Exception exception) {
+                logger.error("can't load fog file {}.", fogPath, exception);
+            }
+        }
+
+        if (fogsById.isEmpty()) {
+            return;
+        }
+
+        FogAssetRegistry.stageFogs(fogsById);
+    }
+
+    /** 重扫 ui/ 子树并整体替换 UiAssetRegistry；预览屏按 version() 轮询自动重建，无需触发器。 */
+    private static void reloadUiFilesFromDisk(Path basePath, Logger logger) {
+        List<Path> uiPaths = ManagerResourceBatchPlanner.collectUiFiles(basePath, logger);
+
+        Map<String, BrUiFile> uiFiles = new LinkedHashMap<>();
+        for (Path uiPath : uiPaths) {
+            String relativeKey = ManagerResourceReloadPlan.toRelativeKey(basePath, uiPath);
+            // _ui_defs.json 是引用清单，无语义内容
+            if (relativeKey.endsWith("_ui_defs.json")) {
+                continue;
+            }
+            try {
+                uiFiles.put(relativeKey, BrUiFile.parse(
+                        GSON.fromJson(Files.readString(uiPath, StandardCharsets.UTF_8), JsonObject.class)));
+            } catch (Exception exception) {
+                logger.error("can't load ui file {}.", uiPath, exception);
+            }
+        }
+
+        if (uiFiles.isEmpty()) {
+            return;
+        }
+
+        UiAssetRegistry.stageUiFiles(uiFiles);
+    }
+
+    /**
+     * 重扫 texts/ 子树并整体替换 LangAssetRegistry（stageLangFiles 仅整体替换语义），
+     * 再定向重载 LanguageManager 使合成 lang json 生效。空目录不动注册表（upsert 语义）。
+     */
+    private static void reloadLangsFromDisk(Path basePath, Logger logger) {
+        List<Path> langPaths = ManagerResourceBatchPlanner.collectLangFiles(basePath, logger);
+
+        Map<String, BrLanguageFile> langFiles = new LinkedHashMap<>();
+        for (Path langPath : langPaths) {
+            String relativeKey = ManagerResourceReloadPlan.toRelativeKey(basePath, langPath);
+            try {
+                langFiles.put(relativeKey, BrLanguageFile.parse(Files.readString(langPath, StandardCharsets.UTF_8)));
+            } catch (Exception exception) {
+                logger.error("can't load lang file {}.", langPath, exception);
+            }
+        }
+
+        if (langFiles.isEmpty()) {
+            return;
+        }
+
+        LangAssetRegistry.stageLangFiles(langFiles);
+        AddonLangPort.triggerLangReload();
+    }
+
+    /**
+     * 重扫 sounds/ 子树并整体替换 SoundAssetRegistry（stageSounds 仅整体替换语义），
+     * 再局部重建 SoundManager 使新合成的 sounds.json 生效。空目录不动注册表（upsert 语义）。
+     */
+    private static void reloadSoundsFromDisk(Path basePath, Logger logger) {
+        List<Path> soundPaths = ManagerResourceBatchPlanner.collectSoundFiles(basePath, logger);
+
+        Map<String, BrSoundDefinitions> definitionFiles = new LinkedHashMap<>();
+        Map<String, BedrockBinaryAsset> soundFiles = new LinkedHashMap<>();
+
+        for (Path soundPath : soundPaths) {
+            String relativeKey = ManagerResourceReloadPlan.toRelativeKey(basePath, soundPath);
+            try {
+                if (relativeKey.endsWith("sound_definitions.json")) {
+                    definitionFiles.put(relativeKey, BrSoundDefinitions.parse(
+                            GSON.fromJson(Files.readString(soundPath, StandardCharsets.UTF_8), JsonObject.class)));
+                } else {
+                    String extension = relativeKey.substring(relativeKey.lastIndexOf('.') + 1);
+                    soundFiles.put(relativeKey, new BedrockBinaryAsset(extension, Files.readAllBytes(soundPath)));
+                }
+            } catch (Exception exception) {
+                logger.error("can't load sound file {}.", soundPath, exception);
+            }
+        }
+
+        if (definitionFiles.isEmpty() && soundFiles.isEmpty()) {
+            return;
+        }
+
+        SoundAssetRegistry.stageSounds(definitionFiles, soundFiles);
+        AddonSoundPort.triggerSoundReload();
     }
 
     private static void loadAddonTextures(Map<String, ImportedImageData> textures) {
@@ -278,6 +399,17 @@ public final class ManagerResourceImportPlanner {
                     NativeImagePort.evictDerivedTextures();
                     TextureChangedEventPublisher.post();
                 }
+                case TEXTURE_TGA -> {
+                    NativeImagePort.uploadFromImportedImageData(
+                            ManagerResourceReloadPlan.toTextureKey(basePath, file),
+                            Objects.requireNonNull(ImportedImageData.decodeTga(Files.readAllBytes(file))));
+                    NativeImagePort.evictDerivedTextures();
+                    TextureChangedEventPublisher.post();
+                }
+                case SOUND_DEFINITION_JSON, SOUND_FILE -> reloadSoundsFromDisk(basePath, logger);
+                case TEXT_LANG -> reloadLangsFromDisk(basePath, logger);
+                case FOG_JSON -> reloadFogsFromDisk(basePath, logger);
+                case UI_JSON -> reloadUiFilesFromDisk(basePath, logger);
                 case UNSUPPORTED -> {
                 }
             }
@@ -287,17 +419,26 @@ public final class ManagerResourceImportPlanner {
     }
 
     private static void loadTextures(Path basePath) {
-        List<Path> pngFiles = ManagerResourceBatchPlanner.collectTexturePngFiles(basePath, LOGGER);
+        List<Path> textureFiles = ManagerResourceBatchPlanner.collectTextureFiles(basePath, LOGGER);
 
-        pngFiles.forEach(pngFile -> {
-            try (InputStream inputStream = Files.newInputStream(pngFile)) {
-                NativeImagePort.loadAndUpload(ManagerResourceReloadPlan.toTextureKey(basePath, pngFile), inputStream);
+        textureFiles.forEach(textureFile -> {
+            try {
+                String textureKey = ManagerResourceReloadPlan.toTextureKey(basePath, textureFile);
+                if (textureKey.endsWith(".tga")) {
+                    NativeImagePort.uploadFromImportedImageData(
+                            textureKey,
+                            Objects.requireNonNull(ImportedImageData.decodeTga(Files.readAllBytes(textureFile))));
+                } else {
+                    try (InputStream inputStream = Files.newInputStream(textureFile)) {
+                        NativeImagePort.loadAndUpload(textureKey, inputStream);
+                    }
+                }
             } catch (IOException e) {
                 LOGGER.error("can't load file.", e);
             }
         });
 
-        if (!pngFiles.isEmpty()) {
+        if (!textureFiles.isEmpty()) {
             NativeImagePort.evictDerivedTextures();
             TextureChangedEventPublisher.post();
         }

@@ -29,6 +29,8 @@ public record BedrockAddonPack(
         LinkedHashMap<String, BrSoundIndex> soundIndexFiles,
         LinkedHashMap<String, BrSoundDefinitions> soundDefinitionFiles,
         LinkedHashMap<String, BrLanguageFile> languageFiles,
+        LinkedHashMap<String, BrFog> fogFiles,
+        LinkedHashMap<String, BrUiFile> uiFiles,
         LinkedHashMap<String, BrBehaviorEntityFile> behaviorEntityFiles,
         LinkedHashMap<String, BedrockBinaryAsset> soundFiles,
         LinkedHashMap<String, BrTextureIndexFile> textureIndexFiles,
@@ -57,6 +59,8 @@ public record BedrockAddonPack(
         soundIndexFiles = new LinkedHashMap<>(soundIndexFiles);
         soundDefinitionFiles = new LinkedHashMap<>(soundDefinitionFiles);
         languageFiles = new LinkedHashMap<>(languageFiles);
+        fogFiles = new LinkedHashMap<>(fogFiles);
+        uiFiles = new LinkedHashMap<>(uiFiles);
         behaviorEntityFiles = new LinkedHashMap<>(behaviorEntityFiles);
         soundFiles = new LinkedHashMap<>(soundFiles);
         textureIndexFiles = new LinkedHashMap<>(textureIndexFiles);

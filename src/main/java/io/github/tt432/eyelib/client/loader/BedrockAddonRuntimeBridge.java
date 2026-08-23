@@ -7,6 +7,9 @@ import io.github.tt432.eyelib.client.manager.ModelManager;
 import io.github.tt432.eyelib.client.manager.RenderControllerManager;
 import io.github.tt432.eyelib.client.registry.AnimationAssetRegistry;
 import io.github.tt432.eyelib.importer.addon.SoundAssetRegistry;
+import io.github.tt432.eyelib.importer.addon.LangAssetRegistry;
+import io.github.tt432.eyelib.importer.addon.FogAssetRegistry;
+import io.github.tt432.eyelib.importer.addon.UiAssetRegistry;
 import io.github.tt432.eyelib.importer.entity.BrClientEntity;
 import io.github.tt432.eyelib.client.render.controller.RenderControllerEntry;
 import io.github.tt432.eyelib.client.render.controller.RenderControllers;
@@ -93,6 +96,9 @@ public final class BedrockAddonRuntimeBridge {
         AnimationAssetRegistry.stageAnimations(ADDON_SOURCE_KEY, toRuntimeAnimations(resourcePack.animations()));
         AnimationAssetRegistry.stageControllers(ADDON_SOURCE_KEY, toRuntimeAnimationControllers(resourcePack.animationControllers()));
         SoundAssetRegistry.stageSounds(resourcePack.soundDefinitionFiles(), resourcePack.soundFiles());
+        LangAssetRegistry.stageLangFiles(resourcePack.languageFiles());
+        FogAssetRegistry.stageFogs(resourcePack.fogsByIdentifier());
+        UiAssetRegistry.stageUiFiles(resourcePack.uiFiles());
         // 叠加客户端实体（保留 BrClientEntityLoader 加载的 mod 自带条目；阴影语义支持卸载）
         {
             java.util.LinkedHashMap<String, BrClientEntity> flattened = new java.util.LinkedHashMap<>();

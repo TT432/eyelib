@@ -33,6 +33,8 @@ public record BedrockAddonSideAggregate(
         LinkedHashMap<String, BrSoundIndex> soundIndexFiles,
         LinkedHashMap<String, BrSoundDefinitions> soundDefinitionFiles,
         LinkedHashMap<String, BrLanguageFile> languageFiles,
+        LinkedHashMap<String, BrFog> fogFiles,
+        LinkedHashMap<String, BrUiFile> uiFiles,
         LinkedHashMap<String, BedrockBinaryAsset> soundFiles,
         LinkedHashMap<String, BrTextureIndexFile> textureIndexFiles,
         LinkedHashMap<String, BrTextureMetadataFile> textureMetadataFiles,
@@ -69,7 +71,9 @@ public record BedrockAddonSideAggregate(
             linkedHashMapCodec(BrParticle.CODEC).optionalFieldOf("particle_files", new LinkedHashMap<>()).forGetter(BedrockAddonSideAggregate::particleFiles),
             linkedHashMapCodec(BrMaterial.CODEC).optionalFieldOf("material_files", new LinkedHashMap<>()).forGetter(BedrockAddonSideAggregate::materialFiles)
     ).apply(ins, (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p) ->
-            new BedrockAddonSideAggregate(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p,
+            new BedrockAddonSideAggregate(a, b, c, d, e, f, g, h, i, j,
+                    new LinkedHashMap<>(), new LinkedHashMap<>(),
+                    k, l, m, n, o, p,
                     new LinkedHashMap<>(), new LinkedHashMap<>(), new LinkedHashMap<>(), new LinkedHashMap<>(), new LinkedHashMap<>(), new LinkedHashMap<>())
     ));
     // 外部可见的 CODEC 委托给 16 字段版
@@ -85,6 +89,8 @@ public record BedrockAddonSideAggregate(
         soundIndexFiles = new LinkedHashMap<>(soundIndexFiles);
         soundDefinitionFiles = new LinkedHashMap<>(soundDefinitionFiles);
         languageFiles = new LinkedHashMap<>(languageFiles);
+        fogFiles = new LinkedHashMap<>(fogFiles);
+        uiFiles = new LinkedHashMap<>(uiFiles);
         soundFiles = new LinkedHashMap<>(soundFiles);
         textureIndexFiles = new LinkedHashMap<>(textureIndexFiles);
         textureMetadataFiles = new LinkedHashMap<>(textureMetadataFiles);
@@ -101,6 +107,8 @@ public record BedrockAddonSideAggregate(
 
     public static BedrockAddonSideAggregate empty() {
         return new BedrockAddonSideAggregate(
+                new LinkedHashMap<>(),
+                new LinkedHashMap<>(),
                 new LinkedHashMap<>(),
                 new LinkedHashMap<>(),
                 new LinkedHashMap<>(),
@@ -139,6 +147,12 @@ public record BedrockAddonSideAggregate(
     public Map<String, BrParticle> particlesByIdentifier() {
         LinkedHashMap<String, BrParticle> flattened = new LinkedHashMap<>();
         particleFiles.forEach((path, particle) -> flattened.put(particle.particleEffect().description().identifier(), particle));
+        return Map.copyOf(flattened);
+    }
+
+    public Map<String, BrFog> fogsByIdentifier() {
+        LinkedHashMap<String, BrFog> flattened = new LinkedHashMap<>();
+        fogFiles.forEach((path, fog) -> flattened.put(fog.identifier(), fog));
         return Map.copyOf(flattened);
     }
 

@@ -273,10 +273,22 @@ public final class BedrockAddonLoader {
                 if (entry.lowerEffectivePath().endsWith("languages.json")) break;
                 acc.languageFiles.put(entry.effectivePath(), BrLanguageFile.parse(readString(entry)));
             }
+            case UI -> {
+                // _ui_defs.json 是引用清单，无语义内容
+                if (entry.lowerEffectivePath().endsWith("_ui_defs.json")) break;
+                try {
+                    acc.uiFiles.put(entry.effectivePath(), BrUiFile.parse(readJsonFile(entry)));
+                } catch (RuntimeException e) {
+                    captureUnmanaged(acc, entry, BedrockUnmanagedReason.SCHEMA_PARSE_FAILED, true,
+                            "UI parse: " + e.getMessage());
+                }
+            }
             case BEHAVIOR_ENTITY ->
                 acc.behaviorEntityFiles.put(entry.effectivePath(), BrBehaviorEntityFile.parse(readJsonFile(entry)));
             case SPAWN_RULE ->
                 acc.spawnRulesFiles.put(entry.effectivePath(), BrSpawnRule.parse(readJsonFile(entry)));
+            case FOG ->
+                acc.fogFiles.put(entry.effectivePath(), BrFog.parse(readJsonFile(entry)));
             case SOUND_FILE ->
                 acc.soundFiles.put(entry.effectivePath(), new BedrockBinaryAsset(extensionOf(entry.effectivePath()),
                         readBytes(entry)));
@@ -323,6 +335,8 @@ public final class BedrockAddonLoader {
         final LinkedHashMap<String, BrSoundIndex> soundIndexFiles = new LinkedHashMap<>();
         final LinkedHashMap<String, BrSoundDefinitions> soundDefinitionFiles = new LinkedHashMap<>();
         final LinkedHashMap<String, BrLanguageFile> languageFiles = new LinkedHashMap<>();
+        final LinkedHashMap<String, BrFog> fogFiles = new LinkedHashMap<>();
+        final LinkedHashMap<String, BrUiFile> uiFiles = new LinkedHashMap<>();
         final LinkedHashMap<String, BedrockBinaryAsset> soundFiles = new LinkedHashMap<>();
         final LinkedHashMap<String, BrTextureIndexFile> textureIndexFiles = new LinkedHashMap<>();
         final LinkedHashMap<String, BrTextureMetadataFile> textureMetadataFiles = new LinkedHashMap<>();
@@ -396,7 +410,7 @@ public final class BedrockAddonLoader {
                     sourceName(), manifest, selectedSubpack,
                     animationFiles, animationControllerFiles,
                     clientEntityFiles, attachables, modelFiles, textures,
-                    soundIndexFiles, soundDefinitionFiles, languageFiles,
+                    soundIndexFiles, soundDefinitionFiles, languageFiles, fogFiles, uiFiles,
                     behaviorEntityFiles, soundFiles,
                     textureIndexFiles, textureMetadataFiles,
                     renderControllerFiles, particleFiles, materialFiles,
@@ -765,7 +779,7 @@ public final class BedrockAddonLoader {
         return switch (family) {
             case ITEM, BLOCK, RECIPE, SPAWN_RULE, TRADING, FEATURE, FEATURE_RULE, STRUCTURE, SCRIPT, BIOME ->
                     BedrockUnmanagedReason.OUTSIDE_IMPORTER_SCOPE;
-            case UI, FOG, UNKNOWN_JSON, UNKNOWN_TEXT, UNKNOWN_BINARY ->
+            case UNKNOWN_JSON, UNKNOWN_TEXT, UNKNOWN_BINARY ->
                     BedrockUnmanagedReason.NO_TYPED_SCHEMA_YET;
             default -> BedrockUnmanagedReason.UNKNOWN_LAYOUT;
         };

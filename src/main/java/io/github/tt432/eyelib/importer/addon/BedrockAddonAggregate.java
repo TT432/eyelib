@@ -54,6 +54,8 @@ public record BedrockAddonAggregate(
         var soundIndexFiles = new java.util.LinkedHashMap<String, BrSoundIndex>();
         var soundDefinitionFiles = new java.util.LinkedHashMap<String, BrSoundDefinitions>();
         var languageFiles = new java.util.LinkedHashMap<String, BrLanguageFile>();
+        var fogFiles = new java.util.LinkedHashMap<String, BrFog>();
+        var uiFiles = new java.util.LinkedHashMap<String, BrUiFile>();
         var soundFiles = new java.util.LinkedHashMap<String, BedrockBinaryAsset>();
         var textureIndexFiles = new java.util.LinkedHashMap<String, BrTextureIndexFile>();
         var textureMetadataFiles = new java.util.LinkedHashMap<String, BrTextureMetadataFile>();
@@ -78,6 +80,8 @@ public record BedrockAddonAggregate(
             soundIndexFiles.putAll(pack.soundIndexFiles());
             soundDefinitionFiles.putAll(pack.soundDefinitionFiles());
             languageFiles.putAll(pack.languageFiles());
+            fogFiles.putAll(pack.fogFiles());
+            uiFiles.putAll(pack.uiFiles());
             soundFiles.putAll(pack.soundFiles());
             textureIndexFiles.putAll(pack.textureIndexFiles());
             textureMetadataFiles.putAll(pack.textureMetadataFiles());
@@ -116,6 +120,8 @@ public record BedrockAddonAggregate(
                 soundIndexFiles,
                 soundDefinitionFiles,
                 languageFiles,
+                fogFiles,
+                uiFiles,
                 soundFiles,
                 textureIndexFiles,
                 textureMetadataFiles,
@@ -215,6 +221,18 @@ public record BedrockAddonAggregate(
 
     public Map<String, BrLanguageFile> languageFiles() {
         return resourcePack.languageFiles();
+    }
+
+    public Map<String, BrFog> fogFiles() {
+        return resourcePack.fogFiles();
+    }
+
+    public Map<String, BrFog> fogsByIdentifier() {
+        return resourcePack.fogsByIdentifier();
+    }
+
+    public Map<String, BrUiFile> uiFiles() {
+        return resourcePack.uiFiles();
     }
 
     public Map<String, BedrockBinaryAsset> soundFiles() {

@@ -67,8 +67,38 @@ public final class ManagerResourceBatchPlanner {
         return result;
     }
 
-    public static List<Path> collectTexturePngFiles(Path basePath, Logger logger) {
-        return collectFiles(basePath.resolve("textures"), fileName -> fileName.endsWith(".png"), logger, "textures");
+    public static List<Path> collectFogFiles(Path basePath, Logger logger) {
+        return collectFiles(basePath.resolve("fogs"),
+                fileName -> fileName.toLowerCase(java.util.Locale.ROOT).endsWith(".json"),
+                logger, "fogs");
+    }
+
+    public static List<Path> collectUiFiles(Path basePath, Logger logger) {
+        return collectFiles(basePath.resolve("ui"),
+                fileName -> fileName.toLowerCase(java.util.Locale.ROOT).endsWith(".json"),
+                logger, "ui");
+    }
+
+    public static List<Path> collectLangFiles(Path basePath, Logger logger) {
+        return collectFiles(basePath.resolve("texts"),
+                fileName -> fileName.toLowerCase(java.util.Locale.ROOT).endsWith(".lang"),
+                logger, "texts");
+    }
+
+    public static List<Path> collectSoundFiles(Path basePath, Logger logger) {
+        return collectFiles(basePath.resolve("sounds"), fileName -> {
+            String lowerCaseName = fileName.toLowerCase(java.util.Locale.ROOT);
+            return lowerCaseName.endsWith("sound_definitions.json")
+                    || lowerCaseName.endsWith(".ogg")
+                    || lowerCaseName.endsWith(".fsb");
+        }, logger, "sounds");
+    }
+
+    public static List<Path> collectTextureFiles(Path basePath, Logger logger) {
+        return collectFiles(basePath.resolve("textures"), fileName -> {
+            String lowerCaseName = fileName.toLowerCase(java.util.Locale.ROOT);
+            return lowerCaseName.endsWith(".png") || lowerCaseName.endsWith(".tga");
+        }, logger, "textures");
     }
 
     private static List<Path> collectFiles(Path subPath, Predicate<String> fileNameFilter, Logger logger, String context) {

@@ -22,11 +22,17 @@ public final class ManagerResourceReloadPlan {
         MATERIAL_FILE,
         MODEL_BBMODEL,
         TEXTURE_PNG,
+        TEXTURE_TGA,
+        SOUND_DEFINITION_JSON,
+        SOUND_FILE,
+        TEXT_LANG,
+        FOG_JSON,
+        UI_JSON,
         UNSUPPORTED
     }
 
     public static ReloadTarget classifySingleFile(String relativePath) {
-        String normalizedRelativePath = normalize(relativePath);
+        String normalizedRelativePath = normalize(relativePath).toLowerCase(Locale.ROOT);
 
         if (normalizedRelativePath.endsWith(".json")) {
             if (normalizedRelativePath.startsWith("animations/")) {
@@ -50,6 +56,16 @@ public final class ManagerResourceReloadPlan {
             if (normalizedRelativePath.startsWith("models/")) {
                 return ReloadTarget.MODEL_JSON;
             }
+            if (normalizedRelativePath.startsWith("sounds/")
+                    && normalizedRelativePath.endsWith("sound_definitions.json")) {
+                return ReloadTarget.SOUND_DEFINITION_JSON;
+            }
+            if (normalizedRelativePath.startsWith("fogs/")) {
+                return ReloadTarget.FOG_JSON;
+            }
+            if (normalizedRelativePath.startsWith("ui/")) {
+                return ReloadTarget.UI_JSON;
+            }
             return ReloadTarget.UNSUPPORTED;
         }
 
@@ -65,6 +81,19 @@ public final class ManagerResourceReloadPlan {
             return ReloadTarget.TEXTURE_PNG;
         }
 
+        if (normalizedRelativePath.startsWith("textures/") && normalizedRelativePath.endsWith(".tga")) {
+            return ReloadTarget.TEXTURE_TGA;
+        }
+
+        if (normalizedRelativePath.startsWith("sounds/")
+                && (normalizedRelativePath.endsWith(".ogg") || normalizedRelativePath.endsWith(".fsb"))) {
+            return ReloadTarget.SOUND_FILE;
+        }
+
+        if (normalizedRelativePath.startsWith("texts/") && normalizedRelativePath.endsWith(".lang")) {
+            return ReloadTarget.TEXT_LANG;
+        }
+
         return ReloadTarget.UNSUPPORTED;
     }
 
@@ -72,8 +101,12 @@ public final class ManagerResourceReloadPlan {
         return classifySingleFile(basePath.relativize(file).toString());
     }
 
+    public static String toRelativeKey(Path basePath, Path file) {
+        return normalize(basePath.relativize(file).toString()).toLowerCase(Locale.ROOT);
+    }
+
     public static String toTextureKey(Path basePath, Path textureFile) {
-        return normalize(basePath.relativize(textureFile).toString()).toLowerCase(Locale.ROOT);
+        return toRelativeKey(basePath, textureFile);
     }
 
     private static String normalize(String relativePath) {

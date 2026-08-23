@@ -115,6 +115,8 @@ class BedrockAddonRuntimeBridgeTest {
                 new LinkedHashMap<>(),
                 new LinkedHashMap<>(),
                 new LinkedHashMap<>(),
+                new LinkedHashMap<>(),
+                new LinkedHashMap<>(),
                 linkedMapOf("render_controllers/test.render_controllers.json", renderControllers),
                 new LinkedHashMap<>(),
                 linkedMapOf("materials/test.material", material),
@@ -179,7 +181,7 @@ class BedrockAddonRuntimeBridgeTest {
                 new LinkedHashMap<>(), new LinkedHashMap<>(), new LinkedHashMap<>(), new LinkedHashMap<>(),
                 new LinkedHashMap<>(), new LinkedHashMap<>(), new LinkedHashMap<>(), new LinkedHashMap<>(),
                 new LinkedHashMap<>(), new LinkedHashMap<>(), new LinkedHashMap<>(), new LinkedHashMap<>(),
-                new LinkedHashMap<>(), new LinkedHashMap<>());
+                new LinkedHashMap<>(), new LinkedHashMap<>(), new LinkedHashMap<>(), new LinkedHashMap<>());
         BedrockAddonRuntimeBridge.replaceFromAddon(new BedrockAddon(List.of(), List.of(), new LinkedHashMap<>(),
                 new BedrockAddonAggregate(round, BedrockAddonSideAggregate.empty())));
 
