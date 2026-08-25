@@ -60,6 +60,7 @@ work/perf-ms-frame-plan/spark/
 work/*.png
 work/rd_*
 work/shot/
+work/prod-verify/
 work/screenshots/
 
 # smoke test artifacts (generated at runtime, not source)

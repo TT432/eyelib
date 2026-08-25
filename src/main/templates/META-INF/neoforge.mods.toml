@@ -26,10 +26,5 @@ versionRange="${minecraft_version_range}"
 ordering="NONE"
 side="BOTH"
 
-# LDLib2 可选前置：节点图编辑器（docs/specs/nodegraph-visual-molang.md D7）。未安装时编辑器入口关闭，其余功能不受影响。
-[[dependencies.${mod_id}]]
-modId="ldlib2"
-type="optional"
-versionRange="[2.2.32,)"
-ordering="AFTER"
-side="CLIENT"
+# LDLib2（modId=ldlib2，节点图编辑器）自 ADR-0030 起 jarJar 内嵌进产物 jar，不再需要外部安装，
+# 也不再声明 dependencies——mods 文件夹中若存在更高版本的独立 ldlib2，由 jarjar 版本协商接管。

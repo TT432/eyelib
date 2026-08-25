@@ -5,7 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * LDLib 可选前置门控（规格 D7）。
+ * LDLib 加载门控（规格 D7；LDLib2 自 ADR-0030 起 jarJar 内嵌，正常恒可开）。
  *
  * <p>本类不引用任何 LDLib 类型：编辑器实现类仅以「类名字符串」持有，
  * 确认前置存在后才经反射加载，保证未安装 LDLib 时主链路零 LDLib 类加载。
@@ -22,7 +22,7 @@ public final class NodegraphGate {
     private NodegraphGate() {
     }
 
-    /** 节点图编辑器是否可用（LDLib 已安装）。 */
+    /** 节点图编辑器是否可用（LDLib2 已加载——内嵌发布，正常恒 true）。 */
     public static boolean isEditorAvailable() {
         return LdlibCompat.isLdlibLoaded();
     }
@@ -34,7 +34,7 @@ public final class NodegraphGate {
      */
     public static void openEditor(@org.jspecify.annotations.Nullable String libraryName) {
         if (!isEditorAvailable()) {
-            LOGGER.warn("[nodegraph] editor unavailable: optional LDLib dependency is not installed");
+            LOGGER.warn("[nodegraph] editor unavailable: LDLib2 (expected to be jarJar-embedded) is not loaded");
             return;
         }
         try {

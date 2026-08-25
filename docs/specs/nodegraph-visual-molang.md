@@ -69,10 +69,12 @@ LDLib2 有 SubgraphNodeModel，LDLib 1.x graphprocessor 没有子图。为保证
 
 ### D7. 可选前置隔离
 
+> 部署语义已被 ADR-0030（2026-08-25）修订：LDLib2 自该版起 jarJar 内嵌进产物 jar，
+> 编辑器在非开发环境恒可用；mods.toml 不再声明 ldlib2 依赖。以下类加载隔离要求不变。
+
 - 所有 `import com.lowdragmc.*` 只出现在 `client.nodegraph.editor.ldlib1|ldlib2` 包及其直接入口工厂。
 - 入口门：`ModList.get().isLoaded("ldlib2")`（1.21.1/26.1.2）/ `isLoaded("ldlib")`（1.20.1）；门后通过**隔离类加载**（专用 holder 类，仅在门内反射/ServiceLoader 触达）创建编辑器，主链路类不得静态引用 LDLib 类型。
-- mods.toml / neoforge.mods.toml 声明 `type="optional"` 依赖，保证装了 LDLib 时加载顺序正确。
-- 构建：`compileOnly` + dev runtime（ModDevGradle `localRuntime`/`additionalRuntimeClasspath`）引入，不 jarJar 嵌入产物。
+- 构建：`compileOnly` + dev runtime（ModDevGradle `localRuntime`/`additionalRuntimeClasspath`）引入；生产产物 jarJar 内嵌（ADR-0030）。
 
 ## 2. 图语言设计（EVM — Eyelib Visual Molang）
 
