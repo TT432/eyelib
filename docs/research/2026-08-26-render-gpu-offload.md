@@ -303,7 +303,7 @@ GLFW.glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, 1);
 | 阶段 | 内容 | 版本 | 验证 |
 |---|---|---|---|
 | **P0 前置** | ①~~定论+修复 OPT-R1~~（已完成：定论无缺陷，DFSModelTest da8634bd）②决策死资产（3 组 shader/ShaderManager/shader_mapping.json：接线还是删除）③C2 直写缓冲 | 全版本 | clientsmoke FBO 像素回归 + benchmark |
-| **P1 先行** | C1 GPU 蒙皮：自定义 RenderPipeline + UBO/TBO 调色板 + 静态 GpuBuffer 几何 | **26.1.2**（API 最友好：官方自定义管线 + DynamicUniforms 范式 + DeferredRenderSink 合批） | RenderDoc GetPostVSData 顶点数值对比（浮点容差定标）+ FBO 像素对比 + mixed-n96 benchmark |
+| **P1 先行** | C1 GPU 蒙皮：自定义 RenderPipeline + UBO/TBO 调色板 + 静态 GpuBuffer 几何 | **26.1.2**（API 最友好：官方自定义管线 + DynamicUniforms 范式 + DeferredRenderSink 合批） | **已完成 2026-08-27（1d47d353/88da7479/c957789a）**：UBO 调色板（TBO 无 float 格式，弃用）+ drawMultipleIndexed 阶段批量 flush。正确性验证通过；benchmark 结论**性能中性**（26.1.2 瓶颈在 vanilla submit 机制）。详见 docs/perf/c1-gpu-skinning-26.1.2.md |
 | **P2 跟进** | C1 移植 ≤26.1：RegisterShadersEvent + 自定义 VertexFormat(boneIndex) + vanilla VertexBuffer + TBO 调色板；与 R1 合批协同 | 1.20.1 / 1.21.1 | 同 P1，三版本行为对齐 |
 | **P3 扩展** | C4 粒子实例化；C6 派生纹理 GPU 化/colorMask uniform 化 | 全版本 | FBO + benchmark |
 | **P4 平台跃迁** | 26.2 Vulkan 节点落地后重估：compute 调色板预合成、SSBO、GPU 蒙皮 compute 化 | 26.2+ | 同左 |
