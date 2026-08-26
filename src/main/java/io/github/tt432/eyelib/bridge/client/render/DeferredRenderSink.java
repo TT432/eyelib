@@ -3,6 +3,8 @@ package io.github.tt432.eyelib.bridge.client.render;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import io.github.tt432.eyelib.bridge.material.MaterialPort;
+import io.github.tt432.eyelib.bridge.client.render.skinning.adapter.NgSkinningManager;
+import io.github.tt432.eyelib.bridge.material.ResourceLocationBridge;
 import io.github.tt432.eyelib.material.port.PortRenderPass;
 import io.github.tt432.eyelib.util.PortResourceLocation;
 import net.minecraft.client.renderer.SubmitNodeCollector;
@@ -37,14 +39,23 @@ final class DeferredRenderSink implements RenderSink {
             if (Boolean.getBoolean("eyelib.ngRenderProbe")) {
                 probeConsumerSwap(renderType, consumer);
             }
+            // C1 GPU 蒙皮：会话非空时 writer 可跳过顶点写入（palette 采集），
+            // 绘制由会话 finish 接管；routing RenderType 仅承担 phase 归类，共享缓冲保持为空。
+            var skinning = NgSkinningManager.createSession(renderType, ResourceLocationBridge.toMc(texture));
             try {
-                writer.write(submitPose, consumer);
+                writer.write(submitPose, consumer, skinning);
             } catch (IllegalStateException e) {
+                if (skinning != null) {
+                    skinning.discard();
+                }
                 // 26.1 已知问题（见 work/feedback.json「Not building!」条目）：
                 // 极小概率下 vanilla 共享 BufferBuilder 在写入中途被外部 endBatch，
                 // 直接抛出会崩掉整个客户端。此处降级为丢弃本段几何并大声记录
                 // （renderType + consumer 身份 + 完整栈），保住其余渲染流程。
                 logWriterFailure(renderType, consumer, e);
+            }
+            if (skinning != null) {
+                skinning.finish();
             }
         });
     }

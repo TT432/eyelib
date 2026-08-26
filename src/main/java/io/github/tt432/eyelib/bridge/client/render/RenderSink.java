@@ -3,6 +3,7 @@ package io.github.tt432.eyelib.bridge.client.render;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import io.github.tt432.eyelib.material.port.PortRenderPass;
+import io.github.tt432.eyelib.bridge.client.render.skinning.SkinningSession;
 import io.github.tt432.eyelib.util.PortResourceLocation;
 //? if <26.1 {
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -55,10 +56,14 @@ public interface RenderSink {
 
     /**
      * 顶点生成回调：把几何写入给定 VertexConsumer。
+     *
+     * @param skinning 非空表示本次提交可走 GPU 蒙皮（C1，仅 26.1.2 提供）：
+     *                 writer 可经会话采集骨骼调色板并跳过顶点写入；
+     *                 会话 begin 返回 false 时 writer 必须回退经典写入。
      */
     @FunctionalInterface
     interface GeometryWriter {
-        void write(PoseStack.Pose pose, VertexConsumer consumer);
+        void write(PoseStack.Pose pose, VertexConsumer consumer, @org.jspecify.annotations.Nullable SkinningSession skinning);
     }
 
     //? if <26.1 {

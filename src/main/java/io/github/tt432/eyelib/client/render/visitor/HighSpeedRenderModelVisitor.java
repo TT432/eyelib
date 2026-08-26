@@ -4,6 +4,7 @@ import io.github.tt432.eyelib.model.ModelVisitContext;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import io.github.tt432.eyelib.bridge.client.render.VertexConsumerPort;
+import io.github.tt432.eyelib.bridge.client.render.skinning.SkinningSession;
 import io.github.tt432.eyelib.client.render.RenderParams;
 import io.github.tt432.eyelib.bridge.client.render.bake.BakedModel;
 import io.github.tt432.eyelib.animation.ModelRuntimeData;
@@ -23,6 +24,15 @@ public class HighSpeedRenderModelVisitor extends ModelVisitor {
         if (!context.contains("BackedModel")) {
             throw new RuntimeException("can't use HighSpeedRenderModelVisitor without BackedModel");
         }
+        // C1 GPU 蒙皮（ADR-0032）：会话存在且 begin 接受 → 本次渲染走调色板采集，
+        // 经典 transformPos/顶点写入整体跳过；begin 拒绝（骨骼超限/容量不足）→ 经典路径。
+        SkinningSession skinning = params.skinning();
+        if (skinning != null) {
+            BakedModel bakedModel = context.get("BackedModel");
+            if (skinning.begin(bakedModel, params.tintColor(), params.overlay(), params.light())) {
+                context.put("SkinningSession", skinning);
+            }
+        }
     }
 
     @Override
@@ -41,7 +51,18 @@ public class HighSpeedRenderModelVisitor extends ModelVisitor {
             return;
         }
 
-        if (renderParams.partVisibility().getOrDefault(bone.id(), true)) {
+        SkinningSession skinning = context.get("SkinningSession");
+        boolean visible = renderParams.partVisibility().getOrDefault(bone.id(), true);
+        if (skinning != null) {
+            PoseStack.Pose last = poseStack.last();
+            skinning.appendBone(bone.id(), last.pose(), last.normal());
+            if (visible) {
+                skinning.markVisible(bone.id());
+            }
+            return;
+        }
+
+        if (visible) {
             renderBakedBone(renderParams, bakedBone);
         }
     }

@@ -30,7 +30,8 @@ final class ImmediateRenderSink implements RenderSink {
                        PoseStack pose, GeometryWriter writer) {
         RenderType renderType = MaterialPort.toRenderType(renderPass, texture);
         VertexConsumer consumer = bufferSource.getBuffer(renderType);
-        writer.write(pose.last(), consumer);
+        // ≤26.1 暂无 GPU 蒙皮实现（P2 移植），恒 null。
+        writer.write(pose.last(), consumer, null);
     }
 
     @Override

@@ -5,6 +5,7 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import io.github.tt432.eyelib.bridge.client.adapter.EntityRenderPorts;
 import io.github.tt432.eyelib.bridge.client.render.texture.NativeImagePort;
 import io.github.tt432.eyelib.bridge.client.render.texture.TexturePresencePort;
+import io.github.tt432.eyelib.bridge.client.render.skinning.SkinningSession;
 import io.github.tt432.eyelib.bridge.material.MaterialPort;
 import io.github.tt432.eyelib.capability.component.ModelComponent;
 import io.github.tt432.eyelib.material.port.PortRenderPass;
@@ -32,20 +33,21 @@ public record RenderParams(
         int overlay,
         Int2BooleanOpenHashMap partVisibility,
         float @Nullable [] tintColor,
-        @Nullable PortResourceLocation meshTexture
+        @Nullable PortResourceLocation meshTexture,
+        @Nullable SkinningSession skinning
 ) {
     public static RenderParams noRender() {
         var poseStack = new PoseStack();
         return new RenderParams(
                 null, poseStack.last(), poseStack, null, null, false,
-                null, 0, OverlayTexture.NO_OVERLAY, new Int2BooleanOpenHashMap(), null, null
+                null, 0, OverlayTexture.NO_OVERLAY, new Int2BooleanOpenHashMap(), null, null, null
         );
     }
 
     public static RenderParams noRender(PoseStack poseStack) {
         return new RenderParams(
                 null, poseStack.last(), poseStack, null, null, false,
-                null, 0, OverlayTexture.NO_OVERLAY, new Int2BooleanOpenHashMap(), null, null
+                null, 0, OverlayTexture.NO_OVERLAY, new Int2BooleanOpenHashMap(), null, null, null
         );
     }
 
@@ -98,6 +100,8 @@ public record RenderParams(
         private float @Nullable [] tintColor = null;
         @Nullable
         private PortResourceLocation meshTexture = null;
+        @Nullable
+        private SkinningSession skinning = null;
 
         public Builder(PoseStack.Pose pose0, PoseStack poseStack, @Nullable PortRenderPass renderPass, boolean isSolid, @Nullable PortResourceLocation texture, @Nullable VertexConsumer consumer) {
             this.pose0 = pose0;
@@ -137,6 +141,10 @@ public record RenderParams(
             this.meshTexture = meshTexture;
             return this;
         }
+        public Builder skinning(@Nullable SkinningSession skinning) {
+            this.skinning = skinning;
+            return this;
+        }
 
         public Builder colorMaskTexture(MultiBufferSource multiBufferSource, ModelComponent modelComponent, float[] color) {
             if (texture == null) {
@@ -159,7 +167,7 @@ public record RenderParams(
         }
 
         public RenderParams build() {
-            return new RenderParams(renderTarget, pose0, poseStack, renderPass, texture, isSolid, consumer, light, overlay, partVisibility, tintColor, meshTexture);
+            return new RenderParams(renderTarget, pose0, poseStack, renderPass, texture, isSolid, consumer, light, overlay, partVisibility, tintColor, meshTexture, skinning);
         }
     }
 }

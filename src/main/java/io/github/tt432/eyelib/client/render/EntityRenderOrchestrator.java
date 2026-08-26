@@ -16,6 +16,7 @@ import io.github.tt432.eyelib.bridge.client.ClientTickPort;
 import io.github.tt432.eyelib.bridge.client.RenderEntityParams;
 import io.github.tt432.eyelib.bridge.client.render.adapter.RenderPorts;
 import io.github.tt432.eyelib.bridge.client.render.RenderSink;
+import io.github.tt432.eyelib.bridge.client.render.skinning.SkinningSession;
 import io.github.tt432.eyelib.model.ModelVisitContext;
 import io.github.tt432.eyelib.bridge.molang.ComponentStoreView;
 import io.github.tt432.eyelib.bridge.molang.MolangContextPort;
@@ -436,11 +437,11 @@ public final class EntityRenderOrchestrator {
                                                                            RenderOutput output = resolveOutput(data, modelComponent);
                                                                            ModelRuntimeData finalTickedInfos = tickedInfos;
                                                                            if (output != null) {
-                                                                               data.sink().submit(output.renderPass(), output.texture(), poseStack, (pose, consumer) -> {
+                                                                               data.sink().submit(output.renderPass(), output.texture(), poseStack, (pose, consumer, skinning) -> {
                                                                                    // 用 sink 捕获的 pose 快照重建 PoseStack：延迟实现(>=26.1)的回调在 renderAllFeatures
                                                                                    // 阶段执行，此时原 poseStack 已被 popPose，必须用快照而非 data.poseStack()。
                                                                                    PoseStack capturedPose = RenderPorts.get().renderSystemPort().createPoseStackFromMatrix(pose.pose());
-                                                                                   RenderParams renderParams = buildRenderParams(capturedPose, data, modelComponent, output, consumer);
+                                                                                   RenderParams renderParams = buildRenderParams(capturedPose, data, modelComponent, output, consumer, skinning);
                                                                                    RenderHelper renderHelper = RenderHelper.start()
                                                                                            .render(renderParams, model, cast(finalTickedInfos));
                                                                                    data.extraRender().render(renderHelper.getContext(), data);
@@ -448,7 +449,7 @@ public final class EntityRenderOrchestrator {
                                                                                data.sink().flush();
                                                                            } else {
                                                                                // 无有效 renderPass：仍收集 locator（consumer=null 时 visitor 跳过顶点写入）
-                                                                                RenderParams renderParams = buildRenderParams(data.poseStack(), data, modelComponent, null, null);
+                                                                                RenderParams renderParams = buildRenderParams(data.poseStack(), data, modelComponent, null, null, null);
                                                                                RenderHelper renderHelper = RenderHelper.start()
                                                                                        .render(renderParams, model, cast(finalTickedInfos));
                                                                                data.extraRender().render(renderHelper.getContext(), data);
@@ -692,7 +693,8 @@ public final class EntityRenderOrchestrator {
      * 用 sink 回调提供的 consumer 构造 RenderParams。output 为 null 时构造无渲染（consumer=null）的 params。
      */
     private static RenderParams buildRenderParams(PoseStack poseStack, SimpleRenderAction<?> data, ModelComponent modelComponent,
-                                                  @Nullable RenderOutput output, @Nullable VertexConsumer consumer) {
+                                                  @Nullable RenderOutput output, @Nullable VertexConsumer consumer,
+                                                  @Nullable SkinningSession skinning) {
         RenderParams.Builder builder = output != null
                 ? RenderParams.builder(poseStack, output.renderPass(), output.isSolid(), output.texture(), consumer)
                 : RenderParams.builder(poseStack, null, modelComponent.isSolid(), null, null);
@@ -703,6 +705,7 @@ public final class EntityRenderOrchestrator {
                 .partVisibility(modelComponent.getPartVisibility())
                 .tintColor(modelComponent.getRcColor())
                 .meshTexture(modelComponent.getMeshTexture())
+                .skinning(skinning)
                 .build();
     }
 
