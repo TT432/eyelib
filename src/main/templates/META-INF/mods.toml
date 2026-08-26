@@ -81,8 +81,14 @@ mandatory=true
 ordering="NONE"
 side="BOTH"
 
-# LDLib2（modId=ldlib2，节点图编辑器）自 ADR-0030 起 jarJar 内嵌进产物 jar，不再需要外部安装，
-# 也不再声明 dependencies——mods 文件夹中若存在更高版本的独立 ldlib2，由 FML jarjar 版本协商接管。
+# LDLib2 可选前置：节点图编辑器（docs/specs/nodegraph-visual-molang.md D7）。未安装时编辑器入口关闭，其余功能不受影响。
+# 1.20.1 由 TT432/LDLib2-1.20.1-Forge fork 提供（modId=ldlib2），其 mods.toml 强制前置 kotlinforforge。
+[[dependencies.${mod_id}]]
+modId="ldlib2"
+mandatory=false
+versionRange="[2.2.27,)"
+ordering="AFTER"
+side="CLIENT"
 
 
 # Features are specific properties of the game environment, that you may want to declare you require. This example declares

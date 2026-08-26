@@ -95,7 +95,7 @@ repositories {
             includeGroup "curse.maven"
         }
     }
-    // firstdark snapshots：LDLib2（节点图编辑器运行时组件，生产产物经 jarJar 内嵌，ADR-0030）。
+    // firstdark snapshots：LDLib2（节点图编辑器可选前置，见 docs/specs/nodegraph-visual-molang.md §4）。
     exclusiveContent {
         forRepository {
             maven {
@@ -396,14 +396,13 @@ dependencies {
         modLocalRuntime "curse.maven:spark-361579:4738952"
     }
 
-    // LDLib2：节点图编辑器（ClientEntity 可视化作者工具）运行时组件。
-    // 生产产物 jarJar 内嵌发布——非开发环境开箱可用（ADR-0030）；dev 运行时由
-    // modLocalRuntime/localRuntime 提供（dev 下 eyelib 以 classes 目录加载，无 jarjar 内容）。
+    // LDLib2：节点图编辑器（ClientEntity 可视化作者工具）可选前置（docs/specs/nodegraph-visual-molang.md D7；ADR-0031）。
+    // compileOnly + dev runtime，不 jarJar 嵌入产物；运行时缺失时编辑器入口关闭。
     if (isLegacyForge) {
         // LDLib2 1.20.1 Forge fork（TT432/LDLib2-1.20.1-Forge，third_party/LDLib2 submodule 构建）。
-        // dev 用 plain jar（mojmap 名，免 remap）；生产内嵌用 :all classifier（reobfJarJar 产物：
-        // SRG 名 + 自带 jarjar 内嵌 taffy/mixinextras）——内嵌 plain jar 会因 mixin @Overwrite
-        // 找不到 SRG 目标启动崩溃（2026-08-25 实证）。
+        // dev 用 plain jar（mojmap 名，免 remap）；生产安装件为 fork 发布的 :all classifier
+        // （reobfJarJar 产物：SRG 名 + 自带 jarjar 内嵌 taffy/mixinextras）——plain jar 是
+        // mojmap 开发形态，生产不可用（mixin @Overwrite 找不到 SRG 目标，2026-08-25 实证）。
         modLdlibCompile "com.github.tt432:ldlib2-forge-1.20.1:2.2.34+forge.1.20.1-fork.6"
         modLocalRuntime "com.github.tt432:ldlib2-forge-1.20.1:2.2.34+forge.1.20.1-fork.6"
         compileOnly "org.jetbrains.kotlin:kotlin-stdlib:2.1.20"
@@ -415,28 +414,18 @@ dependencies {
         additionalRuntimeClasspath "dev.vfyjxf:taffy:1.1.4"
         // 移植版 mods.toml 强制前置 kotlinforforge [4.11.0,)。
         modLocalRuntime "maven.modrinth:kotlin-for-forge:4.12.0"
-        // 生产内嵌集：fork :all（嵌套发现其自带 taffy/mixinextras）+ KFF（强制前置；其外层 jar
-        // 以自动模块 thedarkcolour.kotlinforforge 携带完整 kotlin-stdlib 类——严禁再平铺内嵌
-        // kotlin-stdlib，否则两模块重复导出 kotlin.* 触发 JPMS split-package 启动崩溃，实证同上）。
-        // fork 声明的 mixinextras [0.3.5,) 由本模块既有 0.5.0 内嵌覆盖（版本协商取高）。
-        jarJar("com.github.tt432:ldlib2-forge-1.20.1:2.2.34+forge.1.20.1-fork.6:all") { transitive = false }
-        jarJar "maven.modrinth:kotlin-for-forge:4.12.0"
     } else if (isModern) {
         // LDLib2 26.1.x（mojmap，modId=ldlib2）；MDG 2.x localRuntime 自动注册 mod discovery。
         compileOnly "com.lowdragmc.ldlib2:ldlib2-neoforge-26.1:26.1.2.33"
         localRuntime "com.lowdragmc.ldlib2:ldlib2-neoforge-26.1:26.1.2.33"
         // 编辑器适配层单测（EvmGraphTranslatorTest）需要 LDLib2 在 test 运行时 classpath。
         testRuntimeOnly "com.lowdragmc.ldlib2:ldlib2-neoforge-26.1:26.1.2.33"
-        // 生产内嵌：发布件自身 jarjar 已含 kotlin-stdlib/taffy（FML 嵌套发现）。
-        jarJar "com.lowdragmc.ldlib2:ldlib2-neoforge-26.1:26.1.2.33"
     } else {
         // LDLib2 1.21.1（mojmap，modId=ldlib2，:all 自身 jarjar 含 taffy/yoga/kotlin-stdlib）；
         // MDG 1.x localRuntime 不注册 mod discovery 且会双份加载 → 独立 configuration + copy 到 run/mods。
         compileOnly "com.lowdragmc.ldlib2:ldlib2-neoforge-1.21.1:2.2.34:all"
         ldlib2Jar "com.lowdragmc.ldlib2:ldlib2-neoforge-1.21.1:2.2.34:all"
         testRuntimeOnly "com.lowdragmc.ldlib2:ldlib2-neoforge-1.21.1:2.2.34:all"
-        // 生产内嵌（同 26.1，依赖其自带 jarjar 的嵌套发现）。
-        jarJar "com.lowdragmc.ldlib2:ldlib2-neoforge-1.21.1:2.2.34:all"
     }
 
     if (hasAdditionalRuntimeClasspath) {

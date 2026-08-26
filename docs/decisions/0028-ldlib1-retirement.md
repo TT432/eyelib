@@ -26,8 +26,7 @@ LDLib2 nodegraphtookit。双实现的代价已实证：每个编辑器功能要�
    `Ldlib2NodegraphEditor`；`LdlibCompat` 全版本检测 `ldlib2` modId。
 3. **依赖切换**：1.20.1 移除 `curse.maven:ldlib-626676:7652228`（LDLib 1.0.49），
    仅保留 fork 坐标 `com.github.tt432:ldlib2-forge-1.20.1:2.2.27+forge.1.20.1-fork.1`
-   （mavenLocal；上游修复合入前以此为来源）；mods.toml 声明改 `ldlib2 [2.2.27,)`
-   （该可选依赖声明后被 ADR-0030 删除——LDLib2 改 jarJar 内嵌发布）。
+   （mavenLocal；上游修复合入前以此为来源）；mods.toml 声明改 `ldlib2 [2.2.27,)`。
 4. **双编辑器交付规则废止**：AGENTS.md「节点图功能默认 ldlib1+ldlib2 双端交付」
    同步删除——编辑器适配层只剩一端，新功能只需在 LDLib2 适配层实现。
 

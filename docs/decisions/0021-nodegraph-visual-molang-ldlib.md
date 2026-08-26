@@ -19,7 +19,7 @@
 ### 核心矛盾
 
 1. **两套不兼容的 LDLib 图 API**：若以任一 LDLib 的图模型/序列化为权威格式，跨版本不可移植，且运行时（组装 ClientEntity 并渲染）被迫依赖可选前置。
-2. **可选前置 vs 运行时可用**：要求「装了 ldlib 才启用编辑器」，但没装时已经做好的图仍应能产出 ClientEntity。（部署语义已被 ADR-0030 废止：LDLib2 自 2026-08-25 起 jarJar 内嵌发布，编辑器恒可用；「未装时图仍可构建渲染」的运行时语义保留。）
+2. **可选前置 vs 运行时可用**：要求「装了 ldlib 才启用编辑器」，但没装时已经做好的图仍应能产出 ClientEntity。（部署语义：ADR-0030 曾短暂改为 jarJar 内嵌，ADR-0031 于 2026-08-26 废止之并恢复可选前置。）
 3. **架构约束**：domain 零 MC import（ADR-0016）、`//?` 注释栖息地受 ArchUnit 限制（ADR-0015 §4）、版本特定 loader API 只能住 bridge。
 4. **语言设计**：直接做「molang AST 的节点化」会把 AST 的噪声（优先级、语句 vs 表达式）暴露给用户；UE 蓝图的 Exec/Data 双流更贴合 molang 的 ExprSet 语义。
 
