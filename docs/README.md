@@ -19,6 +19,7 @@
 | Spark 性能基线与优化 | [perf/spark-baseline-and-optimizations.md](perf/spark-baseline-and-optimizations.md) |
 | 渲染 FPS / 稳定性 Benchmark | [perf/render-fps-benchmark.md](perf/render-fps-benchmark.md) |
 | Heap 泄漏定位案例（JFR + full-GC histogram） | [perf/heap-leak-investigation.md](perf/heap-leak-investigation.md) |
+| 渲染系统 GPU 化调研（可行边界 + 分阶段路线图） | [research/2026-08-26-render-gpu-offload.md](research/2026-08-26-render-gpu-offload.md) |
 
 ## Skill 索引
 
