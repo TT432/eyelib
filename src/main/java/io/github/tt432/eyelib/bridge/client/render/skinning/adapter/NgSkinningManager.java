@@ -61,11 +61,13 @@ public final class NgSkinningManager {
     private static final List<NgSkinningSession> SOLID_DRAWS = new ArrayList<>();
     private static final List<NgSkinningSession> TRANSLUCENT_DRAWS = new ArrayList<>();
     private static final Vector4f WHITE = new Vector4f(1.0F, 1.0F, 1.0F, 1.0F);
+    private static final List<String> PALETTE_DYNAMIC_UNIFORMS = List.of("BonePalette");
     private static final Vector3f ZERO = new Vector3f();
     private static final Matrix4f IDENTITY = new Matrix4f();
 
     private static @Nullable MappableRingBuffer paletteRing;
     private static int ringOffset;
+    private static java.nio.@Nullable ByteBuffer paletteStaging;
     private static int alignment = 256;
     private static boolean hooksInstalled;
     private static boolean warnedRingFull;
@@ -125,15 +127,21 @@ public final class NgSkinningManager {
     }
 
     /**
-     * 分配当帧 palette block（offset 按 UBO 对齐）。
-     * 返回 null = 当帧容量耗尽，调用方回退经典路径。
+     * 分配当帧 palette block（offset 按 UBO 对齐），返回 ring 内偏移。
+     * 返回 -1 = 当帧容量耗尽，调用方回退经典路径。
+     *
+     * <p>会话矩阵写入共享 CPU 暂存（{@link #paletteStaging}，返回值即其内偏移），
+     * GPU 上传在 flush 时一次性完成（每 phase 一次 mapBuffer + 批量拷贝，
+     * 取代逐实体 mapBuffer——后者是 n384 实测的主要开销项）。
      */
-    static synchronized @Nullable GpuBufferSlice acquirePalette(int size) {
+    static synchronized int acquirePalette(int size) {
         MappableRingBuffer ring = paletteRing;
         if (ring == null) {
             alignment = RenderSystem.getDevice().getUniformOffsetAlignment();
             paletteRing = ring = new MappableRingBuffer(() -> "eyelib-bone-palette",
                     GpuBuffer.USAGE_MAP_WRITE | GpuBuffer.USAGE_UNIFORM, RING_CAPACITY);
+            paletteStaging = java.nio.ByteBuffer.allocateDirect(RING_CAPACITY)
+                    .order(java.nio.ByteOrder.LITTLE_ENDIAN);
         }
         int offset = (ringOffset + alignment - 1) / alignment * alignment;
         if (offset + size > RING_CAPACITY) {
@@ -142,10 +150,41 @@ public final class NgSkinningManager {
                 LOGGER.error("[skinning] bone palette ring exhausted ({} bytes/frame needed so far); "
                         + "remaining entities this frame fall back to CPU skinning", ringOffset);
             }
-            return null;
+            return -1;
         }
         ringOffset = offset + size;
+        return offset;
+    }
+
+    /** 会话矩阵写入目标（容量 = ring 容量；调用方按 acquirePalette 返回的 offset 定位）。 */
+    static java.nio.ByteBuffer paletteStaging() {
+        var staging = paletteStaging;
+        if (staging == null) {
+            throw new IllegalStateException("acquirePalette must be called first");
+        }
+        return staging;
+    }
+
+    /** acquire 返回的 offset → 当帧 UBO slice（finish 时调用，同一帧的 currentBuffer）。 */
+    static GpuBufferSlice paletteSlice(int offset, int size) {
+        var ring = paletteRing;
+        if (ring == null) {
+            throw new IllegalStateException("acquirePalette must be called first");
+        }
         return ring.currentBuffer().slice(offset, size);
+    }
+
+    /** 把 [0, uptoOffset) 的暂存内容一次性写入 ring（每 phase flush 一次）。 */
+    private static void uploadPalette(int uptoOffset) {
+        var ring = paletteRing;
+        var staging = paletteStaging;
+        if (ring == null || staging == null || uptoOffset <= 0) {
+            return;
+        }
+        try (GpuBuffer.MappedView view = RenderSystem.getDevice().createCommandEncoder()
+                .mapBuffer(ring.currentBuffer().slice(0, uptoOffset), false, true)) {
+            view.data().put(0, staging, 0, uptoOffset);
+        }
     }
 
     /** 会话完成：override 目标（PIP/物品栏/FBO）立即绘制，否则入世界路径阶段队列。 */
@@ -214,9 +253,10 @@ public final class NgSkinningManager {
         }
 
         CommandEncoder encoder = RenderSystem.getDevice().createCommandEncoder();
-        // mapBuffer（writeTransform 内部）禁止在 RenderPass 开启期间调用，先取 slice 再建 pass
+        // mapBuffer（writeTransform/uploadPalette 内部）禁止在 RenderPass 开启期间调用，先上传再建 pass
         GpuBufferSlice dynamicTransforms = RenderSystem.getDynamicUniforms()
                 .writeTransform(modelView, WHITE, ZERO, IDENTITY);
+        uploadPalette(ringOffset);
         int i = 0;
         while (i < records.size()) {
             RenderPipeline pipeline = records.get(i).pipeline();
@@ -235,23 +275,28 @@ public final class NgSkinningManager {
             GpuSampler textureSampler = tex.getSampler();
             GpuTextureView overlayView = mc.gameRenderer.overlayTexture().getTextureView();
             GpuTextureView lightmapView = mc.gameRenderer.lightmap();
+            // vanilla chunk 渲染同构（ChunkSectionsToRender.renderGroup）：一次 drawMultipleIndexed
+            // 提交组内全部实体/可见区间，per-draw 经 uniformUploaderConsumer 绑定各自 palette slice
+            List<RenderPass.Draw<GpuBufferSlice>> draws = new ArrayList<>(records.size());
+            for (int k = i; k < j; k++) {
+                NgSkinningSession rec = records.get(k);
+                SkinnedGeometry geo = rec.geometry();
+                GpuBufferSlice palette = rec.paletteSlice();
+                int[] ranges = rec.ranges();
+                for (int r = 0; r < ranges.length; r += 2) {
+                    draws.add(new RenderPass.Draw<>(0, geo.vertexBuffer(), geo.indexBuffer(),
+                            VertexFormat.IndexType.INT, ranges[r], ranges[r + 1], 0,
+                            (unused, uploader) -> uploader.upload("BonePalette", palette)));
+                }
+                // 同一实体的多个区间共享其 palette slice：闭包按 Draw 捕获（uniformArgument 恒 null）
+            }
             try (RenderPass pass = encoder.createRenderPass(() -> "eyelib skinned entities",
                     color, OptionalInt.empty(), depth, OptionalDouble.empty())) {
                 pass.setPipeline(pipeline);
                 RenderSystem.bindDefaultUniforms(pass);
                 pass.setUniform("DynamicTransforms", dynamicTransforms);
                 bindSamplers(pass, pipeline, textureView, textureSampler, overlayView, lightmapView);
-                for (int k = i; k < j; k++) {
-                    NgSkinningSession rec = records.get(k);
-                    pass.setUniform("BonePalette", rec.paletteSlice());
-                    SkinnedGeometry geo = rec.geometry();
-                    pass.setVertexBuffer(0, geo.vertexBuffer());
-                    pass.setIndexBuffer(geo.indexBuffer(), VertexFormat.IndexType.INT);
-                    int[] ranges = rec.ranges();
-                    for (int r = 0; r < ranges.length; r += 2) {
-                        pass.drawIndexed(0, ranges[r], ranges[r + 1], 1);
-                    }
-                }
+                pass.drawMultipleIndexed(draws, null, null, PALETTE_DYNAMIC_UNIFORMS, null);
             }
             i = j;
         }
