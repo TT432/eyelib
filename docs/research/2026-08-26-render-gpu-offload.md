@@ -13,7 +13,7 @@
 3. **Molang/动画求值不可搬 GPU**（C3，主结论为否定）：200+ 个 `query.*` 函数直接读 Java 侧 MC 实体实时状态，`variable./temp./this` 有顺序累加语义，箭头访问运行时切换宿主。Bedrock 原版同为 CPU 逐帧采样架构（ADR-0013），parity 不要求实现方式一致。
 4. **版本窗口是关键战略变量**：≤26.1 为 OpenGL 3.2 core（一手验证 vanilla `Window.java` GLFW hints），无 compute shader/SSBO；**26.2 起 vanilla 切 Vulkan**（官方公告），compute/SSBO 全面解锁。26.1 的 blaze3d 已提供自定义 RenderPipeline（自定义 shader + UBO uniform）这一官方扩展点，是 GPU 蒙皮的最佳先行版本。
 5. **既有性能工作已把 CPU 侧榨到「接近固有成本」**（spark 实测 Opt1-9 合入后 eyelib self 36μs/实体/帧，Molang 求值链占渲染 7.7%）；进一步收益只能从「消除每帧顶点重建」获得，即 GPU 化。
-6. **前置硬依赖**：DFSModel 线性化打断父子骨骼层级继承的缺陷（OPT-R1）必须先定论并修复——GPU 蒙皮要求每骨骼完整世界矩阵。
+6. **前置硬依赖**：DFSModel 线性化打断父子骨骼层级继承的缺陷（OPT-R1）必须先定论并修复——GPU 蒙皮要求每骨骼完整世界矩阵。【勘误 2026-08-27：OPT-R1 已于 2026-07-25 定论——缺陷不存在，帧序列由递归 visitBone 生成故 Pre/Post 严格嵌套、子骨骼正常继承父变换，可执行证据 DFSModelTest（da8634bd，1.20.1 复测绿）。此前置已解除。】
 
 ---
 
@@ -245,7 +245,7 @@ GLFW.glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, 1);
 - 粒子 locator、attachable、AR 兼容：CPU 矩阵数组是唯一权威，三者的消费方式不变。
 
 **前置条件**：
-1. **定论并修复 OPT-R1**（DFSModel 线性化 popPose 打断父子层级继承，work/perf-ms-frame-plan/render-scout-report.md:276-279）——GPU 蒙皮要求每骨骼完整世界矩阵，该缺陷不修复则 GPU 化无从谈起。
+1. **定论并修复 OPT-R1**（DFSModel 线性化 popPose 打断父子骨骼层级继承，work/perf-ms-frame-plan/render-scout-report.md:276-279）——GPU 蒙皮要求每骨骼完整世界矩阵，该缺陷不修复则 GPU 化无从谈起。【勘误 2026-08-27：已定论为侦察报告误判，无需修复，见 DFSModelTest（da8634bd）。】
 2. 顶点格式扩展：NEW_ENTITY 无 boneIndex 属性，需自定义 VertexFormat。
 3. 像素级回归基建：clientsmoke FBO 像素对比 + RenderDoc GetPostVSData 顶点数/坐标验证（docs/concepts/entity-verification-workflow.md 已有方法）。
 
@@ -302,7 +302,7 @@ GLFW.glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, 1);
 
 | 阶段 | 内容 | 版本 | 验证 |
 |---|---|---|---|
-| **P0 前置** | ①定论+修复 OPT-R1（DFSModel 层级继承）②决策死资产（3 组 shader/ShaderManager/shader_mapping.json：接线还是删除）③C2 直写缓冲 | 全版本 | clientsmoke FBO 像素回归 + benchmark |
+| **P0 前置** | ①~~定论+修复 OPT-R1~~（已完成：定论无缺陷，DFSModelTest da8634bd）②决策死资产（3 组 shader/ShaderManager/shader_mapping.json：接线还是删除）③C2 直写缓冲 | 全版本 | clientsmoke FBO 像素回归 + benchmark |
 | **P1 先行** | C1 GPU 蒙皮：自定义 RenderPipeline + UBO/TBO 调色板 + 静态 GpuBuffer 几何 | **26.1.2**（API 最友好：官方自定义管线 + DynamicUniforms 范式 + DeferredRenderSink 合批） | RenderDoc GetPostVSData 顶点数值对比（浮点容差定标）+ FBO 像素对比 + mixed-n96 benchmark |
 | **P2 跟进** | C1 移植 ≤26.1：RegisterShadersEvent + 自定义 VertexFormat(boneIndex) + vanilla VertexBuffer + TBO 调色板；与 R1 合批协同 | 1.20.1 / 1.21.1 | 同 P1，三版本行为对齐 |
 | **P3 扩展** | C4 粒子实例化；C6 派生纹理 GPU 化/colorMask uniform 化 | 全版本 | FBO + benchmark |
@@ -312,7 +312,7 @@ GLFW.glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, 1);
 
 ## 7. 关键风险登记
 
-1. **OPT-R1 未定论**：若当前模型实际依赖层级继承（A&S 多为扁平骨骼可能掩盖），C1 之前必须修复并回归。
+1. **OPT-R1 未定论**：若当前模型实际依赖层级继承（A&S 多为扁平骨骼可能掩盖），C1 之前必须修复并回归。【已解除 2026-08-27：定论无缺陷，DFSModelTest（da8634bd）1.20.1 绿。】
 2. **薄映射层原则冲突**：C1 需要自有 shader + 自有 VBO，与 cross-version-render-architecture.md §9「不自建 VBO/着色器」原则直接冲突——**需要一次显式的 ADR 决策修订该原则**（建议以「用 vanilla VertexBuffer/GpuBuffer 抽象而非裸 GL」作为缓和条款）。
 3. **浮点一致性**：CPU 路径 PoseStack（JOML float）与 GPU fp32 蒙皮的舍入差异；验证方法已具备（RenderDoc GetPostVSData）。
 4. **26.1.2 共享 buffer 中途 endBatch 的已知降级**（DeferredRenderSink.java:42-52）：自定义提交路径需避开或继承该守卫。

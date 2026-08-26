@@ -390,12 +390,12 @@ ADR-0016 §"过渡期已知债务"记录的、与渲染流程相关的债务：
 |------------------|------------------------|
 | §2 实体几何管线（ModelPart 树、render、顶点写入） | eyelib 不复用 vanilla ModelPart，自建 `Model.Bone`/`BakedBone` + `ModelVisitor`；仅顶点写入终点对齐 `DefaultVertexFormat.NEW_ENTITY`/`ENTITY`（§3.3） |
 | §3.1 RenderType 系统 | `BrRenderTypeFactory` 把 Bedrock 语义映射到 vanilla RenderType（<26.1）/ RenderPipeline PSO（>=26.1）（§6.4） |
-| §3.2 顶点缓冲系统 | eyelib 不自建 VBO，复用 vanilla `MultiBufferSource.BufferSource` + `VertexConsumer`，仅 `VertexConsumerPort` 屏蔽 API 差异 |
-| §3.3 着色器系统 | eyelib 不自建着色器，复用 vanilla entity 着色器（经 RenderType/RenderPipeline 绑定） |
+| §3.2 顶点缓冲系统 | eyelib 复用 vanilla `MultiBufferSource.BufferSource` + `VertexConsumer`，仅 `VertexConsumerPort` 屏蔽 API 差异；C1 GPU 蒙皮起允许经 vanilla `VertexBuffer`/`GpuBuffer` 抽象持有自有静态几何缓冲（ADR-0032） |
+| §3.3 着色器系统 | eyelib 复用 vanilla entity 着色器（经 RenderType/RenderPipeline 绑定）；C1 GPU 蒙皮起允许经官方扩展点（Forge `RegisterShadersEvent` / 26.1 `RenderPipeline.withVertexShader`）注册自有蒙皮着色器（ADR-0032） |
 | §3.4/§3.5 主渲染循环 + GPU 上传 | eyelib 接入点 = `RenderLevelStageEvent`（§5）；GPU 上传完全委托 vanilla `endBatch`/`RenderPass` |
 | 26.1.2 §2.2 两阶段 submit | `EyelibLivingEntityRenderer` 的 `>=26.1` 分支实现 `extractRenderState`+`submit`（§5.4），作为 `RenderLivingEventAdapter` 的 fallback（§7.1 已解决双重渲染） |
 
-**设计原则**：eyelib 是 Bedrock 渲染语义在 JE 基础设施上的**薄映射层**，不重写 vanilla 管线，只在材质语义→RenderType、骨骼变换→顶点写入两个接缝处做翻译。vanilla 三版本的基础设施差异（PSO、submit、FrameGraph）被 bridge Port 吸收，对 Application 层不可见。
+**设计原则**：eyelib 是 Bedrock 渲染语义在 JE 基础设施上的**薄映射层**，不重写 vanilla 管线，只在材质语义→RenderType、骨骼变换→顶点写入两个接缝处做翻译。「骨骼变换→顶点写入」接缝自 C1 起迁移为「骨骼矩阵→调色板上传 + VS 蒙皮」（ADR-0032），仍以 vanilla GPU 抽象为限、禁止裸 GL。vanilla 三版本的基础设施差异（PSO、submit、FrameGraph）被 bridge Port 吸收，对 Application 层不可见。
 
 ---
 
