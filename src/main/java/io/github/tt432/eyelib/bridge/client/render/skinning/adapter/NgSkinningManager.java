@@ -9,6 +9,7 @@ import com.mojang.blaze3d.systems.CommandEncoder;
 import com.mojang.blaze3d.systems.RenderPass;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.textures.FilterMode;
+import com.mojang.blaze3d.textures.GpuSampler;
 import com.mojang.blaze3d.textures.GpuTextureView;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import io.github.tt432.eyelib.bridge.client.render.bake.BakedModel;
@@ -213,6 +214,9 @@ public final class NgSkinningManager {
         }
 
         CommandEncoder encoder = RenderSystem.getDevice().createCommandEncoder();
+        // mapBuffer（writeTransform 内部）禁止在 RenderPass 开启期间调用，先取 slice 再建 pass
+        GpuBufferSlice dynamicTransforms = RenderSystem.getDynamicUniforms()
+                .writeTransform(modelView, WHITE, ZERO, IDENTITY);
         int i = 0;
         while (i < records.size()) {
             RenderPipeline pipeline = records.get(i).pipeline();
@@ -223,13 +227,20 @@ public final class NgSkinningManager {
                     && records.get(j).texture().equals(texture)) {
                 j++;
             }
+            // 纹理解析可能触发懒上传（TextureManager.getTexture → DynamicTexture.upload
+            // → writeToTexture），禁止在 RenderPass 开启期间执行——与 vanilla
+            // RenderType.draw 同模式（state.getTextures() 在 createRenderPass 之前）
+            AbstractTexture tex = mc.getTextureManager().getTexture(texture);
+            GpuTextureView textureView = tex.getTextureView();
+            GpuSampler textureSampler = tex.getSampler();
+            GpuTextureView overlayView = mc.gameRenderer.overlayTexture().getTextureView();
+            GpuTextureView lightmapView = mc.gameRenderer.lightmap();
             try (RenderPass pass = encoder.createRenderPass(() -> "eyelib skinned entities",
                     color, OptionalInt.empty(), depth, OptionalDouble.empty())) {
                 pass.setPipeline(pipeline);
                 RenderSystem.bindDefaultUniforms(pass);
-                pass.setUniform("DynamicTransforms", RenderSystem.getDynamicUniforms()
-                        .writeTransform(modelView, WHITE, ZERO, IDENTITY));
-                bindSamplers(pass, pipeline, texture);
+                pass.setUniform("DynamicTransforms", dynamicTransforms);
+                bindSamplers(pass, pipeline, textureView, textureSampler, overlayView, lightmapView);
                 for (int k = i; k < j; k++) {
                     NgSkinningSession rec = records.get(k);
                     pass.setUniform("BonePalette", rec.paletteSlice());
@@ -246,18 +257,15 @@ public final class NgSkinningManager {
         }
     }
 
-    private static void bindSamplers(RenderPass pass, RenderPipeline pipeline, Identifier texture) {
-        Minecraft mc = Minecraft.getInstance();
+    private static void bindSamplers(RenderPass pass, RenderPipeline pipeline, GpuTextureView textureView, GpuSampler textureSampler,
+                                     GpuTextureView overlayView, GpuTextureView lightmapView) {
         var samplerCache = RenderSystem.getSamplerCache();
         for (String sampler : pipeline.getSamplers()) {
             switch (sampler) {
-                case "Sampler0" -> {
-                    AbstractTexture tex = mc.getTextureManager().getTexture(texture);
-                    pass.bindTexture("Sampler0", tex.getTextureView(), tex.getSampler());
-                }
-                case "Sampler1" -> pass.bindTexture("Sampler1", mc.gameRenderer.overlayTexture().getTextureView(),
+                case "Sampler0" -> pass.bindTexture("Sampler0", textureView, textureSampler);
+                case "Sampler1" -> pass.bindTexture("Sampler1", overlayView,
                         samplerCache.getClampToEdge(FilterMode.LINEAR));
-                case "Sampler2" -> pass.bindTexture("Sampler2", mc.gameRenderer.lightmap(),
+                case "Sampler2" -> pass.bindTexture("Sampler2", lightmapView,
                         samplerCache.getClampToEdge(FilterMode.LINEAR));
                 default -> LOGGER.warn("[skinning] pipeline {} declares unsupported sampler {}", pipeline.getLocation(), sampler);
             }
