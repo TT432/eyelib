@@ -10,29 +10,27 @@ Bedrock addon 纹理使用 alpha=3 的 faint 像素做边缘抗锯齿，Bedrock 
 
 ## 双路径方案
 
-不分全局 clamp。在 `resolveSlotTexture` 中根据材质类型使用不同纹理路径：
+不分全局 clamp。`RenderControllerEntry.resolveSlotTextures()` 按材质类型为每个纹理图层选择不同路径：
 
 | 路径 | 材质 | alpha 行为 |
 |------|------|-----------|
-| `complex:textures/...` | blending | 保留原始 alpha |
-| `complex:clamped/textures/...` | alphatest | clamp alpha → 0/255 binary |
+| 原始图层路径 | 普通 / blending | 保留原始 alpha |
+| `<ns>:clamped/<原路径>` | alphatest / emissive（且非 colorMask） | clamp alpha → 0/255 binary |
 
 ### 实现
 
-`RenderControllerEntry.resolveSlotTexture()`：
-1. 正常 merge + upload → `complex:textures/...`（所有材质共用）
-2. `isAlphatestMaterial(materialName)` → 从 GL download 已上传的复杂纹理 → clamp → upload 为 `complex:clamped/textures/...` → 返回 clamped path
-3. 非 alphatest 材质返回原始 path
+`RenderControllerEntry.resolveSlotTextures()`：
+1. 按材质名把 `texture.material` 注入 MolangScope，逐图层解析 RC 的 `textures` 表达式（先底层后顶层）
+2. `!usesColorMask(name) && (isAlphatestMaterial(name) || isEmissiveMaterial(name))` → 每个图层经 `clampedTexture()` 生成副本：GL download → `clampAlphaToBinary` → upload 为 `clamped/` 前缀路径
+3. 其余材质直接使用原始图层路径
 
-### isAlphatestMaterial 查找逻辑
+emissive 一并 clamp 的原因：BE 发光着色器不丢弃低 alpha（alpha 是发光掩码），而 MC entityTranslucent 着色器在 alpha<0.1 时 discard（A&S 蜘蛛红眼 alpha 仅 1-10 会整体消失）。
 
-材质名按三层查找 MaterialManager：
-1. 全 key（`"entity_alphatest_change_color:entity_alphatest"`）
-2. suffix（key 的 `:` 后部分）
-3. name 字段（entry.name()）
-→ `entry.hasBlending(matMap)` → !hasBlending 即 alphatest
+### 材质判定
+
+`flagsOf(materialName)` → `MaterialFlags(multitexture, alphatest, emissive, colorMask)`，基于 MaterialManager 材质解析链上的 defines/states 推导（如 ALPHA_TEST / USE_EMISSIVE / USE_ONLY_EMISSIVE / USE_COLOR_MASK），结果按 matMap 引用缓存。
 
 ## 注意
 
-- `NativeImageIO.download()` 内部用 try-with-resources，返回后 NativeImage 被释放。必须用 `NativeImageIO.copyImage()` 创建独立副本后再 clamp
-- `TextureLayerMerger.merge()` 的 compute shader 使用 premultiplied alpha (`src.rgb * src.a`)，低 alpha 输入会被乘到接近黑色。**clamp 必须在 merge 之前做**（即对输入纹理 clamp）。当前方案通过 download 已 merge 的纹理再做 clamp 避免了此问题
+- download 后的 NativeImage 生命周期：必须用 `NativeImagePort.copyImage()` 创建独立副本后再 clamp、upload（当前封装在 `clampedTexture()` 的 syncedAction 中）
+- 本文早期版本提及的 `TextureLayerMerger.merge()` compute shader **从未在代码库中落地**（≤26.1 vanilla 仅 OpenGL 3.2 core，无 compute；详见 docs/research/2026-08-26-render-gpu-offload.md §3.1），该描述为历史残留，已删除。当前无纹理合并步骤——clamp 逐图层进行
