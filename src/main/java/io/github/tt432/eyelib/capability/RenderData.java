@@ -110,7 +110,9 @@ public class RenderData<T> {
     @SuppressWarnings("unchecked")
     public void init(T owner) {
         this.owner = owner;
-        scope = new MolangScope();
+        // 渲染链单线程访问（render 线程 lazy-init 与求值，见 MolangDebugService 文档）：
+        // 用单线程 scope 消除 4 个并发结构的每求值开销（JFR：CHM 遍历/清理占渲染线程显著份额）
+        scope = MolangScope.singleThreaded();
         scope.getHostContext().put(RENDER_DATA, this);
         if (owner != null) {
             scope.getHostContext().put((Class<T>) owner.getClass(), owner);

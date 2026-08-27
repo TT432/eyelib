@@ -6,14 +6,10 @@ import io.github.tt432.eyelib.molang.compiler.binding.MolangBinder;
 import io.github.tt432.eyelib.molang.compiler.frontend.MolangParserFrontends;
 import io.github.tt432.eyelib.molang.compiler.frontend.MolangParserFrontendResult;
 import io.github.tt432.eyelib.molang.compiler.frontend.ast.MolangAst;
-import io.github.tt432.eyelib.molang.MolangScope;
-import io.github.tt432.eyelib.molang.type.MolangObject;
-import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodHandles.Lookup.ClassOption;
 import java.lang.invoke.MethodType;
 import java.util.List;
-import java.util.Set;
 
 /**
  * Molang 编译器实现：解析 → 绑定 → 生成字节码 → 加载。
@@ -70,33 +66,10 @@ public final class MolangCompilerImpl implements MolangCompiler {
                 .findConstructor(hiddenClass, MethodType.methodType(void.class))
                 .invoke();
 
-        CompiledMolangExpression metadata = (CompiledMolangExpression) hiddenInstance;
-        MethodHandle evaluateHandle = lookup
-                .findVirtual(hiddenClass, "evaluate",
-                        MethodType.methodType(MolangObject.class, MolangScope.class))
-                .bindTo(hiddenInstance);
-        MethodHandle wrappedHandle = MethodHandles.dropArguments(
-                evaluateHandle, 0, HiddenMolangExpression.class);
-
-        return new HiddenMolangExpression(
-                metadata.sourceExpression(),
-                wrappedHandle,
-                metadata.requiredHostRoles());
-    }
-
-    private record HiddenMolangExpression(
-            String sourceExpression,
-            MethodHandle evaluateHandle,
-            Set<String> requiredHostRoles
-    ) implements CompiledMolangExpression {
-        @Override
-        public MolangObject evaluate(MolangScope scope) {
-            try {
-                return (MolangObject) evaluateHandle.invoke(this, scope);
-            } catch (Throwable t) {
-                throw new IllegalStateException(
-                        "Failed to invoke hidden Molang expression: " + sourceExpression, t);
-            }
-        }
+        // 生成类已实现 CompiledMolangExpression 全部方法，直接返回实例：
+        // 旧实现经 bindTo+dropArguments 包一层 MethodHandle，evaluate 走 LambdaForm invoke
+        // （JFR 实证：Invokers.checkCustomized ~9% + HiddenMolangExpression.evaluate ~10% 渲染线程），
+        // 直接接口调用由 JIT vtable 分派，零 LambdaForm 开销；异常由 MolangValue.getObject 统一捕获记录。
+        return (CompiledMolangExpression) hiddenInstance;
     }
 }

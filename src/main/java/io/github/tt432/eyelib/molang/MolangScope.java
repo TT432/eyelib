@@ -183,6 +183,11 @@ public final class MolangScope {
      * variable.* 与 host context 不受影响。仅清本层，不动 parent 链。
      */
     public void clearTempVariables() {
+        // 快速路径：绝大多数求值不写 temp.*（JFR 实证：CHM forEach+clear 在空集上仍遍历表，
+        // 占渲染线程 ~13%）。空集时 forEach/clear 均为无副作用 no-op，语义不变。
+        if (tempKeys.isEmpty()) {
+            return;
+        }
         tempKeys.forEach(cache::remove);
         tempKeys.clear();
     }
