@@ -15,9 +15,8 @@ import org.slf4j.LoggerFactory;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
+import java.util.IdentityHashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * C1 跨实体合批调度器（&le;26.1，GL&ge;4.6，ADR-0032）：收集一帧内的蒙皮会话，
@@ -39,6 +38,9 @@ final class BatchSkinningDispatcher {
     private static @Nullable ByteBuffer paletteStaging;
     private static @Nullable ByteBuffer metaStaging;
     private static boolean windowOpen;
+    /** meta 填充 scratch（渲染线程单线程使用，drain 内复用零分配）；后 3 个 int 恒为 0（对齐填充）。 */
+    private static final float[] META_FLOAT_SCRATCH = new float[8];
+    private static final int[] META_INT_SCRATCH = new int[6];
 
     private BatchSkinningDispatcher() {
     }
@@ -75,85 +77,97 @@ final class BatchSkinningDispatcher {
                 return; // 重载窗口期：丢一帧（finally 释放暂存）
             }
 
-            // 1. 分组（RenderType 首见顺序）+ 几何子批（同几何实体连续排布 meta）
-            Map<RenderType, Group> groups = new LinkedHashMap<>();
+            // 1. 分组计数（RenderType 首见顺序；IdentityHashMap 引用哈希快于 LinkedHashMap 键哈希）
+            List<Group> groups = new ArrayList<>();
+            IdentityHashMap<RenderType, Group> groupIndex = new IdentityHashMap<>();
+            int totalMats = 0;
+            int totalVertices = 0;
+            int totalEntities = 0;
             for (LegacySkinningSession session : PENDING) {
                 if (!(session.geometry() instanceof ComputeSkinnedGeometry geometry)) {
                     continue; // 几何类型与模式不匹配（路径切换竞态）：丢弃
                 }
-                groups.computeIfAbsent(session.routingType(), k -> new Group())
-                        .add(session, geometry);
+                Group group = groupIndex.get(session.routingType());
+                if (group == null) {
+                    group = new Group(session.routingType(), session.variant());
+                    groupIndex.put(session.routingType(), group);
+                    groups.add(group);
+                }
+                Subbatch sub = group.subIndex.get(geometry);
+                if (sub == null) {
+                    sub = new Subbatch(geometry, session);
+                    group.subIndex.put(geometry, sub);
+                    group.subbatches.add(sub);
+                } else {
+                    sub.sessions.add(session);
+                }
+                totalVertices += geometry.vertexCount();
+                totalMats += geometry.slotCount() * 2;
+                totalEntities++;
             }
             if (groups.isEmpty()) {
                 return;
             }
 
-            // 2. 布局：逐组逐子批分配 meta 下标 / palette 矩阵基址 / 输出顶点基址
-            int totalMats = 0;
-            int totalVertices = 0;
-            int totalEntities = 0;
-            for (Group group : groups.values()) {
-                group.firstVertex = totalVertices;
-                for (Subbatch sub : group.subbatches.values()) {
-                    sub.entityBase = totalEntities;
-                    for (LegacySkinningSession session : sub.sessions) {
-                        sub.vertexBases.add(totalVertices);
-                        sub.poseBases.add(totalMats);
-                        totalVertices += sub.geometry.vertexCount();
-                        totalMats += sub.geometry.slotCount() * 2;
-                        totalEntities++;
-                    }
-                }
-                group.vertexCount = totalVertices - group.firstVertex;
-            }
-
-            // 3. 上传 palette/meta
+            // 2. 上传 palette/meta：布局与填充单遍融合（基址内联推导，无逐实体 ArrayList 分配）。
+            // palette 用绝对下标批量拷贝（FloatBuffer.put(index, float[], …) 是 Unsafe 块拷贝）；
+            // 逐 float putFloat 循环 JFR 实证占渲染线程 ~25%（fbo n384 全部内联进 drain 帧）
             program.ensureCapacities(totalVertices, totalMats, totalEntities);
             ByteBuffer palette = staging(true, totalMats * 64);
             ByteBuffer meta = staging(false, totalEntities * BatchSkinningProgram.META_STRIDE);
-            for (Group group : groups.values()) {
-                for (Subbatch sub : group.subbatches.values()) {
+            java.nio.FloatBuffer paletteFloats = palette.asFloatBuffer();
+            java.nio.FloatBuffer metaFloats = meta.asFloatBuffer();
+            java.nio.IntBuffer metaInts = meta.asIntBuffer();
+            int vertexBase = 0;
+            int matBase = 0;
+            int entityIndex = 0;
+            for (Group group : groups) {
+                group.firstVertex = vertexBase;
+                for (Subbatch sub : group.subbatches) {
+                    sub.entityBase = entityIndex;
                     int slotCount = sub.geometry.slotCount();
-                    for (int i = 0; i < sub.sessions.size(); i++) {
-                        LegacySkinningSession session = sub.sessions.get(i);
-                        int poseBase = sub.poseBases.get(i);
+                    int floatsPerPalette = slotCount * 16;
+                    for (LegacySkinningSession session : sub.sessions) {
                         // pose[n] + normal[n] 紧凑打包（mat4 槽位）
-                        float[] pose = session.poseArray();
-                        float[] normals = session.normalArray();
-                        for (int f = 0; f < slotCount * 16; f++) {
-                            palette.putFloat(pose[f]);
-                        }
-                        for (int f = 0; f < slotCount * 16; f++) {
-                            palette.putFloat(normals[f]);
-                        }
-                        meta.putFloat(session.tintR()).putFloat(session.tintG())
-                                .putFloat(session.tintB()).putFloat(session.tintA());
-                        meta.putFloat(session.lightU()).putFloat(session.lightV())
-                                .putFloat(session.overlayU()).putFloat(session.overlayV());
-                        meta.putInt(poseBase);
-                        meta.putInt(poseBase + slotCount);
-                        meta.putInt(sub.vertexBases.get(i));
-                        meta.putInt(0).putInt(0).putInt(0);
+                        paletteFloats.put(matBase * 16, session.poseArray(), 0, floatsPerPalette);
+                        paletteFloats.put((matBase + slotCount) * 16, session.normalArray(), 0, floatsPerPalette);
+                        META_FLOAT_SCRATCH[0] = session.tintR();
+                        META_FLOAT_SCRATCH[1] = session.tintG();
+                        META_FLOAT_SCRATCH[2] = session.tintB();
+                        META_FLOAT_SCRATCH[3] = session.tintA();
+                        META_FLOAT_SCRATCH[4] = session.lightU();
+                        META_FLOAT_SCRATCH[5] = session.lightV();
+                        META_FLOAT_SCRATCH[6] = session.overlayU();
+                        META_FLOAT_SCRATCH[7] = session.overlayV();
+                        metaFloats.put(entityIndex * 16, META_FLOAT_SCRATCH, 0, 8);
+                        META_INT_SCRATCH[0] = matBase;
+                        META_INT_SCRATCH[1] = matBase + slotCount;
+                        META_INT_SCRATCH[2] = vertexBase;
+                        metaInts.put(entityIndex * 16 + 8, META_INT_SCRATCH, 0, 6);
+                        vertexBase += sub.geometry.vertexCount();
+                        matBase += slotCount * 2;
+                        entityIndex++;
                     }
                 }
+                group.vertexCount = vertexBase - group.firstVertex;
             }
-            palette.flip();
-            meta.flip();
+            // 绝对写不动 position：upload 读取 [0, limit) —— 直接设定 limit 到数据末尾
+            palette.limit(totalMats * 64);
+            meta.limit(totalEntities * BatchSkinningProgram.META_STRIDE);
             program.upload(palette, meta);
 
             // 4. 计算相：每子批一次 2D dispatch
             program.beginDispatch();
-            for (Group group : groups.values()) {
-                for (Subbatch sub : group.subbatches.values()) {
+            for (Group group : groups) {
+                for (Subbatch sub : group.subbatches) {
                     program.dispatchSubbatch(sub.geometry, sub.entityBase, sub.sessions.size());
                 }
             }
             program.endDispatch();
 
             // 5. 绘制相：每组一次状态机 + 一次 draw
-            for (Map.Entry<RenderType, Group> entry : groups.entrySet()) {
-                RenderType routingType = entry.getKey();
-                Group group = entry.getValue();
+            for (Group group : groups) {
+                RenderType routingType = group.routingType;
                 ShaderInstance shader = LegacySkinningManager.batchShader(group.variant);
                 if (shader == null) {
                     continue; // 重载窗口期：丢一帧
@@ -254,26 +268,27 @@ final class BatchSkinningDispatcher {
 
     /** 一个 RenderType 组：同几何的连续实体段为一个子批（一次 dispatch）。 */
     private static final class Group {
-        final LinkedHashMap<ComputeSkinnedGeometry, Subbatch> subbatches = new LinkedHashMap<>();
-        int variant = LegacySkinningManager.VARIANT_UNSUPPORTED;
+        final RenderType routingType;
+        final int variant;
+        final IdentityHashMap<ComputeSkinnedGeometry, Subbatch> subIndex = new IdentityHashMap<>();
+        final List<Subbatch> subbatches = new ArrayList<>();
         int firstVertex;
         int vertexCount;
 
-        void add(LegacySkinningSession session, ComputeSkinnedGeometry geometry) {
-            variant = session.variant();
-            subbatches.computeIfAbsent(geometry, k -> new Subbatch(geometry)).sessions.add(session);
+        Group(RenderType routingType, int variant) {
+            this.routingType = routingType;
+            this.variant = variant;
         }
     }
 
     private static final class Subbatch {
         final ComputeSkinnedGeometry geometry;
         final List<LegacySkinningSession> sessions = new ArrayList<>();
-        final List<Integer> vertexBases = new ArrayList<>();
-        final List<Integer> poseBases = new ArrayList<>();
         int entityBase;
 
-        Subbatch(ComputeSkinnedGeometry geometry) {
+        Subbatch(ComputeSkinnedGeometry geometry, LegacySkinningSession first) {
             this.geometry = geometry;
+            this.sessions.add(first);
         }
     }
 }
