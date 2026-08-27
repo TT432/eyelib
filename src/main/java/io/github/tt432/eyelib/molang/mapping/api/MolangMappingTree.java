@@ -84,6 +84,18 @@ public class MolangMappingTree {
         fieldResolutionCache.clear();
         methodResolutionCache.clear();
         queryVariantCache.clear();
+        // 单调递增的注册表纪元：MolangRuntimeSupport 零参绑定缓存以此检测失效，
+        // 免回调节（每次求值一次 volatile 读 + 长整型比较）。
+        epoch++;
+    }
+    private volatile long epoch;
+
+    /**
+     * 注册表纪元：addNode/clear/normalizeAndValidatePublicationOrder 时自增。
+     * 供外层按注册表内容缓存解析结果的组件做廉价失效检测。
+     */
+    public long epoch() {
+        return epoch;
     }
 
     MolangMappingTree() {

@@ -154,6 +154,15 @@
 
 - 优化前:https://spark.lucko.me/8RhM134XVh
 - 优化后:https://spark.lucko.me/txiWm3qS1e
+### Opt10 · molang 零参解析绑定缓存（2026-08-28）
+
+- **文件**:`molang/compiler/MolangRuntimeSupport.java`、`molang/mapping/api/MolangMappingTree.java`
+- **根因**:Opt6/Opt9 后每次零参 query 求值仍串行 5 次哈希查找——scope.get → findField(缓存) → findMethod(缓存) → selectQueryVariant(缓存,且每次 `new QueryVariantKey` record 分配+hash) → methodHandleOf(缓存)，外加 invokeMethod 的 varargs 槽位重检测与 Object[] 全量装配。
+- **方案**:RuntimeSupport 增加 `ZERO_ARG_CACHE`：按 (名称 × host 有无 × 注册表纪元) 缓存完整解析结果 ZeroArgBinding——kind(FIELD/METHOD/NONE) + 预建 MethodHandle + 参数模板（可见参数缺省值与空 varargs 数组预填，host/engine 槽每次现填）。失效检测 = 树引用同一性 + `MolangMappingTree.epoch()`（addNode/clear/normalize 自增）一次 volatile 读，免回调节。键为字节码 ldc 的编译期常量字符串，无防御性拷贝（Opt9 教训）。resolveCall 零参路径共用；非零参路径不变。
+- **语义保持**:scope.get 覆盖检查仍在缓存之前（脚本赋值优先）；FIELD/NONE 对 resolveCall 视为未解析（warn+scope.get 兜底不变）；selectQueryVariant 内部首步即 findMethod，先查 findMethod 等价（源码实证）；变体歧义 catch→NONE 与原路径一致。
+- **踩坑**:同 publication signature 的变体属注册冲突（静默丢弃）——host 回退变体必须 varargs 形态（同 DefaultRoleFallbackVariantMapping 先例）。
+- **诊断开关**:`-Deyelib.molang.zeroArgBinding=false` 回退逐次解析旧路径（benchmark A/B 用，已接入 runClientBenchmark 转发）。
+- **验证**:1.20.1 单测全绿（含新契约测试 MolangRuntimeSupportZeroArgBindingTest：epoch 失效重解析/scope 覆盖优先/FULL-MINIMAL 槽独立）；1.20.1/1.21.1 编译绿。benchmark 交错 A/B（fbo slime n384，fresh JVM，30s 测量）：ON 113.57/125.34 vs OFF 105.57/104.29 FPS → **+13.8%**（两轮同向 +7.6%/+20.2%），渲染零错误。
 
 > **T4 是佐证**:Forge EventBus cast Lambda 是通用机制(所有事件 post 共用,非 eyelib 专属),38% 下降部分归因 Opt3、部分归因采样时机与 GC。Opt3 主证据是 T3 CPU 的干净归因。
 

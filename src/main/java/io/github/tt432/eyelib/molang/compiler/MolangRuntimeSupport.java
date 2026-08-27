@@ -49,6 +49,189 @@ public final class MolangRuntimeSupport {
     private static final ConcurrentHashMap<Method, Optional<MethodHandle>> METHOD_HANDLES = new ConcurrentHashMap<>();
     private static final ConcurrentHashMap<Field, Optional<MethodHandle>> FIELD_GETTERS = new ConcurrentHashMap<>();
     private static final MolangObject[] NO_ARGS = new MolangObject[0];
+    // ---------------------------------------------------------------------
+    // 零参解析绑定缓存：resolveMemberAccess / resolveCall(零参) 的完整解析结果
+    // （findField → findMethod → selectQueryVariant → MethodHandle + 参数模板）
+    // 只取决于 (名称, host 是否存在, 注册表纪元)。注册表变更（epoch 自增）后条目
+    // 自动失效重解析，无需回调节。键为字节码 ldc 的编译期常量字符串，直接使用、
+    // 无防御性拷贝（Opt9 教训：缓存键成本不得超过被缓存计算）。
+    // ---------------------------------------------------------------------
+    private static final ConcurrentHashMap<String, ZeroArgCacheEntry> ZERO_ARG_CACHE = new ConcurrentHashMap<>();
+    // 诊断开关（benchmark A/B 用）：-Deyelib.molang.zeroArgBinding=false 回退逐次解析旧路径
+    private static final boolean ZERO_ARG_BINDING_ENABLED =
+            Boolean.parseBoolean(System.getProperty("eyelib.molang.zeroArgBinding", "true"));
+
+    private record ZeroArgCacheEntry(MolangMappingTree tree, long epoch,
+                                     ZeroArgBinding minimal, ZeroArgBinding full) {
+    }
+
+    private static final class ZeroArgBinding {
+        static final int KIND_NONE = 0;
+        static final int KIND_FIELD = 1;
+        static final int KIND_METHOD = 2;
+        static final ZeroArgBinding NONE = new ZeroArgBinding();
+
+        int kind = KIND_NONE;
+        // KIND_FIELD：优先 MethodHandle getter，不可 unreflect 时反射回退
+        @Nullable MethodHandle fieldGetter;
+        @Nullable Field field;
+        // KIND_METHOD：template 已预填可见参数默认值与空 varargs 数组；
+        // host/engine 槽位每次调用现填（值随 scope 变化）
+        @Nullable MethodHandle methodHandle;
+        @Nullable Method method;
+        @Nullable FunctionInfo functionInfo;   // 诊断开关回退路径（invokeMethod）用
+        Object[] template = new Object[0];
+        int[] hostSlots = {};
+        Class<?>[] hostSlotTypes = {};
+        Object[] hostSlotDefaults = {};
+        int[] engineSlots = {};
+
+        static ZeroArgBinding forField(Field field) {
+            ZeroArgBinding b = new ZeroArgBinding();
+            b.kind = KIND_FIELD;
+            b.fieldGetter = fieldGetterOf(field).orElse(null);
+            b.field = field;
+            return b;
+        }
+
+        static ZeroArgBinding forMethod(FunctionInfo functionInfo) {
+            ZeroArgBinding b = new ZeroArgBinding();
+            b.kind = KIND_METHOD;
+            Method method = functionInfo.method();
+            List<FunctionParameterRole> paramRoles = functionInfo.parameterRoles();
+            b.methodHandle = methodHandleOf(method).orElse(null);
+            b.method = method;
+            b.functionInfo = functionInfo;
+            b.template = new Object[method.getParameterCount()];
+
+            int varArgSlot = -1;
+            if (method.isVarArgs() && !paramRoles.isEmpty()) {
+                FunctionParameterRole lastRole = paramRoles.get(paramRoles.size() - 1);
+                if (lastRole.role() == MolangFunction.ParameterRole.VISIBLE_ARG
+                        && method.getParameterTypes()[lastRole.index()].isArray()) {
+                    varArgSlot = lastRole.index();
+                }
+            }
+
+            List<Integer> hostSlots = new ArrayList<>(2);
+            List<Class<?>> hostTypes = new ArrayList<>(2);
+            List<Object> hostDefaults = new ArrayList<>(2);
+            List<Integer> engineSlots = new ArrayList<>(1);
+
+            for (FunctionParameterRole role : paramRoles) {
+                int idx = role.index();
+                if (idx == varArgSlot) {
+                    continue;
+                }
+                switch (role.role()) {
+                    // 零参调用：可见参数槽恒定缺省（与 invokeMethod 缺参分支一致）
+                    case VISIBLE_ARG -> b.template[idx] = role.parameterType().isPrimitive()
+                            ? defaultPrimitive(role.parameterType()) : null;
+                    case RECEIVER, INJECTED_HOST -> {
+                        hostSlots.add(idx);
+                        hostTypes.add(role.parameterType());
+                        hostDefaults.add(role.parameterType().isPrimitive()
+                                ? defaultPrimitive(role.parameterType()) : null);
+                    }
+                    case SPECIAL_ENGINE_ARG -> engineSlots.add(idx);
+                }
+            }
+            if (varArgSlot >= 0) {
+                Class<?> component = method.getParameterTypes()[varArgSlot].getComponentType();
+                if (component != null) {
+                    // 零参调用 varargs 恒为空数组，预建共享
+                    b.template[varArgSlot] = Array.newInstance(component, 0);
+                }
+            }
+            b.hostSlots = hostSlots.stream().mapToInt(Integer::intValue).toArray();
+            b.hostSlotTypes = hostTypes.toArray(new Class<?>[0]);
+            b.hostSlotDefaults = hostDefaults.toArray();
+            b.engineSlots = engineSlots.stream().mapToInt(Integer::intValue).toArray();
+            return b;
+        }
+    }
+
+    private static boolean hasHostContext(MolangScope scope) {
+        return scope.getHostContext().get(HostRoles.HOST_PRESENCE_MARKER).isPresent();
+    }
+
+    private static ZeroArgBinding zeroArgBinding(String name, boolean fullHost) {
+        MolangMappingTree tree = MolangMappingRegistries.mappingTree();
+        if (!ZERO_ARG_BINDING_ENABLED) {
+            return resolveZeroArg(tree, name, fullHost);
+        }
+        long epoch = tree.epoch();
+        ZeroArgCacheEntry entry = ZERO_ARG_CACHE.get(name);
+        if (entry != null && entry.tree() == tree && entry.epoch() == epoch) {
+            return fullHost ? entry.full() : entry.minimal();
+        }
+        ZeroArgBinding minimal = resolveZeroArg(tree, name, false);
+        ZeroArgBinding full = resolveZeroArg(tree, name, true);
+        // 良性竞争：并发解析结果幂等；epoch 错位时下次调用重解析
+        ZERO_ARG_CACHE.put(name, new ZeroArgCacheEntry(tree, epoch, minimal, full));
+        return fullHost ? full : minimal;
+    }
+
+    private static ZeroArgBinding resolveZeroArg(MolangMappingTree tree, String name, boolean fullHost) {
+        var fieldData = tree.findField(name);
+        if (fieldData != null) {
+            return ZeroArgBinding.forField(fieldData.field());
+        }
+        if (tree.findMethod(name) != null) {
+            FunctionInfo functionInfo;
+            try {
+                functionInfo = tree.selectQueryVariant(name, List.of(),
+                        fullHost ? HOST_ROLES_FULL : HOST_ROLES_MINIMAL);
+            } catch (Exception e) {
+                // 变体歧义 — 当作未解析处理（与原路径语义一致）
+                return ZeroArgBinding.NONE;
+            }
+            if (functionInfo != null) {
+                return ZeroArgBinding.forMethod(functionInfo);
+            }
+        }
+        return ZeroArgBinding.NONE;
+    }
+
+    private static MolangObject invokeZeroArgField(ZeroArgBinding b) {
+        MethodHandle getter = b.fieldGetter;
+        if (getter != null) {
+            try {
+                return wrapJavaResult(getter.invokeWithArguments());
+            } catch (Throwable ignored) {
+                return MolangNull.INSTANCE;
+            }
+        }
+        try {
+            return wrapJavaResult(b.field.get(null));
+        } catch (IllegalAccessException ignored) {
+            return MolangNull.INSTANCE;
+        }
+    }
+
+    private static MolangObject invokeZeroArgMethod(ZeroArgBinding b, MolangScope scope) {
+        Object[] args = b.template.clone();
+        for (int i = 0; i < b.hostSlots.length; i++) {
+            Object value = scope.getHostContext().get(b.hostSlotTypes[i]).orElse(null);
+            args[b.hostSlots[i]] = value != null ? value : b.hostSlotDefaults[i];
+        }
+        for (int slot : b.engineSlots) {
+            args[slot] = scope;
+        }
+        MethodHandle handle = b.methodHandle;
+        if (handle != null) {
+            try {
+                return wrapJavaResult(handle.invokeWithArguments(args));
+            } catch (Throwable ignored) {
+                return MolangNull.INSTANCE;
+            }
+        }
+        try {
+            return wrapJavaResult(b.method.invoke(null, args));
+        } catch (InvocationTargetException | IllegalAccessException ignored) {
+            return MolangNull.INSTANCE;
+        }
+    }
 
     private static Optional<MethodHandle> methodHandleOf(Method method) {
         return METHOD_HANDLES.computeIfAbsent(method, m -> {
@@ -118,47 +301,20 @@ public final class MolangRuntimeSupport {
             return MolangNull.INSTANCE;
         }
 
-        MolangMappingTree mappingTree = MolangMappingRegistries.mappingTree();
-
+        // scope 覆盖优先（脚本赋值/宿主注入的扁平键），不可缓存——每次现查
         MolangObject scopeValue = scope.get(dottedName);
         if (!(scopeValue instanceof MolangNull)) {
             return scopeValue;
         }
 
-        var fieldData = mappingTree.findField(dottedName);
-        if (fieldData != null) {
-            Field field = fieldData.field();
-            Optional<MethodHandle> getter = fieldGetterOf(field);
-            if (getter.isPresent()) {
-                try {
-                    return wrapJavaResult(getter.get().invokeWithArguments());
-                } catch (Throwable ignored) {
-                    return MolangNull.INSTANCE;
-                }
-            }
-            try {
-                return wrapJavaResult(field.get(null));
-            } catch (IllegalAccessException ignored) {
-                return MolangNull.INSTANCE;
-            }
-        }
-
-        var methodData = mappingTree.findMethod(dottedName);
-        if (methodData != null) {
-            Set<MolangFunction.ParameterRole> hostRoles = computeAvailableHostRoles(scope);
-            FunctionInfo functionInfo;
-            try {
-                functionInfo = mappingTree.selectQueryVariant(dottedName, List.of(), hostRoles);
-            } catch (Exception e) {
-                // 变体歧义 — 当作未解析处理
-                return MolangNull.INSTANCE;
-            }
-            if (functionInfo != null) {
-                return invokeMethod(functionInfo, scope, NO_ARGS);
-            }
-        }
-
-        return MolangNull.INSTANCE;
+        ZeroArgBinding binding = zeroArgBinding(dottedName, hasHostContext(scope));
+        return switch (binding.kind) {
+            case ZeroArgBinding.KIND_FIELD -> invokeZeroArgField(binding);
+            case ZeroArgBinding.KIND_METHOD -> ZERO_ARG_BINDING_ENABLED
+                    ? invokeZeroArgMethod(binding, scope)
+                    : invokeMethod(binding.functionInfo, scope, NO_ARGS);
+            default -> MolangNull.INSTANCE;
+        };
     }
 
     public static MolangObject resolveCall(MolangScope scope, String methodName, MolangObject[] argValues) {
@@ -173,8 +329,16 @@ public final class MolangRuntimeSupport {
         MolangObject[] visibleArgs;
         List<VisibleArgumentKind> callShape;
         if (argValues == null || argValues.length == 0) {
-            visibleArgs = NO_ARGS;
-            callShape = List.of();
+            // 零参调用：走绑定缓存快路径（等价于 selectQueryVariant(name, List.of(), hostRoles)
+            // + invokeMethod(NO_ARGS)；FIELD/NONE 视为未解析，warn + scope.get 兜底语义不变）
+            ZeroArgBinding binding = zeroArgBinding(methodName, hasHostContext(scope));
+            if (binding.kind == ZeroArgBinding.KIND_METHOD) {
+                return ZERO_ARG_BINDING_ENABLED
+                        ? invokeZeroArgMethod(binding, scope)
+                        : invokeMethod(binding.functionInfo, scope, NO_ARGS);
+            }
+            warnMissing(methodName);
+            return scope.get(methodName);
         } else {
             visibleArgs = argValues;
             VisibleArgumentKind[] kinds = new VisibleArgumentKind[argValues.length];
