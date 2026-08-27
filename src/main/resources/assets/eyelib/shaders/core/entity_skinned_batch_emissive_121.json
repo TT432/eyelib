@@ -4,12 +4,15 @@
         "srcrgb": "srcalpha",
         "dstrgb": "1-srcalpha"
     },
-    "vertex": "eyelib:entity_skinned_compute_emissive",
+    "vertex": "eyelib:entity_skinned_batch_emissive_121",
     "fragment": "minecraft:rendertype_entity_translucent_emissive",
     "attributes": [
         "Position",
         "UV0",
-        "Normal"
+        "Normal",
+        "Tint",
+        "LightUV",
+        "OverlayUV"
     ],
     "samplers": [
         { "name": "Sampler0" },
@@ -22,8 +25,6 @@
         { "name": "Light0_Direction", "type": "float", "count": 3, "values": [ 0.0, 0.0, 0.0 ] },
         { "name": "Light1_Direction", "type": "float", "count": 3, "values": [ 0.0, 0.0, 0.0 ] },
         { "name": "FogStart", "type": "float", "count": 1, "values": [ 0.0 ] },
-        { "name": "FogEnd", "type": "float", "count": 1, "values": [ 1.0 ] },
-        { "name": "TintColor", "type": "float", "count": 4, "values": [ 1.0, 1.0, 1.0, 1.0 ] },
-        { "name": "OverlayUV", "type": "int", "count": 2, "values": [ 0, 0 ] }
+        { "name": "FogEnd", "type": "float", "count": 1, "values": [ 1.0 ] }
     ]
 }

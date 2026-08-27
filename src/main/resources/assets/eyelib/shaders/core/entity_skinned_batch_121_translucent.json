@@ -4,12 +4,15 @@
         "srcrgb": "srcalpha",
         "dstrgb": "1-srcalpha"
     },
-    "vertex": "eyelib:entity_skinned_compute_121",
-    "fragment": "minecraft:rendertype_entity_solid",
+    "vertex": "eyelib:entity_skinned_batch_121",
+    "fragment": "minecraft:rendertype_entity_translucent",
     "attributes": [
         "Position",
         "UV0",
-        "Normal"
+        "Normal",
+        "Tint",
+        "LightUV",
+        "OverlayUV"
     ],
     "samplers": [
         { "name": "Sampler0" },
@@ -25,9 +28,6 @@
         { "name": "FogStart", "type": "float", "count": 1, "values": [ 0.0 ] },
         { "name": "FogEnd", "type": "float", "count": 1, "values": [ 1.0 ] },
         { "name": "FogColor", "type": "float", "count": 4, "values": [ 0.0, 0.0, 0.0, 0.0 ] },
-        { "name": "FogShape", "type": "int", "count": 1, "values": [ 0 ] },
-        { "name": "TintColor", "type": "float", "count": 4, "values": [ 1.0, 1.0, 1.0, 1.0 ] },
-        { "name": "OverlayUV", "type": "int", "count": 2, "values": [ 0, 0 ] },
-        { "name": "LightUV", "type": "int", "count": 2, "values": [ 0, 0 ] }
+        { "name": "FogShape", "type": "int", "count": 1, "values": [ 0 ] }
     ]
 }

@@ -4,12 +4,15 @@
         "srcrgb": "srcalpha",
         "dstrgb": "1-srcalpha"
     },
-    "vertex": "eyelib:entity_skinned_compute_121",
-    "fragment": "minecraft:rendertype_entity_translucent",
+    "vertex": "eyelib:entity_skinned_batch",
+    "fragment": "minecraft:rendertype_entity_solid",
     "attributes": [
         "Position",
         "UV0",
-        "Normal"
+        "Normal",
+        "Tint",
+        "LightUV",
+        "OverlayUV"
     ],
     "samplers": [
         { "name": "Sampler0" },
@@ -19,15 +22,13 @@
     "uniforms": [
         { "name": "ModelViewMat", "type": "matrix4x4", "count": 16, "values": [ 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0 ] },
         { "name": "ProjMat", "type": "matrix4x4", "count": 16, "values": [ 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0 ] },
+        { "name": "IViewRotMat", "type": "matrix3x3", "count": 9, "values": [ 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0 ] },
         { "name": "ColorModulator", "type": "float", "count": 4, "values": [ 1.0, 1.0, 1.0, 1.0 ] },
         { "name": "Light0_Direction", "type": "float", "count": 3, "values": [ 0.0, 0.0, 0.0 ] },
         { "name": "Light1_Direction", "type": "float", "count": 3, "values": [ 0.0, 0.0, 0.0 ] },
         { "name": "FogStart", "type": "float", "count": 1, "values": [ 0.0 ] },
         { "name": "FogEnd", "type": "float", "count": 1, "values": [ 1.0 ] },
         { "name": "FogColor", "type": "float", "count": 4, "values": [ 0.0, 0.0, 0.0, 0.0 ] },
-        { "name": "FogShape", "type": "int", "count": 1, "values": [ 0 ] },
-        { "name": "TintColor", "type": "float", "count": 4, "values": [ 1.0, 1.0, 1.0, 1.0 ] },
-        { "name": "OverlayUV", "type": "int", "count": 2, "values": [ 0, 0 ] },
-        { "name": "LightUV", "type": "int", "count": 2, "values": [ 0, 0 ] }
+        { "name": "FogShape", "type": "int", "count": 1, "values": [ 0 ] }
     ]
 }

@@ -86,6 +86,8 @@ final class FboBenchmarkWorkload implements BenchmarkWorkload {
         float scale = Math.max(16.0F, Math.min(cellWidth, cellHeight) * 0.72F);
 
         EntitySceneRenderer.beginScene(minecraft, target, BACKGROUND_ARGB);
+        //? if <26.1
+        io.github.tt432.eyelib.bridge.client.render.skinning.adapter.LegacySkinningManager.openBatchWindow();
         try {
             for (int i = 0; i < entities.size(); i++) {
                 int column = i % columns;
@@ -99,6 +101,8 @@ final class FboBenchmarkWorkload implements BenchmarkWorkload {
             }
         } finally {
             RenderLivingEventAdapter.sceneEntityOverride = null;
+            //? if <26.1
+            io.github.tt432.eyelib.bridge.client.render.skinning.adapter.LegacySkinningManager.drainBatch();
             EntitySceneRenderer.endScene(minecraft);
             //? if <26.1
             minecraft.getMainRenderTarget().bindWrite(true);
