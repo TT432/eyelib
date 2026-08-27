@@ -43,11 +43,21 @@ final class SkinningGeometryPacker {
     ) {
     }
 
-    static Packed pack(BakedModel model) {
+    /** slot 分配计划（按骨骼 id 升序、跳过零顶点骨骼；NG 与 Legacy 几何共用此唯一事实源）。 */
+    record SlotPlan(
+            /** 骨骼 id → slot（零顶点骨骼无条目）。 */
+            Int2IntMap boneToSlot,
+            /** slot → 骨骼 id（按 id 升序）。 */
+            int[] slotBoneIds,
+            int slotCount,
+            int totalVertices
+    ) {
+    }
+
+    static SlotPlan planSlots(BakedModel model) {
         int[] ids = model.bones().keySet().toIntArray();
         Arrays.sort(ids);
 
-        // 第一遍：分配 slot（跳过零顶点骨骼）并统计总量
         Int2IntMap boneToSlot = new Int2IntOpenHashMap(ids.length);
         int[] slotBoneIds = new int[ids.length];
         int slotCount = 0;
@@ -61,6 +71,15 @@ final class SkinningGeometryPacker {
             slotBoneIds[slotCount++] = id;
             totalVertices += bone.vertexSize();
         }
+        return new SlotPlan(boneToSlot, slotBoneIds, slotCount, totalVertices);
+    }
+
+    static Packed pack(BakedModel model) {
+        SlotPlan plan = planSlots(model);
+        Int2IntMap boneToSlot = plan.boneToSlot();
+        int[] slotBoneIds = plan.slotBoneIds();
+        int slotCount = plan.slotCount();
+        int totalVertices = plan.totalVertices();
         if (slotCount == 0) {
             return null;
         }

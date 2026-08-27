@@ -20,6 +20,8 @@
 | 渲染 FPS / 稳定性 Benchmark | [perf/render-fps-benchmark.md](perf/render-fps-benchmark.md) |
 | Heap 泄漏定位案例（JFR + full-GC histogram） | [perf/heap-leak-investigation.md](perf/heap-leak-investigation.md) |
 | 渲染系统 GPU 化调研（可行边界 + 分阶段路线图） | [research/2026-08-26-render-gpu-offload.md](research/2026-08-26-render-gpu-offload.md) |
+| C1 GPU 蒙皮 26.1.2 结果（正确性通过、性能中性） | [perf/c1-gpu-skinning-26.1.2.md](perf/c1-gpu-skinning-26.1.2.md) |
+| C1 GPU 蒙皮 ≤26.1 结果（1.20.1/1.21.1，正确性通过、性能中性） | [perf/c1-gpu-skinning-legacy.md](perf/c1-gpu-skinning-legacy.md) |
 
 ## Skill 索引
 

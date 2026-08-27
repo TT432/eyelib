@@ -17,7 +17,8 @@ import org.joml.Matrix4f;
  * </ol>
  * 会话的 palette 上传与绘制由实现方在 writer 回调结束后完成，不属于本契约。
  *
- * <p>26.1.2 实现见 {@code adapter/NgSkinningSession}；&le;26.1 暂无实现（恒 null session）。
+ * <p>26.1.2 实现见 {@code adapter/NgSkinningSession}；&le;26.1（1.20.1/1.21.1）实现见
+ * {@code adapter/LegacySkinningSession}（P2，DESIGN-P2）。
  */
 public interface SkinningSession {
 

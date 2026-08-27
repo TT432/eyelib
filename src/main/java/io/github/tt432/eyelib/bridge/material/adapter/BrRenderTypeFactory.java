@@ -35,6 +35,7 @@ import net.minecraft.client.renderer.RenderStateShard;
 //?}
 //? if <26.1 {
 import net.minecraft.client.renderer.RenderType;
+import io.github.tt432.eyelib.bridge.client.render.skinning.adapter.LegacySkinningManager;
 //?} else {
 import net.minecraft.client.renderer.rendertype.RenderType;
 //?}
@@ -109,7 +110,7 @@ public final class BrRenderTypeFactory {
 
     //? if <26.1 {
     private static RenderType custom(ResourceLocation texture, BrRenderState state) {
-        return RenderType.create(
+        RenderType renderType = RenderType.create(
                 "eyelib_material_" + state.surfaceClass().name().toLowerCase() + "_" + texture,
                 DefaultVertexFormat.NEW_ENTITY,
                 VertexFormat.Mode.QUADS,
@@ -130,6 +131,23 @@ public final class BrRenderTypeFactory {
                         .setOverlayState(new RenderStateShard.OverlayStateShard(state.overlay()))
                         .createCompositeState(false)
         );
+        // C1 GPU 蒙皮（P2，ADR-0032）：创建期登记 routing RenderType 的蒙皮 shader 变体；
+        // 变体选择必须与下方 shaderState 的 vanilla shader 选择保持一致（蒙皮 shader 是其逐行复刻）
+        LegacySkinningManager.registerVariant(renderType, legacySkinningVariant(state));
+        return renderType;
+    }
+    /** 与 {@link #shaderState} 的 vanilla shader 选择一一对应的蒙皮变体（GLINT 等不支持的回退 CPU）。 */
+    private static int legacySkinningVariant(BrRenderState state) {
+        return switch (state.surfaceClass()) {
+            case CUTOUT -> LegacySkinningManager.VARIANT_CUTOUT;
+            case EMISSIVE_CUTOUT, TRANSLUCENT_EMISSIVE ->
+                    LegacySkinningManager.VARIANT_EMISSIVE;
+            case TRANSLUCENT, ADDITIVE -> state.emissive()
+                    ? LegacySkinningManager.VARIANT_EMISSIVE
+                    : LegacySkinningManager.VARIANT_TRANSLUCENT;
+            case GLINT -> LegacySkinningManager.VARIANT_UNSUPPORTED;
+            default -> LegacySkinningManager.VARIANT_SOLID;
+        };
     }
 
     private static RenderStateShard.ShaderStateShard shaderState(BrRenderState state) {

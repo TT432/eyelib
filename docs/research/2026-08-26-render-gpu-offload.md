@@ -304,7 +304,7 @@ GLFW.glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, 1);
 |---|---|---|---|
 | **P0 前置** | ①~~定论+修复 OPT-R1~~（已完成：定论无缺陷，DFSModelTest da8634bd）②~~决策死资产~~（已完成 70bea805：3 组 *_chunk shader/ShaderManager/shader_mapping.json 共 19 个零引用死文件全部删除，alpha-clamp-two-path.md 死引用已勘误）③C2 直写缓冲 | 全版本 | clientsmoke FBO 像素回归 + benchmark |
 | **P1 先行** | C1 GPU 蒙皮：自定义 RenderPipeline + UBO/TBO 调色板 + 静态 GpuBuffer 几何 | **26.1.2**（API 最友好：官方自定义管线 + DynamicUniforms 范式 + DeferredRenderSink 合批） | **已完成 2026-08-27（1d47d353/88da7479/c957789a）**：UBO 调色板（TBO 无 float 格式，弃用）+ drawMultipleIndexed 阶段批量 flush。正确性验证通过；benchmark 结论**性能中性**（26.1.2 瓶颈在 vanilla submit 机制）。详见 docs/perf/c1-gpu-skinning-26.1.2.md |
-| **P2 跟进** | C1 移植 ≤26.1：RegisterShadersEvent + 自定义 VertexFormat(boneIndex) + vanilla VertexBuffer + TBO 调色板；与 R1 合批协同 | 1.20.1 / 1.21.1 | 同 P1，三版本行为对齐。**待用户决策是否启动**（P1 中性，但 ≤26.1 顶点 CPU 占比高，预期收益更实） |
+| **P2 跟进** | ~~C1 移植 ≤26.1~~ | 1.20.1 / 1.21.1 | **已完成 2026-08-27**：实际落地为 RegisterShadersEvent + UV1 元素复用骨骼索引（零自定义元素/零裸 GL）+ VertexBuffer 展开三角形 + uniform 数组调色板（非 TBO）。正确性验证通过（含 EMISSIVE 变体、蜘蛛发光眼）；benchmark 结论**性能中性**（FBO ON 慢 1-3%，world 持平——逐实体 draw+状态机开销抵消顶点 CPU 节省）。详见 docs/perf/c1-gpu-skinning-legacy.md。下一步候选：P2.5 按 RenderType 跨实体状态去重 |
 | **P3 扩展** | C4 粒子实例化；C6 派生纹理 GPU 化/colorMask uniform 化 | 全版本 | FBO + benchmark |
 | **P4 平台跃迁** | 26.2 Vulkan 节点落地后重估：compute 调色板预合成、SSBO、GPU 蒙皮 compute 化 | 26.2+ | 同左 |
 

@@ -161,6 +161,7 @@ if (isLegacyForge) {
                 gameDirectory = project.file('run/benchmark')
                 systemProperty 'forge.enabledGameTestNamespaces', project.mod_id
                 systemProperty 'eyelib.benchmark.enabled', 'true'
+                systemProperty 'eyelib.gpuSkinning', benchmarkProperty('eyelib.gpuSkinning', 'true')
                 systemProperty 'eyelib.benchmark.autoExit', benchmarkProperty('eyelib.benchmark.autoExit', 'true')
                 systemProperty 'eyelib.benchmark.modes', benchmarkProperty('eyelib.benchmark.modes', 'fbo,world,pacing,stability')
                 systemProperty 'eyelib.benchmark.entity', benchmarkProperty('eyelib.benchmark.entity', 'minecraft:slime')
@@ -261,6 +262,7 @@ if (isLegacyForge) {
                 gameDirectory = project.file('run/benchmark')
                 systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
                 systemProperty 'eyelib.benchmark.enabled', 'true'
+                systemProperty 'eyelib.gpuSkinning', benchmarkProperty('eyelib.gpuSkinning', 'true')
                 systemProperty 'eyelib.benchmark.autoExit', benchmarkProperty('eyelib.benchmark.autoExit', 'true')
                 systemProperty 'eyelib.benchmark.modes', benchmarkProperty('eyelib.benchmark.modes', 'fbo,world,pacing,stability')
                 systemProperty 'eyelib.benchmark.entity', benchmarkProperty('eyelib.benchmark.entity', 'minecraft:slime')
