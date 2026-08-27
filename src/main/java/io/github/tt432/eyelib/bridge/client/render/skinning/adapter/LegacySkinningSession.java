@@ -25,7 +25,7 @@ public final class LegacySkinningSession implements SkinningSession {
     private final RenderType routingType;
     private final int variant;
 
-    private @Nullable LegacySkinnedGeometry geometry;
+    private @Nullable LegacyGpuGeometry geometry;
     private float @Nullable [] pose;
     private float @Nullable [] normals;
     private @Nullable BitSet visible;
@@ -42,7 +42,7 @@ public final class LegacySkinningSession implements SkinningSession {
 
     @Override
     public boolean begin(BakedModel model, float @Nullable [] tintColor, int overlay, int light) {
-        LegacySkinnedGeometry geo = LegacySkinningManager.geometry(model);
+        LegacyGpuGeometry geo = LegacySkinningManager.geometry(model);
         if (geo == null) {
             return false;
         }
@@ -69,7 +69,7 @@ public final class LegacySkinningSession implements SkinningSession {
 
     @Override
     public void appendBone(int boneId, Matrix4f pose, Matrix3f normal) {
-        LegacySkinnedGeometry geo = geometry;
+        LegacyGpuGeometry geo = geometry;
         float[] poseArr = this.pose;
         float[] normalArr = this.normals;
         if (!active || geo == null || poseArr == null || normalArr == null) {
@@ -96,7 +96,7 @@ public final class LegacySkinningSession implements SkinningSession {
 
     @Override
     public void markVisible(int boneId) {
-        LegacySkinnedGeometry geo = geometry;
+        LegacyGpuGeometry geo = geometry;
         if (!active || geo == null || visible == null) {
             return;
         }
@@ -108,7 +108,7 @@ public final class LegacySkinningSession implements SkinningSession {
 
     /** writer 正常结束：不可见 slot 退化；全不可见则不入队（归还暂存）。 */
     public void finish() {
-        LegacySkinnedGeometry geo = geometry;
+        LegacyGpuGeometry geo = geometry;
         float[] poseArr = this.pose;
         if (!active || geo == null || poseArr == null || visible == null) {
             return;
@@ -150,7 +150,7 @@ public final class LegacySkinningSession implements SkinningSession {
         return variant;
     }
 
-    LegacySkinnedGeometry geometry() {
+    LegacyGpuGeometry geometry() {
         var geo = geometry;
         if (geo == null) {
             throw new IllegalStateException("session not begun");

@@ -29,7 +29,7 @@ import com.mojang.blaze3d.vertex.MeshData;
  *
  * <p>顶点写入走 vanilla VertexConsumer API，字节级打包（法线量化等）与经典 CPU 路径天然一致。
  */
-public final class LegacySkinnedGeometry implements AutoCloseable {
+public final class LegacySkinnedGeometry implements LegacyGpuGeometry {
     //? if <1.20.6 {
     public static final VertexFormat FORMAT = new VertexFormat(ImmutableMap.of(
             "Position", DefaultVertexFormat.ELEMENT_POSITION,
@@ -130,10 +130,12 @@ public final class LegacySkinnedGeometry implements AutoCloseable {
     }
 
     /** 骨骼 id → palette slot；无几何骨骼返回 -1。 */
+    @Override
     public int slotOf(int boneId) {
         return boneToSlot.getOrDefault(boneId, -1);
     }
 
+    @Override
     public int slotCount() {
         return slotCount;
     }

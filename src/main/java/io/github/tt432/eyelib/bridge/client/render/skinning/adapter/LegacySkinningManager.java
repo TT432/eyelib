@@ -2,20 +2,24 @@
 package io.github.tt432.eyelib.bridge.client.render.skinning.adapter;
 
 import com.mojang.blaze3d.platform.GlStateManager;
+import com.mojang.blaze3d.platform.Window;
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.BufferUploader;
 import com.mojang.blaze3d.vertex.VertexBuffer;
+import com.mojang.blaze3d.vertex.VertexFormat;
 import io.github.tt432.eyelib.bridge.client.render.bake.BakedModel;
 import io.github.tt432.eyelib.bridge.event.ManagerEntryChangedEventPublisher;
 import io.github.tt432.eyelib.bridge.event.ManagerReplacedEventPublisher;
 import io.github.tt432.eyelib.bridge.material.ResourceLocationBridge;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.ShaderInstance;
 import org.jspecify.annotations.Nullable;
+import org.lwjgl.opengl.GL11;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.IdentityHashMap;
@@ -35,7 +39,11 @@ import net.neoforged.neoforge.client.event.RegisterShadersEvent;
 /**
  * C1 GPU 蒙皮管理器（&le;26.1，ADR-0032）：蒙皮 ShaderInstance 注册（RegisterShadersEvent）、
  * routing RenderType → 蒙皮变体映射（BrRenderTypeFactory 创建期登记）、静态几何缓存、
- * palette float[] 池，以及单次绘制的执行（routing 状态机 setup + 蒙皮 uniform + VertexBuffer.drawWithShader）。
+ * palette 暂存池，以及单次绘制的执行。
+ *
+ * <p>两条 GPU 路径（{@link Mode}）：GL&ge;4.6 时 compute 蒙皮（skin.comp 写输出 SSBO +
+ * 直通管线绘制），否则 VS 蒙皮（uniform 调色板 + 蒙皮 vsh）；二者都不可用时整体回退经典 CPU 蒙皮。
+ * {@code -Deyelib.gpuSkinning.mode=vs|compute|auto}（默认 auto）可强制路径用于基准对照。
  *
  * <p>绘制时机：{@code ImmediateRenderSink.flush}（实体渲染调用栈内，等价 vanilla endBatch 时机），
  * overlay/lightmap 纹理由 routing RenderType 的 OverlayStateShard/LightmapStateShard 在
@@ -52,6 +60,21 @@ public final class LegacySkinningManager {
     private static final Logger LOGGER = LoggerFactory.getLogger(LegacySkinningManager.class);
     private static final boolean ENABLED = Boolean.parseBoolean(System.getProperty("eyelib.gpuSkinning", "true"));
 
+    /** 蒙皮路径；{@code -Deyelib.gpuSkinning.mode} 控制（auto = compute 优先，VS 兜底）。 */
+    public enum Mode {
+        OFF,
+        VERTEX_SHADER,
+        COMPUTE;
+
+        static Mode requested() {
+            return switch (System.getProperty("eyelib.gpuSkinning.mode", "auto")) {
+                case "vs" -> VERTEX_SHADER;
+                case "compute" -> COMPUTE;
+                default -> null; // auto
+            };
+        }
+    }
+
     /** 蒙皮变体（shader 数组下标）；UNSUPPORTED = 不蒙皮（回退 CPU）。 */
     public static final int VARIANT_UNSUPPORTED = -1;
     public static final int VARIANT_CUTOUT = 0;
@@ -62,18 +85,30 @@ public final class LegacySkinningManager {
     // 1.20.1 与 1.21.1 的 vanilla 蒙皮母版不同（1.21.1 fog_distance 改 2 参签名、去 IViewRotMat/normal 输出），
     // 资产与命名都按版本分开；FS 均复用 vanilla 同名 fsh
     //? if <1.20.6 {
-    private static final String[] SHADER_NAMES = {
+    private static final String[] VS_SHADER_NAMES = {
             "entity_skinned_legacy",
             "entity_skinned_legacy_solid",
             "entity_skinned_legacy_translucent",
             "entity_skinned_legacy_emissive"
     };
+    private static final String[] COMPUTE_SHADER_NAMES = {
+            "entity_skinned_compute",
+            "entity_skinned_compute_solid",
+            "entity_skinned_compute_translucent",
+            "entity_skinned_compute_emissive"
+    };
     //?} else {
-    private static final String[] SHADER_NAMES = {
+    private static final String[] VS_SHADER_NAMES = {
             "entity_skinned_legacy_121",
             "entity_skinned_legacy_121_solid",
             "entity_skinned_legacy_121_translucent",
             "entity_skinned_legacy_emissive_121"
+    };
+    private static final String[] COMPUTE_SHADER_NAMES = {
+            "entity_skinned_compute_121",
+            "entity_skinned_compute_121_solid",
+            "entity_skinned_compute_121_translucent",
+            "entity_skinned_compute_emissive_121"
     };
     //?}
 
@@ -81,11 +116,13 @@ public final class LegacySkinningManager {
     private static final int GL_MAX_VERTEX_UNIFORM_COMPONENTS = 0x8B4A;
     private static final int REQUIRED_UNIFORM_COMPONENTS = SkinningLayout.MAX_BONES * 32 + 64;
 
-    private static final ShaderInstance[] SHADERS = new ShaderInstance[SHADER_NAMES.length];
+    private static final ShaderInstance[] VS_SHADERS = new ShaderInstance[VS_SHADER_NAMES.length];
+    private static final ShaderInstance[] COMPUTE_SHADERS = new ShaderInstance[COMPUTE_SHADER_NAMES.length];
     private static final IdentityHashMap<RenderType, Integer> VARIANTS = new IdentityHashMap<>();
-    private static final IdentityHashMap<BakedModel, LegacySkinnedGeometry> GEOMETRIES = new IdentityHashMap<>();
+    private static final IdentityHashMap<BakedModel, LegacyGpuGeometry> GEOMETRIES = new IdentityHashMap<>();
     private static final Deque<float[]> ARRAY_POOL = new ArrayDeque<>();
-    private static boolean capable = true;
+    private static @Nullable ComputeSkinningProgram computeProgram;
+    private static Mode mode = Mode.OFF;
     private static boolean hooksInstalled;
 
     private LegacySkinningManager() {
@@ -93,6 +130,10 @@ public final class LegacySkinningManager {
 
     public static boolean enabled() {
         return ENABLED;
+    }
+
+    public static Mode mode() {
+        return mode;
     }
 
     /** BrRenderTypeFactory.custom 创建期登记 routing RenderType 的蒙皮变体。 */
@@ -104,7 +145,7 @@ public final class LegacySkinningManager {
 
     /** ImmediateRenderSink 入口：创建一次提交的蒙皮会话；关闭/未知变体/重载窗口 → null（经典路径）。 */
     public static @Nullable LegacySkinningSession createSession(RenderType routingType) {
-        if (!ENABLED || !capable) {
+        if (!ENABLED || mode == Mode.OFF) {
             return null;
         }
         int variant;
@@ -115,29 +156,35 @@ public final class LegacySkinningManager {
             }
             variant = v;
         }
-        if (SHADERS[variant] == null) {
+        ShaderInstance[] shaders = mode == Mode.COMPUTE ? COMPUTE_SHADERS : VS_SHADERS;
+        if (shaders[variant] == null) {
             return null; // 资源重载窗口期：着色器尚未注册
+        }
+        if (mode == Mode.COMPUTE && computeProgram == null) {
+            return null;
         }
         installInvalidationHooks();
         return new LegacySkinningSession(routingType, variant);
     }
 
     /** 几何缓存（按 BakedModel 实例身份；模型失效时整体清空）。渲染线程调用。 */
-    static @Nullable LegacySkinnedGeometry geometry(BakedModel model) {
+    static @Nullable LegacyGpuGeometry geometry(BakedModel model) {
         synchronized (GEOMETRIES) {
-            LegacySkinnedGeometry cached = GEOMETRIES.get(model);
+            LegacyGpuGeometry cached = GEOMETRIES.get(model);
             if (cached != null) {
                 return cached;
             }
         }
-        // 创建放锁外：VertexBuffer 创建/上传可能触发驱动同步；并发创建同模型几何的最坏结果是多建一份，
+        // 创建放锁外：GPU 缓冲创建/上传可能触发驱动同步；并发创建同模型几何的最坏结果是多建一份，
         // putIfAbsent 失败方立即 close，不影响正确性。
-        LegacySkinnedGeometry created = LegacySkinnedGeometry.create(model);
+        LegacyGpuGeometry created = mode == Mode.COMPUTE
+                ? ComputeSkinnedGeometry.create(model)
+                : LegacySkinnedGeometry.create(model);
         if (created == null) {
             return null;
         }
         synchronized (GEOMETRIES) {
-            LegacySkinnedGeometry raced = GEOMETRIES.putIfAbsent(model, created);
+            LegacyGpuGeometry raced = GEOMETRIES.putIfAbsent(model, created);
             if (raced != null) {
                 created.close();
                 return raced;
@@ -168,38 +215,95 @@ public final class LegacySkinningManager {
         if (!ENABLED) {
             return;
         }
-        capable = probeCapability();
-        if (!capable) {
-            LOGGER.error("[skinning] GPU 蒙皮禁用：MAX_VERTEX_UNIFORM_COMPONENTS 不足（需要 ≥ {}）。"
-                    + "所有实体回退经典 CPU 蒙皮。", REQUIRED_UNIFORM_COMPONENTS);
-            return;
+        // 重载清理：vanilla 负责关闭旧 ShaderInstance；compute 程序与着色器引用自行回收
+        java.util.Arrays.fill(VS_SHADERS, null);
+        java.util.Arrays.fill(COMPUTE_SHADERS, null);
+        if (computeProgram != null) {
+            computeProgram.close();
+            computeProgram = null;
         }
-        for (int i = 0; i < SHADER_NAMES.length; i++) {
-            final int idx = i;
+
+        boolean computeOk = ComputeSkinningProgram.supported();
+        int components = GlStateManager._getInteger(GL_MAX_VERTEX_UNIFORM_COMPONENTS);
+        boolean vsOk = components >= REQUIRED_UNIFORM_COMPONENTS;
+        LOGGER.info("[skinning] MAX_VERTEX_UNIFORM_COMPONENTS = {}（VS 路径需要 ≥ {}）",
+                components, REQUIRED_UNIFORM_COMPONENTS);
+
+        Mode selected = pickMode(Mode.requested(), computeOk, vsOk);
+        // 注册/编译失败逐级降级：COMPUTE → VERTEX_SHADER → OFF。
+        // 绝不能把异常抛出事件总线——RegisterShadersEvent 中断会让 vanilla 着色器全部缺失，客户端必崩（2026-08-27 实证）
+        while (selected != Mode.OFF) {
             try {
-                event.registerShader(new ShaderInstance(event.getResourceProvider(),
-                        ResourceLocationBridge.fromParts("eyelib", SHADER_NAMES[i]), LegacySkinnedGeometry.FORMAT),
-                        shader -> SHADERS[idx] = shader);
-            } catch (IOException e) {
-                throw new UncheckedIOException("[skinning] 蒙皮着色器编译失败: " + SHADER_NAMES[idx], e);
+                registerShadersFor(event, selected);
+                if (selected == Mode.COMPUTE) {
+                    computeProgram = ComputeSkinningProgram.create(event.getResourceProvider());
+                }
+                break;
+            } catch (IOException | RuntimeException e) {
+                LOGGER.error("[skinning] {} 路径着色器初始化失败，尝试降级", selected, e);
+                java.util.Arrays.fill(VS_SHADERS, null);
+                java.util.Arrays.fill(COMPUTE_SHADERS, null);
+                if (computeProgram != null) {
+                    computeProgram.close();
+                    computeProgram = null;
+                }
+                selected = selected == Mode.COMPUTE && vsOk ? Mode.VERTEX_SHADER : Mode.OFF;
             }
+        }
+        if (selected != mode) {
+            mode = selected;
+            // 几何类型跟随路径（VertexBuffer vs SSBO/VAO），路径切换必须整体重建
+            clearGeometries();
+        }
+        LOGGER.info("[skinning] GPU 蒙皮路径 = {}", mode);
+    }
+
+    private static void registerShadersFor(RegisterShadersEvent event, Mode targetMode) throws IOException {
+        String[] names = targetMode == Mode.COMPUTE ? COMPUTE_SHADER_NAMES : VS_SHADER_NAMES;
+        ShaderInstance[] target = targetMode == Mode.COMPUTE ? COMPUTE_SHADERS : VS_SHADERS;
+        VertexFormat format = targetMode == Mode.COMPUTE
+                ? ComputeSkinnedGeometry.COMPUTE_FORMAT
+                : LegacySkinnedGeometry.FORMAT;
+        for (int i = 0; i < names.length; i++) {
+            final int idx = i;
+            event.registerShader(new ShaderInstance(event.getResourceProvider(),
+                    ResourceLocationBridge.fromParts("eyelib", names[i]), format),
+                    shader -> target[idx] = shader);
         }
     }
 
-    /** 一次性能力探测（blaze3d 包装，非裸 GL；渲染线程=shader 注册时机）。 */
-    private static boolean probeCapability() {
-        int components = GlStateManager._getInteger(GL_MAX_VERTEX_UNIFORM_COMPONENTS);
-        LOGGER.info("[skinning] MAX_VERTEX_UNIFORM_COMPONENTS = {}（需要 ≥ {}）", components, REQUIRED_UNIFORM_COMPONENTS);
-        return components >= REQUIRED_UNIFORM_COMPONENTS;
+    /** 路径选择：master 开关外，compute 需 GL≥4.6（用户需求阈值），VS 需调色板 uniform 容量。 */
+    private static Mode pickMode(@Nullable Mode requested, boolean computeOk, boolean vsOk) {
+        Mode selected = switch (requested == null ? Mode.COMPUTE : requested) {
+            case COMPUTE -> computeOk ? Mode.COMPUTE : (vsOk ? Mode.VERTEX_SHADER : Mode.OFF);
+            case VERTEX_SHADER -> vsOk ? Mode.VERTEX_SHADER : Mode.OFF;
+            case OFF -> Mode.OFF;
+        };
+        if (requested == Mode.COMPUTE && !computeOk) {
+            LOGGER.warn("[skinning] 强制 compute 路径但 GL<4.6，回退 {}", selected);
+        }
+        if (selected == Mode.OFF) {
+            LOGGER.error("[skinning] GPU 蒙皮禁用：compute 与 VS 路径能力均不足，所有实体回退经典 CPU 蒙皮。");
+        }
+        return selected;
     }
 
     /**
      * 执行一次蒙皮绘制：routing 状态机 setup（含 Sampler0/1/2 绑定与混合/深度/cull），
-     * 蒙皮 uniform 设置，VertexBuffer.drawWithShader（自动 MV/Proj/Fog/ColorModulator/Light0/1 + sampler 收集）。
+     * 蒙皮数据上传，绘制，状态机还原。
      */
     public static void draw(LegacySkinningSession session) {
-        ShaderInstance shader = SHADERS[session.variant()];
-        if (shader == null) {
+        if (mode == Mode.COMPUTE) {
+            computeDraw(session);
+        } else {
+            vsDraw(session);
+        }
+    }
+
+    /** VS 路径：蒙皮 uniform 设置 + VertexBuffer.drawWithShader（自动 MV/Proj/Fog/ColorModulator/Light0/1 + sampler 收集）。 */
+    private static void vsDraw(LegacySkinningSession session) {
+        ShaderInstance shader = VS_SHADERS[session.variant()];
+        if (shader == null || !(session.geometry() instanceof LegacySkinnedGeometry geometry)) {
             session.releaseArrays();
             return; // 重载窗口期：丢一帧，保流程
         }
@@ -208,11 +312,9 @@ public final class LegacySkinningManager {
         try {
             setIfPresent(shader, "BonePose", session.poseArray());
             setIfPresent(shader, "BoneNormal", session.normalArray());
-            setIfPresent(shader, "TintColor", session.tintR(), session.tintG(), session.tintB(), session.tintA());
-            setIfPresent(shader, "OverlayUV", session.overlayU(), session.overlayV());
-            setIfPresent(shader, "LightUV", session.lightU(), session.lightV());
+            setEntityUniforms(shader, session);
 
-            VertexBuffer buffer = session.geometry().vertexBuffer();
+            VertexBuffer buffer = geometry.vertexBuffer();
             buffer.bind();
             buffer.drawWithShader(RenderSystem.getModelViewMatrix(), RenderSystem.getProjectionMatrix(), shader);
             VertexBuffer.unbind();
@@ -220,6 +322,92 @@ public final class LegacySkinningManager {
             routingType.clearRenderState();
             session.releaseArrays();
         }
+    }
+
+    /**
+     * compute 路径：palette 上传 + skin.comp dispatch（写输出 SSBO），随后以直通管线绘制
+     * （uniform 序列照抄 vanilla VertexBuffer._drawWithShader，保证与 VS 路径逐位同源）。
+     */
+    private static void computeDraw(LegacySkinningSession session) {
+        ShaderInstance shader = COMPUTE_SHADERS[session.variant()];
+        ComputeSkinningProgram program = computeProgram;
+        if (shader == null || program == null || !(session.geometry() instanceof ComputeSkinnedGeometry geometry)) {
+            session.releaseArrays();
+            return;
+        }
+        RenderType routingType = session.routingType();
+        routingType.setupRenderState();
+        try {
+            program.skin(geometry, session.poseArray(), session.normalArray());
+            setEntityUniforms(shader, session);
+
+            //? if <1.20.6 {
+            // 1.20.1 无 ShaderInstance.setDefaultUniforms，照抄 VertexBuffer._drawWithShader 的 uniform 序列
+            for (int i = 0; i < 12; i++) {
+                shader.setSampler("Sampler" + i, RenderSystem.getShaderTexture(i));
+            }
+            if (shader.MODEL_VIEW_MATRIX != null) {
+                shader.MODEL_VIEW_MATRIX.set(RenderSystem.getModelViewMatrix());
+            }
+            if (shader.PROJECTION_MATRIX != null) {
+                shader.PROJECTION_MATRIX.set(RenderSystem.getProjectionMatrix());
+            }
+            if (shader.INVERSE_VIEW_ROTATION_MATRIX != null) {
+                shader.INVERSE_VIEW_ROTATION_MATRIX.set(RenderSystem.getInverseViewRotationMatrix());
+            }
+            if (shader.COLOR_MODULATOR != null) {
+                shader.COLOR_MODULATOR.set(RenderSystem.getShaderColor());
+            }
+            if (shader.GLINT_ALPHA != null) {
+                shader.GLINT_ALPHA.set(RenderSystem.getShaderGlintAlpha());
+            }
+            if (shader.FOG_START != null) {
+                shader.FOG_START.set(RenderSystem.getShaderFogStart());
+            }
+            if (shader.FOG_END != null) {
+                shader.FOG_END.set(RenderSystem.getShaderFogEnd());
+            }
+            if (shader.FOG_COLOR != null) {
+                shader.FOG_COLOR.set(RenderSystem.getShaderFogColor());
+            }
+            if (shader.FOG_SHAPE != null) {
+                shader.FOG_SHAPE.set(RenderSystem.getShaderFogShape().getIndex());
+            }
+            if (shader.TEXTURE_MATRIX != null) {
+                shader.TEXTURE_MATRIX.set(RenderSystem.getTextureMatrix());
+            }
+            if (shader.GAME_TIME != null) {
+                shader.GAME_TIME.set(RenderSystem.getShaderGameTime());
+            }
+            if (shader.SCREEN_SIZE != null) {
+                Window window = Minecraft.getInstance().getWindow();
+                shader.SCREEN_SIZE.set((float) window.getWidth(), (float) window.getHeight());
+            }
+            RenderSystem.setupShaderLights(shader);
+            //?} else {
+            shader.setDefaultUniforms(VertexFormat.Mode.TRIANGLES,
+                    RenderSystem.getModelViewMatrix(), RenderSystem.getProjectionMatrix(),
+                    Minecraft.getInstance().getWindow());
+            //?}
+
+            shader.apply();
+            BufferUploader.invalidate();
+            GlStateManager._glBindVertexArray(geometry.vaoId());
+            GL11.glDrawArrays(GL11.GL_TRIANGLES, 0, geometry.vertexCount());
+            GlStateManager._glBindVertexArray(0);
+            BufferUploader.invalidate();
+            shader.clear();
+        } finally {
+            routingType.clearRenderState();
+            session.releaseArrays();
+        }
+    }
+
+    /** tint/overlay/lightmap 逐实体 uniform（两条路径共用；缺失名静默跳过，兼容变体差异）。 */
+    private static void setEntityUniforms(ShaderInstance shader, LegacySkinningSession session) {
+        setIfPresent(shader, "TintColor", session.tintR(), session.tintG(), session.tintB(), session.tintA());
+        setIfPresent(shader, "OverlayUV", session.overlayU(), session.overlayV());
+        setIfPresent(shader, "LightUV", session.lightU(), session.lightV());
     }
 
     private static void setIfPresent(ShaderInstance shader, String name, float[] values) {
@@ -263,7 +451,7 @@ public final class LegacySkinningManager {
 
     private static void clearGeometries() {
         synchronized (GEOMETRIES) {
-            GEOMETRIES.values().forEach(LegacySkinnedGeometry::close);
+            GEOMETRIES.values().forEach(LegacyGpuGeometry::close);
             GEOMETRIES.clear();
         }
     }
