@@ -304,7 +304,8 @@ GLFW.glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, 1);
 |---|---|---|---|
 | **P0 前置** | ①~~定论+修复 OPT-R1~~（已完成：定论无缺陷，DFSModelTest da8634bd）②~~决策死资产~~（已完成 70bea805：3 组 *_chunk shader/ShaderManager/shader_mapping.json 共 19 个零引用死文件全部删除，alpha-clamp-two-path.md 死引用已勘误）③C2 直写缓冲 | 全版本 | clientsmoke FBO 像素回归 + benchmark |
 | **P1 先行** | C1 GPU 蒙皮：自定义 RenderPipeline + UBO/TBO 调色板 + 静态 GpuBuffer 几何 | **26.1.2**（API 最友好：官方自定义管线 + DynamicUniforms 范式 + DeferredRenderSink 合批） | **已完成 2026-08-27（1d47d353/88da7479/c957789a）**：UBO 调色板（TBO 无 float 格式，弃用）+ drawMultipleIndexed 阶段批量 flush。正确性验证通过；benchmark 结论**性能中性**（26.1.2 瓶颈在 vanilla submit 机制）。详见 docs/perf/c1-gpu-skinning-26.1.2.md |
-| **P2 跟进** | ~~C1 移植 ≤26.1~~ | 1.20.1 / 1.21.1 | **已完成 2026-08-27**：实际落地为 RegisterShadersEvent + UV1 元素复用骨骼索引（零自定义元素/零裸 GL）+ VertexBuffer 展开三角形 + uniform 数组调色板（非 TBO）。正确性验证通过（含 EMISSIVE 变体、蜘蛛发光眼）；benchmark 结论**性能中性**（FBO ON 慢 1-3%，world 持平——逐实体 draw+状态机开销抵消顶点 CPU 节省）。详见 docs/perf/c1-gpu-skinning-legacy.md。下一步候选：P2.5 按 RenderType 跨实体状态去重 |
+| **P2 跟进** | ~~C1 移植 ≤26.1~~ | 1.20.1 / 1.21.1 | **已完成 2026-08-27**：实际落地为 RegisterShadersEvent + UV1 元素复用骨骼索引（零自定义元素/零裸 GL）+ VertexBuffer 展开三角形 + uniform 数组调色板（非 TBO）。正确性验证通过（含 EMISSIVE 变体、蜘蛛发光眼）；benchmark 结论~~性能中性~~【⚠ 已废弃 2026-08-28：覆盖率空洞使 ON 实为 CPU，对比无效】。详见 docs/perf/c1-gpu-skinning-legacy.md。下一步候选：P2.5 按 RenderType 跨实体状态去重 |
+| **P2.5 合批** | ~~按 RenderType 跨实体合批 + 覆盖率修复~~ | 1.20.1 / 1.21.1 | **已完成 2026-08-28（cf6258fa/d6ad17c8/19b84534/c95e1277）**：修复默认材质未登记蒙皮变体的覆盖率空洞（此前全部 ≤26.1 C1 基准无效）；compute 路径改跨实体合批（2D dispatch + 每 RenderType 组单 draw，stage 事件窗口）；JFR 驱动 molang 求值链三处微优化。真生效基准 vs 真 CPU 基线：fbo n384 +52~61%、world n384 +17~21%（相对最初基线 fbo n384 +75%）。详见 docs/perf/c1-gpu-skinning-legacy.md 勘误章 |
 | **P3 扩展** | C4 粒子实例化；C6 派生纹理 GPU 化/colorMask uniform 化 | 全版本 | FBO + benchmark |
 | **P4 平台跃迁** | 26.2 Vulkan 节点落地后重估：compute 调色板预合成、SSBO、GPU 蒙皮 compute 化 | 26.2+ | 同左 |
 
@@ -315,6 +316,7 @@ GLFW.glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, 1);
 1. **OPT-R1 未定论**：若当前模型实际依赖层级继承（A&S 多为扁平骨骼可能掩盖），C1 之前必须修复并回归。【已解除 2026-08-27：定论无缺陷，DFSModelTest（da8634bd）1.20.1 绿。】
 2. ~~**薄映射层原则冲突**~~【已解除 2026-08-27：ADR-0032 显式修订——允许经 vanilla 抽象（GpuBuffer/RenderPipeline）持自有 shader/几何，禁裸 GL 直调】。
 3. **浮点一致性**：CPU 路径 PoseStack（JOML float）与 GPU fp32 蒙皮的舍入差异；验证方法已具备（RenderDoc GetPostVSData）。
+3b. ~~**基准有效性陷阱**~~【已实案 2026-08-28：ON/OFF 对比必须证明 ON 真的生效（本案例反射 VARIANTS/GEOMETRIES 计数），否则可能测出 CPU 对 CPU 的假中性——此前的"性能中性"结论即此失效模式。教训：性能声明必须附生效证据。】
 4. **26.1.2 共享 buffer 中途 endBatch 的已知降级**（DeferredRenderSink.java:42-52）：自定义提交路径需避开或继承该守卫。【P1 实证：26.1.2 FBO 场景 writer 从不执行（clientsmoke 跳 renderAllFeatures）；瓶颈在 vanilla submit 机制本身，详见 docs/perf/c1-gpu-skinning-26.1.2.md】
 5. **AR 兼容分支**互斥：ARBakedVisitor 需原始 bind-pose 数组，GPU 蒙皮启用时 AR 路径回退。【P1 已按此实现：AR 宿主自动回退 CPU 路径。】
 6. **版本碎片化**：1.20.1 状态机 RenderType、1.21.1 过渡、26.1.2 PSO、26.2 Vulkan——四条轨道的适配成本随时间递增；建议 P1 只做 26.1.2 以最小化并行维护面。

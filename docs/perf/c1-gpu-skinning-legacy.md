@@ -48,6 +48,8 @@ n384（各 96；world 场景 actual 305/309 ≠ configured 384，按有效性规
 
 ## 结论
 
+> **⚠ 已废弃（2026-08-28）**：本节 ON/OFF 对比无效——彼时存在覆盖率空洞（默认状态材质从未登记蒙皮变体，ON 实际也走 CPU 蒙皮），所谓"性能中性"测的是 CPU 对 CPU。真实结论见文末「跨实体合批与覆盖率修复」章。
+
 **1.20.1 上 C1 性能中性**（FBO ON 慢 ~1–3%，world 持平，噪声 ±3–5%）。结构性解释：vanilla 1.20.1 把同 RenderType 几何合批进共享缓冲（全帧每类型一次 draw），蒙皮路径换成逐实体×组件 draw + 状态机 setup/clear + 24KB uniform 上传；省下的顶点 CPU（Opt1-9 后本已不大）被状态切换与上传开销抵消。
 
 **价值定位与后续**：与 26.1.2 结论一致——C1 的直接收益不在当前 OpenGL 帧时间，而在：①GPU 带宽消除（未测）；②ADR-0032 基建（自有 shader/几何通道三版本贯通）；③26.2+ Vulkan compute 路径的落点。若要把 ≤26.1 做到正收益，下一步是 **P2.5 按 RenderType 跨实体状态去重**（阶段化收集 + 每类型一次 setupRenderState，26.1.2 的阶段 flush 同构），把逐实体状态切换从 O(实体数) 降到 O(RenderType 数)。
@@ -78,4 +80,67 @@ n384（各 96；world 场景 actual 305/309 ≠ configured 384，按有效性规
 | world n96 | 82.8 | 83.4 | 83.9 |
 | world n384 | 29.9 | 30.3 | 30.6 |
 
-**结论：compute 路径同样性能中性**（全部差异 ≤1.5%，在噪声内）。证实结构性诊断：瓶颈是逐实体 draw + 状态机 setup/clear 的提交路径，蒙皮数学在 CPU（变换）、VS（uniform 数组）还是 compute（SSBO）执行对帧时间都无影响。compute 路径的价值与 VS 路径相同——基建贯通（自有 compute shader 编译/SSBO/VAO 通道）+ 26.2+ Vulkan 落点，以及后续姿态缓存（palette 不变跳过 dispatch）的挂载点。
+> **⚠ 已废弃（2026-08-28）**：同上——覆盖率空洞使三路径实际同为 CPU 蒙皮，本节基准表不构成 GPU 蒙皮的性能证据；但"瓶颈在提交路径而非蒙皮数学"的结构性诊断被后续工作证实并解决（合批删除逐实体 draw 后收益兑现）。
+
+## 跨实体合批与覆盖率修复（2026-08-28，含结论勘误）
+
+### 覆盖率空洞（此前所有 ≤26.1 C1 基准无效的根因）
+
+`needsCustomRenderType=false` 的材质经 `RenderPassAdapter` 映射为 **vanilla RenderType**
+（entitySolid/entityCutout/entityTranslucent/entityTranslucentEmissive），蒙皮变体登记只在
+`BrRenderTypeFactory.custom()` 内——默认材质从未登记，`createSession` 恒返回 null 回退 CPU。
+实证：COMPUTE 模式 + A&S 实体渲染中反射读 `VARIANTS=0 / GEOMETRIES=0`。
+此前 VS/compute 的 ON/OFF"性能中性"结论测的都是 CPU 对 CPU，**不构成 GPU 蒙皮的性能证据**。
+
+修复（d6ad17c8）：`RenderPassAdapter` <26.1 分支为 5 种 vanilla entity RenderType 登记变体
+（SOLID→solid、ALPHA_TEST→cutout、TRANSLUCENT/ADDITIVE→translucent、TRANSLUCENT_EMISSIVE→emissive），
+与 vanilla shader 语义一一对应。修复后反射实证 VARIANTS/GEOMETRIES >0，截图渲染正确。
+
+### 跨实体合批 compute（P2.5 落地，cf6258fa + 19b84534）
+
+- `skin_batch.comp`（GLSL 430）：2D dispatch（x=顶点，y=子批内实体），meta SSBO（64B/实体）携带
+  逐实体 palette 基址/输出顶点基址/tint/light/overlay；palette 按实体 slotCount 紧凑打包。
+- 输出顶点 80B（pos/nrm/uv/light/overlay/tint），直通 vsh 把原逐实体 uniform 改为逐顶点属性。
+- `BatchSkinningDispatcher`：帧内会话收集 → 按 routing RenderType 分组（首见序/提交序）→
+  单 drain 完成 palette/meta 上传（绝对下标批量拷贝）+ 每几何子批一次 dispatch + 每组一次 draw。
+- 窗口语义：level 实体相（Forge/NeoForge `RenderLevelStageEvent` AFTER_SKY→AFTER_ENTITIES）内延迟合批；
+  窗口外（GUI/预览/FBO 手动渲染）submit 即 drain，等价逐实体旧行为。FBO benchmark 显式开窗。
+- 关键不变量：RenderSystem MV 在实体相为常量（实体变换在 palette 根姿态），合批 draw 取 drain 时 MV 同值。
+- 旧逐实体 compute 路径整体删除（干净切换）；VS 路径不变，作为 GL<4.6 回退。
+
+### 配套 molang 求值链优化（c95e1277，JFR 驱动）
+
+JFR（fbo n384 渲染线程）实证：molang 求值链 ~53%、动画采样 ~17%、蒙皮提交 ~0.1%（合批后）。
+三处修复：①`clearTempVariables` 空集短路（CHM 遍历清理 ~13%）；②编译表达式去
+bindTo+dropArguments 的 MethodHandle 包装（Invokers.checkCustomized ~9% + evaluate ~10%）；
+③RenderData scope 改单线程变体（4 个并发结构退化 HashMap/HashSet）。
+
+### Benchmark（1.20.1，slime n96/n384，RTX 4070 Laptop，15s warmup + 30s measure，fresh JVM）
+
+同一代码基线（含 molang 修复）下 GPU 蒙皮 OFF（真 CPU 基线）vs 合批 compute（真生效）：
+
+| 场景 | CPU（molang 修复后） | 合批 compute | 提升 |
+|---|---:|---:|---:|
+| fbo n96 | 157.2 | 191.3–203.2 | **+22–29%** |
+| fbo n384 | 72.7 | 110.4–116.9 | **+52–61%** |
+| world n96 | 95.2 | 104.7–109.2 | **+10–15%** |
+| world n384 | 33.4 | 39.0–40.4 | **+17–21%** |
+
+（合批 compute 列为多次 run 区间；fbo n96 小帧场景 run 间方差 ±6%。）
+
+相对最初未修复基线（127.0/65.1/82.8/29.9），当前总收益：fbo n384 **+75%**，world n384 **+33%**。
+
+### 正确性验证（真生效状态）
+
+- 1.20.1/1.21.1 运行时截图：史莱姆半透明（外层/内核/面部层重叠正确）、蜘蛛发光红眼、牛/僵尸正常；
+  反射实证 VARIANTS/GEOMETRIES>0 且几何为预期类型（compute=ComputeSkinnedGeometry，vs=LegacySkinnedGeometry）。
+- 1.20.1 单测全绿；两版本编译绿。
+- 截图：work/c1-batch/{batch_it4_scene2.png（1.20.1 合批）、batch_121_engaged.png（1.21.1 合批）、vs_120_engaged.png（1.20.1 VS）}。
+
+### 已知余项
+
+- FBO benchmark 的 detached 实体每帧重走 setupClientEntity（isStale 恒真）——benchmark 环境假象，
+  世界路径实体无此行为；FBO 场景的 molang 份额被其放大，真实世界收益以上表 world 行为准。
+- TickStage 对全部 level 实体（含视锥外）逐帧 tick——保持 BE 动画连续性语义，未动。
+- world 场景在 mob 密集时渲染线程含 vanilla 客户端实体 tick（pushEntities/getEntities AABB 扫描）
+  背景成本，与蒙皮无关。
