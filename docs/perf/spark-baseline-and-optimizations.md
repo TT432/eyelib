@@ -184,6 +184,17 @@
 - **结果**:fbo n384 中性（124.8/127.6 vs 基线 121.7~127.5，该场景非渲染线程受限）；**world n384 +5.3%**（41.26/42.36 vs 基线 39.0~40.4，区间不重叠）。相对本轮优化前最初基线（33.4）累计 +25%。
 - **教训**:帧率不动的 CPU 优化先查受限线程——JFR 证明工作确实消失后，换 CPU 受限场景（world）再下结论。
 
+### Opt13 · molang 零参调用精确签名 invoker + hasHostContext O(1)（2026-08-28）
+
+- **文件**:`molang/compiler/MolangRuntimeSupport.java`、`molang/MolangScope.java`
+- **根因**（JFR 行级归因，world n384 渲染线程）：①`hasHostContext` 每次调用经 `HostContext.get(HOST_PRESENCE_MARKER)` 触发 HashMap entrySet 扫描+迭代器分配（marker 全库无人注册、类型为 Object.class，扫描恒等价于"任一 store 非空"）≈4%；②零参 query 每次调用走 `template.clone()`+`invokeWithArguments(Object[])` 泛型分派（`asSpreader`/`MethodType.replaceParameterTypes`/`Arrays.equals`）≈5% 且逐次分配。
+- **方案**:①`hasHostContext`/`computeAvailableHostRoles` 改 `MolangScope.hasAnyHost()`（`!roleStore.isEmpty() || !classStore.isEmpty()`，语义等价论证：Object.class.isInstance 匹配任意非 null 条目，扫描命中 ⟺ 非空；唯一分歧为病态 null put）。②零参绑定解析期组合精确签名 `(MolangScope)MolangObject` MethodHandle：const 槽（可见缺省/空 varargs/无角色槽）insertArguments 绑定、host 槽经 `hostSlot` 过滤器现取（新增 `MolangScope.findHost` 无 Optional 等价查找）、engine 槽 identity(scope)、返回统一 asType 到 Object 后 filterReturnValue 包装——调用点 `invokeExact` 无装箱/无分派/零分配。组合失败回退旧泛型路径并 WARN 可观测。
+- **实证缺陷**:filterReturnValue **不做装箱**——primitive 返回直接组合抛 IAE，导致生产全部 query 静默回退旧路径而单测全绿（测试只验结果，回退路径结果同样正确）。教训：快路径必须有「真实生效」断言。修复：返回先 asType 到 Object；新增包私有 `hasComposedInvoker(name, fullHost)` 测试钩子，契约测试对 engine/receiver/varargs/field/混合形态断言 invoker 非 null。
+- **验证**:新契约测试 MolangRuntimeSupportInvokerTest 8 例（槽位形态等价、host 逐次现取、异常归 Null、epoch 失效重解析、invoker 生效断言）；其中"必需可见参数零参不可解析"用 stash 对照证实为既有语义（非本次引入）。1.20.1 全量单测绿、1.21.1 编译绿。
+- **结果**:**world n384 +7~15%，区间不重叠**（ON 43.54/44.10 vs OFF 38.19/40.56；同构建 `-Deyelib.molang.exactInvoker=false` 对照）。修复后 JFR：零参 invokeWithArguments 清零、hasHostContext 扫描清零、template.clone 清零；benchmark 全程 0 条组合失败警告。
+- **诊断开关**:`-Deyelib.molang.exactInvoker=false`（已接入 runClientBenchmark 转发）。
+- **余项**:resolveCall 非零参路径（math.* 带参调用）仍走 invokeMethod 泛型分派（~2%）；query 体内 `HostContext.get(HostRole)` 的 isInstance 扫描（~2%，在 MolangBuiltInQuery 查询实现内，非 RuntimeSupport）。
+
 ## 已排除项
 
 - **eyelib 自身堆占用健康**:eyelib 全部类合计 56MB(2.18%),数量级合理,无需优化。

@@ -1,7 +1,6 @@
 package io.github.tt432.eyelib.molang.compiler;
 
 import io.github.tt432.eyelib.molang.MolangScope;
-import io.github.tt432.eyelib.molang.mapping.api.HostRoles;
 import io.github.tt432.eyelib.molang.mapping.api.MolangFunction;
 import io.github.tt432.eyelib.molang.mapping.api.MolangMappingRegistries;
 import io.github.tt432.eyelib.molang.mapping.api.MolangMappingTree;
@@ -21,10 +20,12 @@ import org.slf4j.LoggerFactory;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -50,6 +51,139 @@ public final class MolangRuntimeSupport {
     private static final ConcurrentHashMap<Field, Optional<MethodHandle>> FIELD_GETTERS = new ConcurrentHashMap<>();
     private static final MolangObject[] NO_ARGS = new MolangObject[0];
     // ---------------------------------------------------------------------
+    // 精确签名 invoker：解析期把（const 槽绑定 + host 槽 scope 拉取 + 结果包装）组合成
+    // (MolangScope)MolangObject 的 MethodHandle，调用点 invokeExact 直调。
+    // JFR 实证旧路径（template.clone + invokeWithArguments(Object[]) 泛型分派经
+    // asSpreader/MethodType 比较）占渲染线程 ~5% 且逐次分配。
+    // ---------------------------------------------------------------------
+    private static final MethodHandles.Lookup LOOKUP = MethodHandles.lookup();
+    private static final MethodHandle WRAP_RESULT;
+    private static final MethodHandle HOST_SLOT;
+
+    static {
+        try {
+            WRAP_RESULT = LOOKUP.findStatic(MolangRuntimeSupport.class, "wrapJavaResult",
+                    MethodType.methodType(MolangObject.class, Object.class));
+            HOST_SLOT = LOOKUP.findStatic(MolangRuntimeSupport.class, "hostSlot",
+                    MethodType.methodType(Object.class, MolangScope.class, Class.class, Object.class));
+        } catch (ReflectiveOperationException e) {
+            throw new ExceptionInInitializerError(e);
+        }
+    }
+
+    /** host 槽位取值（组合 invoker 的内联调用点）：scope 宿主查找，缺失回退默认值。 */
+    private static Object hostSlot(MolangScope scope, Class<?> type, @Nullable Object dflt) {
+        Object value = scope.findHost(type);
+        return value != null ? value : dflt;
+    }
+
+    /**
+     * 组合精确签名 {@code (MolangScope)MolangObject} 的调用句柄：
+     * const 槽（可见参数缺省 / 空 varargs / 无角色槽）经 insertArguments 绑定，
+     * host 槽经 {@link #hostSlot} 过滤器每次调用现取，engine 槽传 scope 本身，
+     * 返回值经 {@link #wrapJavaResult} 包装。任一步失败（如 primitive 槽绑定 null）
+     * 返回 null，调用点回退 template.clone + invokeWithArguments 泛型路径——
+     * 该场景旧路径逐次抛异常归 MolangNull，等价。
+     */
+    private static @Nullable MethodHandle composeInvoker(ZeroArgBinding b, Method method) {
+        MethodHandle target = b.methodHandle;
+        if (target == null) {
+            // unreflect 失败（不可访问）——诊断可见，调用点回退泛型路径
+            LOGGER.debug("zero-arg invoker unavailable (unreflect failed): {}", method);
+            return null;
+        }
+        try {
+            int n = method.getParameterCount();
+            Class<?>[] ptypes = method.getParameterTypes();
+            boolean[] dynamic = new boolean[n];
+            for (int slot : b.hostSlots) {
+                dynamic[slot] = true;
+            }
+            for (int slot : b.engineSlots) {
+                dynamic[slot] = true;
+            }
+            // 自高向低绑定 const 槽（template 值），保持低位槽的原始下标不变
+            MethodHandle h = target;
+            for (int i = n - 1; i >= 0; i--) {
+                if (!dynamic[i]) {
+                    h = MethodHandles.insertArguments(h, i, b.template[i]);
+                }
+            }
+            int m = 0;
+            for (boolean d : dynamic) {
+                if (d) {
+                    m++;
+                }
+            }
+            if (m == 0) {
+                h = MethodHandles.dropArguments(h, 0, MolangScope.class);
+            } else {
+                MethodHandle[] filters = new MethodHandle[m];
+                int fi = 0;
+                for (int i = 0; i < n; i++) {
+                    if (!dynamic[i]) {
+                        continue;
+                    }
+                    MethodHandle filter;
+                    if (isEngineSlot(b, i)) {
+                        filter = MethodHandles.identity(MolangScope.class);
+                    } else {
+                        int hi = indexOf(b.hostSlots, i);
+                        filter = MethodHandles.insertArguments(HOST_SLOT, 1,
+                                b.hostSlotTypes[hi], b.hostSlotDefaults[hi]);
+                    }
+                    // 返回 Object → 槽位类型（引用 cast / primitive unbox）；
+                    // host 值经 findHost 的 isInstance 保证类型，primitive 槽恒取非 null 缺省
+                    filters[fi++] = filter.asType(MethodType.methodType(ptypes[i], MolangScope.class));
+                }
+                h = MethodHandles.filterArguments(h, 0, filters);
+                // (MolangScope × m)R → (MolangScope)R：全部参数映射到同一个 scope
+                h = MethodHandles.permuteArguments(h,
+                        MethodType.methodType(h.type().returnType(), MolangScope.class),
+                        new int[m]);
+            }
+            // filterReturnValue 不做装箱：先把返回统一 asType 到 Object
+            // （primitive 装箱、引用 widening、void → null），再交给 WRAP_RESULT
+            h = h.asType(MethodType.methodType(Object.class, MolangScope.class));
+            return MethodHandles.filterReturnValue(h, WRAP_RESULT);
+        } catch (Throwable e) {
+            // 组合失败 = 静默性能回退，必须可观测（每绑定每 epoch 至多一次）
+            LOGGER.warn("zero-arg invoker composition failed for {} — falling back to generic path", method, e);
+            return null;
+        }
+    }
+
+    /**
+     * 测试钩子：指定名称的缓存零参绑定是否持有组合 invoker（验证快路径真实生效，
+     * 防止静默回退——结果正确但走了泛型路径的情况）。
+     */
+    static boolean hasComposedInvoker(String name, boolean fullHost) {
+        ZeroArgCacheEntry entry = ZERO_ARG_CACHE.get(name);
+        if (entry == null) {
+            return false;
+        }
+        ZeroArgBinding binding = fullHost ? entry.full() : entry.minimal();
+        return binding.invoker != null;
+    }
+
+    private static boolean isEngineSlot(ZeroArgBinding b, int index) {
+        for (int slot : b.engineSlots) {
+            if (slot == index) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static int indexOf(int[] array, int value) {
+        for (int i = 0; i < array.length; i++) {
+            if (array[i] == value) {
+                return i;
+            }
+        }
+        throw new IllegalStateException("host slot not found: " + value);
+    }
+    // ---------------------------------------------------------------------
     // 零参解析绑定缓存：resolveMemberAccess / resolveCall(零参) 的完整解析结果
     // （findField → findMethod → selectQueryVariant → MethodHandle + 参数模板）
     // 只取决于 (名称, host 是否存在, 注册表纪元)。注册表变更（epoch 自增）后条目
@@ -60,6 +194,10 @@ public final class MolangRuntimeSupport {
     // 诊断开关（benchmark A/B 用）：-Deyelib.molang.zeroArgBinding=false 回退逐次解析旧路径
     private static final boolean ZERO_ARG_BINDING_ENABLED =
             Boolean.parseBoolean(System.getProperty("eyelib.molang.zeroArgBinding", "true"));
+    // 诊断开关（benchmark A/B 用）：-Deyelib.molang.exactInvoker=false 禁用组合
+    // invokeExact 快路径，全部回退 template.clone + invokeWithArguments 泛型路径
+    private static final boolean EXACT_INVOKER_ENABLED =
+            Boolean.parseBoolean(System.getProperty("eyelib.molang.exactInvoker", "true"));
 
     private record ZeroArgCacheEntry(MolangMappingTree tree, long epoch,
                                      ZeroArgBinding minimal, ZeroArgBinding full) {
@@ -85,12 +223,26 @@ public final class MolangRuntimeSupport {
         Class<?>[] hostSlotTypes = {};
         Object[] hostSlotDefaults = {};
         int[] engineSlots = {};
+        /** 精确签名组合调用句柄（KIND_METHOD：(MolangScope)MolangObject；KIND_FIELD：()MolangObject）；组合失败时 null → 回退泛型路径。 */
+        @Nullable MethodHandle invoker;
 
         static ZeroArgBinding forField(Field field) {
             ZeroArgBinding b = new ZeroArgBinding();
             b.kind = KIND_FIELD;
             b.fieldGetter = fieldGetterOf(field).orElse(null);
             b.field = field;
+            // 仅静态字段可组合无参调用句柄；实例字段回退旧路径（无参 invokeWithArguments
+            // 抛 WrongMethodTypeException → MolangNull，语义保持）
+            if (EXACT_INVOKER_ENABLED && b.fieldGetter != null && Modifier.isStatic(field.getModifiers())) {
+                try {
+                    // 同 composeInvoker：filterReturnValue 不装箱，先 asType 到 Object 返回
+                    b.invoker = MethodHandles.filterReturnValue(
+                            b.fieldGetter.asType(MethodType.methodType(Object.class)),
+                            WRAP_RESULT);
+                } catch (Throwable e) {
+                    b.invoker = null;
+                }
+            }
             return b;
         }
 
@@ -147,12 +299,15 @@ public final class MolangRuntimeSupport {
             b.hostSlotTypes = hostTypes.toArray(new Class<?>[0]);
             b.hostSlotDefaults = hostDefaults.toArray();
             b.engineSlots = engineSlots.stream().mapToInt(Integer::intValue).toArray();
+            b.invoker = EXACT_INVOKER_ENABLED ? composeInvoker(b, method) : null;
             return b;
         }
     }
 
     private static boolean hasHostContext(MolangScope scope) {
-        return scope.getHostContext().get(HostRoles.HOST_PRESENCE_MARKER).isPresent();
+        // O(1) 等价替换：marker 类型为 Object.class，旧实现的 isInstance 扫描
+        // 等价于「任一 store 非空」（语义论证见 MolangScope.hasAnyHost）
+        return scope.hasAnyHost();
     }
 
     private static ZeroArgBinding zeroArgBinding(String name, boolean fullHost) {
@@ -195,6 +350,15 @@ public final class MolangRuntimeSupport {
 
     private static MolangObject invokeZeroArgField(ZeroArgBinding b) {
         MethodHandle getter = b.fieldGetter;
+        MethodHandle invoker = b.invoker;
+        if (invoker != null) {
+            try {
+                // 组合产物恒为 ()MolangObject（静态字段 getter + 结果包装）
+                return (MolangObject) invoker.invokeExact();
+            } catch (Throwable ignored) {
+                return MolangNull.INSTANCE;
+            }
+        }
         if (getter != null) {
             try {
                 return wrapJavaResult(getter.invokeWithArguments());
@@ -211,6 +375,15 @@ public final class MolangRuntimeSupport {
 
     private static MolangObject invokeZeroArgMethod(ZeroArgBinding b, MolangScope scope) {
         Object[] args = b.template.clone();
+        MethodHandle invoker = b.invoker;
+        if (invoker != null) {
+            try {
+                // 组合产物恒为 (MolangScope)MolangObject，invokeExact 无装箱/分派
+                return (MolangObject) invoker.invokeExact(scope);
+            } catch (Throwable ignored) {
+                return MolangNull.INSTANCE;
+            }
+        }
         for (int i = 0; i < b.hostSlots.length; i++) {
             Object value = scope.getHostContext().get(b.hostSlotTypes[i]).orElse(null);
             args[b.hostSlots[i]] = value != null ? value : b.hostSlotDefaults[i];
@@ -401,7 +574,7 @@ public final class MolangRuntimeSupport {
     }
 
     private static Set<MolangFunction.ParameterRole> computeAvailableHostRoles(MolangScope scope) {
-        return scope.getHostContext().get(HostRoles.HOST_PRESENCE_MARKER).isPresent()
+        return scope.hasAnyHost()
                 ? HOST_ROLES_FULL
                 : HOST_ROLES_MINIMAL;
     }

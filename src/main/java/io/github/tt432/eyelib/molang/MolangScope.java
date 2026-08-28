@@ -111,6 +111,46 @@ public final class MolangScope {
         return hostContext;
     }
 
+    /**
+     * 宿主上下文是否存在任意条目。O(1)。
+     * <p>
+     * 与 {@code getHostContext().get(HostRoles.HOST_PRESENCE_MARKER).isPresent()} 现行语义等价：
+     * marker 的类型是 {@code Object.class}，isInstance 匹配任意非 null 条目——
+     * 旧实现的扫描在任一 store 非空时命中首条目，为空时落空。唯一分歧点：单线程 scope
+     * 显式 put 入 null 值（病态用法；并发 scope 的 ConcurrentHashMap 直接拒绝 null）。
+     * <p>
+     * 动机：JFR 实证旧路径每次调用做 HashMap entrySet 扫描 + 迭代器分配，
+     * 占渲染线程 ~4%（每个零参 query 求值都会经过）。
+     */
+    public boolean hasAnyHost() {
+        return !hostRoleStore.isEmpty() || !hostContextStore.isEmpty();
+    }
+
+    /**
+     * 按类型查找宿主对象，与 {@code hostContext.get(Class)} 完全相同的查找顺序
+     * （classStore 精确 → classStore isInstance 扫描 → roleStore isInstance 扫描），
+     * 但不包装 Optional——零参绑定组合调用点的热路径用。
+     */
+    public @Nullable Object findHost(Class<?> clazz) {
+        Object exact = hostContextStore.get(clazz);
+        if (exact != null) {
+            return exact;
+        }
+        for (var entry : hostContextStore.entrySet()) {
+            Object value = entry.getValue();
+            if (clazz.isInstance(value)) {
+                return value;
+            }
+        }
+        for (var entry : hostRoleStore.entrySet()) {
+            Object value = entry.getValue();
+            if (clazz.isInstance(value)) {
+                return value;
+            }
+        }
+        return null;
+    }
+
     @Nullable
     private volatile MolangScope parent;
 
