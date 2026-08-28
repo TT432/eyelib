@@ -4,12 +4,15 @@ import io.github.tt432.eyelib.client.entity.RenderControllerRuntime;
 import io.github.tt432.eyelib.client.render.controller.RenderControllerEntry;
 import io.github.tt432.eyelib.model.Model;
 import io.github.tt432.eyelib.util.PortResourceLocation;
+import it.unimi.dsi.fastutil.ints.Int2BooleanOpenHashMap;
 import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -22,6 +25,8 @@ import java.util.function.Supplier;
  */
 public class RenderControllerComponent {
     private static final AtomicInteger TEXTURE_STATE_VERSION = new AtomicInteger();
+    /** setupModel 分组/基础可见性缓存开关（benchmark A/B 对照用）。 */
+    private static final boolean GROUP_CACHE = Boolean.parseBoolean(System.getProperty("eyelib.rc.groupCache", "true"));
 
     public static void onTextureStateChanged() {
         TEXTURE_STATE_VERSION.incrementAndGet();
@@ -85,6 +90,14 @@ public class RenderControllerComponent {
         @Nullable
         private Set<Integer> cachedAllBoneIds;
         private final Map<String, Optional<PortResourceLocation>> meshTextureCache = new HashMap<>();
+        /** setupModel 派生缓存键：几何解析值 + 逐材质解析值（与 renderController.materials 顺序对齐）+ rcColor。 */
+        private String cachedGeometryKey;
+        private final List<String> cachedMaterialKey = new ArrayList<>();
+        private float @Nullable [] cachedColorKey;
+        /** 派生值：材质名 → 骨骼集（键序 = 首现顺序，与重建逻辑一致）。 */
+        private @Nullable LinkedHashMap<String, Set<Integer>> cachedGroups;
+        /** 派生值：每组的基础可见性表（与 cachedGroups 值序对齐），逐帧 clone 后再叠加 part_visibility 表达式。 */
+        private final List<Int2BooleanOpenHashMap> cachedBaseVis = new ArrayList<>();
 
         private Slot(@Nullable RenderControllerEntry renderController) {
             this.renderController = renderController;
@@ -115,6 +128,8 @@ public class RenderControllerComponent {
                 boneMatchCache.clear();
                 meshTextureCache.clear();
                 cachedAllBoneIds = null;
+                cachedGroups = null;
+                cachedBaseVis.clear();
                 cachedModelVersion = modelVersion;
             }
         }
@@ -150,6 +165,41 @@ public class RenderControllerComponent {
                                                           Supplier<Optional<PortResourceLocation>> resolver) {
             checkModelVersion(modelVersion);
             return meshTextureCache.computeIfAbsent(geometryName, g -> resolver.get());
+        }
+        /**
+         * setupModel 分组缓存：键 = (geometry, 逐材质解析值, rcColor) 值相等比较。
+         * molang 表达式逐帧求值不变（动态性保留），仅消除值不变时的 map 重建。
+         * 命中返回缓存分组；未命中由 rebuild 重建并连带重建 baseVis。
+         */
+        public @Nullable LinkedHashMap<String, Set<Integer>> materialGroups(
+                String geometry, List<String> materialValues, float @Nullable [] color,
+                Supplier<LinkedHashMap<String, Set<Integer>>> rebuild) {
+            LinkedHashMap<String, Set<Integer>> groups = cachedGroups;
+            if (GROUP_CACHE
+                    && groups != null
+                    && geometry.equals(cachedGeometryKey)
+                    && materialValues.equals(cachedMaterialKey)
+                    && Arrays.equals(color, cachedColorKey)) {
+                return groups;
+            }
+            groups = rebuild.get();
+            cachedGeometryKey = geometry;
+            cachedMaterialKey.clear();
+            cachedMaterialKey.addAll(materialValues);
+            cachedColorKey = color == null ? null : color.clone();
+            cachedGroups = groups;
+            return groups;
+        }
+
+        /** 重建路径回填 baseVis（与 groups 值序对齐）；调用方保证仅在 rebuild 后调用。 */
+        public void storeBaseVis(List<Int2BooleanOpenHashMap> baseVis) {
+            cachedBaseVis.clear();
+            cachedBaseVis.addAll(baseVis);
+        }
+
+        /** 与当前 cachedGroups 值序对齐的基础可见性表；调用方须先经 materialGroups 确保一致。 */
+        public List<Int2BooleanOpenHashMap> baseVis() {
+            return cachedBaseVis;
         }
     }
 }

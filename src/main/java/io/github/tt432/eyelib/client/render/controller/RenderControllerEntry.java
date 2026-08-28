@@ -139,36 +139,56 @@ public record RenderControllerEntry(
         // 收集所有骨骼（按 modelVersion 缓存：骨骼集合静态）
         Set<Integer> allBoneIds = renderControllerSlot.allBoneIds(models, modelVersion);
 
-        // 按 materials 数组顺序处理所有槽位，后面覆盖前面（Bedrock "Saddle will override Mane" 语义）
-        // boneId → materialName
-        Map<Integer, String> boneMaterialMap = new LinkedHashMap<>();
-
+        // 逐材质表达式逐帧求值（molang 动态性保留）；解析值与上一帧相等时复用分组与基础可见性表，
+        // 消除逐实体逐帧的 boneMaterialMap/分组 LinkedHashMap 重建（JFR: setupModel 7.1% 的主要构成）
+        List<String> materialValues = new ArrayList<>(materials.size());
         for (var entry : materials) {
-            String pattern = entry.key();
-            String materialName = get(scope, entry.value(), "material", entity.materials());
-            Set<Integer> matchedBones = renderControllerSlot.matchBones(pattern, models, modelVersion);
-
-            for (int boneId : matchedBones) {
-                boneMaterialMap.put(boneId, materialName);
-            }
+            materialValues.add(get(scope, entry.value(), "material", entity.materials()));
         }
-
-        if (boneMaterialMap.isEmpty()) {
-            return components;
-        }
-
-        // 按材质名分组骨骼
-        Map<String, Set<Integer>> materialBoneGroups = new LinkedHashMap<>();
-        for (var entry : boneMaterialMap.entrySet()) {
-            materialBoneGroups.computeIfAbsent(entry.getValue(), k -> new LinkedHashSet<>()).add(entry.getKey());
-        }
-
-        // 预计算全局 part_visibility（按 modelVersion 缓存，所有组件复用）
-        renderControllerSlot.runtime().setup(modelVersion, models, this);
 
         boolean needReloadTexture = renderControllerSlot.needsTextureReload();
 
         float[] rcColor = evalRcColor(scope);
+
+        // 按 materials 数组顺序处理所有槽位，后面覆盖前面（Bedrock "Saddle will override Mane" 语义）
+        Map<String, Set<Integer>> materialBoneGroups = renderControllerSlot.materialGroups(
+                geometryResult, materialValues, rcColor, () -> {
+                    // boneId → materialName
+                    Map<Integer, String> boneMaterialMap = new LinkedHashMap<>();
+                    int slotIndex = 0;
+                    for (var entry : materials) {
+                        Set<Integer> matchedBones = renderControllerSlot.matchBones(entry.key(), models, modelVersion);
+                        String materialName = materialValues.get(slotIndex++);
+                        for (int boneId : matchedBones) {
+                            boneMaterialMap.put(boneId, materialName);
+                        }
+                    }
+
+                    // 按材质名分组骨骼（键序 = 首现顺序）
+                    LinkedHashMap<String, Set<Integer>> groups = new LinkedHashMap<>();
+                    for (var entry : boneMaterialMap.entrySet()) {
+                        groups.computeIfAbsent(entry.getValue(), k -> new LinkedHashSet<>()).add(entry.getKey());
+                    }
+
+                    // 每组基础可见性表（与 groups 值序对齐）；part_visibility 表达式逐帧叠加在副本上
+                    List<Int2BooleanOpenHashMap> baseVis = new ArrayList<>(groups.size());
+                    for (Set<Integer> visibleBones : groups.values()) {
+                        Int2BooleanOpenHashMap vis = new Int2BooleanOpenHashMap(allBoneIds.size());
+                        for (int id : allBoneIds) {
+                            vis.put(id, visibleBones.contains(id));
+                        }
+                        baseVis.add(vis);
+                    }
+                    renderControllerSlot.storeBaseVis(baseVis);
+                    return groups;
+                });
+
+        if (materialBoneGroups.isEmpty()) {
+            return components;
+        }
+
+        // 预计算全局 part_visibility（按 modelVersion 缓存，所有组件复用）
+        renderControllerSlot.runtime().setup(modelVersion, models, this);
 
         // texture_meshes 体素化贴图（BE 语义：形状由 mesh 短名指定的贴图决定，与图层无关）
         // 按 (modelVersion, 几何名) 缓存：模型与实体纹理表静态，仅几何选择可逐帧变化
@@ -195,11 +215,11 @@ public record RenderControllerEntry(
         }
 
         // 层在外、组在内：第 i 层渲染全模型的所有材质组，再渲染第 i+1 层
+        List<Int2BooleanOpenHashMap> baseVisList = renderControllerSlot.baseVis();
         for (int layer = 0; layer < maxLayers; layer++) {
+            int groupOrdinal = 0;
             for (var groupEntry : materialBoneGroups.entrySet()) {
                 String materialName = groupEntry.getKey();
-                Set<Integer> visibleBones = groupEntry.getValue();
-
                 // 不变量：texturesByGroup 与 materialBoneGroups 同键（上方同一循环构建）
                 List<PortResourceLocation> layers = java.util.Objects.requireNonNull(texturesByGroup.get(materialName));
                 PortResourceLocation matTexture = layers.get(Math.min(layer, layers.size() - 1));
@@ -212,11 +232,10 @@ public record RenderControllerEntry(
                 comp.setRcColor(rcColor);
                 comp.setMeshTexture(meshTexture);
 
-                // 直接构建进组件的可见性表（原实现先建临时表再 putAll 复制，多一次分配+拷贝）
+                // 基础可见性表按组缓存（值键命中时零重建）；拷贝进组件后逐帧叠加 part_visibility 表达式
                 Int2BooleanOpenHashMap vis = comp.getPartVisibility();
-                for (int id : allBoneIds) {
-                    vis.put(id, visibleBones.contains(id));
-                }
+                vis.putAll(baseVisList.get(groupOrdinal));
+                groupOrdinal++;
                 renderControllerSlot.runtime().evalPartVisibility(vis, scope);
 
                 components.add(comp);

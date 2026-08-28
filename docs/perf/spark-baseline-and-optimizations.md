@@ -208,6 +208,15 @@
 - **诊断开关**:`-Deyelib.molang.shapeCache=false`、`-Deyelib.molang.roleMemo=false`、`-Deyelib.anim.linearScanThreshold=0`（均已接入 runClientBenchmark 转发）。
 - **余项**:invokeMethod 参数打包/转换仍逐次（~4%，精确 invoker 化需处理 varargs/逐参转换过滤器，复杂度高收益低）；RenderControllerEntry.setupModel 逐实体逐帧 map 迭代（~7%，新发现）；MolangValue3.getX 叶帧 12.8% 为内联归宿帧（动态表达式字节码本体）。
 
+### Opt15 · setupModel 值相等键缓存：分组 + 基础可见性表跨帧复用（2026-08-28）
+
+- **文件**:`capability/component/RenderControllerComponent.java`（Slot 增缓存）、`client/render/controller/RenderControllerEntry.java`（setupModel 重构）
+- **方案**:承接 Opt14 余项 JFR（setupModel ~7%）。键 = (geometry 解析值, 逐材质解析值列表, rcColor 值) 逐帧求值后**值相等比较**；命中则复用派生的 材质名→骨骼集 LinkedHashMap 与每组基础可见性表（Int2BooleanOpenHashMap，putAll 拷贝进组件后逐帧叠加 part_visibility 表达式）。molang 表达式求值本身不缓存（动态性完整保留），消除的是值不变时的 map/集合重建。失效：任一表达式值变化（值比较）或 modelVersion 变化（checkModelVersion 连带清空）。生产时序不变量：allBoneIds/matchBones 恒先于 materialGroups 调用，版本先于缓存稳定。
+- **验证**:新契约测试 RenderControllerComponentSlotGroupCacheTest 5 例（命中同实例零重建/color 按值比较/任一键分量变化重建/modelVersion 失效/baseVis 对齐回填）。1.20.1/1.21.1 全量单测绿（26.1.2 预存 fastutil NoSuchMethodError 失败与本次无关）。运行时截图：史莱姆半透明层次、蜘蛛发光红眼、牛正常（compute 合批路径，VARIANTS=10/GEOMETRIES=9 实证生效）。
+- **结果**:**1.21.1 world n384 +2.9% 区间不重叠**（ON 59.48/59.10 vs OFF 56.50/57.75）；1.20.1 三轮 ON 42.96/44.41/46.05 vs OFF 41.85/44.52/47.67 完全重叠=中性（该版本同场景方差 ±6% 吞没收益）；26.1.2 中性（瓶颈不在此）。保留：分配/map 构建的真实消除 + 无回归。
+- **诊断开关**:`-Deyelib.rc.groupCache=false`（已接入 runClientBenchmark 转发）。
+- **余项**:setupModel 内逐帧保留成本 = geometry/材质/color 表达式求值本身 + resolveSlotTextures（texture expr 求值 + clamped 解析）+ ModelComponent 分配；再压需表达式级常量折叠。
+
 ## 已排除项
 
 - **eyelib 自身堆占用健康**:eyelib 全部类合计 56MB(2.18%),数量级合理,无需优化。
