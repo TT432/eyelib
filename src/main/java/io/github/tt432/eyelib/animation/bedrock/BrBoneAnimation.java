@@ -25,17 +25,56 @@ import java.util.TreeMap;
  *
  * @author TT432
  */
-public record BrBoneAnimation(
-        Map<String, BrAnimationChannel<BrBoneKeyFrame>> channels,
-        BrBoneAnimationDefinition compiledDefinition
-) {
+public final class BrBoneAnimation {
     public static final String ROTATION = "rotation";
     public static final String POSITION = "position";
     public static final String SCALE = "scale";
 
-    public BrBoneAnimation {
-        channels = Collections.unmodifiableMap(new LinkedHashMap<>(channels));
-        compiledDefinition = compiledDefinition != null ? compiledDefinition : compileDefinition(channels);
+    private final Map<String, BrAnimationChannel<BrBoneKeyFrame>> channels;
+    private final BrBoneAnimationDefinition compiledDefinition;
+    // 预解析的编译期通道（缺失/空关键帧归 null）：消除 BrClipExecutor 每骨骼每帧 6 次
+    // 字符串键 map 查找（JFR：UnmodifiableMap.get 占渲染线程 ~6-8%，归因 hasChannel+channel(name)）。
+    // record 不允许额外表字段，故为 final class；equals/hashCode 维持 (channels, compiledDefinition) 语义。
+    private final @Nullable BrAnimationChannel<BrBoneKeyFrameDefinition> rotationChannel;
+    private final @Nullable BrAnimationChannel<BrBoneKeyFrameDefinition> positionChannel;
+    private final @Nullable BrAnimationChannel<BrBoneKeyFrameDefinition> scaleChannel;
+
+    public BrBoneAnimation(Map<String, BrAnimationChannel<BrBoneKeyFrame>> channels,
+                           @Nullable BrBoneAnimationDefinition compiledDefinition) {
+        this.channels = Collections.unmodifiableMap(new LinkedHashMap<>(channels));
+        this.compiledDefinition = compiledDefinition != null ? compiledDefinition : compileDefinition(this.channels);
+        this.rotationChannel = nonEmpty(this.compiledDefinition.channels().get(ROTATION));
+        this.positionChannel = nonEmpty(this.compiledDefinition.channels().get(POSITION));
+        this.scaleChannel = nonEmpty(this.compiledDefinition.channels().get(SCALE));
+    }
+
+    private static @Nullable BrAnimationChannel<BrBoneKeyFrameDefinition> nonEmpty(
+            @Nullable BrAnimationChannel<BrBoneKeyFrameDefinition> channel) {
+        return channel != null && !channel.keyFrames().isEmpty() ? channel : null;
+    }
+
+    public Map<String, BrAnimationChannel<BrBoneKeyFrame>> channels() {
+        return channels;
+    }
+
+    public BrBoneAnimationDefinition compiledDefinition() {
+        return compiledDefinition;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        return this == o || (o instanceof BrBoneAnimation other
+                && channels.equals(other.channels) && compiledDefinition.equals(other.compiledDefinition));
+    }
+
+    @Override
+    public int hashCode() {
+        return java.util.Objects.hash(channels, compiledDefinition);
+    }
+
+    @Override
+    public String toString() {
+        return "BrBoneAnimation[channels=" + channels + ", compiledDefinition=" + compiledDefinition + "]";
     }
 
     public BrBoneAnimation(Map<String, BrAnimationChannel<BrBoneKeyFrame>> channels) {
@@ -132,35 +171,36 @@ public record BrBoneAnimation(
 
     /** 通道是否含关键帧；空通道可在采样前整体短路。 */
     public boolean hasRotation() {
-        return hasChannel(ROTATION);
+        return rotationChannel != null;
     }
 
     public boolean hasPosition() {
-        return hasChannel(POSITION);
+        return positionChannel != null;
     }
 
     public boolean hasScale() {
-        return hasChannel(SCALE);
-    }
-
-    private boolean hasChannel(String name) {
-        BrAnimationChannel<BrBoneKeyFrame> channel = channels.get(name);
-        return channel != null && !channel.keyFrames().isEmpty();
+        return scaleChannel != null;
     }
 
     @Nullable
     public Vector3f lerpRotation(MolangScope scope, float currentTick, float thisX, float thisY, float thisZ) {
-        return sample(ROTATION, scope, currentTick, thisX, thisY, thisZ);
+        return sampleChannel(rotationChannel, scope, currentTick, thisX, thisY, thisZ);
     }
 
     @Nullable
     public Vector3f lerpPosition(MolangScope scope, float currentTick, float thisX, float thisY, float thisZ) {
-        return sample(POSITION, scope, currentTick, thisX, thisY, thisZ);
+        return sampleChannel(positionChannel, scope, currentTick, thisX, thisY, thisZ);
     }
 
     @Nullable
     public Vector3f lerpScale(MolangScope scope, float currentTick, float thisX, float thisY, float thisZ) {
-        return sample(SCALE, scope, currentTick, thisX, thisY, thisZ);
+        return sampleChannel(scaleChannel, scope, currentTick, thisX, thisY, thisZ);
+    }
+    /** 经预解析通道直接采样；通道缺失/为空（恒 null 结果）时直接返回 null，跳过空通道分配与查找。 */
+    private static @Nullable Vector3f sampleChannel(@Nullable BrAnimationChannel<BrBoneKeyFrameDefinition> channel,
+                                                    MolangScope scope, float currentTick,
+                                                    float thisX, float thisY, float thisZ) {
+        return channel == null ? null : BrBoneAnimationSampler.sample(channel, scope, currentTick, thisX, thisY, thisZ);
     }
 
     @Nullable

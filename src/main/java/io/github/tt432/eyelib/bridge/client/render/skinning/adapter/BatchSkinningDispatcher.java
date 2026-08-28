@@ -15,7 +15,6 @@ import org.slf4j.LoggerFactory;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
-import java.util.IdentityHashMap;
 import java.util.List;
 
 /**
@@ -77,9 +76,9 @@ final class BatchSkinningDispatcher {
                 return; // 重载窗口期：丢一帧（finally 释放暂存）
             }
 
-            // 1. 分组计数（RenderType 首见顺序；IdentityHashMap 引用哈希快于 LinkedHashMap 键哈希）
+            // 1. 分组计数（RenderType 首见顺序）。每帧 distinct RenderType/几何数量小（个位数~数十），
+            // 线性扫描引用比较即可——IdentityHashMap 逐 drain 分配 + put 探针 JFR 实证占渲染线程 ~8.5%。
             List<Group> groups = new ArrayList<>();
-            IdentityHashMap<RenderType, Group> groupIndex = new IdentityHashMap<>();
             int totalMats = 0;
             int totalVertices = 0;
             int totalEntities = 0;
@@ -87,17 +86,30 @@ final class BatchSkinningDispatcher {
                 if (!(session.geometry() instanceof ComputeSkinnedGeometry geometry)) {
                     continue; // 几何类型与模式不匹配（路径切换竞态）：丢弃
                 }
-                Group group = groupIndex.get(session.routingType());
+                Group group = null;
+                for (int gi = 0; gi < groups.size(); gi++) {
+                    Group candidate = groups.get(gi);
+                    if (candidate.routingType == session.routingType()) {
+                        group = candidate;
+                        break;
+                    }
+                }
                 if (group == null) {
                     group = new Group(session.routingType(), session.variant());
-                    groupIndex.put(session.routingType(), group);
                     groups.add(group);
                 }
-                Subbatch sub = group.subIndex.get(geometry);
+                Subbatch sub = null;
+                List<Subbatch> subbatches = group.subbatches;
+                for (int si = 0; si < subbatches.size(); si++) {
+                    Subbatch candidate = subbatches.get(si);
+                    if (candidate.geometry == geometry) {
+                        sub = candidate;
+                        break;
+                    }
+                }
                 if (sub == null) {
                     sub = new Subbatch(geometry, session);
-                    group.subIndex.put(geometry, sub);
-                    group.subbatches.add(sub);
+                    subbatches.add(sub);
                 } else {
                     sub.sessions.add(session);
                 }
@@ -270,7 +282,6 @@ final class BatchSkinningDispatcher {
     private static final class Group {
         final RenderType routingType;
         final int variant;
-        final IdentityHashMap<ComputeSkinnedGeometry, Subbatch> subIndex = new IdentityHashMap<>();
         final List<Subbatch> subbatches = new ArrayList<>();
         int firstVertex;
         int vertexCount;
