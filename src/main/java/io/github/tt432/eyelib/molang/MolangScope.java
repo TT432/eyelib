@@ -24,6 +24,22 @@ import java.util.concurrent.ConcurrentHashMap;
 public final class MolangScope {
     private final Map<Class<?>, Object> hostContextStore;
     private final Map<HostRole<?>, Object> hostRoleStore;
+    /**
+     * get(HostRole) 解析结果备忘：精确命中之外的 isInstance 扫描（含第 3 步跨 store
+     * 回退）在渲染热路径每 query 一次（JFR ~2%，Opt14）。任一 store 的 4 个变更方法
+     * （put/remove 两族）全量清空——memo 结果耦合两个 store，粒度取最保守。
+     * 诊断：-Deyelib.molang.roleMemo=false 禁用（回退逐次扫描）。
+     */
+    private final Map<HostRole<?>, RoleMemoEntry> hostRoleMemo;
+    /** 宿主变更纪元：任一 store 变更自增，memo 条目纪元错位即重解析（避免 clear+回填竞态提供陈旧值）。 */
+    private volatile long hostMutationEpoch;
+    private static final boolean ROLE_MEMO_ENABLED =
+            Boolean.parseBoolean(System.getProperty("eyelib.molang.roleMemo", "true"));
+    /** memo 中的「解析为空」标记（真实宿主值不会等于此实例）。 */
+    private static final Object NULL_HOST_MARKER = new Object();
+
+    private record RoleMemoEntry(long epoch, Object value) {
+    }
 
     public MolangScope() {
         this(true);
@@ -32,6 +48,7 @@ public final class MolangScope {
     private MolangScope(boolean concurrent) {
         hostContextStore = concurrent ? new ConcurrentHashMap<>() : new HashMap<>();
         hostRoleStore = concurrent ? new ConcurrentHashMap<>() : new HashMap<>();
+        hostRoleMemo = concurrent ? new ConcurrentHashMap<>() : new HashMap<>();
         cache = concurrent ? new ConcurrentHashMap<>() : new HashMap<>();
         tempKeys = concurrent ? ConcurrentHashMap.newKeySet() : new HashSet<>();
     }
@@ -48,6 +65,24 @@ public final class MolangScope {
         @Override
         @SuppressWarnings("unchecked")
         public <T> Optional<T> get(HostRole<T> role) {
+            if (ROLE_MEMO_ENABLED) {
+                RoleMemoEntry entry = hostRoleMemo.get(role);
+                if (entry != null && entry.epoch() == hostMutationEpoch) {
+                    @SuppressWarnings("unchecked")
+                    T value = entry.value() == NULL_HOST_MARKER ? null : (T) entry.value();
+                    return Optional.ofNullable(value);
+                }
+                Optional<T> resolved = resolveRole(role);
+                // 计算后取纪元：计算与变更竞态时条目即陈旧，下次访问重解析
+                hostRoleMemo.put(role, new RoleMemoEntry(hostMutationEpoch,
+                        resolved.isPresent() ? resolved.get() : NULL_HOST_MARKER));
+                return resolved;
+            }
+            return resolveRole(role);
+        }
+
+        @SuppressWarnings("unchecked")
+        private <T> Optional<T> resolveRole(HostRole<T> role) {
             // 1. 尝试精确键匹配
             Object exact = hostRoleStore.get(role);
             if (exact != null && role.type().isInstance(exact)) {
@@ -65,12 +100,23 @@ public final class MolangScope {
 
         @Override
         public <T> void put(HostRole<T> role, T value) {
+            // 幂等写短路：宿主装配（EntityPortAdapter.putHost）每帧以同一实例重写同角色，
+            // 内容不变就不动纪元——否则 memo 每帧全灭（JFR 实证 resolveRole 2.9% 残留）
+            if (value != null && hostRoleStore.get(role) == value) {
+                return;
+            }
             hostRoleStore.put(role, value);
+            hostMutationEpoch++;
         }
 
         @Override
         public <T> void remove(HostRole<T> role) {
-            hostRoleStore.remove(role);
+            // 同幂等考量：键不存在时 map 内容不变，不动纪元
+            // （putHost 对恒缺角色每帧 remove，不能因此清空 memo）
+            if (hostRoleStore.containsKey(role)) {
+                hostRoleStore.remove(role);
+                hostMutationEpoch++;
+            }
         }
 
         @Override
@@ -98,12 +144,19 @@ public final class MolangScope {
 
         @Override
         public <T> void put(Class<T> clazz, T value) {
+            if (value != null && hostContextStore.get(clazz) == value) {
+                return;
+            }
             hostContextStore.put(clazz, value);
+            hostMutationEpoch++;
         }
 
         @Override
         public <T> void remove(Class<T> clazz) {
-            hostContextStore.remove(clazz);
+            if (hostContextStore.containsKey(clazz)) {
+                hostContextStore.remove(clazz);
+                hostMutationEpoch++;
+            }
         }
     };
 

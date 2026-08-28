@@ -199,6 +199,28 @@ public final class MolangRuntimeSupport {
     private static final boolean EXACT_INVOKER_ENABLED =
             Boolean.parseBoolean(System.getProperty("eyelib.molang.exactInvoker", "true"));
 
+    // ---------------------------------------------------------------------
+    // 非零参调用解析缓存：selectQueryVariant(名称, 调用形, host 角色集) 的结果只取决于
+    // (名称, 逐参 STRING/NUMBER 形态, host 有无, 注册表纪元)。键把形态压进 long
+    // （位 0-5 参数数，位 6+i 第 i 参为 STRING，位 63 host 有无），避免逐次构造
+    // kinds 数组 + Arrays.asList + 树形变体选择（JFR ~2%，Opt14）。
+    // 未解析（null/歧义异常）也缓存——warnMissing 本就按名去重，语义不变。
+    // 参数打包/转换仍在 invokeMethod 逐次执行（值随求值变化，不可缓存）。
+    // 诊断：-Deyelib.molang.shapeCache=false 回退逐次解析旧路径。
+    // ---------------------------------------------------------------------
+    private static final ConcurrentHashMap<ShapeKey, ShapeCacheEntry> SHAPE_CACHE = new ConcurrentHashMap<>();
+    private static final boolean SHAPE_CACHE_ENABLED =
+            Boolean.parseBoolean(System.getProperty("eyelib.molang.shapeCache", "true"));
+    private static final long SHAPE_HOST_BIT = 1L << 63;
+    /** 可缓存的最大参数数：位 6..60 为 STRING 标记，超出走原路径。 */
+    private static final int MAX_SHAPED_ARGS = 55;
+
+    private record ShapeKey(String name, long bits) {
+    }
+
+    private record ShapeCacheEntry(MolangMappingTree tree, long epoch, @Nullable FunctionInfo info) {
+    }
+
     private record ZeroArgCacheEntry(MolangMappingTree tree, long epoch,
                                      ZeroArgBinding minimal, ZeroArgBinding full) {
     }
@@ -513,6 +535,9 @@ public final class MolangRuntimeSupport {
             warnMissing(methodName);
             return scope.get(methodName);
         } else {
+            if (SHAPE_CACHE_ENABLED && argValues.length <= MAX_SHAPED_ARGS) {
+                return resolveCallShaped(scope, mappingTree, methodName, argValues);
+            }
             visibleArgs = argValues;
             VisibleArgumentKind[] kinds = new VisibleArgumentKind[argValues.length];
             for (int i = 0; i < argValues.length; i++) {
@@ -571,6 +596,49 @@ public final class MolangRuntimeSupport {
             return VisibleArgumentKind.STRING;
         }
         return VisibleArgumentKind.NUMBER;
+    }
+
+    /**
+     * 非零参调用的缓存解析路径：形态位键命中（同树同纪元）直接复用 FunctionInfo，
+     * 未命中重建调用形走 {@code selectQueryVariant} 并缓存（含 null 缺失结果）。
+     * 与 resolveCall 原分支语义等价：解析异常/缺失 → warnMissing + MolangNull。
+     */
+    private static MolangObject resolveCallShaped(MolangScope scope, MolangMappingTree mappingTree,
+                                                  String methodName, MolangObject[] argValues) {
+        long bits = argValues.length | (scope.hasAnyHost() ? SHAPE_HOST_BIT : 0);
+        for (int i = 0; i < argValues.length; i++) {
+            if (argValues[i] instanceof MolangString) {
+                bits |= 1L << (6 + i);
+            }
+        }
+        ShapeKey key = new ShapeKey(methodName, bits);
+        long epoch = mappingTree.epoch();
+        ShapeCacheEntry entry = SHAPE_CACHE.get(key);
+        FunctionInfo functionInfo;
+        if (entry != null && entry.tree() == mappingTree && entry.epoch() == epoch) {
+            functionInfo = entry.info();
+        } else {
+            VisibleArgumentKind[] kinds = new VisibleArgumentKind[argValues.length];
+            for (int i = 0; i < argValues.length; i++) {
+                kinds[i] = callShapeKind(argValues[i]);
+            }
+            List<VisibleArgumentKind> callShape = Arrays.asList(kinds);
+            try {
+                functionInfo = mappingTree.selectQueryVariant(methodName, callShape,
+                        (bits & SHAPE_HOST_BIT) != 0 ? HOST_ROLES_FULL : HOST_ROLES_MINIMAL);
+            } catch (Exception e) {
+                // 变体歧义：不缓存（与原路径每次重试一致），warn 按名去重
+                warnMissing(methodName);
+                return MolangNull.INSTANCE;
+            }
+            // 良性竞争：并发解析结果幂等；epoch 错位时下次调用重解析
+            SHAPE_CACHE.put(key, new ShapeCacheEntry(mappingTree, epoch, functionInfo));
+        }
+        if (functionInfo == null) {
+            warnMissing(methodName);
+            return MolangNull.INSTANCE;
+        }
+        return invokeMethod(functionInfo, scope, argValues);
     }
 
     private static Set<MolangFunction.ParameterRole> computeAvailableHostRoles(MolangScope scope) {

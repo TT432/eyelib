@@ -195,6 +195,19 @@
 - **诊断开关**:`-Deyelib.molang.exactInvoker=false`（已接入 runClientBenchmark 转发）。
 - **余项**:resolveCall 非零参路径（math.* 带参调用）仍走 invokeMethod 泛型分派（~2%）；query 体内 `HostContext.get(HostRole)` 的 isInstance 扫描（~2%，在 MolangBuiltInQuery 查询实现内，非 RuntimeSupport）。
 
+### Opt14 · molang 三小热点打包：非零参 shape 缓存 + HostContext 角色 memo + 采样线性扫描（2026-08-28）
+
+- **文件**:`molang/compiler/MolangRuntimeSupport.java`、`molang/MolangScope.java`、`util/collection/ImmutableFloatTreeMap.java`
+- **方案**（三项均承接 Opt13 余项 JFR 归因）:
+  1. **非零参解析缓存（shapeCache）**:`selectQueryVariant(名称, 调用形, host 角色集)` 结果只取决于 (名称, 逐参 STRING/NUMBER 形态, host 有无, 注册表纪元)——形态压入 long 键（位 0-5 参数数，位 6+i 第 i 参 STRING 标记，位 63 host 有无），缓存 FunctionInfo（含 null 缺失结果；歧义异常不缓存与原路径逐次重试一致）。参数打包/值转换仍逐次走 invokeMethod（值随求值变化不可缓存）。>55 参回退原路径。
+  2. **HostContext 角色 memo（roleMemo）**:`get(HostRole)` 三步解析（精确→roleStore isInstance 扫描→classStore 回退）结果 memo 化；失效用**变更纪元**（不用 clear——并发下 clear+回填竞态会无限期供陈旧值，纪元错位条目下次访问即重解析）。**关键配套**：宿主装配（EntityPortAdapter.putHost）每帧以同一实例重写同角色，put/remove 加幂等短路（同引用 put / 不存在键 remove 不动纪元）——否则纪元每帧颠簸，memo 全灭（首版实证 resolveRole 残留 2.9% 即此因）。
+  3. **采样线性扫描（linearScan）**:`floorHigherIndices` 对 ≤16 键数组改 `Float.compare` 顺序循环。`Float.compare` 与 `Arrays.binarySearch(float[],float)` 同一全序（-0.0<0.0、NaN 最大、位级相等才算命中；构造期 keys 同序排序），结果逐位等价（含 NaN/-0.0 tick 病态输入），有穷尽契约测试钉死。
+- **验证**:新契约测试 3 类——ImmutableFloatTreeMapLinearScanTest（尺寸 1~32 × NaN/±Inf/±0/键间/越界 tick 对二分 oracle 逐位等价）、MolangScopeRoleMemoTest（精确命中/跨角色 isInstance 回退/class 族耦合失效/单线程 scope 同契约）、MolangRuntimeSupportShapeCacheTest（缓存命中一致、STRING/NUMBER 形态分流——**实证发现：注册键为 (名称, publication signature)，同元数不同参数类型属注册冲突**，故重载测试用不同元数构造、epoch 重建/原地 addNode 失效翻正）。1.20.1/1.21.1 全量单测绿。
+- **生效证据**（JFR 修复后，work/opt14b.jfr，渲染线程 368 样本）：selectQueryVariant 0.0%、Arrays.binarySearch 0.0%（原 3.4%）、HostContext$1.get 4.9%→0.8%、resolveRole 2.9%→0.5%。
+- **结果**:**world n384 +4.3%，区间不重叠**（ON 46.23/46.59 vs OFF 44.22/44.83；同构建三开关对照）。相对最初基线 33.4 累计约 +39%。
+- **诊断开关**:`-Deyelib.molang.shapeCache=false`、`-Deyelib.molang.roleMemo=false`、`-Deyelib.anim.linearScanThreshold=0`（均已接入 runClientBenchmark 转发）。
+- **余项**:invokeMethod 参数打包/转换仍逐次（~4%，精确 invoker 化需处理 varargs/逐参转换过滤器，复杂度高收益低）；RenderControllerEntry.setupModel 逐实体逐帧 map 迭代（~7%，新发现）；MolangValue3.getX 叶帧 12.8% 为内联归宿帧（动态表达式字节码本体）。
+
 ## 已排除项
 
 - **eyelib 自身堆占用健康**:eyelib 全部类合计 56MB(2.18%),数量级合理,无需优化。

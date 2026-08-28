@@ -121,8 +121,33 @@ public sealed class ImmutableFloatTreeMap<V> {
      * （命中：floor=s, higher=s+1；未命中：floor=ins-1, higher=ins，均越界即 -1），
      * 供采样热路径用一次二分替代两次。
      */
+    /**
+     * 线性扫描阈值：小数组下顺序循环（{@link Float#compare} 为 intrinsic，分支可预测）
+     * 优于 {@code Arrays.binarySearch} 的调用与分支误测开销；超过阈值仍走二分。
+     * JFR 实证二分为采样热路径可辨识成本（world n384 渲染线程 ~3.4%，Opt14）。
+     * 诊断：-Deyelib.anim.linearScanThreshold=0 禁用线性路径（回退恒二分）。
+     */
+    private static final int LINEAR_SCAN_THRESHOLD =
+            Integer.getInteger("eyelib.anim.linearScanThreshold", 16);
+
     public long floorHigherIndices(float tick) {
-        int s = Arrays.binarySearch(sortedKeys, tick);
+        float[] keys = sortedKeys;
+        int n = keys.length;
+        if (n <= LINEAR_SCAN_THRESHOLD) {
+            // Float.compare 与 Arrays.binarySearch(float[],float) 使用同一全序
+            // （-0.0 < 0.0、NaN 最大、位级相等才算命中；构造期 keys 按同序排序），
+            // 故与下方二分分支结果逐位等价——含 NaN/-0.0 tick 的病态输入
+            int floor = -1;
+            for (int i = 0; i < n; i++) {
+                if (Float.compare(keys[i], tick) <= 0) {
+                    floor = i;
+                } else {
+                    return ((long) floor << 32) | (i & 0xFFFFFFFFL);
+                }
+            }
+            return ((long) floor << 32) | 0xFFFFFFFFL;
+        }
+        int s = Arrays.binarySearch(keys, tick);
         int floor;
         int higher;
         if (s >= 0) {
