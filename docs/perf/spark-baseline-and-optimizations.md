@@ -253,6 +253,27 @@
 - **方法论勘误（重大）**:jfr print 默认栈深截断（`...`）曾致 TickStage 被低报为 4.0%；`--stack-depth 64` 深栈下真实份额 25.1%（Opt18 后 38.9%）。SetupStage+TickStage 合计 66~77% render 线程——**TickStage/SetupStage 并行化（此前因错误低报被暂缓）实为最大剩余杠杆**。性能声明必须附深栈证据。
 - **诊断开关**:`-Deyelib.rc.componentCache=false`。
 
+### Opt19 · SetupStage/TickStage 跨实体并行化（2026-08-29）
+
+- **文件**:`client/render/pipeline/ParallelStageExecutor.java`（新，专用 FJ 池+索引序合并）、`client/render/EntityRenderOrchestrator.java`（SetupStage/TickStage 重构 + tickEntity 抽取 + tickForEntity hoist）、`client/particle/DeferredAnimationParticleSpawner.java`（新，粒子操作队列化）、`molang/compiler/MolangRuntimeSupport.java`（MemberSite volatile Binding 快照）、`model/GlobalBoneIdHandler.java`（static synchronized）、`molang/MolangValue.java`（常量池 CHM）。
+- **设计文档**:`work/parallel-tick/DESIGN.md`（线程模型+共享状态全清单，work/ 不入 git）。
+- **共享可变状态处置**（逐项实证核查）:
+  1. **MemberSite**：表达式实例按字符串全局共享（compileCache）——(tree,epoch,minimal,full) 散装普通写并发下会撕裂（新纪元+旧绑定）。改 volatile 不可变快照：读侧单次取快照，旧纪元一致或新纪元一致，不撕裂。
+  2. **GlobalBoneIdHandler**：裸 fastutil computeIfAbsent 并发插入可损坏 → static synchronized（稳态仅查找，无竞争同步成本可忽略）。
+  3. **MOLANG_VALUE_CONSTANT_POOL**：Float2ObjectOpenHashMap → ConcurrentHashMap。
+  4. **AttachableItemRenderSetup.CACHE**：static WeakHashMap 非线程安全 → tickForEntity hoist 出并行段，join 后按实体序串行（不消费 tickAnimation 产物，实证）。
+  5. **粒子 spawn/updatePose/remove + syncedActions（NativeImage GPU 读回）**：必须渲染线程 → DeferredAnimationParticleSpawner 逐实体队列 + deferred 收集，join 后按实体索引序回放（同帧同序，粒子在实体之后的粒子相渲染，时序差异不可观察）。
+  6. **已安全不动**：ZERO_ARG_CACHE/METHOD_HANDLES/FIELD_GETTERS/SPREAD_INVOKERS（CHM+不可变条目）、WARNED_MISSING（synchronizedSet）、HostRole REGISTRY（CHM+AtomicInteger）、MolangMappingTree（纪元守卫，帧内只读）。
+- **执行模型**：专用 ForkJoinPool（默认 clamp(2,8,processors/2)=8 worker），实体列表按连续索引分 2×workers 片，渲染线程 join 阻塞（submit/join 建立 happens-before：tick 期实体状态写对 worker 可见；worker 对逐实体 cap 的写 join 后对渲染线程可见）。结果/延迟动作按索引序合并——与串行逐实体迭代顺序完全一致。worker 首个异常 join 后渲染线程重抛。
+- **验证**:契约测试 5 类（MemberSite 并发锤+纪元翻转窗口无撕裂值、执行器覆盖/顺序/异常/阈值/空表、DeferredSpawner 回放序+防御拷贝+幂等、GlobalBoneIdHandler 并发同 id/异 id/反查、常量池并发同实例）+ 1.20.1 全量 262 类绿 + 1.21.1 全量 263 类绿 + 运行时 51k 次渲染 0 错误 + 截图正确（史莱姆半透明/多类型）。
+- **结果**（world n384 slime，45s 串行协议，-Deyelib.parallelStages A/B）:
+  - 1.20.1:OFF 64.03/62.52 → ON **106.03/104.13（约 +66~68%）**。
+  - 1.21.1:OFF 115.63/109.62 → ON **209.64/192.74（约 +76~81%）**。
+  - JFR 机制证据（opt19-on.jfr，--stack-depth 64）：render 线程样本中 SetupStage 14 + TickStage 51（合计 ~15%，原 66~77%）；工作均匀分布在 8 个 worker（distinct javaThreadId ×8，各 ~250-300 样本）。
+- **累计**:1.20.1 world n384 从最初 33.4 → **104~106（约 3.1×）**；1.21.1 → **193~210**。
+- **诊断开关**:`-Deyelib.parallelStages=false`、`-Deyelib.parallelStages.threads=N`、`-Deyelib.parallelStages.minEntities=N`（默认 8，低于阈值串行）。
+- **已知坑**:worker 命名不能用 `getPoolIndex()`（setName 时机恒 0，JFR 里全部显示 worker-0）——独立 AtomicInteger 序号。
+
 ## 已排除项
 
 - **eyelib 自身堆占用健康**:eyelib 全部类合计 56MB(2.18%),数量级合理,无需优化。

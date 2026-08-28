@@ -24,11 +24,13 @@ public class GlobalBoneIdHandler {
     private static final Int2ObjectMap<String> map2 = new Int2ObjectOpenHashMap<>();
     private static int counter;
 
-    public static String get(int id) {
+    // Opt19：并行 stage 的 worker 可能并发读/插（稳态仅查找，解码期已批量插入），
+    // 裸 fastutil map 并发写会损坏内部结构——两方法同锁，稳态成本为无竞争同步。
+    public static synchronized String get(int id) {
         return map2.get(id);
     }
 
-    public static int get(String boneName) {
+    public static synchronized int get(String boneName) {
         if (boneName.isBlank()) return -1;
 
         return map.computeIfAbsent(boneName.toLowerCase(Locale.ROOT), k -> {

@@ -872,12 +872,20 @@ public final class MolangRuntimeSupport {
     // （覆盖位、host 有无）逐次现查，语义与 resolveMemberAccess 完全一致。
     // ---------------------------------------------------------------------
     public static final class MemberSite {
+        /**
+         * (tree, epoch, minimal, full) 一致快照。表达式实例按字符串全局共享
+         * （{@code MolangValue.compileCache}），并行 stage（Opt19）下多 worker 并发 resolve：
+         * 四字段散装普通写会撕裂（读到新 epoch + 旧绑定）。volatile 快照保证读侧
+         * 要么拿到旧纪元一致四元组（下次调用重解析——语义同原"良性竞争"注释），
+         * 要么新纪元一致四元组；快照对象不可变，经 volatile 写安全发布。
+         */
+        private record Binding(MolangMappingTree tree, long epoch,
+                               ZeroArgBinding minimal, ZeroArgBinding full) {
+        }
+
         private final String name;
         private final int overrideBit;
-        private @Nullable MolangMappingTree tree;
-        private long epoch = -1;
-        private ZeroArgBinding minimal = ZeroArgBinding.NONE;
-        private ZeroArgBinding full = ZeroArgBinding.NONE;
+        private volatile @Nullable Binding binding;
 
         private MemberSite(String name) {
             this.name = name;
@@ -896,24 +904,25 @@ public final class MolangRuntimeSupport {
                     return scopeValue;
                 }
             }
-            ZeroArgBinding binding;
+            ZeroArgBinding selected;
             if (ZERO_ARG_BINDING_ENABLED) {
                 MolangMappingTree currentTree = MolangMappingRegistries.mappingTree();
                 long currentEpoch = currentTree.epoch();
-                if (currentTree != tree || currentEpoch != epoch) {
-                    // 良性竞争：并发解析结果幂等；纪元错位时下次调用重解析
-                    minimal = resolveZeroArg(currentTree, name, false);
-                    full = resolveZeroArg(currentTree, name, true);
-                    tree = currentTree;
-                    epoch = currentEpoch;
+                Binding snap = binding;
+                if (snap == null || snap.tree() != currentTree || snap.epoch() != currentEpoch) {
+                    // 良性竞争：并发重建幂等（结果仅取决于 tree+epoch）；输者快照被丢弃
+                    snap = new Binding(currentTree, currentEpoch,
+                            resolveZeroArg(currentTree, name, false),
+                            resolveZeroArg(currentTree, name, true));
+                    binding = snap;
                 }
-                binding = scope.hasAnyHost() ? full : minimal;
+                selected = scope.hasAnyHost() ? snap.full() : snap.minimal();
             } else {
-                binding = resolveZeroArg(MolangMappingRegistries.mappingTree(), name, hasHostContext(scope));
+                selected = resolveZeroArg(MolangMappingRegistries.mappingTree(), name, hasHostContext(scope));
             }
-            return switch (binding.kind) {
-                case ZeroArgBinding.KIND_FIELD -> invokeZeroArgField(binding);
-                case ZeroArgBinding.KIND_METHOD -> invokeZeroArgMethod(binding, scope);
+            return switch (selected.kind) {
+                case ZeroArgBinding.KIND_FIELD -> invokeZeroArgField(selected);
+                case ZeroArgBinding.KIND_METHOD -> invokeZeroArgMethod(selected, scope);
                 default -> MolangNull.INSTANCE;
             };
         }

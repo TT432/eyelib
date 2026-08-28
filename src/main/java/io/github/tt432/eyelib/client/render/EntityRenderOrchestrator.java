@@ -29,8 +29,9 @@ import io.github.tt432.eyelib.capability.component.ModelComponent;
 import io.github.tt432.eyelib.capability.component.RenderControllerComponent;
 import io.github.tt432.eyelib.client.manager.ClientEntityManager;
 import io.github.tt432.eyelib.client.manager.RenderControllerManager;
-import io.github.tt432.eyelib.client.particle.RootAnimationParticleSpawner;
+import io.github.tt432.eyelib.client.particle.DeferredAnimationParticleSpawner;
 import io.github.tt432.eyelib.client.render.controller.RenderControllerEntry;
+import io.github.tt432.eyelib.client.render.pipeline.ParallelStageExecutor;
 import io.github.tt432.eyelib.client.render.pipeline.EntitySetupResult;
 import io.github.tt432.eyelib.client.render.pipeline.EntityTickResult;
 import io.github.tt432.eyelib.client.render.pipeline.FramePlan;
@@ -150,12 +151,22 @@ public final class EntityRenderOrchestrator {
     static final class SetupStage implements FrameStage {
         @Override
         public void apply(FramePlan plan) {
-            entities()
+            List<Entity> visible = entities()
                     .filter(entity -> entity.shouldRender(plan.camX(), plan.camY(), plan.camZ()))
-                    .forEach(entity -> {
+                    .toList();
+            // Opt19：逐实体 setup 跨实体并行（线程模型见 ParallelStageExecutor 与
+            // docs/perf/spark-baseline-and-optimizations.md Opt19 章节）；
+            // 结果与延迟效果按实体索引序合并，与串行迭代完全一致。
+            ParallelStageExecutor.forEachEntity(visible,
+                    (entity, deferred) -> {
                         List<Runnable> effects = setup(entity);
-                        plan.setupResults().add(new EntitySetupResult(entity, effects));
-                        plan.deferredEffects().addAll(effects);
+                        return new EntitySetupResult(entity, effects);
+                    },
+                    (result, deferred) -> {
+                        if (result != null) {
+                            plan.setupResults().add(result);
+                            plan.deferredEffects().addAll(result.deferredEffects());
+                        }
                     });
         }
     }
@@ -170,71 +181,106 @@ public final class EntityRenderOrchestrator {
     static final class TickStage implements FrameStage {
         @Override
         public void apply(FramePlan plan) {
-            entities().forEach(e -> {
-                var cap = RenderData.getComponent(e);
-
-                if (e instanceof LivingEntity entity && cap != null) {
-                    cap.ensureOwner(entity);
-
-                    MolangScope scope = cap.getScope();
-                    if (scope == null) {
-                        return;
-                    }
-
-                    setupSyncedBehaviorContext(entity, scope);
-
-                    ClientEntityComponent clientEntityComponent = cap.getClientEntityComponent();
-
-                    // addon 卸载/换包后注册表代际变化：按 id 重新解析 clientEntity，
-                    // 管理器中已无此 id 时回落 vanilla（else 分支清空组件与 RC 状态）
-                    if (clientEntityComponent.isStale(ClientEntityManager.INSTANCE.generation())) {
-                        setupClientEntity(entity, cap).forEach(Runnable::run);
-                    }
-
-                    AnimationEffects effects = new AnimationEffects();
-                    scope.set("variable.partial_tick", plan.partialTick());
-                    scope.set("variable.attack_time", ((float) entity.swingTime) / entity.getCurrentSwingDuration());
-
-                    scope.getHostContext()
-                         .put(HostRoles.ANIMATION_PARTICLE_SPAWNER,
-                                 new RootAnimationParticleSpawner(ParticlePort.getSpawnAdapter()));
-
-                    ModelRuntimeData tickedInfos;
-                    if (cap.getAnimationComponent().getSerializableInfo() != null) {
-                        tickedInfos = BrAnimator.tickAnimation(cap.getAnimationComponent(), scope, effects,
-                                (ClientTickPort.getTick() + plan.partialTick()) / 20, () -> {
-                                    if (clientEntityComponent.getClientEntity() != null) {
-                                        clientEntityComponent.getClientEntity().scripts().ifPresent(scripts -> {
-                                            scripts.pre_animation().eval(scope);
-                                        });
-                                    }
-                                }, cap.bindBones());
-                    } else {
-                        tickedInfos = ModelRuntimeData.EMPTY;
-                    }
-                    cap.getAnimationComponent().tickedInfos = tickedInfos;
-                    cap.getAnimationComponent().effects = effects;
-                    // setup 重建遗弃粒子的兜底清理（见 AnimationComponent.pollOrphanedParticles）
-                    RootAnimationParticleSpawner.flushOrphaned(
-                            cap.getAnimationComponent(), ParticlePort.getSpawnAdapter());
-
-                    // RC 条件动态重估：条件翻转时重建组件（BE 语义为逐帧评估）。
-                    // 本帧 SetupStage 已做过完整 setup（含条件求值与掩码写入）的实体跳过——
-                    // 同帧内 scope 状态对条件求值无中间变化，重估必然命中同一掩码。
-                    var ce = clientEntityComponent.getClientEntity();
-                    if (ce != null && !ce.renderControllerConditions().isEmpty()
-                            && cap.getRenderControllerComponent().setupFrameStamp() != frameCounter
-                            && evalConditionMask(ce, scope)
-                               != cap.getRenderControllerComponent().conditionMask()) {
-                        setupClientEntity(ce, cap).forEach(Runnable::run);
-                    }
-
-                    AttachableItemRenderSetup.tickForEntity(entity, plan.partialTick());
-
-                    plan.tickResults().add(new EntityTickResult(entity, tickedInfos, effects));
-                }
-            });
+            List<Entity> all = entities().toList();
+            List<LivingEntity> attachableTicked = new ArrayList<>();
+            // Opt19：逐实体 tick（molang 求值+动画采样）跨实体并行；
+            // GPU 操作（NativeImage 下载/上传）与粒子回放收集为 deferred，join 后按实体序回放。
+            ParallelStageExecutor.forEachEntity(all,
+                    (entity, deferred) -> tickEntity(entity, plan, deferred),
+                    (result, deferred) -> {
+                        if (result != null) {
+                            plan.tickResults().add(result);
+                            if (result.entity() instanceof LivingEntity living) {
+                                attachableTicked.add(living);
+                            }
+                        }
+                        for (Runnable action : deferred) {
+                            action.run();
+                        }
+                    });
+            // attachable 装备 tick 使用共享 WeakHashMap 缓存（AttachableItemRenderSetup.CACHE），
+            // 且不消费 tickAnimation 产物——hoist 到并行段后按实体序串行（顺序保持）
+            for (LivingEntity entity : attachableTicked) {
+                AttachableItemRenderSetup.tickForEntity(entity, plan.partialTick());
+            }
         }
+    }
+
+    /**
+     * 逐实体 tick 主体（Opt19：worker 线程执行）。仅读写该实体私有状态
+     * （RenderData/scope/组件）；共享状态安全性见 ParallelStageExecutor 线程模型。
+     * deferred 收集必须在渲染线程执行的动作（GPU 纹理操作、粒子回放、组件重建效果），
+     * 串行模式下由执行器在每实体 merge 时立即回放——与旧 inline 语义同帧同序。
+     */
+    private static @Nullable EntityTickResult tickEntity(Entity e, FramePlan plan, List<Runnable> deferred) {
+        var cap = RenderData.getComponent(e);
+
+        if (!(e instanceof LivingEntity entity) || cap == null) {
+            return null;
+        }
+        cap.ensureOwner(entity);
+
+        MolangScope scope = cap.getScope();
+        if (scope == null) {
+            return null;
+        }
+
+        setupSyncedBehaviorContext(entity, scope);
+
+        ClientEntityComponent clientEntityComponent = cap.getClientEntityComponent();
+
+        // addon 卸载/换包后注册表代际变化：按 id 重新解析 clientEntity，
+        // 管理器中已无此 id 时回落 vanilla（else 分支清空组件与 RC 状态）
+        if (clientEntityComponent.isStale(ClientEntityManager.INSTANCE.generation())) {
+            deferred.addAll(setupClientEntity(entity, cap));
+        }
+
+        AnimationEffects effects = new AnimationEffects();
+        scope.set("variable.partial_tick", plan.partialTick());
+        scope.set("variable.attack_time", ((float) entity.swingTime) / entity.getCurrentSwingDuration());
+
+        // 粒子操作入队，join 后渲染线程回放（DeferredAnimationParticleSpawner 语义）
+        DeferredAnimationParticleSpawner spawner =
+                new DeferredAnimationParticleSpawner(ParticlePort.getSpawnAdapter());
+        scope.getHostContext()
+             .put(HostRoles.ANIMATION_PARTICLE_SPAWNER, spawner);
+
+        ModelRuntimeData tickedInfos;
+        if (cap.getAnimationComponent().getSerializableInfo() != null) {
+            tickedInfos = BrAnimator.tickAnimation(cap.getAnimationComponent(), scope, effects,
+                    (ClientTickPort.getTick() + plan.partialTick()) / 20, () -> {
+                        if (clientEntityComponent.getClientEntity() != null) {
+                            clientEntityComponent.getClientEntity().scripts().ifPresent(scripts -> {
+                                scripts.pre_animation().eval(scope);
+                            });
+                        }
+                    }, cap.bindBones());
+        } else {
+            tickedInfos = ModelRuntimeData.EMPTY;
+        }
+        cap.getAnimationComponent().tickedInfos = tickedInfos;
+        cap.getAnimationComponent().effects = effects;
+        // setup 重建遗弃粒子的兜底清理（见 AnimationComponent.pollOrphanedParticles）：
+        // remove 经延迟 spawner 入队，与其他粒子操作同帧按序回放
+        for (var particle : cap.getAnimationComponent().pollOrphanedParticles()) {
+            spawner.remove(particle.particleUUID());
+        }
+        if (!spawner.isEmpty()) {
+            deferred.add(spawner::drain);
+        }
+
+        // RC 条件动态重估：条件翻转时重建组件（BE 语义为逐帧评估）。
+        // 本帧 SetupStage 已做过完整 setup（含条件求值与掩码写入）的实体跳过——
+        // 同帧内 scope 状态对条件求值无中间变化，重估必然命中同一掩码。
+        var ce = clientEntityComponent.getClientEntity();
+        if (ce != null && !ce.renderControllerConditions().isEmpty()
+                && cap.getRenderControllerComponent().setupFrameStamp() != frameCounter
+                && evalConditionMask(ce, scope)
+                   != cap.getRenderControllerComponent().conditionMask()) {
+            deferred.addAll(setupClientEntity(ce, cap));
+        }
+
+        return new EntityTickResult(entity, tickedInfos, effects);
     }
 
     static boolean renderEntityFromParams(RenderEntityParams params) {

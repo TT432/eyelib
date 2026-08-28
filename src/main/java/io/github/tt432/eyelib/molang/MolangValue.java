@@ -8,7 +8,6 @@ import io.github.tt432.eyelib.molang.mapping.api.MolangMappingTree;
 import io.github.tt432.eyelib.molang.type.MolangFloat;
 import io.github.tt432.eyelib.molang.type.MolangNull;
 import io.github.tt432.eyelib.molang.type.MolangObject;
-import it.unimi.dsi.fastutil.floats.Float2ObjectOpenHashMap;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -108,7 +107,8 @@ public record MolangValue(
     public static final float TRUE = 1;
     public static final float FALSE = 0;
 
-    private static final Float2ObjectOpenHashMap<MolangValue> MOLANG_VALUE_CONSTANT_POOL = new Float2ObjectOpenHashMap<>();
+    // Opt19：并行 stage 下 getConstant 可能被 worker 并发触达——换 CHM（稳态只读命中）。
+    private static final java.util.concurrent.ConcurrentHashMap<Float, MolangValue> MOLANG_VALUE_CONSTANT_POOL = new java.util.concurrent.ConcurrentHashMap<>();
 
     public static final MolangValue ONE = getConstant(TRUE);
     public static final MolangValue ZERO = getConstant(FALSE);
