@@ -96,6 +96,48 @@ class MolangRuntimeSupportZeroArgBindingTest {
         MolangScope scope = new MolangScope();
         assertTrue(MolangRuntimeSupport.resolveMemberAccess(scope, "query.zab_missing") instanceof MolangNull);
     }
+    @Test
+    void runtimeAddNodeResolvesPreviouslyMissingFunction() {
+        MolangMappingTree.setupMolangMappingTree(() -> List.of(entry(VersionOneMapping.class)));
+        MolangScope scope = new MolangScope();
+        // 函数未注册时求值：NONE 绑定进入零参缓存
+        assertTrue(MolangRuntimeSupport.resolveMemberAccess(scope, "query.zab_abc") instanceof MolangNull);
+        assertTrue(MolangRuntimeSupport.resolveCall(scope, "query.zab_abc", new MolangObject[0]) instanceof MolangNull);
+
+        // 运行时原地新增（同一树实例 addNode）→ epoch 自增 → 缓存 NONE 必须失效重解析
+        MolangMappingRegistries.mappingTree().addNode("query",
+                new MolangMappingTree.MolangClass(RuntimeAddedMapping.class, false));
+        assertEquals(3.0f, MolangRuntimeSupport.resolveMemberAccess(scope, "query.zab_abc").asFloat());
+        assertEquals(3.0f, MolangRuntimeSupport.resolveCall(scope, "query.zab_abc", new MolangObject[0]).asFloat());
+    }
+
+    @Test
+    void compiledExpressionPicksUpRuntimeAddedFunction() {
+        MolangMappingTree.setupMolangMappingTree(() -> List.of(entry(VersionOneMapping.class)));
+        MolangScope scope = new MolangScope();
+        // 编译发生在函数注册之前：字节码对 query.zab_abc() 发出运行时 resolveCall（ldc 名称），
+        // 不做编译期常量折叠——同一份编译产物在注册后必须解析到新实现
+        CompiledMolangExpression compiled = new MolangCompilerImpl()
+                .compile("query.zab_abc()", CompileContext.defaults());
+        assertTrue(compiled.evaluate(scope) instanceof MolangNull);
+
+        MolangMappingRegistries.mappingTree().addNode("query",
+                new MolangMappingTree.MolangClass(RuntimeAddedMapping.class, false));
+        assertEquals(3.0f, compiled.evaluate(scope).asFloat());
+    }
+
+    @Test
+    void registryRebuildWithoutFunctionTurnsCachedBindingIntoNull() {
+        MolangMappingTree.setupMolangMappingTree(() -> List.of(
+                entry(VersionOneMapping.class), entry(RuntimeAddedMapping.class)));
+        MolangScope scope = new MolangScope();
+        assertEquals(3.0f, MolangRuntimeSupport.resolveMemberAccess(scope, "query.zab_abc").asFloat());
+
+        // 重建注册表移除该函数（mod 更新删除场景）→ 缓存 METHOD 绑定必须失效
+        MolangMappingTree.setupMolangMappingTree(() -> List.of(entry(VersionOneMapping.class)));
+        assertTrue(MolangRuntimeSupport.resolveMemberAccess(scope, "query.zab_abc") instanceof MolangNull);
+        assertTrue(MolangRuntimeSupport.resolveCall(scope, "query.zab_abc", new MolangObject[0]) instanceof MolangNull);
+    }
 
     private static MolangMappingDiscovery.MolangMappingClassEntry entry(Class<?> mappingClass) {
         MolangMapping mapping = mappingClass.getAnnotation(MolangMapping.class);
@@ -140,5 +182,12 @@ class MolangRuntimeSupportZeroArgBindingTest {
     }
 
     public record ZabHost(float offset) {
+    }
+    @MolangMapping("query")
+    public static final class RuntimeAddedMapping {
+        @MolangFunction("zab_abc")
+        public static float abc() {
+            return 3.0f;
+        }
     }
 }
