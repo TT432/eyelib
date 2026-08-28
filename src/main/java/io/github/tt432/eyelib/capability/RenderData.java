@@ -10,12 +10,16 @@ import io.github.tt432.eyelib.animation.AnimationComponent;
 import io.github.tt432.eyelib.animation.AnimationComponentInfo;
 import io.github.tt432.eyelib.util.entitydata.ModelComponentInfo;
 import io.github.tt432.eyelib.bridge.attachment.dataattach.mc.DataAttachmentHelper;
+import io.github.tt432.eyelib.model.Model;
 import io.github.tt432.eyelib.molang.MolangScope;
 import io.github.tt432.eyelib.molang.mapping.api.HostRole;
 import lombok.Getter;
 import lombok.Setter;
 import net.minecraft.world.entity.Entity;
 import org.jspecify.annotations.Nullable;
+
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -65,6 +69,40 @@ public class RenderData<T> {
     private boolean useBuiltInRenderSystem = true;
 
     private final List<ModelComponent> modelComponents = new ArrayList<>();
+    // ------------------------------------------------------------------
+    // bind 骨骼缓存（Opt16）：原 EntityRenderOrchestrator.collectBindBones 每次调用
+    // 全量重建 Int2ObjectOpenHashMap（TickStage 每实体每帧一次，JFR ~1.5%+分配）。
+    // 内容仅随 modelComponents 变化，故按失效点缓存。
+    // 失效契约：modelComponents 的全部变更点（setupClientEntity 的 components.clear()
+    // 两处、RenderSyncApplyOps.replaceModelComponents 经 ClientRenderSyncService.apply）
+    // 必须调用 invalidateBindBones()。
+    // ------------------------------------------------------------------
+    private @Nullable Int2ObjectMap<Model.Bone> bindBonesCache;
+
+    /**
+     * 实体全部模型组件的 bind 骨骼（按骨骼 id，先组件优先），懒构建缓存。
+     * 供 molang `this` 求值与 attachable 骨骼定位使用。
+     */
+    public Int2ObjectMap<Model.Bone> bindBones() {
+        Int2ObjectMap<Model.Bone> result = bindBonesCache;
+        if (result == null) {
+            result = new Int2ObjectOpenHashMap<>();
+            for (ModelComponent mc : modelComponents) {
+                var model = mc.getModel();
+                if (model == null) continue;
+                for (var entry : model.allBones().int2ObjectEntrySet()) {
+                    result.putIfAbsent(entry.getIntKey(), entry.getValue());
+                }
+            }
+            bindBonesCache = result;
+        }
+        return result;
+    }
+
+    /** modelComponents 变更后必须调用（见字段注释的失效契约）。 */
+    public void invalidateBindBones() {
+        bindBonesCache = null;
+    }
 
     private final AnimationComponent animationComponent = new AnimationComponent();
 

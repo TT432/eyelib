@@ -208,7 +208,7 @@ public final class EntityRenderOrchestrator {
                                             scripts.pre_animation().eval(scope);
                                         });
                                     }
-                                }, collectBindBones(cap));
+                                }, cap.bindBones());
                     } else {
                         tickedInfos = ModelRuntimeData.EMPTY;
                     }
@@ -273,21 +273,6 @@ public final class EntityRenderOrchestrator {
         return setupClientEntity(entity, cap);
     }
 
-    /**
-     * 收集实体全部模型组件的骨骼（bind 姿势），供 molang `this` 求值。
-     */
-    public static it.unimi.dsi.fastutil.ints.Int2ObjectMap<io.github.tt432.eyelib.model.Model.Bone> collectBindBones(RenderData<?> cap) {
-        var map = new it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap<io.github.tt432.eyelib.model.Model.Bone>();
-        for (ModelComponent mc : cap.getModelComponents()) {
-            var model = mc.getModel();
-            if (model == null) continue;
-            for (var entry : model.allBones().int2ObjectEntrySet()) {
-                map.putIfAbsent(entry.getIntKey(), entry.getValue());
-            }
-        }
-        return map;
-    }
-
     static <T> boolean renderEntity(SimpleRenderAction<T> data) {
         var entity = data.entity();
         if (entity == null) {
@@ -319,7 +304,7 @@ public final class EntityRenderOrchestrator {
                               .<Int2ObjectMap<PoseStack.Pose>>orCreate("bones", Int2ObjectOpenHashMap::new);
         // 收集的骨骼姿态为「绕 pivot 的动画变换」，不包含 pivot 平移（applyBoneTranslate 中 +pivot/-pivot 抵消）。
         // attachable 需要附着到骨骼原点，必须补回骨骼 pivot 平移。
-        var bindBones = collectBindBones(action.renderData());
+        var bindBones = action.renderData().bindBones();
         var offHandBone = bindBones.get(leftitem);
         var mainHandBone = bindBones.get(rightitem);
         var offHandPose = locators.get(leftitem);
@@ -576,6 +561,8 @@ public final class EntityRenderOrchestrator {
         }
 
         List<ModelComponent> components = cap.getModelComponents();
+        // components 即将整体重建（两分支均 clear）：bind 骨骼缓存失效（Opt16 失效契约）
+        cap.invalidateBindBones();
 
         if (appliedClientEntity != null) {
             components.clear();

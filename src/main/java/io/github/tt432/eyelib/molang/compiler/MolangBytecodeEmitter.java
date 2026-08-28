@@ -23,6 +23,7 @@ import java.util.List;
 public final class MolangBytecodeEmitter {
 
     private static final int ACC_PUBLIC = 0x0001;
+    private static final int ACC_PRIVATE = 0x0002;
 
     private static final ClassDesc CD_MOLANG_OBJECT =
             ClassDesc.of("io.github.tt432.eyelib.molang.type.MolangObject");
@@ -92,6 +93,8 @@ public final class MolangBytecodeEmitter {
                         ClassHierarchyResolver.ofClassLoading(MolangBytecodeEmitter.class.getClassLoader())
                 )
         );
+        // 站点收集跨 evaluate 发射与 <init>/字段声明共享，故在 build 外创建（Opt17-A）
+        EmitState state = new EmitState(thisClass);
         return classFile.build(thisClass, classBuilder -> {
             // 固定为 Java 17（主版本号 61）以保证 Forge 兼容性
             classBuilder.withVersion(61, 0);
@@ -99,7 +102,23 @@ public final class MolangBytecodeEmitter {
             classBuilder.withSuperclass(cdObject);
             classBuilder.withInterfaceSymbols(cdCompiledExpr);
 
-            // no-arg constructor
+            // evaluate(MolangScope) : MolangObject
+            // 先发 evaluate：emitExpr 过程中收集成员访问站点（state.memberSites）
+            classBuilder.withMethod("evaluate",
+                                     MethodTypeDesc.of(CD_MOLANG_OBJECT, cdScope),
+                                     ACC_PUBLIC,
+                                     mb -> mb.withCode(code -> {
+                                         emitExpr(code, rootExpr, state);
+                                         code.areturn();
+                                     }));
+
+            // 成员访问站点字段（Opt17-A：站点级单态分发，见 MolangRuntimeSupport.MemberSite）
+            ClassDesc cdMemberSite = ClassDesc.of("io.github.tt432.eyelib.molang.compiler.MolangRuntimeSupport$MemberSite");
+            for (int i = 0; i < state.memberSites.size(); i++) {
+                classBuilder.withField("ms$" + i, cdMemberSite, ACC_PRIVATE);
+            }
+
+            // no-arg constructor：站点字段在构造期经工厂初始化
             classBuilder.withMethod("<init>",
                                     MethodTypeDesc.of(CD_VOID),
                                     ACC_PUBLIC,
@@ -107,18 +126,15 @@ public final class MolangBytecodeEmitter {
                                         code.aload(0);
                                         code.invokespecial(cdObject, "<init>",
                                                            MethodTypeDesc.of(CD_VOID));
+                                        for (var siteEntry : state.memberSites.entrySet()) {
+                                            code.aload(0);
+                                            code.ldc(siteEntry.getKey());
+                                            code.invokestatic(CD_RUNTIME_SUPPORT, "newMemberSite",
+                                                    MethodTypeDesc.of(cdMemberSite, CD_STRING));
+                                            code.putfield(thisClass, "ms$" + siteEntry.getValue(), cdMemberSite);
+                                        }
                                         code.return_();
                                     }));
-
-            // evaluate(MolangScope) : MolangObject
-            classBuilder.withMethod("evaluate",
-                                     MethodTypeDesc.of(CD_MOLANG_OBJECT, cdScope),
-                                     ACC_PUBLIC,
-                                     mb -> mb.withCode(code -> {
-                                         EmitState state = new EmitState();
-                                         emitExpr(code, rootExpr, state);
-                                         code.areturn();
-                                     }));
 
             // sourceExpression() : String
             classBuilder.withMethod("sourceExpression",
@@ -174,10 +190,15 @@ public final class MolangBytecodeEmitter {
             emitAssignmentExpr(code, assignmentExpr, state);
         } else if (expr instanceof BoundMolang.BoundMemberAccessExpr memberAccessExpr) {
             if (isFlattenableMemberOwner(memberAccessExpr.owner())) {
+                // Opt17-A：站点级单态分发——站点实例字段在构造期初始化，
+                // resolve 内联进本类 evaluate 后绑定 invoker 按表达式类单态化
+                int siteIndex = state.memberSiteIndex(memberAccessName(memberAccessExpr));
+                code.aload(0);
+                code.getfield(state.owner, "ms$" + siteIndex,
+                        ClassDesc.of("io.github.tt432.eyelib.molang.compiler.MolangRuntimeSupport$MemberSite"));
                 code.aload(1);
-                code.ldc(memberAccessName(memberAccessExpr));
-                code.invokestatic(CD_RUNTIME_SUPPORT, "resolveMemberAccess",
-                                  MethodTypeDesc.of(CD_MOLANG_OBJECT, CD_MOLANG_SCOPE, CD_STRING));
+                code.invokevirtual(ClassDesc.of("io.github.tt432.eyelib.molang.compiler.MolangRuntimeSupport$MemberSite"),
+                        "resolve", MethodTypeDesc.of(CD_MOLANG_OBJECT, CD_MOLANG_SCOPE));
             } else {
                 // 动态成员访问（owner 是 call/index/arrow 等值表达式）：先求 owner 值，
                 // 再按 struct 成员解析（官方 struct 语义；旧行为退化为裸名 scope 查找，属错误）
@@ -684,9 +705,21 @@ public final class MolangBytecodeEmitter {
     private static final class EmitState {
         private final Deque<LoopContext> loopContexts = new ArrayDeque<>();
         private int nextLocalSlot = 2;
+        /** 生成类自身（getfield/putfield 的 owner）。 */
+        private final ClassDesc owner;
+        /** 可扁平化成员访问点 → 站点字段序号（出现序稳定）。 */
+        private final java.util.Map<String, Integer> memberSites = new java.util.LinkedHashMap<>();
+
+        private EmitState(ClassDesc owner) {
+            this.owner = owner;
+        }
 
         private int allocateLocal() {
             return nextLocalSlot++;
+        }
+
+        private int memberSiteIndex(String name) {
+            return memberSites.computeIfAbsent(name, k -> memberSites.size());
         }
     }
 

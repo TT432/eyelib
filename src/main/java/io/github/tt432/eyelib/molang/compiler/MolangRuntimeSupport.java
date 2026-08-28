@@ -449,6 +449,28 @@ public final class MolangRuntimeSupport {
             }
         });
     }
+    // ---------------------------------------------------------------------
+    // 非零参调用的 spreader 缓存（Opt17-B'）：invokeWithArguments 逐次走
+    // asSpreader + MethodType 比较（JFR：Arrays.equals←MethodType.equals ~3.8%、
+    // asSpreaderChecks ~1.3%）。解析期把 (asFixedArity → asSpreader(Object[],n)
+    // → asType((Object[])Object) → WRAP_RESULT) 组合成 (Object[])MolangObject
+    // 精确签名句柄，调用点 invokeExact 无逐次类型检查。
+    // 诊断：-Deyelib.molang.exactInvoker=false 一并回退 invokeWithArguments 旧路径。
+    // ---------------------------------------------------------------------
+    private static final ConcurrentHashMap<Method, Optional<MethodHandle>> SPREAD_INVOKERS = new ConcurrentHashMap<>();
+
+    private static Optional<MethodHandle> spreadInvokerOf(Method method) {
+        return SPREAD_INVOKERS.computeIfAbsent(method, m -> methodHandleOf(m).map(h -> {
+            try {
+                MethodHandle spreader = h.asSpreader(Object[].class, m.getParameterCount());
+                MethodHandle typed = spreader.asType(MethodType.methodType(Object.class, Object[].class));
+                return MethodHandles.filterReturnValue(typed, WRAP_RESULT);
+            } catch (Throwable e) {
+                LOGGER.warn("spread invoker composition failed for {} — falling back to generic path", m, e);
+                return null;
+            }
+        }));
+    }
 
     private static final Set<MolangFunction.ParameterRole> HOST_ROLES_FULL =
             Collections.unmodifiableSet(EnumSet.of(
@@ -491,15 +513,33 @@ public final class MolangRuntimeSupport {
     private MolangRuntimeSupport() {
     }
 
+    /** 诊断开关（benchmark A/B 用）：-Deyelib.molang.memberFastPath=false 回退逐次 scope.get 旧路径。 */
+    private static final boolean MEMBER_FAST_PATH_ENABLED =
+            Boolean.parseBoolean(System.getProperty("eyelib.molang.memberFastPath", "true"));
+
     public static MolangObject resolveMemberAccess(MolangScope scope, String dottedName) {
         if (scope == null || dottedName == null || dottedName.isBlank()) {
             return MolangNull.INSTANCE;
         }
 
-        // scope 覆盖优先（脚本赋值/宿主注入的扁平键），不可缓存——每次现查
-        MolangObject scopeValue = scope.get(dottedName);
-        if (!(scopeValue instanceof MolangNull)) {
-            return scopeValue;
+        // query.*/math.* 快路径（Opt16）：该两根在生产中无 scope 覆盖写入点
+        // （scope cache 仅见 context.* 写入，grep 实证），用 MolangScope 的粘滞
+        // 覆盖位做 O(1) 链式检查——未置位时 scope.get 必然 miss，直接走绑定解析，
+        // 消除逐次求值的 rootKeyOf+map get+parent 递归（JFR ~2-3%）。
+        // 置位（或其他根）走原路径，遮蔽语义不变。
+        if (!MEMBER_FAST_PATH_ENABLED) {
+            MolangObject scopeValue = scope.get(dottedName);
+            if (!(scopeValue instanceof MolangNull)) {
+                return scopeValue;
+            }
+        } else {
+            int bit = MolangScope.rootOverrideBitOf(dottedName);
+            if (bit == 0 || scope.hasRootOverrideChain(bit)) {
+                MolangObject scopeValue = scope.get(dottedName);
+                if (!(scopeValue instanceof MolangNull)) {
+                    return scopeValue;
+                }
+            }
         }
 
         ZeroArgBinding binding = zeroArgBinding(dottedName, hasHostContext(scope));
@@ -702,6 +742,17 @@ public final class MolangRuntimeSupport {
             }
         }
 
+        if (EXACT_INVOKER_ENABLED) {
+            Optional<MethodHandle> spreader = spreadInvokerOf(method);
+            if (spreader.isPresent()) {
+                try {
+                    // 组合产物恒为 (Object[])MolangObject，invokeExact 无逐次类型检查
+                    return (MolangObject) spreader.get().invokeExact(args);
+                } catch (Throwable ignored) {
+                    return MolangNull.INSTANCE;
+                }
+            }
+        }
         Optional<MethodHandle> handle = methodHandleOf(method);
         if (handle.isPresent()) {
             try {
@@ -810,5 +861,69 @@ public final class MolangRuntimeSupport {
         if (WARNED_MISSING.add(methodName)) {
             LOGGER.warn("Molang function '{}' not found or unresolvable — returning 0", methodName);
         }
+    }
+
+    // ---------------------------------------------------------------------
+    // MemberSite（Opt17-A）：生成字节码中每个可扁平化成员访问点一个实例，
+    // resolve 被内联进各表达式类专有的 evaluate，使绑定 invoker 的 invokeExact
+    // 按表达式类单态化——共享调用点（invokeZeroArgMethod 内）的 megamorphic
+    // 分发迫使 JIT 走 checkCustomized 兜底（JFR ~2.5%）。
+    // 站点状态仅 (tree, epoch, minimal/full 绑定)——scope 相关状态
+    // （覆盖位、host 有无）逐次现查，语义与 resolveMemberAccess 完全一致。
+    // ---------------------------------------------------------------------
+    public static final class MemberSite {
+        private final String name;
+        private final int overrideBit;
+        private @Nullable MolangMappingTree tree;
+        private long epoch = -1;
+        private ZeroArgBinding minimal = ZeroArgBinding.NONE;
+        private ZeroArgBinding full = ZeroArgBinding.NONE;
+
+        private MemberSite(String name) {
+            this.name = name;
+            this.overrideBit = MolangScope.rootOverrideBitOf(name);
+        }
+
+        public MolangObject resolve(MolangScope scope) {
+            if (scope == null) {
+                return MolangNull.INSTANCE;
+            }
+            // 覆盖检查：与 resolveMemberAccess 同语义（Opt16 快路径位）
+            int bit = overrideBit;
+            if (!MEMBER_FAST_PATH_ENABLED || bit == 0 || scope.hasRootOverrideChain(bit)) {
+                MolangObject scopeValue = scope.get(name);
+                if (!(scopeValue instanceof MolangNull)) {
+                    return scopeValue;
+                }
+            }
+            ZeroArgBinding binding;
+            if (ZERO_ARG_BINDING_ENABLED) {
+                MolangMappingTree currentTree = MolangMappingRegistries.mappingTree();
+                long currentEpoch = currentTree.epoch();
+                if (currentTree != tree || currentEpoch != epoch) {
+                    // 良性竞争：并发解析结果幂等；纪元错位时下次调用重解析
+                    minimal = resolveZeroArg(currentTree, name, false);
+                    full = resolveZeroArg(currentTree, name, true);
+                    tree = currentTree;
+                    epoch = currentEpoch;
+                }
+                binding = scope.hasAnyHost() ? full : minimal;
+            } else {
+                binding = resolveZeroArg(MolangMappingRegistries.mappingTree(), name, hasHostContext(scope));
+            }
+            return switch (binding.kind) {
+                case ZeroArgBinding.KIND_FIELD -> invokeZeroArgField(binding);
+                case ZeroArgBinding.KIND_METHOD -> invokeZeroArgMethod(binding, scope);
+                default -> MolangNull.INSTANCE;
+            };
+        }
+    }
+
+    /** 生成代码构造站点用工厂（名称来自编译期常量，null/blank 属编译器缺陷）。 */
+    public static MemberSite newMemberSite(String name) {
+        if (name == null || name.isBlank()) {
+            throw new IllegalArgumentException("member site name must be non-blank");
+        }
+        return new MemberSite(name);
     }
 }

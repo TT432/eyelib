@@ -39,6 +39,8 @@ public final class ClientRenderSyncService {
         RenderData<?> data = RenderData.getComponent(entity);
 
         RenderSyncApplyOps.replaceModelComponents(data.getModelComponents(), packet.modelInfo(), ClientRenderSyncService::decodeModelPayload);
+        // modelComponents 已整体替换：bind 骨骼缓存失效（Opt16 失效契约）
+        data.invalidateBindBones();
     }
 
     public static void apply(AnimationComponentSyncPacket packet) {

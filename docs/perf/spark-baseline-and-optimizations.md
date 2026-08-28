@@ -217,6 +217,24 @@
 - **诊断开关**:`-Deyelib.rc.groupCache=false`（已接入 runClientBenchmark 转发）。
 - **余项**:setupModel 内逐帧保留成本 = geometry/材质/color 表达式求值本身 + resolveSlotTextures（texture expr 求值 + clamped 解析）+ ModelComponent 分配；再压需表达式级常量折叠。
 
+### Opt16 · 解析链五件：memberAccess 快路径 + bindBones 缓存 + 动画解析缓存 + Float 缓存 + 短路前移（2026-08-28）
+
+- **文件**:`molang/MolangScope.java`（根覆盖位）、`molang/compiler/MolangRuntimeSupport.java`（resolveMemberAccess 快路径）、`molang/type/MolangFloat.java`（小整数缓存）、`animation/bedrock/BrClipExecutor.java`（空通道短路前移到 getData 前）、`capability/RenderData.java`（bindBones 懒缓存+失效契约）、`client/render/EntityRenderOrchestrator.java`+`AttachableItemRenderSetup.java`+`mixin/client/Item{,InHand}RendererMixin.java`（collectBindBones→bindBones 迁移）、`client/render/sync/ClientRenderSyncService.java`（sync 失效点）、`animation/bedrock/controller/BrControllerStateOwner.java`（解析缓存）+`BrControllerExecutor.java`+`BrAnimationController.java`（7 处解析点迁移）
+- **方案**:JFR（1.20.1 world n384，work/opt16/opt16-before.jfr）归因：Int2Object find 4.0%（getData computeIfAbsent + collectBindBones 每帧重建）、HashMap.getNode 4.0%（RegistrySnapshot 链 + scope.get）、scope.get 遮蔽检查 ~2%、MolangFloat.valueOf 1.6%。五项：①query/math 根覆盖位（putTracked 置位、粘滞、parent 链检查）跳过恒 miss 的 scope.get——grep 实证 query.*/math.* 无写入点（context.* 有，不走快路径）；②MolangFloat [-16,256] 整数缓存；③空通道骨骼不再创建零值 Entry（读侧等价）；④bindBones 按失效点缓存（变更点全集：setupClientEntity 两 clear + sync replaceModelComponents）；⑤动画名解析缓存（守卫 = animations 实例 identity + registry generation）。
+- **验证**:契约测试 4 类（MemberFastPath 遮蔽/struct 置位/parent 链、MolangFloatCache 边界、RenderDataBindBones 失效、BrControllerResolveCache generation/identity/null 缓存）+ 1.20.1 全量 251 类零失败 + 运行时截图正确。
+- **结果**:串行单客户端 A/B（并发双客户端会互相污染，已改协议）：1.20.1 ON 47.59 vs OFF 46.74（+1.8%，噪声带内）；1.21.1 ON 71.66 vs OFF 70.40（+1.8%）。生效证据由 Opt17 轮 JFR 复核确认（见下）。
+- **诊断开关**:`-Deyelib.molang.memberFastPath=false`、`-Deyelib.anim.controllerResolveCache=false`。
+
+### Opt17 · 表达式级深优化：MemberSite 站点单态分发 + spreader invokeExact + rootKeyOf memo（2026-08-28）
+
+- **文件**:`molang/compiler/MolangRuntimeSupport.java`（MemberSite 站点类 + SPREAD_INVOKERS）、`molang/compiler/MolangBytecodeEmitter.java`（站点字段发射）、`molang/MolangScope.java`（ROOT_KEY_MEMO）
+- **方案**:Opt16 后 JFR 新热点：①checkCustomized 2.5%——invokeExact 调用点被全部表达式共享（megamorphic），JIT 无法按站点特化；②Arrays.equals←MethodType.equals 3.8% + asSpreaderChecks 1.3%——invokeMethod 逐次 invokeWithArguments 泛型分派；③substring←rootKeyOf 2.9%——3+ 段名每次分配。对策：①发射器为每个可扁平化成员访问生成实例字段（构造期 newMemberSite 初始化），resolve 内联进表达式类专有的 evaluate → 绑定 invoker 按表达式类单态化；站点状态仅 (tree,epoch,绑定)，scope 相关（覆盖位/host）逐次现查，语义与静态路径一致；②invokeMethod 用解析期组合的 asSpreader+asType+WRAP_RESULT 句柄 invokeExact（开关复用 exactInvoker）；③rootKeyOf 纯函数 CHM memo（仅分配形态）。
+- **验证**:契约测试 MolangMemberSiteContractTest 5 例（端到端求值/运行时注册重解析/遮蔽/struct 遮蔽/与静态路径一致性）+ 全量回归绿 + 运行时截图正确。JFR 复核（opt17-after.jfr）：MethodType.equals 3.8%→0、substring 2.9%→0、asSpreader→0、checkCustomized 2.5%→1.0%。
+- **结果**:**1.20.1 world n384 +8~13%**（51.41/53.03 vs Opt16 46.7~47.6，区间不重叠）；**1.21.1 +5~9%**（75.33/77.05 vs 70.4~71.7，区间不重叠）。
+- **余项**:invokeZeroArgMethod 叶 4.8%（内联归属帧，残余 invokeExact+hostSlot 真实工作）；apply 13.2%/getX 5.1% 为表达式字节码本体；dynamic 关键帧逐帧求值无缓存空间（this 逐轴不同）。
+- **基准协议修订**:同版本多实例并发跑 benchmark 会互相污染 CPU（此前并发轮 1.21.1 56 vs 串行 70+），一律串行单客户端。
+- **累计**:1.20.1 world n384 从最初 33.4 → 51.4~53.0（约 +54~59%）；1.21.1 → 75.3~77.0。
+
 ## 已排除项
 
 - **eyelib 自身堆占用健康**:eyelib 全部类合计 56MB(2.18%),数量级合理,无需优化。

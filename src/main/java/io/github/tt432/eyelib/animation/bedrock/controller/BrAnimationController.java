@@ -5,7 +5,6 @@ import io.github.tt432.eyelib.importer.animation.bedrock.controller.BrAcStateDef
 import io.github.tt432.eyelib.importer.animation.bedrock.controller.BrAnimationControllerSchema;
 
 import io.github.tt432.eyelib.animation.Animation;
-import io.github.tt432.eyelib.animation.AnimationLookup;
 import io.github.tt432.eyelib.animation.AnimationEffects;
 import io.github.tt432.eyelib.animation.StateMachineAnimation;
 import io.github.tt432.eyelib.animation.ModelRuntimeData;
@@ -60,9 +59,7 @@ public record BrAnimationController(
         // sound/particle/timeline 收尾事件），与状态切换时结束旧状态动画的语义一致。
         if (data instanceof Data d && d.getCurrState() != null) {
             d.getCurrState().animations().keySet().forEach(animationName -> {
-                String animName = d.owner().currentAnimations().get(animationName);
-                if (animName == null) return;
-                Animation animation = AnimationLookup.get(animName);
+                Animation animation = d.owner().resolveAnimation(animationName);
                 if (animation == null) return;
                 animation.onFinish(d.getData(animation));
             });
@@ -75,9 +72,7 @@ public record BrAnimationController(
             return true;
         }
         return d.getCurrState().animations().keySet().stream().anyMatch(animationName -> {
-            String animName = d.owner().currentAnimations().get(animationName);
-            if (animName == null) return true;
-            Animation animation = AnimationLookup.get(animName);
+            Animation animation = d.owner().resolveAnimation(animationName);
             if (animation == null) return true;
             return animation.anyAnimationFinished(d.getData(animation));
         });
@@ -89,9 +84,7 @@ public record BrAnimationController(
             return false;
         }
         return d.getCurrState().animations().keySet().stream().allMatch(animationName -> {
-            String animName = d.owner().currentAnimations().get(animationName);
-            if (animName == null) return false;
-            Animation animation = AnimationLookup.get(animName);
+            Animation animation = d.owner().resolveAnimation(animationName);
             if (animation == null) return false;
             return animation.allAnimationFinished(d.getData(animation));
         });

@@ -217,6 +217,48 @@ public final class MolangScope {
     }
 
     private final Map<String, MolangObject> cache;
+    // ------------------------------------------------------------------
+    // 根前缀覆盖标志（Opt16）：resolveMemberAccess 对 query.*/math.* 逐次求值
+    // 做 scope.get 遮蔽检查（恒 miss，JFR ~2-3%）。覆盖只能经 set 系列写入
+    // （全部 funnel 到 putTracked），故用两位粘滞标志短路：
+    // 位未置 → 链上不存在该根的任何覆盖 → 跳过 map 查找直接走绑定解析。
+    // 位粘滞（remove 不清）：置位后仅性能回退，不影响正确性。
+    // ------------------------------------------------------------------
+    /** query.* 覆盖位。 */
+    public static final int ROOT_OVERRIDE_QUERY = 1;
+    /** math.* 覆盖位。 */
+    public static final int ROOT_OVERRIDE_MATH = 2;
+    private volatile int rootOverrideBits;
+
+    /**
+     * 本层或任一祖先层是否存在 query/math 根的覆盖写入。
+     * 沿 parent 链逐层检查（实体渲染 scope 无 parent，一级即停）。
+     */
+    public boolean hasRootOverrideChain(int bit) {
+        MolangScope scope = this;
+        while (scope != null) {
+            if ((scope.rootOverrideBits & bit) != 0) {
+                return true;
+            }
+            scope = scope.parent;
+        }
+        return false;
+    }
+
+    /**
+     * 成员访问名（query.x/math.x 形式）对应的覆盖位；非 query/math 根返回 0。
+     * 判定用首段长度+前缀（与 isMolangRootPrefix 同约定），零分配。
+     */
+    public static int rootOverrideBitOf(String name) {
+        int firstDot = name.indexOf('.');
+        // 整名（无点）同样置位：保守超集，见 putTracked
+        int rootLen = firstDot < 0 ? name.length() : firstDot;
+        return switch (rootLen) {
+            case 5 -> name.startsWith("query") ? ROOT_OVERRIDE_QUERY : 0;
+            case 4 -> name.startsWith("math") ? ROOT_OVERRIDE_MATH : 0;
+            default -> 0;
+        };
+    }
 
     // temp.* 键登记（BE 语义：temp.* 仅在当前表达式求值内有效，见 clearTempVariables）。
     // 与 cache 同源写入/移除，localEntries 视图天然包含 temp 条目。
@@ -231,17 +273,35 @@ public final class MolangScope {
     // 的根键取前两段（variable.qpptaw.r → 根 variable.qpptaw、路径 r），其余点名取首段。
     // 两段名（variable.foo）整名即根键——简单变量的存取路径与 struct 引入前完全一致。
 
+    // Opt17-C：rootKeyOf 备忘。仅「会分配 substring 的形态」（3+ 段 molang 根名 /
+    // 非根点分名）走 memo；命中 = String 缓存哈希 + 一次 CHM probe（JFR：
+    // substring 分配+哈希占渲染线程 ~2.9%）。名语料来自编译期常量与脚本，有界。
+    private static final java.util.concurrent.ConcurrentHashMap<String, String> ROOT_KEY_MEMO =
+            new java.util.concurrent.ConcurrentHashMap<>();
+
     /** 根键：无点 → 整名；molang 根前缀 → 前两段；其余 → 首段。 */
     private static String rootKeyOf(String name) {
         int firstDot = name.indexOf('.');
         if (firstDot < 0) {
             return name;
         }
+        int rootEnd;
         if (isMolangRootPrefix(name, firstDot)) {
             int secondDot = name.indexOf('.', firstDot + 1);
-            return secondDot < 0 ? name : name.substring(0, secondDot);
+            if (secondDot < 0) {
+                return name;
+            }
+            rootEnd = secondDot;
+        } else {
+            rootEnd = firstDot;
         }
-        return name.substring(0, firstDot);
+        String memo = ROOT_KEY_MEMO.get(name);
+        if (memo != null) {
+            return memo;
+        }
+        String computed = name.substring(0, rootEnd);
+        ROOT_KEY_MEMO.putIfAbsent(name, computed);
+        return computed;
     }
 
     /**
@@ -382,6 +442,10 @@ public final class MolangScope {
         cache.put(name, object);
         if (isTempKey(name)) {
             tempKeys.add(name);
+        }
+        int bit = rootOverrideBitOf(name);
+        if (bit != 0) {
+            rootOverrideBits |= bit;
         }
     }
 

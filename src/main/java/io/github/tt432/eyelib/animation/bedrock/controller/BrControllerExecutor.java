@@ -2,7 +2,6 @@ package io.github.tt432.eyelib.animation.bedrock.controller;
 
 import io.github.tt432.eyelib.animation.Animation;
 import io.github.tt432.eyelib.animation.AnimationEffects;
-import io.github.tt432.eyelib.animation.AnimationLookup;
 import io.github.tt432.eyelib.animation.RuntimeParticlePlayData;
 import io.github.tt432.eyelib.animation.bedrock.BrAnimationEntry;
 import io.github.tt432.eyelib.animation.AnimationParticleSpawner;
@@ -93,9 +92,7 @@ final class BrControllerExecutor {
         data.setCurrState(currState);
         data.setStartTick(ticks);
         currState.animations().keySet().forEach(animName -> {
-            String anim = animations.get(animName);
-            if (anim == null) return;
-            Animation animation = AnimationLookup.get(anim);
+            Animation animation = data.owner().resolveAnimation(animName);
             if (animation == null) return;
             animation.onFinish(data.getData(animation));
         });
@@ -118,9 +115,7 @@ final class BrControllerExecutor {
         if (lastState != null) {
             if (blendProgress < 1) {
                 lastState.animations().forEach((animationName, blendValue) -> {
-                    String anim = animations.get(animationName);
-                    if (anim == null) return;
-                    Animation animation = AnimationLookup.get(anim);
+                    Animation animation = data.owner().resolveAnimation(animationName);
                     if (animation == null) return;
                     if (data.getData(animation) instanceof BrAnimationEntry.Data d) {
                         animation.tickAnimation(data.getData(animation), animations, scope, d.lastTicks(),
@@ -129,9 +124,7 @@ final class BrControllerExecutor {
                 });
             } else {
                 lastState.animations().forEach((name, blendValue) -> {
-                    String anim = animations.get(name);
-                    if (anim == null) return;
-                    Animation animation = AnimationLookup.get(anim);
+                    Animation animation = data.owner().resolveAnimation(name);
                     if (animation == null) return;
                     animation.onFinish(data.getData(animation));
                 });
@@ -143,9 +136,7 @@ final class BrControllerExecutor {
                                          float multiplier, float startedTime, ModelRuntimeData infos,
                                          BrAnimationController.Data data, MolangScope scope, AnimationEffects effects,
                                          Runnable animationStartFeedback) {
-        String anim = animations.get(animName);
-        if (anim == null) return;
-        Animation animation = AnimationLookup.get(anim);
+        Animation animation = data.owner().resolveAnimation(animName);
         if (animation == null) return;
         animation.tickAnimation(data.getData(animation), animations, scope, startedTime,
                 multiplier * blendValue, infos, effects, animationStartFeedback);

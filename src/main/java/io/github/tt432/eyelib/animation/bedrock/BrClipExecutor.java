@@ -47,13 +47,17 @@ final class BrClipExecutor {
         entry.bones().int2ObjectEntrySet().forEach((boneEntry) -> {
             var boneName = boneEntry.getIntKey();
             var boneAnim = boneEntry.getValue();
-            var renderInfoEntry = infos.getData(boneName);
 
             // 空通道短路：无关键帧的通道跳过 `this` 计算与采样。
+            // 前移到 getData 之前（Opt16）：无通道骨骼不再创建零值 Entry——
+            // 读侧 position/rotation/scale/getOrDefault 对缺失 Entry 与零值 Entry
+            // 返回完全同值（bind pose / IDENTITY 零值），语义不变。
             boolean hasRotation = boneAnim.hasRotation();
             boolean hasPosition = boneAnim.hasPosition();
             boolean hasScale = boneAnim.hasScale();
             if (!hasRotation && !hasPosition && !hasScale) return;
+
+            var renderInfoEntry = infos.getData(boneName);
 
             // molang `this` = 表达式最终写入目标的当前值（bind + 已累积动画）。
             // entry 与 bind 同为渲染侧单位（弧度/翻转、1/16 块、乘法缩放），
