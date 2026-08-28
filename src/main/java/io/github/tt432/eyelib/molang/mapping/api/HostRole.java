@@ -9,16 +9,35 @@ import java.util.Objects;
  * @author TT432
  */
 public final class HostRole<T> {
+    // Opt18-D：全局驻留——同 (name, type) 恒返回同一实例并分配稠密序号，
+    // HostContext 据此以数组索引替代 HashMap 探测（JFR：HostRole.hashCode ~2% render 线程）。
+    // equals/hashCode 语义不变（驻留后身份比较与值比较等价）。
+    private static final java.util.concurrent.ConcurrentHashMap<String, HostRole<?>> REGISTRY =
+            new java.util.concurrent.ConcurrentHashMap<>();
+    private static final java.util.concurrent.atomic.AtomicInteger NEXT_ID =
+            new java.util.concurrent.atomic.AtomicInteger();
+
     private final String name;
     private final Class<T> type;
+    private final int id;
 
-    private HostRole(String name, Class<T> type) {
+    private HostRole(String name, Class<T> type, int id) {
         this.name = Objects.requireNonNull(name, "name");
         this.type = Objects.requireNonNull(type, "type");
+        this.id = id;
     }
 
+    @SuppressWarnings("unchecked")
     public static <T> HostRole<T> of(String name, Class<T> type) {
-        return new HostRole<>(name, type);
+        Objects.requireNonNull(name, "name");
+        Objects.requireNonNull(type, "type");
+        return (HostRole<T>) REGISTRY.computeIfAbsent(name + '\0' + type.getName(),
+                k -> new HostRole<>(name, type, NEXT_ID.getAndIncrement()));
+    }
+
+    /** 驻留序号：全局稠密从 0 递增，供 HostContext 数组索引。 */
+    public int id() {
+        return id;
     }
 
     public Class<T> type() {

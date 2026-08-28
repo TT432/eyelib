@@ -561,11 +561,8 @@ public final class EntityRenderOrchestrator {
         }
 
         List<ModelComponent> components = cap.getModelComponents();
-        // components 即将整体重建（两分支均 clear）：bind 骨骼缓存失效（Opt16 失效契约）
-        cap.invalidateBindBones();
 
         if (appliedClientEntity != null) {
-            components.clear();
             BrClientEntity ce = appliedClientEntity;
 
             // texture./geometry./material. 短名仅随 clientEntity/scope 变化，守卫内一次性注入（原每帧重建）
@@ -576,6 +573,7 @@ public final class EntityRenderOrchestrator {
 
             int conditionMask = 0;
             int modelVersion = clientEntityComponent.getModelVersion();
+            List<ModelComponent> rebuilt = new ArrayList<>();
             for (int i = 0; i < ce.render_controllers().size(); i++) {
                 String renderController = ce.render_controllers().get(i);
                 io.github.tt432.eyelib.molang.MolangValue condition = ce.renderControllerConditions()
@@ -587,11 +585,21 @@ public final class EntityRenderOrchestrator {
                 RenderControllerEntry renderControllerEntry = RenderControllerManager.INSTANCE.get(renderController);
                 RenderControllerComponent.Slot renderControllerSlot = renderControllerComponent.syncSlot(i, renderControllerEntry);
                 if (renderControllerEntry != null && cap.getScope() != null)
-                    components.addAll(renderControllerEntry.setupModel(cap.getScope(), appliedClientEntity, clientEntityComponent.getModels(), modelVersion, renderControllerSlot, syncedActions));
+                    rebuilt.addAll(renderControllerEntry.setupModel(cap.getScope(), appliedClientEntity, clientEntityComponent.getModels(), modelVersion, renderControllerSlot, syncedActions));
             }
             renderControllerComponent.setConditionMask(conditionMask);
             renderControllerComponent.trim(ce.render_controllers().size());
             renderControllerComponent.markSetupFrame(frameCounter);
+
+            // Opt18-A2：全部 RC 静态缓存命中时 rebuilt 与现有组件实例序完全一致——
+            // 跳过 clear/addAll 与 bind 骨骼失效（内容未变，bind 集合不变），
+            // 消除逐帧 ArrayList 重建与 Opt16 缓存的无效化。
+            if (!identicalComponents(components, rebuilt)) {
+                // components 整体替换：bind 骨骼缓存失效（Opt16 失效契约）
+                cap.invalidateBindBones();
+                components.clear();
+                components.addAll(rebuilt);
+            }
 
             if (components.isEmpty() && !ce.geometry().isEmpty()) {
                 var entry = ce.geometry().entrySet().stream().findFirst().orElse(null);
@@ -605,6 +613,8 @@ public final class EntityRenderOrchestrator {
                         modelComponent.setInfo(new ModelComponentInfo(
                                 entry.getValue(), PortResourceLocation.parse(defaultTexture),
                                 PortResourceLocation.parse("entity_translucent")));
+                        // 组件集变化：bind 骨骼缓存失效（Opt16 失效契约）
+                        cap.invalidateBindBones();
                         components.add(modelComponent);
                     }
                 }
@@ -616,7 +626,10 @@ public final class EntityRenderOrchestrator {
                 cap.getScope().getHostContext().put(HostRoles.CLIENT_ENTITY, ce);
             }
         } else {
-            components.clear();
+            if (!components.isEmpty()) {
+                cap.invalidateBindBones();
+                components.clear();
+            }
             renderControllerComponent.clear();
             renderControllerComponent.setConditionMask(0);
             if (cap.getScope() != null) {
@@ -625,6 +638,19 @@ public final class EntityRenderOrchestrator {
         }
 
         return syncedActions;
+    }
+
+    /** 实例序恒等比较：静态缓存命中路径逐帧返回同一实例序，据此跳过组件列表重建。 */
+    private static boolean identicalComponents(List<ModelComponent> current, List<ModelComponent> rebuilt) {
+        if (current.size() != rebuilt.size()) {
+            return false;
+        }
+        for (int i = 0; i < current.size(); i++) {
+            if (current.get(i) != rebuilt.get(i)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /**

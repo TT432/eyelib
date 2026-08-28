@@ -235,6 +235,24 @@
 - **基准协议修订**:同版本多实例并发跑 benchmark 会互相污染 CPU（此前并发轮 1.21.1 56 vs 串行 70+），一律串行单客户端。
 - **累计**:1.20.1 world n384 从最初 33.4 → 51.4~53.0（约 +54~59%）；1.21.1 → 75.3~77.0。
 
+### Opt18 · map 机制消除：setup 引用锚点 + ModelRuntimeData/HostContext 数组化 + RC 组件值键缓存（2026-08-29）
+
+- **文件**:`animation/AnimationComponent.java`（引用锚点短路）、`animation/ModelRuntimeData.java`（Entry[] 数组化）、`molang/mapping/api/HostRole.java`（驻留+序号）、`molang/MolangScope.java`（HostContext 槽位数组）、`capability/component/RenderControllerComponent.java`（Slot 组件值键缓存）、`client/render/controller/RenderControllerEntry.java`（setupModel 值键流程 + evalTextureLayerPaths/toRenderLocations 拆分）、`client/entity/RenderControllerRuntime.java`（evalPartVisibilityBits）、`client/render/EntityRenderOrchestrator.java`（identicalComponents 恒等跳过 + bindBones 失效收紧）
+- **归因**（opt18-tick-before.jfr，1.20.1 world n384，深栈 64）：render 线程 map 查找/迭代机制合计 43.4%（Int2ObjectOpenHashMap.get 8.9% / HashMap.getNode 8.3% / HashIterator 7.3% / StringLatin1.hashCode 4.9% / RegularImmutableMap.get 3.4%）；子树份额 SetupStage 30.8%（每帧全量 setupClientEntity！）/ TickStage 25.1% / renderComponents 32.6%。
+- **方案**:
+  1. **B AnimationComponent.setup 引用短路**：上次入参引用锚点（lastSetupAnimations/Animate），等值异引用（同步解码拷贝，实证存在于生产路径）采纳为新锚点收敛。修复前 JFR 实证 equals 兜底每帧执行（AnimationComponent.setup self 10%）。
+  2. **C ModelRuntimeData 数组化**：骨骼 id 全局稠密（GlobalBoneIdHandler 从 0 递增）→ Entry[] 按需扩容 + bindBones 转 Bone[]，读路径零哈希探测（此前 position/rotation 6.7%）。负 id（空白名 -1 兜底）专用槽保持旧 map 语义。
+  3. **D HostRole 驻留 + HostContext 数组**：of(name,type) 全局驻留分配稠密序号 id（注册键=(名称,类型) 语义不变），MolangScope 角色存储/memo 改 Object[]/RoleMemoEntry[] 按 id 索引（HostRole.hashCode+memo probe ~2-3%）。
+  4. **A' RC 组件值键缓存**：setupModel 键 = 本帧求值出的全部动态输入（geometry 解析值 + 逐材质值 + 逐组纹理路径 + rcColor + part_visibility 隐藏位集），值 = 组件列表。molang 逐帧求值不变（**关键实证**：A&S 史莱姆 RC 表达式全动态——geometry/textures/materials/part_visibility 均读 variable./query.——编译期常量门在真实资产上永不命中，故用值键而非静态门）；命中消除下游重建（PortResourceLocation.parse/clamped/组件分配/vis 叠加）。part_visibility 求值次数从「每组×层」收敛为 1 次（无副作用表达式等价）。setupClientEntity 增 identicalComponents 恒等跳过（全 RC 命中时跳过 clear/addAll 与 bindBones 失效）。
+- **验证**:契约测试 4 类 15 例（Slot 值键 4 + ModelRuntimeData 数组 7 + HostRole 数组 5 + setup 引用 3）+ 1.20.1 全量 1682 例绿 + 1.21.1 全量绿 + 运行时截图正确（史莱姆半透明/蜘蛛红眼）。运行时反射实证：锚点字段 == ce.animations()/s.animate()（引用短路生效）、Slot.cachedComponents 非空且内容等于活跃组件。
+- **结果**（world n384，45s 串行协议）:
+  - 1.20.1:Opt17 态 51.41/53.03 → **66.52/66.88 区间（约 +26~30%）**；componentCache 开关 A/B 中性（66.52 ON vs 66.88 OFF——求值本身在两条路径都跑，缓存只消下游）。
+  - 1.21.1:Opt17 态 75.33/77.05 → **111.29/118.84（约 +44~56%）**；OFF 111.78。
+  - JFR 机制证据：AnimationComponent.setup 10.0%→0.5%；setupModel self 85→19 样本（下游重建消除）；命中路径残留 = 逐帧 molang 求值（MolangStruct.get 78 + MolangScope.get 62 + livingFloat 38 + cachedComponentsHit 30 等 ≈ 24% render 线程，BE 语义要求逐帧评估）。
+- **累计**:1.20.1 world n384 从最初 33.4 → **66.5~66.9（约 2.0×）**；1.21.1 → **111.3~118.8**。
+- **方法论勘误（重大）**:jfr print 默认栈深截断（`...`）曾致 TickStage 被低报为 4.0%；`--stack-depth 64` 深栈下真实份额 25.1%（Opt18 后 38.9%）。SetupStage+TickStage 合计 66~77% render 线程——**TickStage/SetupStage 并行化（此前因错误低报被暂缓）实为最大剩余杠杆**。性能声明必须附深栈证据。
+- **诊断开关**:`-Deyelib.rc.componentCache=false`。
+
 ## 已排除项
 
 - **eyelib 自身堆占用健康**:eyelib 全部类合计 56MB(2.18%),数量级合理,无需优化。

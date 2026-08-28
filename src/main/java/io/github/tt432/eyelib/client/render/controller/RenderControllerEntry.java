@@ -125,6 +125,8 @@ public record RenderControllerEntry(
                                            Collection<Model> models, int modelVersion,
                                            RenderControllerComponent.Slot renderControllerSlot,
                                            List<Runnable> syncedActions) {
+        // arrays 注入保留在命中路径之前：BE 语义上后求值的 RC 可覆盖同名 array，
+        // 跳过会让上一帧他 RC 的注入残留（注入顺序语义不变）。
         initArrays(scope);
 
         var geometryResult = get(scope, geometry, "geometry", entity.geometry());
@@ -190,6 +192,26 @@ public record RenderControllerEntry(
         // 预计算全局 part_visibility（按 modelVersion 缓存，所有组件复用）
         renderControllerSlot.runtime().setup(modelVersion, models, this);
 
+        // Opt18-A：part_visibility 逐帧求值为「隐藏骨骼位集」（BE 语义逐帧评估保留；
+        // 求值次数从 每组×层 收敛为 1 次——表达式无副作用时结果等价，见方法注释）。
+        long[] pvHidden = renderControllerSlot.runtime().evalPartVisibilityBits(scope);
+
+        // 逐组纹理路径逐帧求值（texture.material 注入保留求值语义）；
+        // 解析为 PortResourceLocation/裁剪/clamped 是下游重建，只在值键未命中时执行。
+        List<List<String>> texturePathsByGroup = new ArrayList<>(materialBoneGroups.size());
+        for (var groupEntry : materialBoneGroups.entrySet()) {
+            texturePathsByGroup.add(evalTextureLayerPaths(scope, entity, groupEntry.getKey()));
+        }
+
+        // 值键全等 → 复用上帧组件列表，下游重建（parse/clamped/组件分配/vis 叠加）全消除
+        List<ModelComponent> hit = renderControllerSlot.cachedComponentsHit(
+                modelVersion, geometryResult, materialValues, texturePathsByGroup, rcColor, pvHidden);
+        if (hit != null) {
+            return hit;
+        }
+
+        // ---- 重建路径（值键未命中）----
+
         // texture_meshes 体素化贴图（BE 语义：形状由 mesh 短名指定的贴图决定，与图层无关）
         // 按 (modelVersion, 几何名) 缓存：模型与实体纹理表静态，仅几何选择可逐帧变化
         final String geometryName = geometryResult;
@@ -202,9 +224,10 @@ public record RenderControllerEntry(
         // BE 语义：textures 数组 = 多图层，按数组顺序逐层渲染同一几何（先底层后顶层），不做贴图合并
         Map<String, List<PortResourceLocation>> texturesByGroup = new LinkedHashMap<>();
         int maxLayers = 1;
+        int groupIndex = 0;
         for (var groupEntry : materialBoneGroups.entrySet()) {
-            List<PortResourceLocation> layers = resolveSlotTextures(scope, entity, groupEntry.getKey(),
-                                                                    needReloadTexture, syncedActions);
+            List<PortResourceLocation> layers = toRenderLocations(texturePathsByGroup.get(groupIndex++),
+                    groupEntry.getKey(), needReloadTexture, syncedActions);
             // BE 语义：多图层纹理需要 multitexture/masked 材质（多采样器）；
             // 单采样材质只渲染第 0 层（bedrock-wiki 分层教程：需 villager_v2_masked 类材质）
             if (!isMultitextureMaterial(groupEntry.getKey()) && layers.size() > 1) {
@@ -232,11 +255,11 @@ public record RenderControllerEntry(
                 comp.setRcColor(rcColor);
                 comp.setMeshTexture(meshTexture);
 
-                // 基础可见性表按组缓存（值键命中时零重建）；拷贝进组件后逐帧叠加 part_visibility 表达式
+                // 基础可见性表按组缓存（值键命中时零重建）；拷贝进组件后叠加本帧 part_visibility 位集
                 Int2BooleanOpenHashMap vis = comp.getPartVisibility();
                 vis.putAll(baseVisList.get(groupOrdinal));
                 groupOrdinal++;
-                renderControllerSlot.runtime().evalPartVisibility(vis, scope);
+                applyPvHidden(vis, pvHidden);
 
                 components.add(comp);
             }
@@ -246,7 +269,25 @@ public record RenderControllerEntry(
             renderControllerSlot.markTextureUploaded();
         }
 
+        renderControllerSlot.storeCachedComponents(geometryResult, materialValues, texturePathsByGroup,
+                rcColor, pvHidden, components);
+
         return components;
+    }
+
+    /** 将 part_visibility 隐藏位集叠加到组件可见性表（位=1 → 该骨骼强制不可见）。 */
+    private static void applyPvHidden(Int2BooleanOpenHashMap vis, long @org.jspecify.annotations.Nullable [] bits) {
+        if (bits == null) {
+            return;
+        }
+        for (int w = 0; w < bits.length; w++) {
+            long word = bits[w];
+            while (word != 0) {
+                int bit = Long.numberOfTrailingZeros(word);
+                vis.put((w << 6) + bit, false);
+                word &= word - 1;
+            }
+        }
     }
 
     /**
@@ -398,15 +439,14 @@ public record RenderControllerEntry(
     }
 
     /**
-     * 按当前材质名解析全部图层纹理。注入 {@code texture.material} 到 scope 中，
+     * 逐帧求值全部图层纹理路径（Opt18-A 键分量）。注入 {@code texture.material} 到 scope 中，
      * 使得 Bedrock 的 {@code "textures": ["texture.material"]} 表达式能按材质槽动态求值。
-     * 返回顺序与 RC 的 textures 数组一致（先底层后顶层）。
+     * 返回顺序与 RC 的 textures 数组一致（先底层后顶层）；textures 为空时返回空列表
+     * （下游 {@link #toRenderLocations} 映射为 missing 纹理）。
      */
-    private List<PortResourceLocation> resolveSlotTextures(MolangScope scope, BrClientEntity entity,
-                                                           String materialName, boolean needReload,
-                                                           List<Runnable> syncedActions) {
+    private List<String> evalTextureLayerPaths(MolangScope scope, BrClientEntity entity, String materialName) {
         if (textures.isEmpty()) {
-            return List.of(TexturePresencePort.missingLocation());
+            return List.of();
         }
 
         // 按材质名查找实体纹理表，作为 texture.material 的动态值
@@ -423,19 +463,7 @@ public record RenderControllerEntry(
         }
 
         try {
-            List<PortResourceLocation> textureLayers = toPortLocations(resolveTextureLayerPaths(scope, entity));
-
-            // alphatest 材质逐层走 clamped 纹理，避免 MC cutout threshold 0.1/0.5 丢弃低 alpha 像素；
-            // emissive 材质同理：BE 发光着色器不丢弃低 alpha（alpha 是发光掩码），
-            // 而 MC entityTranslucent 着色器在 alpha<0.1 时 discard（A&S 蜘蛛红眼 alpha 仅 1-10 会整体消失）
-            if (!usesColorMask(materialName) && (isAlphatestMaterial(materialName) || isEmissiveMaterial(materialName))) {
-                List<PortResourceLocation> clamped = new ArrayList<>(textureLayers.size());
-                for (PortResourceLocation layer : textureLayers) {
-                    clamped.add(clampedTexture(layer, syncedActions, needReload));
-                }
-                return clamped;
-            }
-            return textureLayers;
+            return resolveTextureLayerPaths(scope, entity);
         } finally {
             if (texPath != null) {
                 if (hadOldValue) {
@@ -445,6 +473,28 @@ public record RenderControllerEntry(
                 }
             }
         }
+    }
+
+    /**
+     * 纹理路径 → 渲染用资源位置（Opt18-A 重建路径）：parse + clamped 副本登记。
+     * alphatest 材质逐层走 clamped 纹理，避免 MC cutout threshold 0.1/0.5 丢弃低 alpha 像素；
+     * emissive 材质同理：BE 发光着色器不丢弃低 alpha（alpha 是发光掩码），
+     * 而 MC entityTranslucent 着色器在 alpha<0.1 时 discard（A&S 蜘蛛红眼 alpha 仅 1-10 会整体消失）。
+     */
+    private List<PortResourceLocation> toRenderLocations(List<String> layerPaths, String materialName,
+                                                         boolean needReload, List<Runnable> syncedActions) {
+        if (layerPaths.isEmpty()) {
+            return List.of(TexturePresencePort.missingLocation());
+        }
+        List<PortResourceLocation> textureLayers = toPortLocations(layerPaths);
+        if (!usesColorMask(materialName) && (isAlphatestMaterial(materialName) || isEmissiveMaterial(materialName))) {
+            List<PortResourceLocation> clamped = new ArrayList<>(textureLayers.size());
+            for (PortResourceLocation layer : textureLayers) {
+                clamped.add(clampedTexture(layer, syncedActions, needReload));
+            }
+            return clamped;
+        }
+        return textureLayers;
     }
 
     /**

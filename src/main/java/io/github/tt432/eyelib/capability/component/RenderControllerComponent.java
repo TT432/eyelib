@@ -98,6 +98,60 @@ public class RenderControllerComponent {
         private @Nullable LinkedHashMap<String, Set<Integer>> cachedGroups;
         /** 派生值：每组的基础可见性表（与 cachedGroups 值序对齐），逐帧 clone 后再叠加 part_visibility 表达式。 */
         private final List<Int2BooleanOpenHashMap> cachedBaseVis = new ArrayList<>();
+        // ---- Opt18-A：组件级值键缓存 ----
+        /** 组件缓存开关（benchmark A/B 对照用）。 */
+        private static final boolean COMPONENT_CACHE =
+                Boolean.parseBoolean(System.getProperty("eyelib.rc.componentCache", "true"));
+        /**
+         * setupModel 全产物值键缓存：键 = 本帧求值出的全部动态输入
+         * （geometry 解析值 + 逐材质解析值 + 逐组纹理路径 + rcColor + part_visibility 隐藏位集），
+         * 值 = 组件列表。molang 表达式逐帧求值不变（BE 动态语义保留——A&S 史莱姆 RC 全部表达式
+         * 均读 variable./query.，编译期常量门在真实资产上永不命中，故用值键而非静态门）；
+         * 值相等（准静态资产逐帧命中）时消除下游全部重建：PortResourceLocation.parse、
+         * clamped 纹理路径、ModelComponent/ModelComponentInfo 分配、vis putAll 与叠加。
+         * 失效通道：RC 引用变化（syncSlot 换新 Slot）、clientEntity 变化（clear）、
+         * modelVersion 变化（checkModelVersion）、纹理状态版本（needsTextureReload 时绕行重建）。
+         */
+        private @Nullable String compKeyGeometry;
+        private final List<String> compKeyMaterials = new ArrayList<>();
+        private final List<List<String>> compKeyTextures = new ArrayList<>();
+        private float @Nullable [] compKeyColor;
+        private long @Nullable [] compKeyPvHidden;
+        private @Nullable List<ModelComponent> cachedComponents;
+
+        /** 值键全等且缓存可用时返回跨帧复用的组件列表（同一实例序）；否则 null。 */
+        public @Nullable List<ModelComponent> cachedComponentsHit(int modelVersion, String geometry,
+                List<String> materialValues, List<List<String>> texturePathsByGroup,
+                float @Nullable [] color, long @Nullable [] pvHidden) {
+            checkModelVersion(modelVersion);
+            if (!COMPONENT_CACHE || cachedComponents == null || needsTextureReload()) {
+                return null;
+            }
+            if (geometry.equals(compKeyGeometry)
+                    && materialValues.equals(compKeyMaterials)
+                    && texturePathsByGroup.equals(compKeyTextures)
+                    && Arrays.equals(color, compKeyColor)
+                    && Arrays.equals(pvHidden, compKeyPvHidden)) {
+                return cachedComponents;
+            }
+            return null;
+        }
+
+        /** 重建路径末尾回填：拷贝键分量，持有组件列表。 */
+        public void storeCachedComponents(String geometry, List<String> materialValues,
+                List<List<String>> texturePathsByGroup, float @Nullable [] color,
+                long @Nullable [] pvHidden, List<ModelComponent> components) {
+            compKeyGeometry = geometry;
+            compKeyMaterials.clear();
+            compKeyMaterials.addAll(materialValues);
+            compKeyTextures.clear();
+            for (List<String> paths : texturePathsByGroup) {
+                compKeyTextures.add(List.copyOf(paths));
+            }
+            compKeyColor = color == null ? null : color.clone();
+            compKeyPvHidden = pvHidden == null ? null : pvHidden.clone();
+            cachedComponents = components;
+        }
 
         private Slot(@Nullable RenderControllerEntry renderController) {
             this.renderController = renderController;
@@ -130,6 +184,10 @@ public class RenderControllerComponent {
                 cachedAllBoneIds = null;
                 cachedGroups = null;
                 cachedBaseVis.clear();
+                cachedComponents = null;
+                compKeyGeometry = null;
+                compKeyColor = null;
+                compKeyPvHidden = null;
                 cachedModelVersion = modelVersion;
             }
         }

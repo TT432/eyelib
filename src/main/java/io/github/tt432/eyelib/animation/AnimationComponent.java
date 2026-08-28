@@ -146,12 +146,30 @@ public class AnimationComponent {
         }
     }
 
+    /** 上次 setup 入参引用（Opt18-B）：serializableInfo 可能经 setInfo 持有解码拷贝，
+     * 引用短路必须锚定上次调用方传入的实例而非 info 内的引用。 */
+    private @org.jspecify.annotations.Nullable Map<String, String> lastSetupAnimations;
+    private @org.jspecify.annotations.Nullable Map<String, MolangValue> lastSetupAnimate;
+
     public void setup(Map<String, String> animations, Map<String, MolangValue> animate) {
-        if (serializableInfo != null
-                && serializableInfo.animate().equals(animate)
-                && serializableInfo.animations().equals(animations)) return;
+        // 引用短路（Opt18-B）：同一 BrClientEntity/scripts 实例逐帧返回同一 map 实例，
+        // 引用相等即内容相等，跳过每帧的 map equals（JFR：RegularImmutableMap.get ~5% render 线程）。
+        if (serializableInfo != null) {
+            if (lastSetupAnimations == animations && lastSetupAnimate == animate) {
+                return;
+            }
+            if (serializableInfo.animate().equals(animate)
+                    && serializableInfo.animations().equals(animations)) {
+                // 等值异引用（如同步解码拷贝）：采纳入参为新锚点，下帧起走引用短路
+                lastSetupAnimations = animations;
+                lastSetupAnimate = animate;
+                return;
+            }
+        }
 
         serializableInfo = new AnimationComponentInfo(animations, animate);
+        lastSetupAnimations = animations;
+        lastSetupAnimate = animate;
 
         this.animate.clear();
         // 重建前排空旧 Data 的粒子登记（否则 looping 发射器永久失联，见 pollOrphanedParticles）

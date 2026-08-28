@@ -23,14 +23,22 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public final class MolangScope {
     private final Map<Class<?>, Object> hostContextStore;
-    private final Map<HostRole<?>, Object> hostRoleStore;
     /**
-     * get(HostRole) 解析结果备忘：精确命中之外的 isInstance 扫描（含第 3 步跨 store
-     * 回退）在渲染热路径每 query 一次（JFR ~2%，Opt14）。任一 store 的 4 个变更方法
-     * （put/remove 两族）全量清空——memo 结果耦合两个 store，粒度取最保守。
+     * Opt18-D：HostRole 驻留序号（{@link HostRole#id()}）索引的槽位数组，替代
+     * HashMap<HostRole, Object>——读路径零哈希探测（JFR：HostRole.hashCode + memo
+     * probe ~2-3% render 线程）。hostRoleHigh = 占用上界（exclusive），scan 只到该界。
+     * 生产热路径 scope 均为 singleThreaded（实体/粒子渲染线程独享）；并发 scope 仅
+     * GUI/冒烟使用，数组增长经 volatile 引用安全发布，槽位写良性竞争（memo 纪元兜底）。
+     */
+    private volatile Object[] hostRoleSlots = new Object[32];
+    private volatile RoleMemoEntry[] hostRoleMemoSlots = new RoleMemoEntry[32];
+    private int hostRoleHigh;
+    /**
+     * get(HostRole) 解析结果备忘（Opt18-D 数组化）：精确命中之外的 isInstance 扫描
+     * （含跨 store 回退）在渲染热路径每 query 一次。任一 store 的 4 个变更方法
+     * （put/remove 两族）自增纪元使 memo 错位重解析，粒度取最保守。
      * 诊断：-Deyelib.molang.roleMemo=false 禁用（回退逐次扫描）。
      */
-    private final Map<HostRole<?>, RoleMemoEntry> hostRoleMemo;
     /** 宿主变更纪元：任一 store 变更自增，memo 条目纪元错位即重解析（避免 clear+回填竞态提供陈旧值）。 */
     private volatile long hostMutationEpoch;
     private static final boolean ROLE_MEMO_ENABLED =
@@ -47,10 +55,27 @@ public final class MolangScope {
 
     private MolangScope(boolean concurrent) {
         hostContextStore = concurrent ? new ConcurrentHashMap<>() : new HashMap<>();
-        hostRoleStore = concurrent ? new ConcurrentHashMap<>() : new HashMap<>();
-        hostRoleMemo = concurrent ? new ConcurrentHashMap<>() : new HashMap<>();
         cache = concurrent ? new ConcurrentHashMap<>() : new HashMap<>();
         tempKeys = concurrent ? ConcurrentHashMap.newKeySet() : new HashSet<>();
+    }
+
+    private Object hostRoleAt(int id) {
+        Object[] slots = hostRoleSlots;
+        return id < slots.length && id < hostRoleHigh ? slots[id] : null;
+    }
+
+    private void hostRolePut(int id, Object value) {
+        Object[] slots = hostRoleSlots;
+        if (id >= slots.length) {
+            int newLen = Math.max(id + 1, slots.length * 2);
+            slots = java.util.Arrays.copyOf(slots, newLen);
+            hostRoleMemoSlots = java.util.Arrays.copyOf(hostRoleMemoSlots, newLen);
+            hostRoleSlots = slots;
+        }
+        slots[id] = value;
+        if (id >= hostRoleHigh) {
+            hostRoleHigh = id + 1;
+        }
     }
 
     /**
@@ -66,16 +91,21 @@ public final class MolangScope {
         @SuppressWarnings("unchecked")
         public <T> Optional<T> get(HostRole<T> role) {
             if (ROLE_MEMO_ENABLED) {
-                RoleMemoEntry entry = hostRoleMemo.get(role);
+                int id = role.id();
+                RoleMemoEntry[] memo = hostRoleMemoSlots;
+                RoleMemoEntry entry = id < memo.length ? memo[id] : null;
                 if (entry != null && entry.epoch() == hostMutationEpoch) {
-                    @SuppressWarnings("unchecked")
                     T value = entry.value() == NULL_HOST_MARKER ? null : (T) entry.value();
                     return Optional.ofNullable(value);
                 }
                 Optional<T> resolved = resolveRole(role);
                 // 计算后取纪元：计算与变更竞态时条目即陈旧，下次访问重解析
-                hostRoleMemo.put(role, new RoleMemoEntry(hostMutationEpoch,
-                        resolved.isPresent() ? resolved.get() : NULL_HOST_MARKER));
+                if (id >= memo.length) {
+                    memo = java.util.Arrays.copyOf(memo, Math.max(id + 1, memo.length * 2));
+                    hostRoleMemoSlots = memo;
+                }
+                memo[id] = new RoleMemoEntry(hostMutationEpoch,
+                        resolved.isPresent() ? resolved.get() : NULL_HOST_MARKER);
                 return resolved;
             }
             return resolveRole(role);
@@ -83,15 +113,18 @@ public final class MolangScope {
 
         @SuppressWarnings("unchecked")
         private <T> Optional<T> resolveRole(HostRole<T> role) {
-            // 1. 尝试精确键匹配
-            Object exact = hostRoleStore.get(role);
+            // 1. 尝试精确槽位匹配
+            Object exact = hostRoleAt(role.id());
             if (exact != null && role.type().isInstance(exact)) {
                 return Optional.of((T) exact);
             }
-            // 2. 回退到 isInstance 遍历角色存储
-            for (var entry : hostRoleStore.entrySet()) {
-                if (role.type().isInstance(entry.getValue())) {
-                    return Optional.of((T) entry.getValue());
+            // 2. 回退到 isInstance 遍历角色槽位
+            Object[] slots = hostRoleSlots;
+            int high = Math.min(hostRoleHigh, slots.length);
+            for (int i = 0; i < high; i++) {
+                Object value = slots[i];
+                if (value != null && role.type().isInstance(value)) {
+                    return Optional.of((T) value);
                 }
             }
             // 3. 回退到基于类的存储以向后兼容
@@ -102,19 +135,21 @@ public final class MolangScope {
         public <T> void put(HostRole<T> role, T value) {
             // 幂等写短路：宿主装配（EntityPortAdapter.putHost）每帧以同一实例重写同角色，
             // 内容不变就不动纪元——否则 memo 每帧全灭（JFR 实证 resolveRole 2.9% 残留）
-            if (value != null && hostRoleStore.get(role) == value) {
+            if (value != null && hostRoleAt(role.id()) == value) {
                 return;
             }
-            hostRoleStore.put(role, value);
+            hostRolePut(role.id(), value);
             hostMutationEpoch++;
         }
 
         @Override
         public <T> void remove(HostRole<T> role) {
-            // 同幂等考量：键不存在时 map 内容不变，不动纪元
+            // 同幂等考量：槽位不存在时内容不变，不动纪元
             // （putHost 对恒缺角色每帧 remove，不能因此清空 memo）
-            if (hostRoleStore.containsKey(role)) {
-                hostRoleStore.remove(role);
+            int id = role.id();
+            Object[] slots = hostRoleSlots;
+            if (id < slots.length && id < hostRoleHigh && slots[id] != null) {
+                slots[id] = null;
                 hostMutationEpoch++;
             }
         }
@@ -133,10 +168,13 @@ public final class MolangScope {
                     return Optional.of((T) entry.getValue());
                 }
             }
-            // 3. 回退到 hostRoleStore（兼容 HostRole put 的数据，确保 callable 参数解析正确）
-            for (var entry : hostRoleStore.entrySet()) {
-                if (clazz.isInstance(entry.getValue())) {
-                    return Optional.of((T) entry.getValue());
+            // 3. 回退到角色槽位（兼容 HostRole put 的数据，确保 callable 参数解析正确）
+            Object[] slots = hostRoleSlots;
+            int high = Math.min(hostRoleHigh, slots.length);
+            for (int i = 0; i < high; i++) {
+                Object value = slots[i];
+                if (value != null && clazz.isInstance(value)) {
+                    return Optional.of((T) value);
                 }
             }
             return Optional.empty();
@@ -176,7 +214,7 @@ public final class MolangScope {
      * 占渲染线程 ~4%（每个零参 query 求值都会经过）。
      */
     public boolean hasAnyHost() {
-        return !hostRoleStore.isEmpty() || !hostContextStore.isEmpty();
+        return hostRoleHigh > 0 || !hostContextStore.isEmpty();
     }
 
     /**
@@ -195,9 +233,11 @@ public final class MolangScope {
                 return value;
             }
         }
-        for (var entry : hostRoleStore.entrySet()) {
-            Object value = entry.getValue();
-            if (clazz.isInstance(value)) {
+        Object[] slots = hostRoleSlots;
+        int high = Math.min(hostRoleHigh, slots.length);
+        for (int i = 0; i < high; i++) {
+            Object value = slots[i];
+            if (value != null && clazz.isInstance(value)) {
                 return value;
             }
         }
