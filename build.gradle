@@ -164,6 +164,7 @@ if (isLegacyForge) {
                 systemProperty 'eyelib.gpuSkinning', benchmarkProperty('eyelib.gpuSkinning', 'true')
                 systemProperty 'eyelib.gpuSkinning.mode', benchmarkProperty('eyelib.gpuSkinning.mode', 'auto')
                 systemProperty 'eyelib.molang.zeroArgBinding', benchmarkProperty('eyelib.molang.zeroArgBinding', 'true')
+                systemProperty 'eyelib.anim.sampleOpt', benchmarkProperty('eyelib.anim.sampleOpt', 'true')
                 systemProperty 'eyelib.benchmark.autoExit', benchmarkProperty('eyelib.benchmark.autoExit', 'true')
                 systemProperty 'eyelib.benchmark.modes', benchmarkProperty('eyelib.benchmark.modes', 'fbo,world,pacing,stability')
                 systemProperty 'eyelib.benchmark.entity', benchmarkProperty('eyelib.benchmark.entity', 'minecraft:slime')
@@ -266,6 +267,7 @@ if (isLegacyForge) {
                 systemProperty 'eyelib.benchmark.enabled', 'true'
                 systemProperty 'eyelib.gpuSkinning', benchmarkProperty('eyelib.gpuSkinning', 'true')
                 systemProperty 'eyelib.gpuSkinning.mode', benchmarkProperty('eyelib.gpuSkinning.mode', 'auto')
+                systemProperty 'eyelib.anim.sampleOpt', benchmarkProperty('eyelib.anim.sampleOpt', 'true')
                 systemProperty 'eyelib.benchmark.autoExit', benchmarkProperty('eyelib.benchmark.autoExit', 'true')
                 systemProperty 'eyelib.benchmark.modes', benchmarkProperty('eyelib.benchmark.modes', 'fbo,world,pacing,stability')
                 systemProperty 'eyelib.benchmark.entity', benchmarkProperty('eyelib.benchmark.entity', 'minecraft:slime')

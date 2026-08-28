@@ -166,6 +166,24 @@
 
 > **T4 是佐证**:Forge EventBus cast Lambda 是通用机制(所有事件 post 共用,非 eyelib 专属),38% 下降部分归因 Opt3、部分归因采样时机与 GC。Opt3 主证据是 T3 CPU 的干净归因。
 
+### Opt11 · 动画采样查找融合 + 常量关键帧短路（2026-08-28）
+
+- **文件**:`util/collection/ImmutableFloatTreeMap.java`、`animation/bedrock/BrBoneAnimationSampler.java`、`animation/bedrock/BrBoneKeyFrame.java`、`molang/MolangValue.java`、`molang/MolangValue3.java`
+- **方案**:①`floorHigherIndices(tick)` 单次二分同时定位 floor/higher（打包 long 返回索引对），平行 `Object[] values` 直取替代 Float2ObjectOpenHashMap 哈希探针；CatmullRom 邻接点由「构造不变量 timestamp==sortedKeys[idx]」索引直取（防御性校验失败回退逐次查找）。②`MolangValue.isConstant()`/MolangValue3.allAxesConstant()：三轴全为编译期常量（常量折叠产物）时采样走预读值，跳过逐轴 `getObject`（clearTempVariables+dispatch）；`setThis` 保留维持 this 残态语义；单侧分支返回新建拷贝（下游可能改向量）。
+- **语义论证**:常量求值不读 scope/不写 temp/不抛异常；temp.* 的读者自身先 clearTempVariables，常量短路跳过的 clear 不可观察（唯一观察者是 debug 快照的瞬态展示）。
+- **验证**:新契约测试 BrBoneAnimationSamplerOptTest 7 例（fused 索引对全部键集×采样点等价旧逐次查找、线性/CatmullRom/常量混合 this 引用全刻度对齐旧算法 oracle、this 引用不被短路、单侧常量返回独立拷贝、空帧 null）。
+- **结果**:**FPS 中性**（fbo slime n384 交错 A/B：ON 127.5/121.7 vs OFF 122.1/124.5，方向不一致）。JFR 归因：融合查找生效（ON 采样器栈内 floorHigherIndices 0 样本 vs OFF floorEntry+higherEntry 27%）；**常量短路对本机 A&S 包无效——其史莱姆关键帧是 molang 动态表达式（单侧分支 100% 走 evalWithThis）**，仅对字面量关键帧的包有效。保留依据：查找融合是严格的更少功 + 契约测试覆盖；常量路径对字面量包（多数 vanilla 风格 BE 动画）有效。
+- **诊断开关**:`-Deyelib.anim.sampleOpt=false` 回退旧路径（已接入 runClientBenchmark 转发）。
+
+### Opt12 · 渲染热路径 map 查找消除（2026-08-28）
+
+- **文件**:`bridge/client/render/skinning/adapter/BatchSkinningDispatcher.java`、`animation/bedrock/BrBoneAnimation.java`、`animation/bedrock/BrBoneAnimationSampler.java`
+- **根因**（JFR 双样本归因，fbo n384 渲染线程）：①`IdentityHashMap.put` self 8.5%——合批 drain 每帧新建 groupIndex/subIndex 两张 IdentityHashMap；②`Collections$UnmodifiableMap.get` 5.4~7.9%——`BrClipExecutor` 每骨骼每帧 3×hasChannel + 3×channel(name) 字符串键查找。
+- **方案**:①drain 分组改 ArrayList 线性扫描引用比较（每帧 distinct RenderType/几何为个位数~数十，扫描成本远低于 map 分配+探针）；②`BrBoneAnimation` record → final class（record 禁止额外表字段），构造期预解析三个编译期通道引用（缺失/空帧归 null），hasRotation/lerpRotation 等改字段读+直采，绕过全部字符串键查找；equals/hashCode/toString 维持原 record 语义。采样器新增通道直采重载。
+- **验证**:两版本编译绿、1.20.1 全量单测绿。JFR 复测（同条件 60s profile）：IdentityHashMap.put **8.5%→0.0%**、UnmodifiableMap.get **7.9%→1.2%**（残量为 RegistrySnapshot 等其他来源）、BatchSkinning 链 15.6%→8.7%。
+- **结果**:fbo n384 中性（124.8/127.6 vs 基线 121.7~127.5，该场景非渲染线程受限）；**world n384 +5.3%**（41.26/42.36 vs 基线 39.0~40.4，区间不重叠）。相对本轮优化前最初基线（33.4）累计 +25%。
+- **教训**:帧率不动的 CPU 优化先查受限线程——JFR 证明工作确实消失后，换 CPU 受限场景（world）再下结论。
+
 ## 已排除项
 
 - **eyelib 自身堆占用健康**:eyelib 全部类合计 56MB(2.18%),数量级合理,无需优化。

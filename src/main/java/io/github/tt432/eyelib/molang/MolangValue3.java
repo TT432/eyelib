@@ -4,6 +4,7 @@ import com.mojang.datafixers.util.Either;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import org.joml.Vector3f;
+import io.github.tt432.eyelib.molang.type.MolangObject;
 
 import java.util.HashMap;
 import java.util.List;
@@ -18,6 +19,27 @@ public record MolangValue3(
         MolangValue y,
         MolangValue z
 ) {
+    /**
+     * 三轴是否均为编译期常量（{@link MolangValue#isConstant()}）。
+     * 常量求值不读 scope、不写 temp、不抛异常——采样热路径据此跳过逐轴 eval 的
+     * clearTempVariables/dispatch 链。三次 instanceof 检查，无分配。
+     */
+    public boolean allAxesConstant() {
+        return x.isConstant() && y.isConstant() && z.isConstant();
+    }
+
+    /**
+     * 常量轴值；调用前提是 {@link #allAxesConstant()} 为真。axis ∈ {0,1,2}。
+     * asFloat 对所有 MolangObject 类型全函数（非数值归 0），与逐轴 eval 的失败语义一致。
+     */
+    public float constantAxis(int axis) {
+        MolangObject constant = (switch (axis) {
+            case 0 -> x;
+            case 1 -> y;
+            default -> z;
+        }).constantValueOrNull();
+        return constant != null ? constant.asFloat() : 0;
+    }
     public static final MolangValue3 ZERO = new MolangValue3(MolangValue.ZERO, MolangValue.ZERO, MolangValue.ZERO);
 
     public static final MolangValue3 AXIS_X = new MolangValue3(MolangValue.ONE, MolangValue.ZERO, MolangValue.ZERO);

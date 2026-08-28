@@ -9,6 +9,7 @@ import io.github.tt432.eyelib.molang.type.MolangFloat;
 import io.github.tt432.eyelib.molang.type.MolangNull;
 import io.github.tt432.eyelib.molang.type.MolangObject;
 import it.unimi.dsi.fastutil.floats.Float2ObjectOpenHashMap;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -70,6 +71,18 @@ public record MolangValue(
 
     public static MolangValue constant(String context, MolangObject molangObject) {
         return new MolangValue(context, new ConstMolangFunction(molangObject));
+    }
+    /**
+     * 是否为编译期常量（{@link MolangConstantExpressionEvaluator} 折叠产物）。
+     * 常量求值不读 scope、不写 temp、不抛异常，可被采样热路径预计算短路。
+     */
+    public boolean isConstant() {
+        return method instanceof ConstMolangFunction;
+    }
+
+    /** 常量值对象；非常量返回 null。返回值共享，调用方不得修改。 */
+    public @Nullable MolangObject constantValueOrNull() {
+        return method instanceof ConstMolangFunction constant ? constant.molangObject : null;
     }
 
     private static MolangFunction wrap(MolangCompiledFunction method) {

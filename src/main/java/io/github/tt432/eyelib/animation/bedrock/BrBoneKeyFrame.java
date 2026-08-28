@@ -96,13 +96,13 @@ public record BrBoneKeyFrame(
         weight = weight + (beforePlus != null ? 1 : 0);
 
         var xArray = setupCurvePoints(scope, beforePlus, before, after, afterPlus,
-                firstPointPredicate, lastPointPredicate, MolangValue3::getX, thisX);
+                firstPointPredicate, lastPointPredicate, new AxisSampler(0), thisX);
 
         var yArray = setupCurvePoints(scope, beforePlus, before, after, afterPlus,
-                firstPointPredicate, lastPointPredicate, MolangValue3::getY, thisY);
+                firstPointPredicate, lastPointPredicate, new AxisSampler(1), thisY);
 
         var zArray = setupCurvePoints(scope, beforePlus, before, after, afterPlus,
-                firstPointPredicate, lastPointPredicate, MolangValue3::getZ, thisZ);
+                firstPointPredicate, lastPointPredicate, new AxisSampler(2), thisZ);
 
         return new Vector3f(
                 Curves.lerpSplineCurve(xArray, weight / (xArray.size() - 1)),
@@ -111,32 +111,59 @@ public record BrBoneKeyFrame(
         );
     }
 
-    @FunctionalInterface
-    interface MolangValue3AxisFunction {
-        float apply(MolangValue3 mv3, MolangScope scope);
+    /** 轴采样器：按轴索引从 MolangValue3（molang 求值）或预计算常量向量（零求值）取值。 */
+    record AxisSampler(int axis) {
+        float apply(MolangValue3 mv3, MolangScope scope) {
+            return switch (axis) {
+                case 0 -> mv3.getX(scope);
+                case 1 -> mv3.getY(scope);
+                default -> mv3.getZ(scope);
+            };
+        }
+
+        float ofConstant(MolangValue3 mv3) {
+            return switch (axis) {
+                case 0 -> mv3.constantAxis(0);
+                case 1 -> mv3.constantAxis(1);
+                default -> mv3.constantAxis(2);
+            };
+        }
+    }
+
+    /**
+     * 轴取值：三轴全常量时走构造期预计算向量（常量不读 scope、不写 temp、不抛异常，
+     * 见 {@link MolangValue#isConstant()} 契约），跳过逐轴 clearTempVariables+dispatch 链。
+     */
+    private static float axisValue(AxisSampler sampler, MolangValue3 mv3, MolangScope scope) {
+        if (BrBoneAnimationSampler.SAMPLE_OPT) {
+            if (mv3.allAxesConstant()) {
+                return sampler.ofConstant(mv3);
+            }
+        }
+        return sampler.apply(mv3, scope);
     }
 
     private static ArrayList<Vector2f> setupCurvePoints(MolangScope scope,
                                                         BrBoneKeyFrame beforePlus, BrBoneKeyFrame before,
                                                         BrBoneKeyFrame after, BrBoneKeyFrame afterPlus,
                                                         boolean firstPointPredicate, boolean lastPointPredicate,
-                                                        MolangValue3AxisFunction function, float thisValue) {
+                                                        AxisSampler function, float thisValue) {
         ArrayList<Vector2f> points = new ArrayList<>();
 
         if (firstPointPredicate) {
             scope.setThis(thisValue);
-            points.add(new Vector2f(beforePlus.timestamp(), function.apply(beforePlus.getPost(), scope)));
+            points.add(new Vector2f(beforePlus.timestamp(), axisValue(function, beforePlus.getPost(), scope)));
         }
 
         scope.setThis(thisValue);
-        points.add(new Vector2f(before.timestamp(), function.apply(before.getPost(), scope)));
+        points.add(new Vector2f(before.timestamp(), axisValue(function, before.getPost(), scope)));
 
         scope.setThis(thisValue);
-        points.add(new Vector2f(after.timestamp(), function.apply(after.getPre(), scope)));
+        points.add(new Vector2f(after.timestamp(), axisValue(function, after.getPre(), scope)));
 
         if (lastPointPredicate) {
             scope.setThis(thisValue);
-            points.add(new Vector2f(afterPlus.timestamp(), function.apply(afterPlus.getPre(), scope)));
+            points.add(new Vector2f(afterPlus.timestamp(), axisValue(function, afterPlus.getPre(), scope)));
         }
 
         return points;
@@ -146,23 +173,23 @@ public record BrBoneKeyFrame(
                                                         BrBoneKeyFrameDefinition beforePlus, BrBoneKeyFrameDefinition before,
                                                         BrBoneKeyFrameDefinition after, BrBoneKeyFrameDefinition afterPlus,
                                                         boolean firstPointPredicate, boolean lastPointPredicate,
-                                                        MolangValue3AxisFunction function, float thisValue) {
+                                                        AxisSampler function, float thisValue) {
         ArrayList<Vector2f> points = new ArrayList<>();
 
         if (firstPointPredicate) {
             scope.setThis(thisValue);
-            points.add(new Vector2f(beforePlus.timestamp(), function.apply(getValue(beforePlus, false), scope)));
+            points.add(new Vector2f(beforePlus.timestamp(), axisValue(function, getValue(beforePlus, false), scope)));
         }
 
         scope.setThis(thisValue);
-        points.add(new Vector2f(before.timestamp(), function.apply(getValue(before, false), scope)));
+        points.add(new Vector2f(before.timestamp(), axisValue(function, getValue(before, false), scope)));
 
         scope.setThis(thisValue);
-        points.add(new Vector2f(after.timestamp(), function.apply(getValue(after, true), scope)));
+        points.add(new Vector2f(after.timestamp(), axisValue(function, getValue(after, true), scope)));
 
         if (lastPointPredicate) {
             scope.setThis(thisValue);
-            points.add(new Vector2f(afterPlus.timestamp(), function.apply(getValue(afterPlus, true), scope)));
+            points.add(new Vector2f(afterPlus.timestamp(), axisValue(function, getValue(afterPlus, true), scope)));
         }
 
         return points;
@@ -185,6 +212,20 @@ public record BrBoneKeyFrame(
                                       float thisX, float thisY, float thisZ) {
         var am3 = current.dataPoints().size() > 1 && current.timestamp() < other.timestamp() ? getValue(current, false) : getValue(current, true);
         var bm3 = other.dataPoints().size() > 1 && current.timestamp() > other.timestamp() ? getValue(other, false) : getValue(other, true);
+
+        if (BrBoneAnimationSampler.SAMPLE_OPT) {
+            if (am3.allAxesConstant() && bm3.allAxesConstant()) {
+                // setThis 保留：维持 this 残态语义（常量不读 this，最终落点 this=thisZ 不变）
+                scope.setThis(thisX);
+                scope.setThis(thisY);
+                scope.setThis(thisZ);
+                return new Vector3f(
+                        EyeMath.lerp(am3.constantAxis(0), bm3.constantAxis(0), weight),
+                        EyeMath.lerp(am3.constantAxis(1), bm3.constantAxis(1), weight),
+                        EyeMath.lerp(am3.constantAxis(2), bm3.constantAxis(2), weight)
+                );
+            }
+        }
 
         scope.setThis(thisX);
         float ax = am3.getX(scope);

@@ -5,7 +5,6 @@ import io.github.tt432.eyelib.util.codec.CodecHelper;
 import it.unimi.dsi.fastutil.floats.Float2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.floats.FloatArrayList;
 import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.jspecify.annotations.Nullable;
@@ -20,9 +19,18 @@ import java.util.function.Function;
  *
  * @author TT432
  */
-@AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Getter
 public sealed class ImmutableFloatTreeMap<V> {
+    private ImmutableFloatTreeMap(float[] sortedKeys, Float2ObjectOpenHashMap<V> data) {
+        this.sortedKeys = sortedKeys;
+        this.data = data;
+        // 与 sortedKeys 平行的值数组：采样热路径（floorHigherIndices/valueAt）免除
+        // Float2ObjectOpenHashMap 的哈希+探针，一次二分后直接索引取值。
+        this.values = new Object[sortedKeys.length];
+        for (int i = 0; i < sortedKeys.length; i++) {
+            this.values[i] = data.get(sortedKeys[i]);
+        }
+    }
 
     public static final class Empty<V> extends ImmutableFloatTreeMap<V> {
 
@@ -92,6 +100,8 @@ public sealed class ImmutableFloatTreeMap<V> {
     private final float[] sortedKeys;
     @Getter
     private final Float2ObjectOpenHashMap<V> data;
+    @Getter(AccessLevel.NONE)
+    private final Object[] values;
 
     public static <V> ImmutableFloatTreeMap<V> of(float[] sortedKeys, Float2ObjectOpenHashMap<V> data) {
         if (sortedKeys.length == 0) return empty();
@@ -104,6 +114,33 @@ public sealed class ImmutableFloatTreeMap<V> {
 
     public boolean isEmpty() {
         return sortedKeys.length == 0;
+    }
+    /**
+     * 单次二分同时定位 floor/higher 索引：高 32 位 = floorIndex，低 32 位 = higherIndex，
+     * 不存在的一侧为 -1。与 {@link #floorEntry}/{@link #higherEntry} 逐次调用语义等价
+     * （命中：floor=s, higher=s+1；未命中：floor=ins-1, higher=ins，均越界即 -1），
+     * 供采样热路径用一次二分替代两次。
+     */
+    public long floorHigherIndices(float tick) {
+        int s = Arrays.binarySearch(sortedKeys, tick);
+        int floor;
+        int higher;
+        if (s >= 0) {
+            floor = s;
+            higher = s + 1 < sortedKeys.length ? s + 1 : -1;
+        } else {
+            int insertion = -s - 1;
+            floor = insertion - 1;
+            higher = insertion < sortedKeys.length ? insertion : -1;
+        }
+        return ((long) floor << 32) | (higher & 0xFFFFFFFFL);
+    }
+
+    /** 按 {@link #floorHigherIndices} 返回的索引直接取值；索引必须来自本实例的定位结果。 */
+    @Nullable
+    @SuppressWarnings("unchecked")
+    public V valueAt(int index) {
+        return (V) values[index];
     }
 
     @Nullable
