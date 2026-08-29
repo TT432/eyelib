@@ -203,7 +203,7 @@
   2. **HostContext 角色 memo（roleMemo）**:`get(HostRole)` 三步解析（精确→roleStore isInstance 扫描→classStore 回退）结果 memo 化；失效用**变更纪元**（不用 clear——并发下 clear+回填竞态会无限期供陈旧值，纪元错位条目下次访问即重解析）。**关键配套**：宿主装配（EntityPortAdapter.putHost）每帧以同一实例重写同角色，put/remove 加幂等短路（同引用 put / 不存在键 remove 不动纪元）——否则纪元每帧颠簸，memo 全灭（首版实证 resolveRole 残留 2.9% 即此因）。
   3. **采样线性扫描（linearScan）**:`floorHigherIndices` 对 ≤16 键数组改 `Float.compare` 顺序循环。`Float.compare` 与 `Arrays.binarySearch(float[],float)` 同一全序（-0.0<0.0、NaN 最大、位级相等才算命中；构造期 keys 同序排序），结果逐位等价（含 NaN/-0.0 tick 病态输入），有穷尽契约测试钉死。
 - **验证**:新契约测试 3 类——ImmutableFloatTreeMapLinearScanTest（尺寸 1~32 × NaN/±Inf/±0/键间/越界 tick 对二分 oracle 逐位等价）、MolangScopeRoleMemoTest（精确命中/跨角色 isInstance 回退/class 族耦合失效/单线程 scope 同契约）、MolangRuntimeSupportShapeCacheTest（缓存命中一致、STRING/NUMBER 形态分流——**实证发现：注册键为 (名称, publication signature)，同元数不同参数类型属注册冲突**，故重载测试用不同元数构造、epoch 重建/原地 addNode 失效翻正）。1.20.1/1.21.1 全量单测绿。
-- **生效证据**（JFR 修复后，work/opt14b.jfr，渲染线程 368 样本）：selectQueryVariant 0.0%、Arrays.binarySearch 0.0%（原 3.4%）、HostContext$1.get 4.9%→0.8%、resolveRole 2.9%→0.5%。
+- **生效证据**（JFR 修复后，opt14b.jfr（工作现场文件，已清理），渲染线程 368 样本）：selectQueryVariant 0.0%、Arrays.binarySearch 0.0%（原 3.4%）、HostContext$1.get 4.9%→0.8%、resolveRole 2.9%→0.5%。
 - **结果**:**world n384 +4.3%，区间不重叠**（ON 46.23/46.59 vs OFF 44.22/44.83；同构建三开关对照）。相对最初基线 33.4 累计约 +39%。
 - **诊断开关**:`-Deyelib.molang.shapeCache=false`、`-Deyelib.molang.roleMemo=false`、`-Deyelib.anim.linearScanThreshold=0`（均已接入 runClientBenchmark 转发）。
 - **余项**:invokeMethod 参数打包/转换仍逐次（~4%，精确 invoker 化需处理 varargs/逐参转换过滤器，复杂度高收益低）；RenderControllerEntry.setupModel 逐实体逐帧 map 迭代（~7%，新发现）；MolangValue3.getX 叶帧 12.8% 为内联归宿帧（动态表达式字节码本体）。
@@ -220,7 +220,7 @@
 ### Opt16 · 解析链五件：memberAccess 快路径 + bindBones 缓存 + 动画解析缓存 + Float 缓存 + 短路前移（2026-08-28）
 
 - **文件**:`molang/MolangScope.java`（根覆盖位）、`molang/compiler/MolangRuntimeSupport.java`（resolveMemberAccess 快路径）、`molang/type/MolangFloat.java`（小整数缓存）、`animation/bedrock/BrClipExecutor.java`（空通道短路前移到 getData 前）、`capability/RenderData.java`（bindBones 懒缓存+失效契约）、`client/render/EntityRenderOrchestrator.java`+`AttachableItemRenderSetup.java`+`mixin/client/Item{,InHand}RendererMixin.java`（collectBindBones→bindBones 迁移）、`client/render/sync/ClientRenderSyncService.java`（sync 失效点）、`animation/bedrock/controller/BrControllerStateOwner.java`（解析缓存）+`BrControllerExecutor.java`+`BrAnimationController.java`（7 处解析点迁移）
-- **方案**:JFR（1.20.1 world n384，work/opt16/opt16-before.jfr）归因：Int2Object find 4.0%（getData computeIfAbsent + collectBindBones 每帧重建）、HashMap.getNode 4.0%（RegistrySnapshot 链 + scope.get）、scope.get 遮蔽检查 ~2%、MolangFloat.valueOf 1.6%。五项：①query/math 根覆盖位（putTracked 置位、粘滞、parent 链检查）跳过恒 miss 的 scope.get——grep 实证 query.*/math.* 无写入点（context.* 有，不走快路径）；②MolangFloat [-16,256] 整数缓存；③空通道骨骼不再创建零值 Entry（读侧等价）；④bindBones 按失效点缓存（变更点全集：setupClientEntity 两 clear + sync replaceModelComponents）；⑤动画名解析缓存（守卫 = animations 实例 identity + registry generation）。
+- **方案**:JFR（1.20.1 world n384，opt16-before.jfr（工作现场文件，已清理））归因：Int2Object find 4.0%（getData computeIfAbsent + collectBindBones 每帧重建）、HashMap.getNode 4.0%（RegistrySnapshot 链 + scope.get）、scope.get 遮蔽检查 ~2%、MolangFloat.valueOf 1.6%。五项：①query/math 根覆盖位（putTracked 置位、粘滞、parent 链检查）跳过恒 miss 的 scope.get——grep 实证 query.*/math.* 无写入点（context.* 有，不走快路径）；②MolangFloat [-16,256] 整数缓存；③空通道骨骼不再创建零值 Entry（读侧等价）；④bindBones 按失效点缓存（变更点全集：setupClientEntity 两 clear + sync replaceModelComponents）；⑤动画名解析缓存（守卫 = animations 实例 identity + registry generation）。
 - **验证**:契约测试 4 类（MemberFastPath 遮蔽/struct 置位/parent 链、MolangFloatCache 边界、RenderDataBindBones 失效、BrControllerResolveCache generation/identity/null 缓存）+ 1.20.1 全量 251 类零失败 + 运行时截图正确。
 - **结果**:串行单客户端 A/B（并发双客户端会互相污染，已改协议）：1.20.1 ON 47.59 vs OFF 46.74（+1.8%，噪声带内）；1.21.1 ON 71.66 vs OFF 70.40（+1.8%）。生效证据由 Opt17 轮 JFR 复核确认（见下）。
 - **诊断开关**:`-Deyelib.molang.memberFastPath=false`、`-Deyelib.anim.controllerResolveCache=false`。
@@ -256,7 +256,7 @@
 ### Opt19 · SetupStage/TickStage 跨实体并行化（2026-08-29）
 
 - **文件**:`client/render/pipeline/ParallelStageExecutor.java`（新，专用 FJ 池+索引序合并）、`client/render/EntityRenderOrchestrator.java`（SetupStage/TickStage 重构 + tickEntity 抽取 + tickForEntity hoist）、`client/particle/DeferredAnimationParticleSpawner.java`（新，粒子操作队列化）、`molang/compiler/MolangRuntimeSupport.java`（MemberSite volatile Binding 快照）、`model/GlobalBoneIdHandler.java`（static synchronized）、`molang/MolangValue.java`（常量池 CHM）。
-- **设计文档**:`work/parallel-tick/DESIGN.md`（线程模型+共享状态全清单，work/ 不入 git）。
+- **设计文档**:`design/opt19-parallel-stages-design.md`（线程模型+共享状态全清单）。
 - **共享可变状态处置**（逐项实证核查）:
   1. **MemberSite**：表达式实例按字符串全局共享（compileCache）——(tree,epoch,minimal,full) 散装普通写并发下会撕裂（新纪元+旧绑定）。改 volatile 不可变快照：读侧单次取快照，旧纪元一致或新纪元一致，不撕裂。
   2. **GlobalBoneIdHandler**：裸 fastutil computeIfAbsent 并发插入可损坏 → static synchronized（稳态仅查找，无竞争同步成本可忽略）。

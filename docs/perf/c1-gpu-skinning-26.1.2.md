@@ -1,7 +1,7 @@
 # C1 GPU 蒙皮（26.1.2）——实现与基准测试结论
 
 > 日期：2026-08-27。状态：**已实现、正确性已验证、性能中性**。
-> 设计：work/c1-gpu-skinning/DESIGN.md；原则：ADR-0032；调研：docs/research/2026-08-26-render-gpu-offload.md §5-C1。
+> 设计：design/c1-gpu-skinning-26.1.2-design.md；原则：ADR-0032；调研：docs/research/2026-08-26-render-gpu-offload.md §5-C1。
 
 ## 1. 实现摘要（commit 1d47d353 + 88da7479 + c957789a）
 
@@ -78,4 +78,4 @@ Opt19（Setup/Tick 跨实体并行化）+ Opt16~18（molang/map 机制消除）�
 - 骨骼数 >96 的模型回退经典路径（UBO 16KB 保证下限约束）。
 - RenderDoc GetPostVSData 数值对比未执行（RenderDoc GL 捕获对 26.1.2
   无调试组命名，帧动作 18 万+，逐 draw 分析成本过高；已有截帧
-  work/c1-gpu-skinning/rdc/frameA2|B2|C_capture.rdc 可供后续深挖）。
+  （原始 .rdc 截帧为工作现场文件，已清理；如需深挖重新截帧即可）。

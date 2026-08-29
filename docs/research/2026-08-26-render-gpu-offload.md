@@ -68,7 +68,7 @@ RenderLevelStageEvent(AFTER_SKY / AfterOpaqueBlocks)
 
 ### 2.2 每帧 CPU 工作清单与成本模型
 
-既有成本模型（work/perf-ms-frame-plan/PLAN.md §1.3，代码结构推得并已抽验）：
+既有成本模型（perf-ms-frame-plan/PLAN.md §1.3，代码结构推得并已抽验）：
 
 ```
 帧成本 = E × [ 动画tick + Σ_components ( resolveOutput + 骨骼遍历 + 顶点变换 + 顶点写入 ) ] + flush/draw
@@ -245,7 +245,7 @@ GLFW.glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, 1);
 - 粒子 locator、attachable、AR 兼容：CPU 矩阵数组是唯一权威，三者的消费方式不变。
 
 **前置条件**：
-1. **定论并修复 OPT-R1**（DFSModel 线性化 popPose 打断父子骨骼层级继承，work/perf-ms-frame-plan/render-scout-report.md:276-279）——GPU 蒙皮要求每骨骼完整世界矩阵，该缺陷不修复则 GPU 化无从谈起。【勘误 2026-08-27：已定论为侦察报告误判，无需修复，见 DFSModelTest（da8634bd）。】
+1. **定论并修复 OPT-R1**（DFSModel 线性化 popPose 打断父子骨骼层级继承，perf-ms-frame-plan/render-scout-report.md:276-279）——GPU 蒙皮要求每骨骼完整世界矩阵，该缺陷不修复则 GPU 化无从谈起。【勘误 2026-08-27：已定论为侦察报告误判，无需修复，见 DFSModelTest（da8634bd）。】
 2. 顶点格式扩展：NEW_ENTITY 无 boneIndex 属性，需自定义 VertexFormat。
 3. 像素级回归基建：clientsmoke FBO 像素对比 + RenderDoc GetPostVSData 顶点数/坐标验证（docs/concepts/entity-verification-workflow.md 已有方法）。
 
@@ -325,7 +325,7 @@ GLFW.glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, 1);
 ## 8. 附录：证据索引
 
 - 代码盘点：5 路 scout 报告（实体链/动画/缓冲/材质/文档），全部行号级，见本报告 §2/§5 内联引用。
-- 既有侦察：work/perf-ms-frame-plan/PLAN.md、render-scout-report.md、anim-scout-report.md。
+- 既有侦察：perf-ms-frame-plan/{PLAN.md、render-scout-report.md、anim-scout-report.md}。
 - 基线数据：docs/perf/spark-baseline-and-optimizations.md、docs/perf/render-fps-benchmark.md。
 - vanilla 研究：docs/vanilla_research/geo_render/{1.20.1,1.21.1,26.1.2}.md。
 - 一手验证：forge-1.20.1 sources jar `Window.java:80-85`（GL 3.2 core）。

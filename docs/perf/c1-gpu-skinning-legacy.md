@@ -1,6 +1,6 @@
 # C1 GPU 蒙皮 ≤26.1（1.20.1 / 1.21.1）结果
 
-> 日期：2026-08-27。前置：26.1.2 P1（c1-gpu-skinning-26.1.2.md）；设计：work/c1-gpu-skinning/DESIGN-P2.md。
+> 日期：2026-08-27。前置：26.1.2 P1（c1-gpu-skinning-26.1.2.md）；设计：design/c1-gpu-skinning-legacy-design.md。
 > 实现：LegacySkinningManager/LegacySkinningSession/LegacySkinnedGeometry（`bridge/client/render/skinning/adapter/`，`//? if <26.1`）。
 
 ## 实现要点（与 26.1.2 的差异）
@@ -17,7 +17,7 @@
 ## 正确性验证
 
 - 单测：1.20.1 全绿（planSlots 重构由既有 SkinningGeometryPackerTest 覆盖）。
-- 运行时（1.20.1 + 1.21.1，A&S 1.10 v2）：牛/蜘蛛/僵尸/史莱姆正确渲染，蜘蛛**发光红眼**（EMISSIVE 变体）昼夜正确；蒙皮路径活跃（GEOMETRIES>0、数组池复用无泄漏、OFF run 无 shader 注册日志）。截图：work/c1-gpu-skinning/shots/p2_mc_day.png（1.20.1）、p2_mc_121d.png（1.21.1）、p2_mc_120_ivec2.png（ivec2 修正后回归）。
+- 运行时（1.20.1 + 1.21.1，A&S 1.10 v2）：牛/蜘蛛/僵尸/史莱姆正确渲染，蜘蛛**发光红眼**（EMISSIVE 变体）昼夜正确；蒙皮路径活跃（GEOMETRIES>0、数组池复用无泄漏、OFF run 无 shader 注册日志）。截图：shots/p2_mc_day.png（1.20.1）、p2_mc_121d.png（1.21.1）、p2_mc_120_ivec2.png（ivec2 修正后回归）。
 - 修复的缺陷：①VertexBuffer.upload 前必须 bind VAO（属性指针/索引缓冲记录在 VAO 状态；缺失 → glDrawElements 驱动崩溃，vanilla 同模式 ChunkRenderDispatcher.uploadChunkLayer）②BoneIndex shader 声明须为 ivec2（UV1 SHORT×2 的实际类型；uint 在 NVIDIA 上巧合可用但属类型不匹配）。
 
 ## Benchmark（1.20.1，mixed 场景，RTX 4070 Laptop，15s warmup + 30s measure，fresh JVM，ON/OFF 交错）
@@ -135,7 +135,7 @@ bindTo+dropArguments 的 MethodHandle 包装（Invokers.checkCustomized ~9% + ev
 - 1.20.1/1.21.1 运行时截图：史莱姆半透明（外层/内核/面部层重叠正确）、蜘蛛发光红眼、牛/僵尸正常；
   反射实证 VARIANTS/GEOMETRIES>0 且几何为预期类型（compute=ComputeSkinnedGeometry，vs=LegacySkinnedGeometry）。
 - 1.20.1 单测全绿；两版本编译绿。
-- 截图：work/c1-batch/{batch_it4_scene2.png（1.20.1 合批）、batch_121_engaged.png（1.21.1 合批）、vs_120_engaged.png（1.20.1 VS）}。
+- 截图：shots/{batch_it4_scene2.png（1.20.1 合批）、batch_121_engaged.png（1.21.1 合批）、vs_120_engaged.png（1.20.1 VS）}。
 
 ### 已知余项
 
