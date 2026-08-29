@@ -273,7 +273,7 @@ GLFW.glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, 1);
 现状：每粒子每帧 CPU 算四角 + 写 4 顶点（BedrockParticleRenderer.java:135-171）。
 方案：静态单位 quad VBO + 每粒子实例数据（位置/尺寸/旋转/UV/颜色）经实例化绘制（GL 3.1 glDraw*Instanced；divisor 依赖 ARB_instanced_arrays，桌面普遍可用）或 26.1.2 自定义管线。VS 内做 camera-facing 展开。
 功能保留：粒子材质 RenderType 缓存（WeakHashMap）、bind_to_actor（位置输入仍来自 CPU 实体状态——每帧上传实例数据不可避免，但上传量 = 粒子数 × 小结构，远小于 4 顶点展开）。
-收益：粒子密集场景；优先级次于 C1。
+**2026-08-29 定论（证据驱动）：不实施。** world n384 场景 56k 行深栈 JFR 聚合中 eyelib 粒子渲染零帧（仅有 vanilla canSpawnSprintParticle）；现有路径经 vanilla bufferSource 按纹理合批（每 RenderType 一次 draw），C1 的教训（vanilla 合批下逐实体 GPU 化中性）在此同样适用——合批已存在，实例化只能省每粒子 4 顶点 CPU 写，无可测收益。且 1.20.1 GL 3.2 需 ARB_instanced_arrays 扩展。若未来出现粒子密集场景的性能证据再重估。
 
 ### C5 · 骨骼矩阵合成 → GPU（**结论：不搬**）
 
@@ -282,11 +282,12 @@ GLFW.glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, 1);
 - ≤26.1 无 compute；transform feedback 方案复杂度高于收益。
 - 26.2+ Vulkan 后可重估（与 C1 的调色板上传合并为 compute 预合成），但预期收益仍低。
 
-### C6 · 派生纹理（clamped/colorMask）→ GPU 离屏渲染
+### C6 · 派生纹理（clamped/colorMask）→ **已解决（C6'，2026-08-29，非 GPU 离屏）**
 
-现状：clamped 副本 = NativeImage download → CPU clampAlphaToBinary → upload（RenderControllerEntry.java:430-441）；colorMask 副本同理（NativeImageIO.java:227-233）。CPU 像素操作且纹理身份进渲染状态 key，破坏批处理/PSO 复用。
-方案：离屏 fragment shader 渲染到纹理（GL 3.2 FBO 足够，无需 compute）；colorMask 更优解是改成自定义 shader 的 tint uniform（消除派生纹理本身，需与 C1 的自定义 shader 协同）。
-注意：TextureLayerMerger 的 compute shader 只存在于文档，代码无实现（§3.1 注）——若复活纹理合并需求，≤26.1 必须用 FBO 离屏而非 compute。
+**实证修正**：派生是每纹理每次纹理状态变更一次的事件（`needsTextureReload` 版本比较触发，syncedAction 延迟执行），稳态逐帧成本为零（56k 行深栈 JFR 零帧）；原方案的"纹理身份破坏批处理"担忧已被 Opt18 值键缓存消解。真实问题仅剩一点：download 的 `glGetTexImage` 同步读回会在派生事件帧造成 GPU 管线停顿。
+
+**C6' 方案（已实施）**：eyelib 基图全部由 `upload()` 注册为 DynamicTexture，其 CPU 侧 NativeImage 像素常驻至 close()（1.20.1/1.21.1/26.1.2 三版本 vanilla 源码实证）。`NativeImageIO.download` 增加 DynamicTexture 像素快路径（`getPixels()` 直用，调用方一律 copyImage 深拷贝后使用），完全消除 GPU 读回；非 DynamicTexture 回退原路径，行为不变。比 FBO 离屏简单：无新 GL 机制，三版本统一。colorMask 路径经同一 download 自动受益。
+**验证**：运行时探针 `DYNAMIC_DOWNLOAD_HITS` 计数（蜘蛛生成触发 57 次派生全走快路径）；像素级等价（clamped 纹理 == 基图 CPU 像素现算 clamp，diff=0）；截图正确（史莱姆半透明层次昼夜正确）；三版本编译绿、1.20.1/1.21.1 单测全绿。colorMask 改 tint uniform（消除派生纹理本身）仍是 26.1.2+ 自定义 shader 协同的远期可选方向，但无性能证据驱动，不实施。
 
 ### C7 · 方块/物品 chunk 路径（**无需 GPU 化**）
 
@@ -306,7 +307,7 @@ GLFW.glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, 1);
 | **P1 先行** | C1 GPU 蒙皮：自定义 RenderPipeline + UBO/TBO 调色板 + 静态 GpuBuffer 几何 | **26.1.2**（API 最友好：官方自定义管线 + DynamicUniforms 范式 + DeferredRenderSink 合批） | **已完成 2026-08-27（1d47d353/88da7479/c957789a）**：UBO 调色板（TBO 无 float 格式，弃用）+ drawMultipleIndexed 阶段批量 flush。正确性验证通过；benchmark 结论**性能中性**（26.1.2 瓶颈在 vanilla submit 机制）。详见 docs/perf/c1-gpu-skinning-26.1.2.md |
 | **P2 跟进** | ~~C1 移植 ≤26.1~~ | 1.20.1 / 1.21.1 | **已完成 2026-08-27**：实际落地为 RegisterShadersEvent + UV1 元素复用骨骼索引（零自定义元素/零裸 GL）+ VertexBuffer 展开三角形 + uniform 数组调色板（非 TBO）。正确性验证通过（含 EMISSIVE 变体、蜘蛛发光眼）；benchmark 结论~~性能中性~~【⚠ 已废弃 2026-08-28：覆盖率空洞使 ON 实为 CPU，对比无效】。详见 docs/perf/c1-gpu-skinning-legacy.md。下一步候选：P2.5 按 RenderType 跨实体状态去重 |
 | **P2.5 合批** | ~~按 RenderType 跨实体合批 + 覆盖率修复~~ | 1.20.1 / 1.21.1 | **已完成 2026-08-28（cf6258fa/d6ad17c8/19b84534/c95e1277）**：修复默认材质未登记蒙皮变体的覆盖率空洞（此前全部 ≤26.1 C1 基准无效）；compute 路径改跨实体合批（2D dispatch + 每 RenderType 组单 draw，stage 事件窗口）；JFR 驱动 molang 求值链三处微优化。真生效基准 vs 真 CPU 基线：fbo n384 +52~61%、world n384 +17~21%（相对最初基线 fbo n384 +75%）。详见 docs/perf/c1-gpu-skinning-legacy.md 勘误章 |
-| **P3 扩展** | C4 粒子实例化；C6 派生纹理 GPU 化/colorMask uniform 化 | 全版本 | FBO + benchmark |
+| **P3 扩展** | ~~C4 粒子实例化~~（2026-08-29 定论不实施：深栈 JFR 零帧 + vanilla 已按纹理合批，无可测收益）；~~C6 派生纹理~~（2026-08-29 以 C6' 解决：DynamicTexture CPU 常驻像素快路径消除 glGetTexImage 同步读回，无需 GPU 离屏管线） | 全版本 | C6' 验证：快路径计数探针 + 像素级等价 diff=0 + 截图正确 | |
 | **P4 平台跃迁** | 26.2 Vulkan 节点落地后重估：compute 调色板预合成、SSBO、GPU 蒙皮 compute 化 | 26.2+ | 同左 |
 
 每个阶段独立可验证、独立提交（沿用 PLAN.md 的测量纪律：benchmark 期间禁 spark/RenderDoc；fresh JVM；baseline/candidate 交错）。

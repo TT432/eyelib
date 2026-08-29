@@ -272,10 +272,19 @@
   - JFR 机制证据（opt19-on.jfr，--stack-depth 64）：render 线程样本中 SetupStage 14 + TickStage 51（合计 ~15%，原 66~77%）；工作均匀分布在 8 个 worker（distinct javaThreadId ×8，各 ~250-300 样本）。
 - **累计**:1.20.1 world n384 从最初 33.4 → **104~106（约 3.1×）**；1.21.1 → **193~210**。
 - **诊断开关**:`-Deyelib.parallelStages=false`、`-Deyelib.parallelStages.threads=N`、`-Deyelib.parallelStages.minEntities=N`（默认 8，低于阈值串行）。
-- **已知坑**:worker 命名不能用 `getPoolIndex()`（setName 时机恒 0，JFR 里全部显示 worker-0）——独立 AtomicInteger 序号。
+### C6' · 派生纹理 download 消除 GPU 读回（2026-08-29）
+
+- **文件**:`bridge/client/render/texture/adapter/NativeImageIO.java`（download 增 DynamicTexture 像素快路径 + DYNAMIC_DOWNLOAD_HITS 探针计数）。
+- **归因**:clamped/_color_mask 派生纹理的生成是每纹理每次纹理状态变更一次的事件（needsTextureReload 版本比较触发，syncedAction 执行），稳态逐帧零成本（56k 行深栈 JFR 零帧）——唯一真实成本是 download 的 `glGetTexImage` **同步读回造成派生事件帧的 GPU 管线停顿**。
+- **方案**:eyelib 基图全部由 `upload()` 注册为 DynamicTexture，CPU 侧 NativeImage 像素常驻至 close()（1.20.1/1.21.1/26.1.2 三版本 vanilla 源码实证）。download 先查 `instanceof DynamicTexture && getPixels() != null`（26.1.2 加 `!isClosed()`）→ 直接用 CPU 像素（调用方一律 copyImage 深拷贝后使用，就地像素只读），完全跳过 GPU 读回；非 DynamicTexture 回退原路径，行为不变。colorMask 经同一 download 自动受益。无新 GL 机制，三版本统一。
+- **验证**:三版本编译绿 + 1.20.1/1.21.1 全量单测绿；运行时探针：世界载入 111 次、蜘蛛生成 +57 次、夜晚合批场景累计 317 次派生全部命中快路径（零 GPU 读回）；**像素级等价**：已注册 clamped 纹理 == 基图 CPU 像素现算 clampAlphaToBinary，逐像素 diff=0；截图正确（史莱姆半透明层次昼/夜正确）。
+- **基准**:稳态 FPS 无可测变化（派生非逐帧成本）——本项消除的是重载/首渲染时的偶发停顿，不做 throughput 基准。
 
 ## 已排除项
 
+## 已排除项
+
+- **C4 粒子实例化（2026-08-29 定论不实施）**:world n384 深栈 JFR 聚合（56k 行）中 eyelib 粒子渲染零帧；现有路径经 vanilla bufferSource 按纹理合批（每 RenderType 一次 draw），实例化只能省每粒子 4 顶点 CPU 写，无可测收益；且 1.20.1 GL 3.2 需 ARB_instanced_arrays 扩展。若未来有粒子密集场景证据再重估。
 - **eyelib 自身堆占用健康**:eyelib 全部类合计 56MB(2.18%),数量级合理,无需优化。
 - **javac 97MB**:`/eval` HTTP 调试服务运行时编译的测量伪影,生产无此开销。
 - **Server thread 开销**:eyelib 在服务端几乎零开销(Top 30 唯一 eyelib 函数 = DataAttachmentHelper.getOrCreate,0.13%)。

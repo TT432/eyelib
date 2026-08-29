@@ -40,6 +40,8 @@ public class NativeImageIO {
     //?} else {
     private static final Map<String, Identifier> COLOR_MASK_CACHE = new HashMap<>();
     //?}
+    /** C6'：download 命中 DynamicTexture CPU 常驻像素（免 GPU 读回）的次数（运行时探针用）。 */
+    public static int DYNAMIC_DOWNLOAD_HITS;
 
     //? if <26.1 {
     public void upload(ResourceLocation texture, NativeImage image) {
@@ -82,6 +84,21 @@ public class NativeImageIO {
     //?} else {
     public <R> R download(Identifier texture, Function<NativeImage, R> imageFunction) {
     //?}
+        // C6'：eyelib 基图由 upload() 注册为 DynamicTexture，其 CPU 侧像素常驻（仅 close 释放，
+        // 1.20.1/1.21.1/26.1.2 三版本源码实证）——直接用其像素，避免 glGetTexImage
+        // 同步读回造成的 GPU 管线停顿。调用方一律经 copyImage 深拷贝后使用，就地像素只读。
+        // 非 DynamicTexture（vanilla/pack 纹理、缺失纹理）走原有回退路径，行为不变。
+        if (Minecraft.getInstance().getTextureManager().getTexture(texture) instanceof DynamicTexture dynamicTexture) {
+            NativeImage pixels = dynamicTexture.getPixels();
+            //? if <26.1 {
+            if (pixels != null) {
+            //?} else {
+            if (pixels != null && !pixels.isClosed()) {
+            //?}
+                DYNAMIC_DOWNLOAD_HITS++;
+                return imageFunction.apply(pixels);
+            }
+        }
         //? if <26.1 {
         Minecraft.getInstance().getTextureManager().getTexture(texture).bind();
 
