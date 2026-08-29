@@ -308,7 +308,7 @@ GLFW.glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, 1);
 | **P2 跟进** | ~~C1 移植 ≤26.1~~ | 1.20.1 / 1.21.1 | **已完成 2026-08-27**：实际落地为 RegisterShadersEvent + UV1 元素复用骨骼索引（零自定义元素/零裸 GL）+ VertexBuffer 展开三角形 + uniform 数组调色板（非 TBO）。正确性验证通过（含 EMISSIVE 变体、蜘蛛发光眼）；benchmark 结论~~性能中性~~【⚠ 已废弃 2026-08-28：覆盖率空洞使 ON 实为 CPU，对比无效】。详见 docs/perf/c1-gpu-skinning-legacy.md。下一步候选：P2.5 按 RenderType 跨实体状态去重 |
 | **P2.5 合批** | ~~按 RenderType 跨实体合批 + 覆盖率修复~~ | 1.20.1 / 1.21.1 | **已完成 2026-08-28（cf6258fa/d6ad17c8/19b84534/c95e1277）**：修复默认材质未登记蒙皮变体的覆盖率空洞（此前全部 ≤26.1 C1 基准无效）；compute 路径改跨实体合批（2D dispatch + 每 RenderType 组单 draw，stage 事件窗口）；JFR 驱动 molang 求值链三处微优化。真生效基准 vs 真 CPU 基线：fbo n384 +52~61%、world n384 +17~21%（相对最初基线 fbo n384 +75%）。详见 docs/perf/c1-gpu-skinning-legacy.md 勘误章 |
 | **P3 扩展** | ~~C4 粒子实例化~~（2026-08-29 定论不实施：深栈 JFR 零帧 + vanilla 已按纹理合批，无可测收益）；~~C6 派生纹理~~（2026-08-29 以 C6' 解决：DynamicTexture CPU 常驻像素快路径消除 glGetTexImage 同步读回，无需 GPU 离屏管线） | 全版本 | C6' 验证：快路径计数探针 + 像素级等价 diff=0 + 截图正确 | |
-| **P4 平台跃迁** | 26.2 Vulkan 节点落地后重估：compute 调色板预合成、SSBO、GPU 蒙皮 compute 化 | 26.2+ | 同左 |
+| **P4 平台跃迁** | ~~26.2 Vulkan 节点落地后重估~~：compute 调色板预合成、SSBO、GPU 蒙皮 compute 化 | 26.2+ | **暂缓（2026-08-29 用户决策）**：26.2 已于 2026-06-16 发布（Vulkan 1.2，官方公告），NeoForge 26.2 生态已可用（Balm/Raised 等已发布 26.2 版本）；待 NeoForge 稳定性与 mcpack 兼容性成熟后再立项 |
 
 每个阶段独立可验证、独立提交（沿用 PLAN.md 的测量纪律：benchmark 期间禁 spark/RenderDoc；fresh JVM；baseline/candidate 交错）。
 
