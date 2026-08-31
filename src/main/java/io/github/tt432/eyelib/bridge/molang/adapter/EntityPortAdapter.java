@@ -35,6 +35,16 @@ public final class EntityPortAdapter {
     public static PortEntity from(Entity entity) {
         return new PortEntityImpl(entity);
     }
+    /**
+     * 每实体缓存的 {@link #from}：动画 tick 等热路径使用，避免逐 tick 分配包装器，
+     * 并保持 HostContext 幂等写短路（同实例 put 不触动 memo 纪元）成立。
+     */
+    public static PortEntity fromCached(Entity entity) {
+        return CACHE.computeIfAbsent(entity, EntityPortAdapter::from);
+    }
+
+    private static final java.util.Map<Entity, PortEntity> CACHE =
+            java.util.Collections.synchronizedMap(new java.util.WeakHashMap<>());
 
     /**
      * 将 {@link PortEntity} 还原为 MC Entity；非本适配器包装的 PortEntity 返回 {@code null}。

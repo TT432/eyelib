@@ -13,6 +13,8 @@ import io.github.tt432.eyelib.molang.mapping.api.HostRoles;
 
 import io.github.tt432.eyelib.util.math.MathHelper;
 import org.jspecify.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 import java.util.UUID;
@@ -23,6 +25,10 @@ import java.util.UUID;
 final class BrControllerExecutor {
     private BrControllerExecutor() {
     }
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(BrControllerExecutor.class);
+        private static final java.util.Set<String> WARNED_MISSING_SOUNDS =
+            java.util.concurrent.ConcurrentHashMap.newKeySet();
 
     static void tick(BrAnimationController controller, BrAnimationController.Data data, Map<String, String> animations, MolangScope scope,
                      float ticks, float multiplier, ModelRuntimeData infos, AnimationEffects effects,
@@ -88,6 +94,24 @@ final class BrControllerExecutor {
                                 data.owner().particles()::add));
             }
         });
+
+        if (!currState.soundEffects().isEmpty()) {
+            scope.getHostContext().get(HostRoles.PORT_ENTITY).ifPresent(entity ->
+                    scope.getHostContext().get(HostRoles.CLIENT_ENTITY).ifPresent(clientEntity -> {
+                        for (String shortName : currState.soundEffects()) {
+                            String s = clientEntity.sound_effects().get(shortName);
+
+                            if (s == null) {
+                                if (WARNED_MISSING_SOUNDS.add(shortName)) {
+                                    LOGGER.warn("Animation controller state sound_effect '{}' has no mapping in sound_effects", shortName);
+                                }
+                                continue;
+                            }
+
+                            io.github.tt432.eyelib.animation.bedrock.BrAnimationEntryDefinition.playSound(s, entity);
+                        }
+                    }));
+        }
 
         data.setCurrState(currState);
         data.setStartTick(ticks);

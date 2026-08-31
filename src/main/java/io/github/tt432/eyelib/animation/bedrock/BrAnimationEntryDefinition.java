@@ -54,6 +54,15 @@ public record BrAnimationEntryDefinition(
         soundPlayer = sp;
     }
 
+    /**
+     * 经已安装的 {@link SoundPlayer} 播放音效 id（bedrock 音效表值），音量/音高与
+     * 时间轴 sound_effects 回调一致。供动画控制器状态级 sound_effects 等非时间轴
+     * 入口复用同一播放端口。
+     */
+    public static void playSound(String soundId, PortEntity entity) {
+        soundPlayer.playSound(soundId, entity.getX(), entity.getY(), entity.getZ(), 1f, 1f);
+    }
+
     public static void installLocatorProvider(LocatorPoseProvider provider) {
         locatorProvider = provider;
     }
