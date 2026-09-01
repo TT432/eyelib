@@ -46,11 +46,8 @@ public class Eyelib {
         EntityPortAdapter.installArrowHostBridge();
         //? if >=1.20.6
         DataAttachmentContainerCapability.register(bus);
-        //? if <26.1
-        bus.addListener(io.github.tt432.eyelib.bridge.client.sound.adapter.AddonSoundBridge::onAddPackFinders);
-        //? if <26.1
-        bus.addListener(io.github.tt432.eyelib.bridge.client.language.adapter.AddonLangBridge::onAddPackFinders);
-        bus.addListener(io.github.tt432.eyelib.bridge.client.loader.adapter.BedrockAddonPackFinder::onAddPackFinders);
+        // 三个 AddPackFinders 监听已改为各 adapter 类上的 @EventBusSubscriber(Dist.CLIENT) 声明式注册，
+        // 避免 @Mod 构造函数在 dedicated server 上加载 client-only 类（RuntimeDistCleaner 拦截即崩）。
         //? if <1.20.6 {
         ApplicationLifecyclePort port = ApplicationLifecyclePort.get();
         if (port != null) port.registerNetworkHandlers();

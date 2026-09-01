@@ -14,7 +14,6 @@
     "CamelAccessor",
     "WolfAccessor",
     //? if !modern {
-    "PoseStackAccessor",
     "LivingEntityAccessor",
     "RangedAttackGoalAccessor",
     "track.common.ItemStackMixin",
@@ -22,14 +21,17 @@
     "track.common.InventoryMixin",
     "track.common.LivingEntityMixin",
     //? if !legacy {
-    "PoseStackPoseAccessor",
     "AvoidEntityGoalAccessor",
     //?}
     //?}
   ],
   "client": [
     "client.TextureManagerMixin",
+    //? if !legacy {
+    "PoseStackPoseAccessor",
+    //?}
     //? if !modern {
+    "PoseStackAccessor",
     "client.PackEntryMixin",
     "client.AbstractSelectionListAccessor",
     "LivingEntityRendererAccessor",

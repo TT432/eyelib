@@ -10,6 +10,15 @@ import net.minecraftforge.event.AddPackFindersEvent;
 //?} else {
 import net.neoforged.neoforge.event.AddPackFindersEvent;
 //?}
+//? if <1.20.6 {
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.Mod;
+//?} else {
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+//?}
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,13 +41,21 @@ import java.nio.file.Path;
  *
  * @author TT432
  */
+//? if <1.20.6 {
+@Mod.EventBusSubscriber(modid = "eyelib", bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
+//?} elif <26.1 {
+@EventBusSubscriber(modid = "eyelib", bus = EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
+//?} else {
+@EventBusSubscriber(modid = "eyelib", value = Dist.CLIENT)
+//?}
 public final class BedrockAddonPackFinder {
     private static final Logger LOGGER = LoggerFactory.getLogger(BedrockAddonPackFinder.class);
 
     private BedrockAddonPackFinder() {
     }
 
-    /** AddPackFindersEvent 监听（mod 总线，Eyelib 入口注册）。 */
+    /** AddPackFindersEvent 监听（mod 总线，类上 @EventBusSubscriber(Dist.CLIENT) 声明式注册）。 */
+    @SubscribeEvent
     public static void onAddPackFinders(AddPackFindersEvent event) {
         if (event.getPackType() != PackType.CLIENT_RESOURCES) {
             return;

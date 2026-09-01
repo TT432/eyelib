@@ -11,6 +11,15 @@ import net.minecraftforge.event.AddPackFindersEvent;
 //?} else {
 import net.neoforged.neoforge.event.AddPackFindersEvent;
 //?}
+//? if <1.20.6 {
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.Mod;
+//?} else {
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+//?}
 
 /**
  * addon 语言桥：注册 {@link AddonLangPack}（required 客户端资源包，mod 总线
@@ -19,11 +28,19 @@ import net.neoforged.neoforge.event.AddPackFindersEvent;
  *
  * @author TT432
  */
+//? if <1.20.6 {
+@Mod.EventBusSubscriber(modid = "eyelib", bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
+//?} elif <26.1 {
+@EventBusSubscriber(modid = "eyelib", bus = EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
+//?} else {
+@EventBusSubscriber(modid = "eyelib", value = Dist.CLIENT)
+//?}
 public final class AddonLangBridge {
     private AddonLangBridge() {
     }
 
     /** AddPackFindersEvent 监听：把 addon 语言包挂进客户端资源扫描。 */
+    @SubscribeEvent
     public static void onAddPackFinders(AddPackFindersEvent event) {
         if (event.getPackType() != PackType.CLIENT_RESOURCES) {
             return;
