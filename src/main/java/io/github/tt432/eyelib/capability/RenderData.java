@@ -103,6 +103,17 @@ public class RenderData<T> {
     public void invalidateBindBones() {
         bindBonesCache = null;
     }
+    /**
+     * 实体模型是否需要动画翻转补偿（基岩版 geo 约定）。
+     * 返回第一个可用模型组件的约定；无模型组件时默认 true（向后兼容）。
+     */
+    public boolean flipAnimation() {
+        for (ModelComponent mc : modelComponents) {
+            var model = mc.getModel();
+            if (model != null) return model.flipAnimation();
+        }
+        return true;
+    }
 
     private final AnimationComponent animationComponent = new AnimationComponent();
 

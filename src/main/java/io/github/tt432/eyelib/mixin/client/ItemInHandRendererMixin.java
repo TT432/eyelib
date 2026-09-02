@@ -91,7 +91,7 @@ public class ItemInHandRendererMixin {
                         if (ce != null) {
                             ce.scripts().ifPresent(s -> s.pre_animation().eval(scope));
                         }
-                    }, rd.bindBones());
+                    }, rd.bindBones(), rd.flipAnimation());
             ac.tickedInfos = tickedInfos;
             ac.effects = effects;
         }

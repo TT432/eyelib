@@ -28,7 +28,17 @@ public final class BrAnimator {
     public static ModelRuntimeData tickAnimation(AnimationComponent component, MolangScope scope, AnimationEffects effects,
                                                  float ticks, Runnable animationStartFeedback,
                                                  @Nullable Int2ObjectMap<Model.Bone> bindBones) {
+        return tickAnimation(component, scope, effects, ticks, animationStartFeedback, bindBones, true);
+    }
+
+    /**
+     * @param flipAnimation 是否需要按基岩版 geo 约定翻转动画（bbmodel 恒等导入的模型传 false）
+     */
+    public static ModelRuntimeData tickAnimation(AnimationComponent component, MolangScope scope, AnimationEffects effects,
+                                                 float ticks, Runnable animationStartFeedback,
+                                                 @Nullable Int2ObjectMap<Model.Bone> bindBones, boolean flipAnimation) {
         ModelRuntimeData infos = new ModelRuntimeData();
+        infos.flipAnimation = flipAnimation;
         infos.bindBones(bindBones);
         scope.getHostContext().put(HostRoles.MODEL_RUNTIME_DATA, infos);
         scope.getHostContext().put(HostRoles.ANIMATION_EFFECTS, effects);

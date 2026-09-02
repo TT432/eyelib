@@ -259,7 +259,7 @@ public final class EntityRenderOrchestrator {
                                 scripts.pre_animation().eval(scope);
                             });
                         }
-                    }, cap.bindBones());
+                    }, cap.bindBones(), cap.flipAnimation());
         } else {
             tickedInfos = ModelRuntimeData.EMPTY;
         }

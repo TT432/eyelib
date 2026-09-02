@@ -35,6 +35,18 @@ public interface Model {
     static Model of(String name, Int2ObjectMap<Bone> allBones, ModelLocator locator, VisibleBox visibleBox) {
         return SimpleModel.of(name, allBones, locator, visibleBox);
     }
+    /**
+     * 创建模型并指定动画约定。
+     * bbmodel 导入的模型应传 {@code flipAnimation = false}（恒等导入，不需要动画翻转补偿）；
+     * 基岩版 geo 导入的模型保持默认 {@code true}（镜像导入，需要翻转补偿）。
+     */
+    static Model of(String name, Int2ObjectMap<Bone> allBones, ModelLocator locator, VisibleBox visibleBox, boolean flipAnimation) {
+        return SimpleModel.of(name, allBones, locator, visibleBox, flipAnimation);
+    }
+    /** 便捷重载：不含 locator 时指定动画约定。 */
+    static Model of(String name, Int2ObjectMap<Bone> allBones, VisibleBox visibleBox, boolean flipAnimation) {
+        return SimpleModel.of(name, allBones, new ModelLocator(new it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap<>()), visibleBox, flipAnimation);
+    }
 
     static Model of(String name, Int2ObjectMap<Bone> allBones, ModelLocator locator) {
         return SimpleModel.of(name, allBones, locator);
@@ -57,6 +69,15 @@ public interface Model {
     ModelLocator locator();
 
     VisibleBox visibleBox();
+    /**
+     * 动画应用时是否需要按基岩版 geo 约定翻转（rotation ×(-1,-1,1)，position ×(-1,1,1)）。
+     * 基岩版 geo 导入器在导入时镜像了 X（pivot.x *= -1 等），动画翻转是配套的补偿；
+     * bbmodel 导入器做恒等导入（不镜像），因此不需要此翻转。
+     * 默认 true（向后兼容基岩版 geo 模型）。
+     */
+    default boolean flipAnimation() {
+        return true;
+    }
 
     interface Bone {
         int id();

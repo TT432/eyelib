@@ -20,7 +20,7 @@ final class ImportedModelBuilder {
         for (ImportedBoneData bone : data.bones()) {
             bones.put(bone.id(), buildBone(bone));
         }
-        return Model.of(data.name(), bones, data.visibleBox());
+        return Model.of(data.name(), bones, data.visibleBox(), data.flipAnimation());
     }
 
     private static Model.Bone buildBone(ImportedBoneData bone) {

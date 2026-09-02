@@ -30,8 +30,23 @@ public record ImportedModelData(
         String name,
         VisibleBox visibleBox,
         List<ImportedModelTexture> textures,
-        List<ImportedBoneData> bones
+        List<ImportedBoneData> bones,
+        boolean flipAnimation
 ) {
+    /**
+     * 动画应用时是否需要按基岩版 geo 约定翻转（rotation ×(-1,-1,1)，position ×(-1,1,1)）。
+     * 基岩版 geo 导入器在导入时镜像了 X（pivot.x *= -1 等），动画翻转是配套的补偿；
+     * bbmodel 导入器做恒等导入（不镜像），因此不需要此翻转。
+     * 默认 true（向后兼容基岩版 geo 模型）。
+     */
+    public ImportedModelData {
+    }
+
+    /** 向后兼容构造器：默认 true（基岩版 geo 约定）。 */
+    public ImportedModelData(String name, VisibleBox visibleBox, List<ImportedModelTexture> textures, List<ImportedBoneData> bones) {
+        this(name, visibleBox, textures, bones, true);
+    }
+
     private static final String SYNTHETIC_ROOT_BONE_NAME = "__bbmodel_root__";
     private static final float DEGREES_TO_RADIANS = (float) (Math.PI / 180D);
 
@@ -62,7 +77,8 @@ public record ImportedModelData(
             bones.add(syntheticRoot);
         }
 
-        return new ImportedModelData(source.modelIdentifier(), VisibleBox.fromBlockbenchDimensions(source.visibleBox()), importedTextures(source.textures()), bones);
+        // bbmodel 导入器恒等导入（不镜像 X），动画不需要翻转补偿
+        return new ImportedModelData(source.modelIdentifier(), VisibleBox.fromBlockbenchDimensions(source.visibleBox()), importedTextures(source.textures()), bones, false);
     }
 
     @Nullable
@@ -151,7 +167,8 @@ public record ImportedModelData(
                         Math.max(source.description().textureHeight(), 1),
                         null
                 )),
-                bones
+                bones,
+                true  // 基岩版 geo 导入器镜像了 X，动画需要翻转补偿
         );
     }
 
@@ -176,7 +193,7 @@ public record ImportedModelData(
         List<ImportedBoneData> repackedBones = bones.stream()
                 .map(bone -> repackBone(bone, packedAtlasWidth, packedAtlasHeight, textureOffsets))
                 .toList();
-        return new ImportedModelData(name, visibleBox, List.of(new ImportedModelTexture(packedAtlasWidth, packedAtlasHeight, atlasImage)), repackedBones);
+        return new ImportedModelData(name, visibleBox, List.of(new ImportedModelTexture(packedAtlasWidth, packedAtlasHeight, atlasImage)), repackedBones, flipAnimation);
     }
 
     @Nullable

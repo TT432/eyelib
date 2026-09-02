@@ -148,7 +148,7 @@ public final class AttachableItemRenderSetup {
                         if (ce != null) {
                             ce.scripts().ifPresent(s -> s.pre_animation().eval(scope));
                         }
-                    }, rd.bindBones());
+                    }, rd.bindBones(), rd.flipAnimation());
             ac.effects = effects;
             // setup 重建遗弃粒子的兜底清理（见 AnimationComponent.pollOrphanedParticles）
             RootAnimationParticleSpawner.flushOrphaned(ac, ParticlePort.getSpawnAdapter());

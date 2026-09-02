@@ -73,7 +73,12 @@ final class BrClipExecutor {
                 float thisRz = (renderInfoEntry.rotation.z + bindRz) * EyeMath.RADIANS_TO_DEGREES;
                 Vector3f rotation = boneAnim.lerpRotation(scope, animTick, thisRx, thisRy, thisRz);
                 if (rotation != null) {
-                    rotation.mul(finalMultiplier).mul(EyeMath.DEGREES_TO_RADIANS).mul(-1, -1, 1);
+                    rotation.mul(finalMultiplier).mul(EyeMath.DEGREES_TO_RADIANS);
+                    // 基岩版 geo 导入器在导入时镜像了 X（pivot.x *= -1 等），动画翻转是配套的补偿；
+                    // bbmodel 导入器做恒等导入（不镜像），因此不需要此翻转。
+                    if (infos.flipAnimation) {
+                        rotation.mul(-1, -1, 1);
+                    }
                     renderInfoEntry.rotation.add(rotation);
                 }
             }
@@ -87,7 +92,10 @@ final class BrClipExecutor {
                 float thisPz = (renderInfoEntry.position.z + bindPz) * 16;
                 Vector3f pos = boneAnim.lerpPosition(scope, animTick, thisPx, thisPy, thisPz);
                 if (pos != null) {
-                    pos.mul(finalMultiplier).div(16).mul(-1, 1, 1);
+                    pos.mul(finalMultiplier).div(16);
+                    if (infos.flipAnimation) {
+                        pos.mul(-1, 1, 1);
+                    }
                     renderInfoEntry.position.add(pos);
                 }
             }

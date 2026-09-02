@@ -1,0 +1,9 @@
+// 临时：modrinth maven 目前对 acceleratedrendering 1.0.5-1.20.1-alpha 全量 404，
+// 将 compileOnly 依赖替换为 mavenLocal 中的等价 jar（来自既有 gradle 缓存）。
+allprojects {
+    configurations.all {
+        resolutionStrategy.dependencySubstitution {
+            substitute module('maven.modrinth:acceleratedrendering:1.0.5-1.20.1-alpha') using module('local.ar:acceleratedrendering:1.0.5-1.20.1-alpha')
+        }
+    }
+}

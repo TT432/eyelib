@@ -15,12 +15,18 @@ final class SimpleModel implements Model {
     private final Int2ObjectMap<Bone> allBones;
     private final ModelLocator locator;
     private final VisibleBox visibleBox;
+    private final boolean flipAnimation;
 
     SimpleModel(String name, Int2ObjectMap<Bone> allBones, ModelLocator locator, VisibleBox visibleBox) {
+        this(name, allBones, locator, visibleBox, true);
+    }
+
+    SimpleModel(String name, Int2ObjectMap<Bone> allBones, ModelLocator locator, VisibleBox visibleBox, boolean flipAnimation) {
         this.name = name;
         this.allBones = allBones;
         this.locator = locator;
         this.visibleBox = visibleBox;
+        this.flipAnimation = flipAnimation;
         this.toplevelBones = new Int2ObjectOpenHashMap<>();
 
         IndexInitializer.fillIndices(this.allBones, this.toplevelBones, this.locator);
@@ -28,6 +34,10 @@ final class SimpleModel implements Model {
 
     static SimpleModel of(String name, Int2ObjectMap<Bone> allBones, ModelLocator locator, VisibleBox visibleBox) {
         return new SimpleModel(name, allBones, locator, visibleBox);
+    }
+
+    static SimpleModel of(String name, Int2ObjectMap<Bone> allBones, ModelLocator locator, VisibleBox visibleBox, boolean flipAnimation) {
+        return new SimpleModel(name, allBones, locator, visibleBox, flipAnimation);
     }
 
     static SimpleModel of(String name, Int2ObjectMap<Bone> allBones, ModelLocator locator) {
@@ -65,5 +75,10 @@ final class SimpleModel implements Model {
     @Override
     public VisibleBox visibleBox() {
         return visibleBox;
+    }
+
+    @Override
+    public boolean flipAnimation() {
+        return flipAnimation;
     }
 }
