@@ -47,6 +47,10 @@ public interface Model {
     static Model of(String name, Int2ObjectMap<Bone> allBones, VisibleBox visibleBox, boolean flipAnimation) {
         return SimpleModel.of(name, allBones, new ModelLocator(new it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap<>()), visibleBox, flipAnimation);
     }
+    /** 便捷重载：不含 visibleBox 时指定动画约定。 */
+    static Model of(String name, Int2ObjectMap<Bone> allBones, ModelLocator locator, boolean flipAnimation) {
+        return SimpleModel.of(name, allBones, locator, EMPTY_VISIBLE_BOX, flipAnimation);
+    }
 
     static Model of(String name, Int2ObjectMap<Bone> allBones, ModelLocator locator) {
         return SimpleModel.of(name, allBones, locator);

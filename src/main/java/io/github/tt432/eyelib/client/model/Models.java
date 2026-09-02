@@ -39,7 +39,7 @@ public class Models {
             processBoneAdd(rootBone, -1, bonesMap, idRemap);
         }
 
-        return Model.of(modelA.name(), bonesMap, modelA.locator(), modelA.visibleBox());
+        return Model.of(modelA.name(), bonesMap, modelA.locator(), modelA.visibleBox(), modelA.flipAnimation());
     }
 
     private static void processBoneAdd(Model.Bone boneB, int parentId, Int2ObjectMap<Model.Bone> bonesMap, Int2IntMap idRemap) {
@@ -97,6 +97,6 @@ public class Models {
             }
         });
 
-        return Model.of(modelA.name(), newBones, modelA.locator(), modelA.visibleBox());
+        return Model.of(modelA.name(), newBones, modelA.locator(), modelA.visibleBox(), modelA.flipAnimation());
     }
 }
