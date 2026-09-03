@@ -19,12 +19,15 @@ public class ClientEntityComponent {
     private long appliedClientEntityVersion;
     /** clientEntity 解析来源（ClientEntityManager）的代际；初始 -1 保证首次解析视为过期。 */
     private long resolvedGeneration = -1;
+    /** clientEntity 由外部直接 {@link #setClientEntity} 设置（非注册表按 id 解析）：不受代际失效影响。 */
+    private boolean externallySet;
     /** 已完成静态 scope 初始化（texture./geometry./material. 短名注入）的 scope 实例。 */
     @Nullable
     private MolangScope staticScopeInited;
 
     public void setClientEntity(@Nullable BrClientEntity clientEntity) {
         this.clientEntity = clientEntity;
+        this.externallySet = true;
         // clientEntity 更换后 texture./geometry./material. 短名集合变化，静态 scope 初始化需重做
         this.staticScopeInited = null;
         if (runtimeData.sync(clientEntity)) {
@@ -66,11 +69,13 @@ public class ClientEntityComponent {
      */
     public void markResolvedFrom(long generation) {
         this.resolvedGeneration = generation;
+        this.externallySet = false;
     }
 
-    /** 来源注册表代际与解析时不同 = 缓存的 clientEntity 已过期，需重新解析（含解析结果为 null 的情况）。 */
+    /** 来源注册表代际与解析时不同 = 缓存的 clientEntity 已过期，需重新解析（含解析结果为 null 的情况）。
+     *  外部直接设置的值不参与代际比对；资源重载后由外部持有者负责重设新实例。 */
     public boolean isStale(long currentGeneration) {
-        return resolvedGeneration != currentGeneration;
+        return !externallySet && resolvedGeneration != currentGeneration;
     }
 
     public Collection<Model> getModels() {

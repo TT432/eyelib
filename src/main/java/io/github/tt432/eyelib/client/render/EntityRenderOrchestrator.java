@@ -588,12 +588,11 @@ public final class EntityRenderOrchestrator {
         ClientEntityComponent clientEntityComponent = cap.getClientEntityComponent();
         RenderControllerComponent renderControllerComponent = cap.getRenderControllerComponent();
         List<Runnable> syncedActions = new ArrayList<>();
-        // 引用不同才视为「外部显式指定」：setClientEntity + 记录当前代际，
-        // 避免 id 解析路径下帧将其当作过期缓存覆盖。
-        // 每帧把当前 ce 传回的重 setup 调用方（RC 条件重估等）引用相等，不触碰 resolvedGeneration。
+        // 引用不同才视为「外部显式指定」：setClientEntity 标记 externallySet，
+        // 不参与注册表代际失效；资源重载后由外部持有者负责重设新实例。
+        // 每帧把当前 ce 传回的重 setup 调用方（RC 条件重估等）引用相等，不触碰该标记。
         if (clientEntity != null && clientEntityComponent.getClientEntity() != clientEntity) {
             clientEntityComponent.setClientEntity(clientEntity);
-            clientEntityComponent.markResolvedFrom(ClientEntityManager.INSTANCE.generation());
         }
 
         boolean clientEntityChanged = clientEntityComponent.consumeChanged();

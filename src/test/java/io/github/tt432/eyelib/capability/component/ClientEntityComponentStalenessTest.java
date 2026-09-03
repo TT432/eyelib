@@ -49,6 +49,36 @@ class ClientEntityComponentStalenessTest {
         assertTrue(component.isStale(registry.generation()));
         assertNull(registry.get(entity.identifier()));
     }
+    @Test
+    void externalSetIsNotInvalidatedByGenerationBump() {
+        Registry<BrClientEntity> registry = new Registry<>("TestRegistry", ManagerEventPublisher.NOOP);
+        BrClientEntity entity = testEntity();
+        registry.put(entity.identifier(), entity);
+
+        ClientEntityComponent component = new ClientEntityComponent();
+        // 先走一遍 id 解析路径（记录代际），再被外部显式覆盖——
+        // 外部设置必须清除代际失效语义，否则资源重载会把外部模型擦掉
+        component.setClientEntity(registry.get(entity.identifier()));
+        component.markResolvedFrom(registry.generation());
+
+        component.setClientEntity(entity);
+        assertFalse(component.isStale(registry.generation()));
+
+        registry.replaceAll(Map.of());
+        assertFalse(component.isStale(registry.generation()));
+    }
+
+    @Test
+    void markResolvedFromAfterExternalSetRestoresInvalidation() {
+        ClientEntityComponent component = new ClientEntityComponent();
+        component.setClientEntity(testEntity());
+        assertFalse(component.isStale(7));
+
+        // id 解析路径重新接管后恢复代际失效语义
+        component.markResolvedFrom(7);
+        assertFalse(component.isStale(7));
+        assertTrue(component.isStale(8));
+    }
 
     private static BrClientEntity testEntity() {
         return new BrClientEntity(
