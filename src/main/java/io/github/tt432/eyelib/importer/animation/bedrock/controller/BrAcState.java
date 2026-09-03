@@ -4,7 +4,6 @@ import com.mojang.datafixers.util.Either;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.eyelib.molang.MolangValue;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 
 import java.util.List;
 import java.util.Map;
@@ -44,7 +43,7 @@ public record BrAcState(
     }
 
     private static Map<String, MolangValue> mergeMaps(List<Map<String, MolangValue>> list) {
-        Map<String, MolangValue> result = new Object2ObjectOpenHashMap<>();
+        Map<String, MolangValue> result = new java.util.LinkedHashMap<>(); // 保序：transitions 列表形式（BE 惯例：单键对象列表）合并时键序即优先级，不能用散列表
         for (Map<String, MolangValue> map : list) {
             result.putAll(map);
         }
