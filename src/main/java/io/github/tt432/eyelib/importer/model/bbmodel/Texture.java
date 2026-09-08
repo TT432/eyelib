@@ -5,12 +5,14 @@ import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.eyelib.importer.model.importer.ImportedImageData;
 import org.jspecify.annotations.Nullable;
+import lombok.With;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.Base64;
 
 /** @author TT432 */
+@With
 public record Texture(
         String name,
         String path,

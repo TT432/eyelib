@@ -15,6 +15,7 @@ import org.jspecify.annotations.Nullable;
 import org.joml.Matrix4f;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
+import org.joml.Vector4f;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -88,9 +89,16 @@ public record ImportedModelData(
         }
 
         List<ImportedCubeData> cubes = new ArrayList<>();
+        List<ImportedLocatorData> locators = new ArrayList<>();
         for (String cubeId : cubeIds) {
             Element element = elementMap.get(cubeId);
             if (element == null) {
+                continue;
+            }
+
+            ImportedLocatorData locator = importedLocator(element);
+            if (locator != null) {
+                locators.add(locator);
                 continue;
             }
 
@@ -100,7 +108,7 @@ public record ImportedModelData(
             }
         }
 
-        if (cubes.isEmpty()) {
+        if (cubes.isEmpty() && locators.isEmpty()) {
             return null;
         }
 
@@ -110,7 +118,7 @@ public record ImportedModelData(
                 new Vector3f(),
                 new Vector3f(),
                 cubes,
-                List.of(),
+                locators,
                 null,
                 false,
                 false,
@@ -304,9 +312,16 @@ public record ImportedModelData(
         }
 
         List<ImportedCubeData> cubes = new ArrayList<>();
+        List<ImportedLocatorData> locators = new ArrayList<>();
         for (String cubeId : entry.cubes()) {
             Element element = elementMap.get(cubeId);
             if (element == null) {
+                continue;
+            }
+
+            ImportedLocatorData locator = importedLocator(element);
+            if (locator != null) {
+                locators.add(locator);
                 continue;
             }
 
@@ -322,11 +337,11 @@ public record ImportedModelData(
                 group.origin() == null ? new Vector3f() : new Vector3f(group.origin()).div(16),
                 group.rotation() == null ? new Vector3f() : new Vector3f(group.rotation()).mul(DEGREES_TO_RADIANS),
                 cubes,
-                importedLocators(entry, group),
+                locators,
                 null,
-                false,
+                group.reset(),
                 group.mirror_uv(),
-                null,
+                group.bedrockBinding().isEmpty() ? null : group.bedrockBinding(),
                 List.of()
         );
         bones.add(bone);
@@ -338,7 +353,16 @@ public record ImportedModelData(
 
     @Nullable
     private static ImportedCubeData importedCube(Element element, List<Texture> textures) {
-        Vector3f[] corners = corners(element);
+        Vector3f from = element.from();
+        Vector3f to = element.to();
+        if (!"cube".equals(element.type())
+                || element.faces() == null
+                || from == null
+                || to == null) {
+            return null;
+        }
+
+        Vector3f[] corners = corners(element, from, to);
         applyRotation(element, corners);
 
         Vector3f lfu = corners[0];
@@ -360,12 +384,12 @@ public record ImportedModelData(
         );
         List<Vector3f> normals = normals(positions);
         List<List<Vector2f>> uvs = ObjectList.of(
-                uv(element.faces(), 4, textures),
-                uv(element.faces(), 5, textures),
-                uv(element.faces(), 1, textures),
-                uv(element.faces(), 0, textures),
-                uv(element.faces(), 3, textures),
-                uv(element.faces(), 2, textures)
+                uv(element, 4, textures),
+                uv(element, 5, textures),
+                uv(element, 1, textures),
+                uv(element, 0, textures),
+                uv(element, 3, textures),
+                uv(element, 2, textures)
         );
 
         List<ImportedFaceData> faces = new ArrayList<>();
@@ -376,20 +400,21 @@ public record ImportedModelData(
 
             List<Vector3f> facePositions = positions.get(i).stream().map(Vector3f::new).toList();
             List<Vector2f> faceUvs = uvs.get(i).stream().map(Vector2f::new).toList();
-            faces.add(new ImportedFaceData(facePositions, faceUvs, new Vector3f(normals.get(i)), textureIndex(element.faces(), i), null));
+            faces.add(new ImportedFaceData(facePositions, faceUvs, new Vector3f(normals.get(i)),
+                    resolveTextureIndex(faceAt(element.faces(), i), textures), null));
         }
 
         return faces.isEmpty() ? null : new ImportedCubeData(faces);
     }
 
-    private static Vector3f[] corners(Element element) {
+    private static Vector3f[] corners(Element element, Vector3f from, Vector3f to) {
         final float scalar = 1F / 16F;
-        float maxX = (float) (element.to().x + element.inflate()) * scalar;
-        float maxY = (float) (element.to().y + element.inflate()) * scalar;
-        float maxZ = (float) (element.to().z + element.inflate()) * scalar;
-        float minX = (float) (element.from().x - element.inflate()) * scalar;
-        float minY = (float) (element.from().y - element.inflate()) * scalar;
-        float minZ = (float) (element.from().z - element.inflate()) * scalar;
+        float maxX = (float) (to.x + element.inflate()) * scalar;
+        float maxY = (float) (to.y + element.inflate()) * scalar;
+        float maxZ = (float) (to.z + element.inflate()) * scalar;
+        float minX = (float) (from.x - element.inflate()) * scalar;
+        float minY = (float) (from.y - element.inflate()) * scalar;
+        float minZ = (float) (from.z - element.inflate()) * scalar;
 
         return new Vector3f[]{
                 new Vector3f(minX, maxY, minZ),
@@ -657,8 +682,55 @@ public record ImportedModelData(
     }
 
     @Nullable
-    private static List<Vector2f> uv(Faces faces, int faceIndex, List<Texture> textures) {
-        FaceData faceData = switch (faceIndex) {
+    private static List<Vector2f> uv(Element element, int faceIndex, List<Texture> textures) {
+        FaceData faceData = faceAt(element.faces(), faceIndex);
+        if (faceData == null) {
+            return null;
+        }
+        int textureIndex = resolveTextureIndex(faceData, textures);
+        if (textureIndex < 0 || textureIndex >= textures.size()) {
+            return null;
+        }
+
+        Texture texture = textures.get(textureIndex);
+        float width = texture.uvWidth();
+        float height = texture.uvHeight();
+        if (width == 0 || height == 0) {
+            return null;
+        }
+
+        Vector4f rect = faceData.uv();
+        if (rect == null) {
+            // box_uv cube 可不写每面 uv：按 Blockbench updateUV 的展开表从 uv_offset 推导
+            if (!element.boxUv()) {
+                return null;
+            }
+            Vector3f boxFrom = element.from();
+            Vector3f boxTo = element.to();
+            if (boxFrom == null || boxTo == null) {
+                return null;
+            }
+            rect = expandBoxUv(boxFrom, boxTo, element.uvOffset(), element.mirrorUv(), faceIndex);
+        }
+
+        float u0 = rect.x / width;
+        float v0 = rect.y / height;
+        float u1 = rect.z / width;
+        float v1 = rect.w / height;
+        return rotateUv(ObjectList.of(
+                new Vector2f(u0, v0),
+                new Vector2f(u1, v0),
+                new Vector2f(u1, v1),
+                new Vector2f(u0, v1)
+        ), faceData.rotation());
+    }
+
+    @Nullable
+    private static FaceData faceAt(@Nullable Faces faces, int faceIndex) {
+        if (faces == null) {
+            return null;
+        }
+        return switch (faceIndex) {
             case 0 -> faces.north();
             case 1 -> faces.east();
             case 2 -> faces.south();
@@ -667,30 +739,90 @@ public record ImportedModelData(
             case 5 -> faces.down();
             default -> null;
         };
-        if (faceData == null || faceData.uv() == null) {
-            return null;
+    }
+
+    /** 面的纹理引用：int 索引直接使用；uuid 字符串按 textures 列表 uuid 解析，找不到返回 -1（面丢弃）。 */
+    private static int resolveTextureIndex(@Nullable FaceData faceData, List<Texture> textures) {
+        if (faceData == null) {
+            return -1;
         }
-        if (faceData.texture() < 0 || faceData.texture() >= textures.size()) {
+        if (!faceData.textureUuid().isEmpty()) {
+            for (int i = 0; i < textures.size(); i++) {
+                if (faceData.textureUuid().equals(textures.get(i).uuid())) {
+                    return i;
+                }
+            }
+            return -1;
+        }
+        return faceData.texture();
+    }
+
+    /**
+     * Blockbench box UV 展开表（cube.js updateUV）：texel 空间，相对 uv_offset。
+     * up/down 的 size 为负表示矩形反向；mirror_uv 时各面水平翻转且 east/west 互换。
+     */
+    private static Vector4f expandBoxUv(Vector3f boxFrom, Vector3f boxTo, Vector2f uvOffset, boolean mirrorUv, int faceIndex) {
+        float sx = (float) Math.floor(boxTo.x - boxFrom.x);
+        float sy = (float) Math.floor(boxTo.y - boxFrom.y);
+        float sz = (float) Math.floor(boxTo.z - boxFrom.z);
+
+        // 顺序与 faceIndex 一致：north, east, south, west, up, down
+        float[][] from = {
+                {sz, sz},
+                {0, sz},
+                {sz * 2 + sx, sz},
+                {sz + sx, sz},
+                {sz + sx, sz},
+                {sz * 2 + sx, 0},
+        };
+        float[][] size = {
+                {sx, sy},
+                {sz, sy},
+                {sx, sy},
+                {sz, sy},
+                {-sx, -sz},
+                {-sx, sz},
+        };
+
+        if (mirrorUv) {
+            for (int i = 0; i < from.length; i++) {
+                from[i][0] += size[i][0];
+                size[i][0] *= -1;
+            }
+            swap(from, 1, 3);
+            swap(size, 1, 3);
+        }
+
+        float u = uvOffset.x;
+        float v = uvOffset.y;
+        return new Vector4f(
+                from[faceIndex][0] + u,
+                from[faceIndex][1] + v,
+                from[faceIndex][0] + size[faceIndex][0] + u,
+                from[faceIndex][1] + size[faceIndex][1] + v
+        );
+    }
+
+    private static void swap(float[][] array, int a, int b) {
+        float[] tmp = array[a];
+        array[a] = array[b];
+        array[b] = tmp;
+    }
+
+    /** bbmodel locator / null_object → 定位器数据。恒等导入（不镜像 X），与 bbmodel cube 同空间。 */
+    @Nullable
+    private static ImportedLocatorData importedLocator(Element element) {
+        boolean isNullObject = "null_object".equals(element.type());
+        if (!isNullObject && !"locator".equals(element.type())) {
             return null;
         }
 
-        Texture texture = textures.get(faceData.texture());
-        float width = texture.uvWidth();
-        float height = texture.uvHeight();
-        if (width == 0 || height == 0) {
-            return null;
-        }
-
-        float u0 = faceData.uv().x / width;
-        float v0 = faceData.uv().y / height;
-        float u1 = faceData.uv().z / width;
-        float v1 = faceData.uv().w / height;
-        return rotateUv(ObjectList.of(
-                new Vector2f(u0, v0),
-                new Vector2f(u1, v0),
-                new Vector2f(u1, v1),
-                new Vector2f(u0, v1)
-        ), faceData.rotation());
+        Vector3f position = element.position() != null ? element.position() : element.from();
+        Vector3f offset = position == null ? new Vector3f() : new Vector3f(position).div(16);
+        Vector3f rotation = element.rotation() == null
+                ? new Vector3f()
+                : new Vector3f(element.rotation()).mul(DEGREES_TO_RADIANS);
+        return new ImportedLocatorData(element.name(), offset, rotation, element.ignoreInheritedScale(), isNullObject);
     }
 
     private static List<Vector2f> rotateUv(List<Vector2f> uvs, int degree) {
@@ -700,23 +832,6 @@ public record ImportedModelData(
             case 270 -> List.of(uvs.get(3), uvs.get(0), uvs.get(1), uvs.get(2));
             default -> uvs;
         };
-    }
-
-    private static int textureIndex(Faces faces, int faceIndex) {
-        FaceData faceData = switch (faceIndex) {
-            case 0 -> faces.north();
-            case 1 -> faces.east();
-            case 2 -> faces.south();
-            case 3 -> faces.west();
-            case 4 -> faces.up();
-            case 5 -> faces.down();
-            default -> null;
-        };
-        return faceData == null ? -1 : faceData.texture();
-    }
-
-    private static List<ImportedLocatorData> importedLocators(Outliner entry, Group group) {
-        return List.of();
     }
 
 }

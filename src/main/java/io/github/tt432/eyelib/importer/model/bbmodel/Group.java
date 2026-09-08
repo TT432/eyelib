@@ -1,11 +1,13 @@
 package io.github.tt432.eyelib.importer.model.bbmodel;
 
+import com.google.gson.annotations.SerializedName;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import org.joml.Vector3f;
 
 /** BBModel 分组，定义骨骼的变换和可见性属性。
+ * bedrock 格式分组额外携带 reset 与 bedrock_binding（Blockbench Group 属性，仅 bedrock 格式暴露）。
  * @author TT432 */
 public record Group(
         String name,
@@ -19,7 +21,10 @@ public record Group(
         boolean mirror_uv,
         int color,
         int autouv,
-        boolean shade
+        boolean shade,
+        boolean reset,
+        @SerializedName("bedrock_binding")
+        String bedrockBinding
 ) {
 
     public static final MapCodec<Group> MAP_CODEC = RecordCodecBuilder.mapCodec(ins -> ins.group(
@@ -34,7 +39,9 @@ public record Group(
             Codec.BOOL.fieldOf("mirror_uv").forGetter(Group::mirror_uv),
             Codec.INT.fieldOf("color").forGetter(Group::color),
             Codec.INT.fieldOf("autouv").forGetter(Group::autouv),
-            Codec.BOOL.optionalFieldOf("shade", false).forGetter(Group::shade)
+            Codec.BOOL.optionalFieldOf("shade", false).forGetter(Group::shade),
+            Codec.BOOL.optionalFieldOf("reset", false).forGetter(Group::reset),
+            Codec.STRING.optionalFieldOf("bedrock_binding", "").forGetter(Group::bedrockBinding)
     ).apply(ins, Group::new));
 
     public static final Codec<Group> CODEC = RecordCodecBuilder.create(ins -> ins.group(
@@ -49,6 +56,8 @@ public record Group(
             Codec.BOOL.fieldOf("mirror_uv").forGetter(Group::mirror_uv),
             Codec.INT.fieldOf("color").forGetter(Group::color),
             Codec.INT.fieldOf("autouv").forGetter(Group::autouv),
-            Codec.BOOL.fieldOf("shade").forGetter(Group::shade)
+            Codec.BOOL.fieldOf("shade").forGetter(Group::shade),
+            Codec.BOOL.optionalFieldOf("reset", false).forGetter(Group::reset),
+            Codec.STRING.optionalFieldOf("bedrock_binding", "").forGetter(Group::bedrockBinding)
     ).apply(ins, Group::new));
 }
