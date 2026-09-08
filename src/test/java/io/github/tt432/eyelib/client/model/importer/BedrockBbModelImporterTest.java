@@ -28,6 +28,9 @@ class BedrockBbModelImporterTest {
         Model model = imported.get("geometry.bedrock_minimal");
         assertNotNull(model);
         assertEquals(1, model.allBones().size());
+        // 动画约定契约：播放的剪辑是基岩 .animation.json（geo 空间），
+        // 与模型导入路径无关，bbmodel 导入模型也必须要求 geo 补偿翻转
+        assertTrue(model.flipAnimation(), "bbmodel 导入模型播放基岩剪辑需要 geo 空间补偿翻转");
 
         Model.Bone root = model.allBones().values().iterator().next();
 

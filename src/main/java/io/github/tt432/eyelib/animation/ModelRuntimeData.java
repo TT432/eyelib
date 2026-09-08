@@ -21,10 +21,10 @@ import java.util.Arrays;
 public final class ModelRuntimeData {
     public static final ModelRuntimeData EMPTY = new ModelRuntimeData();
     /**
-     * 动画应用时是否需要按基岩版 geo 约定翻转（rotation ×(-1,-1,1)，position ×(-1,1,1)）。
-     * 基岩版 geo 导入器在导入时镜像了 X（pivot.x *= -1 等），动画翻转是配套的补偿；
-     * bbmodel 导入器做恒等导入（不镜像），因此不需要此翻转。
-     * 默认 true（向后兼容基岩版 geo 模型）。由 {@link BrAnimator} 根据模型约定设置。
+     * 动画应用时是否需要对剪辑做基岩版 geo 空间补偿翻转（rotation ×(-1,-1,1)，position ×(-1,1,1)）。
+     * 补偿针对剪辑存储空间（基岩 .animation.json 经导出边界 X 镜像），与模型导入路径无关；
+     * 播放基岩剪辑的模型一律为 true。
+     * 默认 true。由 {@link BrAnimator} 根据模型约定设置。
      */
     public boolean flipAnimation = true;
 

@@ -74,8 +74,8 @@ final class BrClipExecutor {
                 Vector3f rotation = boneAnim.lerpRotation(scope, animTick, thisRx, thisRy, thisRz);
                 if (rotation != null) {
                     rotation.mul(finalMultiplier).mul(EyeMath.DEGREES_TO_RADIANS);
-                    // 基岩版 geo 导入器在导入时镜像了 X（pivot.x *= -1 等），动画翻转是配套的补偿；
-                    // bbmodel 导入器做恒等导入（不镜像），因此不需要此翻转。
+                    // 基岩版 .animation.json 剪辑存储在 geo 空间（导出边界 X 镜像），
+                    // 应用到显示空间模型需翻转补偿；与模型来自 geo 还是 bbmodel 导入无关。
                     if (infos.flipAnimation) {
                         rotation.mul(-1, -1, 1);
                     }

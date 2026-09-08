@@ -35,10 +35,14 @@ public record ImportedModelData(
         boolean flipAnimation
 ) {
     /**
-     * 动画应用时是否需要按基岩版 geo 约定翻转（rotation ×(-1,-1,1)，position ×(-1,1,1)）。
-     * 基岩版 geo 导入器在导入时镜像了 X（pivot.x *= -1 等），动画翻转是配套的补偿；
-     * bbmodel 导入器做恒等导入（不镜像），因此不需要此翻转。
-     * 默认 true（向后兼容基岩版 geo 模型）。
+     * 动画应用时是否需要对剪辑做基岩版 geo 空间补偿翻转（rotation ×(-1,-1,1)，position ×(-1,1,1)）。
+     * 该补偿针对的是【动画剪辑的存储空间】：本库只加载基岩版 .animation.json，其数值在
+     * Blockbench 导出边界经过 X 镜像（geo 空间），而 geo/bbmodel 两条导入路径产出的模型
+     * 都在显示空间，因此播放基岩剪辑一律需要 true——与模型来自哪条导入路径无关。
+     * （960a4b81 曾按"bbmodel 恒等导入故不需翻转"传 false，实测非对称动画整体反向；
+     * 该结论当时的验证因 4de3331d 修复前合并路径丢失标记、实际仍按 true 运行而误判通过。）
+     * false 仅为未来恒等空间来源的动画（如 bbmodel 内嵌动画）保留。
+     * 默认 true。
      */
     public ImportedModelData {
     }
@@ -78,8 +82,8 @@ public record ImportedModelData(
             bones.add(syntheticRoot);
         }
 
-        // bbmodel 导入器恒等导入（不镜像 X），动画不需要翻转补偿
-        return new ImportedModelData(source.modelIdentifier(), VisibleBox.fromBlockbenchDimensions(source.visibleBox()), importedTextures(source.textures()), bones, false);
+        // 与模型导入路径无关：播放的剪辑是基岩 .animation.json（geo 空间），需要翻转补偿
+        return new ImportedModelData(source.modelIdentifier(), VisibleBox.fromBlockbenchDimensions(source.visibleBox()), importedTextures(source.textures()), bones, true);
     }
 
     @Nullable

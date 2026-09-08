@@ -32,7 +32,7 @@ public final class BrAnimator {
     }
 
     /**
-     * @param flipAnimation 是否需要按基岩版 geo 约定翻转动画（bbmodel 恒等导入的模型传 false）
+     * @param flipAnimation 是否需要对剪辑做基岩版 geo 空间补偿翻转（基岩 .animation.json 剪辑恒为 true，与模型导入路径无关）
      */
     public static ModelRuntimeData tickAnimation(AnimationComponent component, MolangScope scope, AnimationEffects effects,
                                                  float ticks, Runnable animationStartFeedback,

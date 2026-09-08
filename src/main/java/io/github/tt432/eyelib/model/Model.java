@@ -37,8 +37,8 @@ public interface Model {
     }
     /**
      * 创建模型并指定动画约定。
-     * bbmodel 导入的模型应传 {@code flipAnimation = false}（恒等导入，不需要动画翻转补偿）；
-     * 基岩版 geo 导入的模型保持默认 {@code true}（镜像导入，需要翻转补偿）。
+     * {@code flipAnimation} 标记播放的动画剪辑是否需要 geo 空间补偿翻转；
+     * 本库剪辑均为基岩版 .animation.json（geo 空间），geo/bbmodel 来源的模型都应保持默认 {@code true}。
      */
     static Model of(String name, Int2ObjectMap<Bone> allBones, ModelLocator locator, VisibleBox visibleBox, boolean flipAnimation) {
         return SimpleModel.of(name, allBones, locator, visibleBox, flipAnimation);
@@ -74,10 +74,10 @@ public interface Model {
 
     VisibleBox visibleBox();
     /**
-     * 动画应用时是否需要按基岩版 geo 约定翻转（rotation ×(-1,-1,1)，position ×(-1,1,1)）。
-     * 基岩版 geo 导入器在导入时镜像了 X（pivot.x *= -1 等），动画翻转是配套的补偿；
-     * bbmodel 导入器做恒等导入（不镜像），因此不需要此翻转。
-     * 默认 true（向后兼容基岩版 geo 模型）。
+     * 动画应用时是否需要对剪辑做基岩版 geo 空间补偿翻转（rotation ×(-1,-1,1)，position ×(-1,1,1)）。
+     * 补偿针对剪辑的存储空间而非模型导入路径：基岩版 .animation.json 数值在导出边界经 X 镜像，
+     * 两条模型导入路径产出的模型都在显示空间，播放基岩剪辑一律需要 true。
+     * 默认 true。
      */
     default boolean flipAnimation() {
         return true;
