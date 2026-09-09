@@ -45,6 +45,21 @@ public interface ModelBakePort {
         return TwoSideModelBakeInfo.INSTANCE.getBakedModel(model, isSolid, texture, meshTexture);
     }
 
+    /** 只读探测烘焙缓存（不触发计算）；未命中返回 null。供「未烘焙即跳过本帧」的渲染路径使用。 */
+    static BakedModel twoSidePeekBakedModel(Model model, boolean isSolid, ResourceLocation texture, ResourceLocation meshTexture) {
+        return TwoSideModelBakeInfo.INSTANCE.peekBakedModel(model, isSolid, texture, meshTexture);
+    }
+
+    /** 后台线程异步预热烘焙缓存（不触碰 GL）；已在飞行中的同组合请求自动去重。 */
+    static void twoSideWarmAsync(Model model, ResourceLocation texture, ResourceLocation meshTexture) {
+        TwoSideModelBakeInfo.INSTANCE.warmBakedModelAsync(model, texture, meshTexture);
+    }
+
+    /** 指定组合的异步预热是否已失败（CPU 纹理源缺失），失败时调用方应回退同步烘焙。 */
+    static boolean twoSideWarmFailed(Model model, ResourceLocation texture, ResourceLocation meshTexture) {
+        return TwoSideModelBakeInfo.INSTANCE.isWarmFailed(model, texture, meshTexture);
+    }
+
     /** GUI 预览绘制（blaze3d 访问集中在 bridge；Tesselator + position_tex 即时绘制）。 */
     static void twoSideDrawGuiPreview(BakedModel baked, org.joml.Matrix4f pose, ResourceLocation texture) {
         TwoSideModelBakeInfo.INSTANCE.drawGuiPreview(baked, pose, texture);
@@ -61,6 +76,21 @@ public interface ModelBakePort {
 
     static BakedModel twoSideGetBakedModel(Model model, boolean isSolid, Identifier texture, Identifier meshTexture) {
         return TwoSideModelBakeInfo.INSTANCE.getBakedModel(model, isSolid, texture, meshTexture);
+    }
+
+    /** 只读探测烘焙缓存（不触发计算）；未命中返回 null。供「未烘焙即跳过本帧」的渲染路径使用。 */
+    static BakedModel twoSidePeekBakedModel(Model model, boolean isSolid, Identifier texture, Identifier meshTexture) {
+        return TwoSideModelBakeInfo.INSTANCE.peekBakedModel(model, isSolid, texture, meshTexture);
+    }
+
+    /** 后台线程异步预热烘焙缓存（不触碰 GL）；已在飞行中的同组合请求自动去重。 */
+    static void twoSideWarmAsync(Model model, Identifier texture, Identifier meshTexture) {
+        TwoSideModelBakeInfo.INSTANCE.warmBakedModelAsync(model, texture, meshTexture);
+    }
+
+    /** 指定组合的异步预热是否已失败（CPU 纹理源缺失），失败时调用方应回退同步烘焙。 */
+    static boolean twoSideWarmFailed(Model model, Identifier texture, Identifier meshTexture) {
+        return TwoSideModelBakeInfo.INSTANCE.isWarmFailed(model, texture, meshTexture);
     }
     //?}
 }

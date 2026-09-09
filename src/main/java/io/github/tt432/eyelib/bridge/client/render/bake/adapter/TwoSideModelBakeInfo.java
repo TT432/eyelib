@@ -28,11 +28,11 @@ public class TwoSideModelBakeInfo extends ModelBakeInfo<TwoSideModelBakeInfo.Two
     public static final TwoSideModelBakeInfo INSTANCE = new TwoSideModelBakeInfo();
 
     //? if <26.1 {
-    private final Map<String, Map<String, TwoSideInfoMap>> cache = new HashMap<>();
-    private final Map<String, Map<String, BakedModel>> bakedCache = new HashMap<>();
+    private final Map<String, Map<String, TwoSideInfoMap>> cache = new java.util.concurrent.ConcurrentHashMap<>();
+    private final Map<String, Map<String, BakedModel>> bakedCache = new java.util.concurrent.ConcurrentHashMap<>();
     //?} else {
-    private final Map<String, Map<String, TwoSideInfoMap>> cache = new HashMap<>();
-    private final Map<String, Map<String, BakedModel>> bakedCache = new HashMap<>();
+    private final Map<String, Map<String, TwoSideInfoMap>> cache = new java.util.concurrent.ConcurrentHashMap<>();
+    private final Map<String, Map<String, BakedModel>> bakedCache = new java.util.concurrent.ConcurrentHashMap<>();
     //?}
 
     @Override
@@ -40,6 +40,7 @@ public class TwoSideModelBakeInfo extends ModelBakeInfo<TwoSideModelBakeInfo.Two
         super.invalidateModel(modelName);
         cache.remove(modelName);
         bakedCache.remove(modelName);
+        WARM_FAILED.removeIf(key -> key.startsWith(modelName + "|"));
     }
 
     @Override
@@ -47,6 +48,7 @@ public class TwoSideModelBakeInfo extends ModelBakeInfo<TwoSideModelBakeInfo.Two
         super.invalidateAll();
         cache.clear();
         bakedCache.clear();
+        WARM_FAILED.clear();
     }
 
     @Override
@@ -67,12 +69,14 @@ public class TwoSideModelBakeInfo extends ModelBakeInfo<TwoSideModelBakeInfo.Two
     //?} else {
     public TwoSideInfoMap getBakeInfo(Model model, boolean isSolid, Identifier texture, Identifier meshTexture) {
     //?}
-        return cache.computeIfAbsent(model.name(), ___ -> new HashMap<>())
-                    .computeIfAbsent(texture + "|" + meshTexture, __ -> {
+                return cache.computeIfAbsent(model.name(), ___ -> new java.util.concurrent.ConcurrentHashMap<>())
+                    .computeIfAbsent(isSolid + "|" + texture + "|" + meshTexture, __ -> {
                         Int2ObjectMap<TwoSideInfo> builder = new Int2ObjectOpenHashMap<>();
                         var imageRef = new java.util.concurrent.atomic.AtomicReference<TexImage>();
 
+                        var obtained = new java.util.concurrent.atomic.AtomicBoolean(false);
                         downloadTexture(texture, nativeimage -> {
+                            obtained.set(true);
                             if (meshTexture.equals(texture)) {
                                 imageRef.set(TexImage.copy(nativeimage));
                             }
@@ -90,18 +94,85 @@ public class TwoSideModelBakeInfo extends ModelBakeInfo<TwoSideModelBakeInfo.Two
                             downloadTexture(meshTexture, nativeimage -> imageRef.set(TexImage.copy(nativeimage)));
                         }
 
+                        // 后台线程拿不到纹理像素时禁止写入空结果污染缓存：
+                        // 抛出让 computeIfAbsent 放弃本次写入，调用方（预热任务）标记失败后由渲染线程同步兜底。
+                        if (!obtained.get() && !net.minecraft.client.Minecraft.getInstance().isSameThread()) {
+                            throw new IllegalStateException("texture pixels unavailable off render thread: " + texture);
+                        }
+
                         return new TwoSideInfoMap(builder, imageRef.get());
                     });
-    }
+            }
 
     //? if <26.1 {
     public BakedModel getBakedModel(Model model, boolean isSolid, ResourceLocation texture, ResourceLocation meshTexture) {
     //?} else {
     public BakedModel getBakedModel(Model model, boolean isSolid, Identifier texture, Identifier meshTexture) {
     //?}
-        return bakedCache.computeIfAbsent(model.name(), ___ -> new HashMap<>())
-                         .computeIfAbsent(texture + "|" + meshTexture,
+        return bakedCache.computeIfAbsent(model.name(), ___ -> new java.util.concurrent.ConcurrentHashMap<>())
+                         .computeIfAbsent(isSolid + "|" + texture + "|" + meshTexture,
                                           __ -> bake(model, getBakeInfo(model, isSolid, texture, meshTexture)));
+    }
+
+
+    /**
+     * 只读探测烘焙缓存（不触发计算）。供渲染路径在「未烘焙即跳过本帧」策略下查询。
+     */
+    //? if <26.1 {
+    public @org.jspecify.annotations.Nullable BakedModel peekBakedModel(Model model, boolean isSolid, ResourceLocation texture, ResourceLocation meshTexture) {
+    //?} else {
+    public @org.jspecify.annotations.Nullable BakedModel peekBakedModel(Model model, boolean isSolid, Identifier texture, Identifier meshTexture) {
+    //?}
+        var byTexture = bakedCache.get(model.name());
+        return byTexture == null ? null : byTexture.get(isSolid + "|" + texture + "|" + meshTexture);
+    }
+
+    /** 预热去重：model|texture|mesh 三元组在飞行中只提交一次。 */
+    private static final java.util.Set<String> WARM_INFLIGHT = java.util.concurrent.ConcurrentHashMap.newKeySet();
+    /** 预热失败（CPU 纹理源缺失）的三元组：渲染路径据此回退同步烘焙（原行为）。 */
+    private static final java.util.Set<String> WARM_FAILED = java.util.concurrent.ConcurrentHashMap.newKeySet();
+
+    private static final java.util.concurrent.ExecutorService WARM_POOL = java.util.concurrent.Executors.newFixedThreadPool(
+            Math.max(1, Math.min(2, Runtime.getRuntime().availableProcessors() / 4)), r -> {
+                Thread t = new Thread(r, "eyelib-bake-warmer");
+                t.setDaemon(true);
+                return t;
+            });
+
+    /**
+     * 后台线程异步预热烘焙缓存（两种 isSolid 变体都烘，与渲染路径的缓存键一一对应）。
+     * 烘焙的纹理像素读取走 CPU 路径（addon 内存纹理 / 资源包文件），不触碰 GL；
+     * CPU 源缺失时后台线程直接放弃，由渲染线程同步兜底（见 ModelBakeInfo.downloadTexture）。
+     */
+    //? if <26.1 {
+    public void warmBakedModelAsync(Model model, ResourceLocation texture, ResourceLocation meshTexture) {
+    //?} else {
+    public void warmBakedModelAsync(Model model, Identifier texture, Identifier meshTexture) {
+    //?}
+        String key = model.name() + "|" + texture + "|" + meshTexture;
+        if (!WARM_INFLIGHT.add(key)) {
+            return;
+        }
+        WARM_POOL.execute(() -> {
+            try {
+                getBakedModel(model, false, texture, meshTexture);
+                getBakedModel(model, true, texture, meshTexture);
+            } catch (Exception e) {
+                WARM_FAILED.add(key);
+                org.slf4j.LoggerFactory.getLogger(TwoSideModelBakeInfo.class)
+                                       .info("异步预热烘焙未完成（回退渲染线程同步烘焙）: {}: {}", key, e.toString());
+            } finally {
+                WARM_INFLIGHT.remove(key);
+            }
+        });
+    }
+    /** 指定组合的异步预热是否已失败（渲染路径据此回退同步烘焙）。 */
+    //? if <26.1 {
+    public boolean isWarmFailed(Model model, ResourceLocation texture, ResourceLocation meshTexture) {
+    //?} else {
+    public boolean isWarmFailed(Model model, Identifier texture, Identifier meshTexture) {
+    //?}
+        return WARM_FAILED.contains(model.name() + "|" + texture + "|" + meshTexture);
     }
 
     @Override

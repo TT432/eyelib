@@ -472,6 +472,22 @@ public final class EntityRenderOrchestrator {
                                                                            // consumer 由 RenderSink 在回调中提供（立即: bufferSource.getBuffer; 延迟: submitCustomGeometry 回调）。
                                                                            RenderOutput output = resolveOutput(data, modelComponent);
                                                                            ModelRuntimeData finalTickedInfos = tickedInfos;
+
+                                                                           // skipIfUnbaked（特效等瞬发内容）：模型烘焙未就绪时跳过本帧绘制并提交
+                                                                           // 后台预热，消除渲染线程上的首烘尖刺（实测单帧 40-80ms）；
+                                                                           // 预热失败（CPU 纹理源缺失）时放行原同步烘焙路径。
+                                                                           if (output != null && data.skipIfUnbaked()) {
+                                                                               var warmMesh = modelComponent.getMeshTexture() != null
+                                                                                       ? modelComponent.getMeshTexture() : output.texture();
+                                                                               var mcTexture = io.github.tt432.eyelib.bridge.material.ResourceLocationBridge.toMc(output.texture());
+                                                                               var mcMesh = io.github.tt432.eyelib.bridge.material.ResourceLocationBridge.toMc(warmMesh);
+                                                                               if (io.github.tt432.eyelib.bridge.client.render.bake.ModelBakePort.twoSidePeekBakedModel(model, output.isSolid(), mcTexture, mcMesh) == null
+                                                                                       && !io.github.tt432.eyelib.bridge.client.render.bake.ModelBakePort.twoSideWarmFailed(model, mcTexture, mcMesh)) {
+                                                                                   io.github.tt432.eyelib.bridge.client.render.bake.ModelBakePort.twoSideWarmAsync(model, mcTexture, mcMesh);
+                                                                                   poseStack.popPose();
+                                                                                   return 0;
+                                                                               }
+                                                                           }
                                                                            if (output != null) {
                                                                                data.sink().submit(output.renderPass(), output.texture(), poseStack, (pose, consumer, skinning) -> {
                                                                                    // 用 sink 捕获的 pose 快照重建 PoseStack：延迟实现(>=26.1)的回调在 renderAllFeatures

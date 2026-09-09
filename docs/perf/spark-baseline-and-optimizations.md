@@ -280,6 +280,17 @@
 - **验证**:三版本编译绿 + 1.20.1/1.21.1 全量单测绿；运行时探针：世界载入 111 次、蜘蛛生成 +57 次、夜晚合批场景累计 317 次派生全部命中快路径（零 GPU 读回）；**像素级等价**：已注册 clamped 纹理 == 基图 CPU 像素现算 clampAlphaToBinary，逐像素 diff=0；截图正确（史莱姆半透明层次昼/夜正确）。
 - **基准**:稳态 FPS 无可测变化（派生非逐帧成本）——本项消除的是重载/首渲染时的偶发停顿，不做 throughput 基准。
 
+### Opt20 · 特效首烘离线程化：烘焙异步预热 + 未烘跳过本帧（2026-09-09）
+
+- **症状**（motions4 线上，spark `tpgMEnYqnj`）：玩家身上已有特效时再生成新特效，概率性卡顿。聚合 profile 看不到尖刺——实测复现（dev 客户端埋点）：特效首个渲染帧在渲染线程同步执行模型烘焙，单帧 40-80ms（jineng1_texiao 实测 80ms），其中 `ModelBakeInfo.downloadTexture` 的 `glGetTexImage` 同步读回独占 35-45ms（GPU 管线停顿），另含贴图 PNG 解码与逐像素双面判定。是否卡顿取决于该 (model, texture, meshTexture) 组合本会话是否已烘焙——缓存全局共享，故表现为"概率"。
+- **文件**:`bridge/client/render/bake/ModelBakeInfo.java`（downloadTexture CPU 优先重写 + modelCache 改 CHM）、`bridge/client/render/bake/adapter/TwoSideModelBakeInfo.java`（缓存 CHM + 缓存键补 isSolid + peekBakedModel/warmBakedModelAsync/isWarmFailed + 后台线程禁写空缓存守卫）、`bridge/client/render/bake/ModelBakePort.java`（twoSidePeekBakedModel/twoSideWarmAsync/twoSideWarmFailed 端口）、`client/render/SimpleRenderAction.java`（skipIfUnbaked 标志）、`client/render/EntityRenderOrchestrator.java`（renderComponents 门控）。调用侧：motions4mod `JewelryComponent.replaceOrAddEffect`（入图即预热）+ `LayerRenderer.renderEffects`（skipIfUnbaked）。
+- **方案**:
+  1. downloadTexture（<26.1）改 CPU 优先：addon 内存纹理（AddonTextureRegistry）→ JE 资源包文件 `NativeImage.read`（STB，比 ImageIO 逐像素快约 4×）→ 渲染线程才回退 DynamicTexture 像素（C6'）/GPU 读回；后台线程在 CPU 源缺失时直接放弃，不触碰 TextureManager/GL。
+  2. 烘焙缓存键补 isSolid（原键忽略 isSolid，预热与渲染会变体错位——先烘者赢，可能缓存错误双面判定）。
+  3. 特效渲染路径（skipIfUnbaked=true）：烘焙未就绪 → 提交后台预热 + 跳过本帧绘制（代价：特效晚出现 1-3 帧）；预热失败（仅 DynamicTexture 派生纹理如 _color_mask 会失败）→ 回退原同步烘焙，不劣化。后台线程拿不到像素时抛异常放弃缓存写入，避免空烘焙结果毒化缓存（否则该组合永久不可见）。
+- **验证**:dev 客户端 A/B（cike.jineng1/jineng2/jineng3/putonggongji1_texiao 冷组合）：修复前首个特效帧 80ms+次帧 43ms；修复后生成时刻渲染线程零尖刺（全部低于 8ms 埋点阈值），烘焙在 eyelib-bake-warmer 线程完成（26-43ms）。手动预热后加特效零尖刺证明烘焙是唯一决定性成本。门控热路径等价性：skipIfUnbaked 下 renderComponents 提交与原路径相同的 RenderType/纹理缓冲（计数 MultiBufferSource 实证 ok=true）。视觉：dev 单人环境该类战斗特效本来就不可见（修复前后 A/B 截图一致，与动画骨骼关键帧/宿主模型替换有关），非本修复回归。
+- **残余**:特效动画时间线上的粒子关键帧首次生成仍有 17-35ms 单帧成本（贴图首次 GL 绑定 + 粒子/molang 首次求值），与生成时刻无关，未处理。
+
 ## 已排除项
 
 ## 已排除项

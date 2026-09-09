@@ -1,6 +1,7 @@
 package io.github.tt432.eyelib.bridge.client.render.bake;
 
 import com.mojang.blaze3d.platform.NativeImage;
+import io.github.tt432.eyelib.bridge.client.render.texture.adapter.NativeImageIO;
 import io.github.tt432.eyelib.model.Model;
 import it.unimi.dsi.fastutil.ints.Int2BooleanFunction;
 import net.minecraft.client.Minecraft;
@@ -9,20 +10,18 @@ import net.minecraft.resources.ResourceLocation;
 //?} else {
 import net.minecraft.resources.Identifier;
 //?}
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
-
-import static org.lwjgl.opengl.GL11.*;
 
 /**
  * @author TT432
  */
 public abstract class ModelBakeInfo<Info, BM> {
     //? if <26.1 {
-    private final Map<String, HashMap<ResourceLocation, BM>> modelCache = new HashMap<>();
+    private final Map<String, Map<ResourceLocation, BM>> modelCache = new ConcurrentHashMap<>();
     //?} else {
-    private final Map<String, HashMap<Identifier, BM>> modelCache = new HashMap<>();
+    private final Map<String, Map<Identifier, BM>> modelCache = new ConcurrentHashMap<>();
     //?}
 
     //? if <26.1 {
@@ -30,7 +29,7 @@ public abstract class ModelBakeInfo<Info, BM> {
     //?} else {
     public BM getBakedModel(Model model, boolean isSolid, Identifier texture) {
     //?}
-        return modelCache.computeIfAbsent(model.name(), s -> new HashMap<>())
+        return modelCache.computeIfAbsent(model.name(), s -> new ConcurrentHashMap<>())
                          .computeIfAbsent(texture, i -> {
                              Info bakeInfo = getBakeInfo(model, isSolid, texture);
                              return bake(model, bakeInfo);
@@ -65,20 +64,36 @@ public abstract class ModelBakeInfo<Info, BM> {
     protected void downloadTexture(Identifier texture, Consumer<NativeImage> imageConsumer) {
     //?}
         //? if <26.1 {
-        Minecraft.getInstance().getTextureManager().getTexture(texture).bind();
-
-        int[] width = new int[1];
-        int[] height = new int[1];
-        glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, width);
-        glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, height);
-
-        if (width[0] != 0 && height[0] != 0) {
-            try (NativeImage nativeimage = new NativeImage(width[0], height[0], false)) {
-                nativeimage.downloadTexture(0, false);
-
-                imageConsumer.accept(nativeimage);
+        // CPU 优先（后台线程安全），把烘焙从渲染线程/GPU 管线上移走（实测 GPU 读回单次 35-45ms）：
+        // 1) Bedrock addon 内存纹理（与 TextureManagerMixin 同数据源，无命名空间路径）
+        var addonData = io.github.tt432.eyelib.importer.model.importer.AddonTextureRegistry.get(texture.getPath());
+        if (addonData != null) {
+            try (NativeImage image = NativeImageIO.fromImportedImageData(addonData)) {
+                imageConsumer.accept(image);
             }
+            return;
         }
+        // 2) JE 资源包文件读流解码（MultiPackResourceManager 读路径可被工作线程并发使用）
+        try {
+            var resource = Minecraft.getInstance().getResourceManager().getResource(texture).orElse(null);
+            if (resource != null) {
+                try (var is = resource.open();
+                     NativeImage image = NativeImage.read(is)) {
+                    imageConsumer.accept(image);
+                }
+                return;
+            }
+        } catch (Exception ignored) {
+        }
+        // 后台线程不得触碰 TextureManager/GL：留给渲染线程同步兜底（未预热的冷路径）
+        if (!Minecraft.getInstance().isSameThread()) {
+            return;
+        }
+        // 3) 渲染线程兜底：DynamicTexture CPU 常驻像素优先（C6'），否则 GPU 读回（原行为）
+        NativeImageIO.download(texture, image -> {
+            imageConsumer.accept(image);
+            return null;
+        });
         //?} else {
         try {
             var resource = Minecraft.getInstance().getResourceManager().getResource(texture).orElse(null);

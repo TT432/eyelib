@@ -30,7 +30,8 @@ public record SimpleRenderAction<T>(
         boolean applyEntityPose,
         @Nullable ModelRuntimeData tickedInfos,
         @Nullable AnimationEffects effects,
-        Builder.ExtraRender<T> extraRender
+        Builder.ExtraRender<T> extraRender,
+        boolean skipIfUnbaked
 ) {
     public static <T> Builder<T> builder(MultiBufferSource multiBufferSource, RenderSink sink, PoseStack poseStack, RenderData<T> renderData, float partialTick) {
         return new Builder<>(multiBufferSource, sink, poseStack, renderData, partialTick);
@@ -59,6 +60,8 @@ public record SimpleRenderAction<T>(
         @Nullable AnimationEffects effects = new AnimationEffects();
         ExtraRender<T> extraRender = (context, action) -> {
         };
+        /** 见 {@link #skipIfUnbaked(boolean)}。 */
+        boolean skipIfUnbaked = false;
 
         public Builder(MultiBufferSource multiBufferSource, RenderSink sink, PoseStack poseStack, RenderData<T> renderData, float partialTick) {
             this.multiBufferSource = multiBufferSource;
@@ -76,6 +79,15 @@ public record SimpleRenderAction<T>(
         /** 控制是否追加宿主幼体缩放与身体旋转；客户端实体脚本缩放始终保留。 */
         public Builder<T> applyEntityPose(boolean applyEntityPose) {
             this.applyEntityPose = applyEntityPose;
+            return this;
+        }
+        /**
+         * 未烘焙即跳过本帧绘制并提交后台预热（特效等瞬发内容专用）：
+         * 首次渲染不在渲染线程做模型烘焙（GPU 读回/贴图解码实测单帧 40-80ms），
+         * 代价是特效出现延迟 1-3 帧。预热失败（CPU 纹理源缺失）时回退同步烘焙（原行为）。
+         */
+        public Builder<T> skipIfUnbaked(boolean skipIfUnbaked) {
+            this.skipIfUnbaked = skipIfUnbaked;
             return this;
         }
 
@@ -109,7 +121,7 @@ public record SimpleRenderAction<T>(
         }
 
         public SimpleRenderAction<T> build() {
-            return new SimpleRenderAction<>(multiBufferSource, sink, poseStack, renderData, partialTick, light, overlay, entity, applyEntityPose, tickedInfos, effects, extraRender);
+            return new SimpleRenderAction<>(multiBufferSource, sink, poseStack, renderData, partialTick, light, overlay, entity, applyEntityPose, tickedInfos, effects, extraRender, skipIfUnbaked);
         }
     }
 }
