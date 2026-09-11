@@ -27,6 +27,8 @@ public final class AnimationAssetRegistry {
      */
     private static final Map<Object, Map<?, BrAnimation>> STAGED_ANIMATIONS = new LinkedHashMap<>();
     private static final Map<Object, Map<?, BrAnimationControllers>> STAGED_CONTROLLERS = new LinkedHashMap<>();
+    /** 低优先级动画来源：合并先于默认来源，同名 id 被默认来源覆盖（bbmodel 内嵌动画是默认实现，bedrock json 可覆盖）。 */
+    private static final Map<Object, Map<?, BrAnimation>> STAGED_ANIMATIONS_LOW_PRIORITY = new LinkedHashMap<>();
     /** 原始 schema 暂存（BedrockAddonRuntimeBridge 随运行时暂存一并替换）：
      * 供节点图导入的变量引用提取（read:/write: 命名端口快照）重编码为 JSON 文档。 */
     private static Map<String, BrAnimationEntrySchema> stagedAnimationSchemas = Map.of();
@@ -36,6 +38,12 @@ public final class AnimationAssetRegistry {
     public static void stageAnimations(Object sourceKey, Map<?, BrAnimation> animations) {
         STAGED_ANIMATIONS.remove(sourceKey);
         STAGED_ANIMATIONS.put(sourceKey, animations);
+        flushToManager();
+    }
+    /** 替换该来源的低优先级动画贡献并 flush（空映射 = 卸载该来源）。 */
+    public static void stageAnimationsLowPriority(Object sourceKey, Map<?, BrAnimation> animations) {
+        STAGED_ANIMATIONS_LOW_PRIORITY.remove(sourceKey);
+        STAGED_ANIMATIONS_LOW_PRIORITY.put(sourceKey, animations);
         flushToManager();
     }
 
@@ -73,6 +81,11 @@ public final class AnimationAssetRegistry {
 
     private static void flushToManager() {
         LinkedHashMap<String, Animation> flattened = new LinkedHashMap<>();
+        for (Map<?, BrAnimation> byLocation : STAGED_ANIMATIONS_LOW_PRIORITY.values()) {
+            for (BrAnimation value : byLocation.values()) {
+                value.animations().forEach(flattened::put);
+            }
+        }
         for (Map<?, BrAnimation> byLocation : STAGED_ANIMATIONS.values()) {
             for (BrAnimation value : byLocation.values()) {
                 value.animations().forEach(flattened::put);
@@ -88,6 +101,7 @@ public final class AnimationAssetRegistry {
 
     /** 测试钩子：清空全部来源槽位与运行时注册表。 */
     public static void resetStaging() {
+        STAGED_ANIMATIONS_LOW_PRIORITY.clear();
         STAGED_ANIMATIONS.clear();
         STAGED_CONTROLLERS.clear();
         AnimationRegistries.animation().replaceAll(Map.of());

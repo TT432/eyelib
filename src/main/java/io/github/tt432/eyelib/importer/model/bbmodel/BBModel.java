@@ -21,7 +21,8 @@ public record BBModel(
         List<Element> elements,
         List<Outliner.CubeOrOutliner> outliner,
         List<Texture> textures,
-        List<Group> groups
+        List<Group> groups,
+        List<BbModelAnimation> animations
 ) {
     private static final Codec<Outliner.CubeOrOutliner> ROOT_OUTLINER_CODEC = Codec.either(
             Outliner.CODEC,
@@ -45,10 +46,11 @@ public record BBModel(
             Element.CODEC.listOf().fieldOf("elements").forGetter(BBModel::elements),
             ROOT_OUTLINER_CODEC.listOf().fieldOf("outliner").forGetter(BBModel::outliner),
             Texture.CODEC.listOf().fieldOf("textures").forGetter(BBModel::textures),
-            Group.CODEC.listOf().optionalFieldOf("groups", List.of()).forGetter(BBModel::groups)
-    ).apply(ins, (meta, name, modelIdentifier, visibleBox, resolution, elements, outliner, textures, groups) ->
+            Group.CODEC.listOf().optionalFieldOf("groups", List.of()).forGetter(BBModel::groups),
+            BbModelAnimation.CODEC.listOf().optionalFieldOf("animations", List.of()).forGetter(BBModel::animations)
+    ).apply(ins, (meta, name, modelIdentifier, visibleBox, resolution, elements, outliner, textures, groups, animations) ->
             new BBModel(meta, name, modelIdentifier, visibleBox, resolution, elements, outliner,
-                    normalizeTextureUvSize(textures, resolution), groups)));
+                    normalizeTextureUvSize(textures, resolution), groups, animations)));
 
     /**
      * 对齐 Blockbench 语义：texture 未显式写 uv_width/uv_height 时，UV 空间回落到项目 resolution
