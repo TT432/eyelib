@@ -51,7 +51,7 @@ class BbModelAnimationsTest {
     }
 
     @Test
-    void convertsCoordinateConventionAndLoopType() {
+    void passesThroughValuesAndMapsLoopType() {
         BBModel model = parseModel("""
                 [
                   {
@@ -90,17 +90,15 @@ class BbModelAnimationsTest {
         assertEquals("query.anim_time + query.delta_time", entry.animTimeUpdate().toString());
 
         BrBoneAnimationSchema arm = entry.bones().get("arm");
-        // position：仅 x 取反
-        assertEquals(-1.0F, constantValue(arm, "position", 0F, 0));
+        // 全通道原样透传：UI 空间→显示空间的取反由渲染期 flipAnimation 补偿完成
+        assertEquals(1.0F, constantValue(arm, "position", 0F, 0));
         assertEquals(2.0F, constantValue(arm, "position", 0F, 1));
         assertEquals(3.0F, constantValue(arm, "position", 0F, 2));
-        // rotation：x/y 取反
-        assertEquals(-10.0F, constantValue(arm, "rotation", 0F, 0));
-        assertEquals(-20.0F, constantValue(arm, "rotation", 0F, 1));
+        assertEquals(10.0F, constantValue(arm, "rotation", 0F, 0));
+        assertEquals(20.0F, constantValue(arm, "rotation", 0F, 1));
         assertEquals(30.0F, constantValue(arm, "rotation", 0F, 2));
-        // scale：不取反
         assertEquals(4.0F, constantValue(arm, "scale", 0F, 0));
-        // molang 表达式在取反通道也原样透传
+        // molang 表达式原样透传
         assertEquals("query.move", arm.position().get(0.5F).dataPoints().get(0).x().toString());
     }
 

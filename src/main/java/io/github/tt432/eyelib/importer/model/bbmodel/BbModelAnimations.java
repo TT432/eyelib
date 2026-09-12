@@ -15,9 +15,12 @@ import java.util.Map;
 import java.util.TreeMap;
 
 /**
- * bbmodel 内嵌动画 → bedrock 动画 schema 转换。
- * 坐标约定：Blockbench 编辑器空间转 bedrock 实体空间——position 取反 x、rotation 取反 x/y、
- * scale 不变；只有编译期常量参与取反，molang 表达式原样透传。
+ * bbmodel 内嵌动画 → bedrock 动画 schema 结构转换。
+ * 坐标约定：bbmodel 动画值（UI 空间）原样透传，不做任何取反——Blockbench 显示姿态
+ * 本身就是对 UI 值做 position (-x,y,z)、rotation (-x,-y,z)（实测 mesh 矩阵验证），
+ * 与 {@code BrClipExecutor} 的 geo 空间补偿翻转（flipAnimation）正好同构，
+ * 渲染期补偿一次即得编辑器姿态；转换期再取反会双重翻转导致姿态镜像。
+ * molang 表达式原样透传。
  *
  * @author TT432
  */
@@ -104,16 +107,13 @@ public final class BbModelAnimations {
     }
 
     private static MolangValue3 convertPoint(BbModelAnimation.DataPoint point, String channel) {
-        boolean negateX = channel.equals("position") || channel.equals("rotation");
-        boolean negateY = channel.equals("rotation");
-        return new MolangValue3(axis(point.x(), negateX), axis(point.y(), negateY), axis(point.z(), false));
+        return new MolangValue3(axis(point.x()), axis(point.y()), axis(point.z()));
     }
 
-    /** 数值（含数字字符串）取反后取常量；其余按 molang 表达式编译透传。 */
-    private static MolangValue axis(String raw, boolean negate) {
+    /** 数值（含数字字符串）取常量；其余按 molang 表达式编译透传。 */
+    private static MolangValue axis(String raw) {
         try {
-            float value = Float.parseFloat(raw);
-            return MolangValue.getConstant(negate ? -value : value);
+            return MolangValue.getConstant(Float.parseFloat(raw));
         } catch (NumberFormatException ignored) {
             return new MolangValue(raw);
         }
