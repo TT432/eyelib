@@ -444,6 +444,10 @@ dependencies {
         localRuntime "com.lowdragmc.ldlib2:ldlib2-neoforge-26.1:26.1.2.33"
         // 编辑器适配层单测（EvmGraphTranslatorTest）需要 LDLib2 在 test 运行时 classpath。
         testRuntimeOnly "com.lowdragmc.ldlib2:ldlib2-neoforge-26.1:26.1.2.33"
+        // ldlib2→taffy 传递 fastutil 8.5.12；NeoForge BOM 的 {strictly 8.5.18} 只约束 compileClasspath。
+        // 主源码按 8.5.18 编译会绑定类型化 forEach(IntObjectBiConsumer)（8.5.13+ 新增），
+        // 测试运行时 8.5.12 无此方法 → NoSuchMethodError（17 个测试类集体失败）。强制对齐 8.5.18。
+        testRuntimeOnly 'it.unimi.dsi:fastutil:8.5.18'
     } else {
         // LDLib2 1.21.1（mojmap，modId=ldlib2，:all 自身 jarjar 含 taffy/yoga/kotlin-stdlib）；
         // MDG 1.x localRuntime 不注册 mod discovery 且会双份加载 → 独立 configuration + copy 到 run/mods。

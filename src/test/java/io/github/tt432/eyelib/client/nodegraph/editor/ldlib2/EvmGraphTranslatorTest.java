@@ -9,6 +9,7 @@ import com.google.gson.JsonPrimitive;
 import com.lowdragmc.lowdraglib2.nodegraphtookit.model.node.NodeModel;
 import com.lowdragmc.lowdraglib2.nodegraphtookit.model.node.SubgraphNodeModel;
 import com.lowdragmc.lowdraglib2.nodegraphtookit.model.node.VariableNodeModel;
+import io.github.tt432.eyelib.FmlDistTestStub;
 import io.github.tt432.eyelib.nodegraph.Diagnostic;
 import io.github.tt432.eyelib.nodegraph.GraphData;
 import io.github.tt432.eyelib.nodegraph.GraphInterface;
@@ -24,6 +25,7 @@ import io.github.tt432.eyelib.nodegraph.PortType;
 import io.github.tt432.eyelib.nodegraph.StickyNote;
 import io.github.tt432.eyelib.nodegraph.VariableDecl;
 import io.github.tt432.eyelib.nodegraph.Wire;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -45,6 +47,11 @@ import java.util.TreeSet;
  * 连线端点用 uidOf 换算期望值。
  */
 class EvmGraphTranslatorTest {
+    @BeforeAll
+    static void stubFmlDist() {
+        // LDLib2 26.1.x 节点选项构建链需要 FML Dist（26.1.2 纯 JUnit 无游戏引导），1.21.1 自动跳过
+        FmlDistTestStub.ensureClientDist();
+    }
 
     private static Map<String, JsonElement> opts(Object... kv) {
         Map<String, JsonElement> map = new LinkedHashMap<>();
