@@ -397,7 +397,10 @@ dependencies {
 
     // AR mod 仅 < 26.1 有兼容 jar；26.1+ VertexConsumer API 变更导致 @ExtensionMethod 失配。
     if (!isModern) {
-        compileOnly("maven.modrinth:acceleratedrendering:1.0.5-1.20.1-alpha")
+        // modrinth 已下架（api.modrinth.com/v2/project/acceleratedrendering 404，2026-09-20 复验），
+        // 下架前缓存的原件 vendor 进 libs/（compileOnly API 依赖，不进产物），
+        // 取代 ~/.gradle/init.d/ar-subst.gradle 的 dependencySubstitution 全局补丁。
+        compileOnly files("$rootDir/libs/acceleratedrendering-1.0.5-1.20.1-alpha.jar")
     }
 
     compileOnly "io.github.tt432:clientsmoke:${version}"
