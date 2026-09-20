@@ -72,7 +72,7 @@ public final class MolangRuntimeSupport {
     }
 
     /** host 槽位取值（组合 invoker 的内联调用点）：scope 宿主查找，缺失回退默认值。 */
-    private static Object hostSlot(MolangScope scope, Class<?> type, @Nullable Object dflt) {
+    private static @Nullable Object hostSlot(MolangScope scope, Class<?> type, @Nullable Object dflt) {
         Object value = scope.findHost(type);
         return value != null ? value : dflt;
     }
@@ -326,6 +326,12 @@ public final class MolangRuntimeSupport {
         }
     }
 
+    /** ZERO_ARG_BINDING_ENABLED=false 的诊断回退路径；KIND_METHOD 时 functionInfo 恒非空（forMethod 设置），防御 null → 未解析兜底。 */
+    private static MolangObject invokeMethodFallback(ZeroArgBinding binding, MolangScope scope) {
+        FunctionInfo info = binding.functionInfo;
+        return info != null ? invokeMethod(info, scope, NO_ARGS) : MolangNull.INSTANCE;
+    }
+
     private static boolean hasHostContext(MolangScope scope) {
         // O(1) 等价替换：marker 类型为 Object.class，旧实现的 isInstance 扫描
         // 等价于「任一 store 非空」（语义论证见 MolangScope.hasAnyHost）
@@ -388,8 +394,13 @@ public final class MolangRuntimeSupport {
                 return MolangNull.INSTANCE;
             }
         }
+        // kind==KIND_FIELD 时 field 恒非空（forField 设置）；防御性 null → 未解析兜底
+        Field field = b.field;
+        if (field == null) {
+            return MolangNull.INSTANCE;
+        }
         try {
-            return wrapJavaResult(b.field.get(null));
+            return wrapJavaResult(field.get(null));
         } catch (IllegalAccessException ignored) {
             return MolangNull.INSTANCE;
         }
@@ -421,8 +432,13 @@ public final class MolangRuntimeSupport {
                 return MolangNull.INSTANCE;
             }
         }
+        // kind==KIND_METHOD 时 method 恒非空（forMethod 设置）；防御性 null → 未解析兜底
+        Method method = b.method;
+        if (method == null) {
+            return MolangNull.INSTANCE;
+        }
         try {
-            return wrapJavaResult(b.method.invoke(null, args));
+            return wrapJavaResult(method.invoke(null, args));
         } catch (InvocationTargetException | IllegalAccessException ignored) {
             return MolangNull.INSTANCE;
         }
@@ -547,7 +563,7 @@ public final class MolangRuntimeSupport {
             case ZeroArgBinding.KIND_FIELD -> invokeZeroArgField(binding);
             case ZeroArgBinding.KIND_METHOD -> ZERO_ARG_BINDING_ENABLED
                     ? invokeZeroArgMethod(binding, scope)
-                    : invokeMethod(binding.functionInfo, scope, NO_ARGS);
+                    : invokeMethodFallback(binding, scope);
             default -> MolangNull.INSTANCE;
         };
     }
@@ -570,7 +586,7 @@ public final class MolangRuntimeSupport {
             if (binding.kind == ZeroArgBinding.KIND_METHOD) {
                 return ZERO_ARG_BINDING_ENABLED
                         ? invokeZeroArgMethod(binding, scope)
-                        : invokeMethod(binding.functionInfo, scope, NO_ARGS);
+                        : invokeMethodFallback(binding, scope);
             }
             warnMissing(methodName);
             return scope.get(methodName);

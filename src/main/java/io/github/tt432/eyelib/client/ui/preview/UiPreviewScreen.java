@@ -12,6 +12,7 @@ import io.github.tt432.eyelib.ui.UIScreen;
 import io.github.tt432.eyelib.ui.UIScreenContext;
 import io.github.tt432.eyelib.ui.UIScrollPanel;
 import io.github.tt432.eyelib.util.PortResourceLocation;
+import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -34,6 +35,7 @@ import java.util.function.IntConsumer;
  *
  * @author TT432
  */
+@NullMarked
 public final class UiPreviewScreen implements UIScreen {
     private static final int PAD = 8;
     private static final int TITLE_H = 16;
@@ -162,9 +164,12 @@ public final class UiPreviewScreen implements UIScreen {
         List<String> buildNotes = new ArrayList<>();
         previewRoot = null;
         if (file != null && selectedFile != null && selectedElement != null) {
-            Map<String, BrUiFile> byNamespace = namespaceIndex(files);
-            previewRoot = buildNode(selectedElement, file.elements().get(selectedElement),
-                    file, byNamespace, buildNotes, 0);
+            // selectedElement ∈ elementKeys=file.elements().keySet()，get 必中；防御 null 跳过构建
+            JsonObject rootElement = file.elements().get(selectedElement);
+            if (rootElement != null) {
+                Map<String, BrUiFile> byNamespace = namespaceIndex(files);
+                previewRoot = buildNode(selectedElement, rootElement, file, byNamespace, buildNotes, 0);
+            }
         }
 
         List<String> all = new ArrayList<>(UiAssetRegistry.diagnostics());

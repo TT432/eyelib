@@ -39,6 +39,7 @@ import org.joml.Matrix4f;
 import org.joml.Vector2fc;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -100,7 +101,7 @@ public class BrBlockUnbakedGeometry extends SimpleUnbakedGeometry<BrBlockUnbaked
         poseStack.popPose();
     }
 
-    private static Model loadModel(String modelPath) {
+    private static @Nullable Model loadModel(String modelPath) {
         //? if <1.20.6 {
         ResourceLocation file = new ResourceLocation(modelPath)
         //?} else {
@@ -136,6 +137,7 @@ public class BrBlockUnbakedGeometry extends SimpleUnbakedGeometry<BrBlockUnbaked
     private static final class BakeVisitor extends ModelVisitor {
         private final IModelBuilder<?> modelBuilder;
         private final TextureAtlasSprite sprite;
+        @SuppressWarnings("NullAway") // ModelVisitor 契约：visitFace 先于 visitVertex 初始化 buffer
         private QuadBakingVertexConsumer buffer;
         //? if >=1.20.6
         private int vertexCount;

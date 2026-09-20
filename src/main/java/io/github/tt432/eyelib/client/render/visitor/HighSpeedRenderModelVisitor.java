@@ -29,7 +29,7 @@ public class HighSpeedRenderModelVisitor extends ModelVisitor {
         SkinningSession skinning = params.skinning();
         if (skinning != null) {
             BakedModel bakedModel = context.get("BackedModel");
-            if (skinning.begin(bakedModel, params.tintColor(), params.overlay(), params.light())) {
+            if (bakedModel != null && skinning.begin(bakedModel, params.tintColor(), params.overlay(), params.light())) {
                 context.put("SkinningSession", skinning);
             }
         }

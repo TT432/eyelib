@@ -3,6 +3,7 @@ package io.github.tt432.eyelib.bridge.client.render.skinning.adapter;
 import io.github.tt432.eyelib.bridge.client.render.bake.BakedModel;
 import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
+import org.jspecify.annotations.Nullable;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -74,7 +75,7 @@ final class SkinningGeometryPacker {
         return new SlotPlan(boneToSlot, slotBoneIds, slotCount, totalVertices);
     }
 
-    static Packed pack(BakedModel model) {
+    static @Nullable Packed pack(BakedModel model) {
         SlotPlan plan = planSlots(model);
         Int2IntMap boneToSlot = plan.boneToSlot();
         int[] slotBoneIds = plan.slotBoneIds();

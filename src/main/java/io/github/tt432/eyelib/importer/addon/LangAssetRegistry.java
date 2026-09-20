@@ -2,6 +2,7 @@ package io.github.tt432.eyelib.importer.addon;
 
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
+import org.jspecify.annotations.Nullable;
 
 import java.util.LinkedHashMap;
 import java.util.Locale;
@@ -52,7 +53,7 @@ public final class LangAssetRegistry {
      * 包内相对路径 → 语言 code：取最后一段文件名，去 .lang 后缀并小写。
      * 非 .lang 结尾返回 null（防御性；loader 已过滤）。
      */
-    static String languageCodeOf(String relativePath) {
+    static @Nullable String languageCodeOf(String relativePath) {
         int slash = relativePath.lastIndexOf('/');
         String fileName = slash >= 0 ? relativePath.substring(slash + 1) : relativePath;
         if (!fileName.endsWith(".lang")) {

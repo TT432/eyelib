@@ -6,6 +6,7 @@ import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.ForkJoinWorkerThread;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiFunction;
+import org.jspecify.annotations.Nullable;
 
 /**
  * 逐实体阶段并行执行器（Opt19）。
@@ -39,7 +40,7 @@ public final class ParallelStageExecutor {
         return Math.max(2, Math.min(8, Runtime.getRuntime().availableProcessors() / 2));
     }
 
-    private static volatile ForkJoinPool pool;
+    private static volatile @Nullable ForkJoinPool pool;
 
     // 命名序号独立计数：w.getPoolIndex() 在 setName 时机下恒 0（实证：JFR 里 8 个线程
     // 全部显示 worker-0，靠 javaThreadId 才能区分），会导致诊断/采样聚合误导。

@@ -65,7 +65,7 @@ public final class LegacySkinningManager {
         VERTEX_SHADER,
         COMPUTE;
 
-        static Mode requested() {
+        static @Nullable Mode requested() {
             return switch (System.getProperty("eyelib.gpuSkinning.mode", "auto")) {
                 case "vs" -> VERTEX_SHADER;
                 case "compute" -> COMPUTE;

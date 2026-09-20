@@ -1,6 +1,7 @@
 package io.github.tt432.eyelib.bridge.client.fog;
 
 import io.github.tt432.eyelib.importer.addon.FogAssetRegistry;
+import org.jspecify.annotations.NullMarked;
 
 import java.util.Optional;
 
@@ -11,6 +12,7 @@ import java.util.Optional;
  *
  * @author TT432
  */
+@NullMarked
 public interface FogPort {
     /** 显式激活某个已加载的 fog 定义（id 未注册抛 IllegalArgumentException）。 */
     static void setActiveFog(String id) {

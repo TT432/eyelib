@@ -185,7 +185,7 @@ public record RenderControllerEntry(
                     return groups;
                 });
 
-        if (materialBoneGroups.isEmpty()) {
+        if (materialBoneGroups == null || materialBoneGroups.isEmpty()) {
             return components;
         }
 
@@ -324,7 +324,7 @@ public record RenderControllerEntry(
     private record MaterialFlags(boolean multitexture, boolean alphatest, boolean emissive, boolean colorMask) {
     }
 
-    private static volatile Map<String, BrMaterialEntry> flagsMatMap = null;
+    private static volatile @org.jspecify.annotations.Nullable Map<String, BrMaterialEntry> flagsMatMap;
     private static volatile Map<String, MaterialFlags> flagsCache = Map.of();
 
     private static MaterialFlags flagsOf(String materialName) {

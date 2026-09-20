@@ -4,6 +4,7 @@ import io.github.tt432.eyelib.importer.addon.BrFog;
 import io.github.tt432.eyelib.importer.addon.FogAssetRegistry;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.level.material.FogType;
+import org.jspecify.annotations.NullMarked;
 
 import java.util.Optional;
 //? if <26.1 {
@@ -47,6 +48,7 @@ import net.neoforged.neoforge.client.event.ViewportEvent;
 //?} else {
 @EventBusSubscriber(modid = "eyelib", value = Dist.CLIENT)
 //?}
+@NullMarked
 public final class FogBridge {
     private FogBridge() {
     }

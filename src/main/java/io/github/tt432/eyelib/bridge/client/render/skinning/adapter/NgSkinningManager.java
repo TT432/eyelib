@@ -288,7 +288,7 @@ public final class NgSkinningManager {
                             VertexFormat.IndexType.INT, ranges[r], ranges[r + 1], 0,
                             (unused, uploader) -> uploader.upload("BonePalette", palette)));
                 }
-                // 同一实体的多个区间共享其 palette slice：闭包按 Draw 捕获（uniformArgument 恒 null）
+                // 同一实体的多个区间共享其 palette slice：闭包按 Draw 捕获（uniformArgument 不被 uploader 使用，占位传 dynamicTransforms 满足 @NonNull 契约）
             }
             try (RenderPass pass = encoder.createRenderPass(() -> "eyelib skinned entities",
                     color, OptionalInt.empty(), depth, OptionalDouble.empty())) {
@@ -296,7 +296,7 @@ public final class NgSkinningManager {
                 RenderSystem.bindDefaultUniforms(pass);
                 pass.setUniform("DynamicTransforms", dynamicTransforms);
                 bindSamplers(pass, pipeline, textureView, textureSampler, overlayView, lightmapView);
-                pass.drawMultipleIndexed(draws, null, null, PALETTE_DYNAMIC_UNIFORMS, null);
+                pass.drawMultipleIndexed(draws, null, null, PALETTE_DYNAMIC_UNIFORMS, dynamicTransforms);
             }
             i = j;
         }

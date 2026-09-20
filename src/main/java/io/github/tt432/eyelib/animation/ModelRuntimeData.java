@@ -53,7 +53,7 @@ public final class ModelRuntimeData {
      * （bind + 已累积动画，见 Mojang molang syntax-guide）。
      * 传入的 map 在 setter 内转为数组（id 稠密），读路径零哈希。
      */
-    private Model.@Nullable Bone[] bindBones;
+    private Model.@Nullable Bone @Nullable [] bindBones;
 
     public void bindBones(@Nullable Int2ObjectMap<Model.Bone> bindBones) {
         if (bindBones == null || bindBones.isEmpty()) {

@@ -2,6 +2,7 @@ package io.github.tt432.eyelib.bridge.client.render.bake;
 
 import io.github.tt432.eyelib.bridge.client.render.bake.adapter.TwoSideModelBakeInfo;
 import io.github.tt432.eyelib.model.Model;
+import org.jspecify.annotations.Nullable;
 //? if <26.1 {
 import net.minecraft.resources.ResourceLocation;
 //?} else {
@@ -46,7 +47,7 @@ public interface ModelBakePort {
     }
 
     /** 只读探测烘焙缓存（不触发计算）；未命中返回 null。供「未烘焙即跳过本帧」的渲染路径使用。 */
-    static BakedModel twoSidePeekBakedModel(Model model, boolean isSolid, ResourceLocation texture, ResourceLocation meshTexture) {
+    static @Nullable BakedModel twoSidePeekBakedModel(Model model, boolean isSolid, ResourceLocation texture, ResourceLocation meshTexture) {
         return TwoSideModelBakeInfo.INSTANCE.peekBakedModel(model, isSolid, texture, meshTexture);
     }
 
@@ -79,7 +80,7 @@ public interface ModelBakePort {
     }
 
     /** 只读探测烘焙缓存（不触发计算）；未命中返回 null。供「未烘焙即跳过本帧」的渲染路径使用。 */
-    static BakedModel twoSidePeekBakedModel(Model model, boolean isSolid, Identifier texture, Identifier meshTexture) {
+    static @Nullable BakedModel twoSidePeekBakedModel(Model model, boolean isSolid, Identifier texture, Identifier meshTexture) {
         return TwoSideModelBakeInfo.INSTANCE.peekBakedModel(model, isSolid, texture, meshTexture);
     }
 

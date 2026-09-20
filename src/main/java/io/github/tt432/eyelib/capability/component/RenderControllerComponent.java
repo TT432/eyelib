@@ -91,7 +91,7 @@ public class RenderControllerComponent {
         private Set<Integer> cachedAllBoneIds;
         private final Map<String, Optional<PortResourceLocation>> meshTextureCache = new HashMap<>();
         /** setupModel 派生缓存键：几何解析值 + 逐材质解析值（与 renderController.materials 顺序对齐）+ rcColor。 */
-        private String cachedGeometryKey;
+        private @Nullable String cachedGeometryKey;
         private final List<String> cachedMaterialKey = new ArrayList<>();
         private float @Nullable [] cachedColorKey;
         /** 派生值：材质名 → 骨骼集（键序 = 首现顺序，与重建逻辑一致）。 */

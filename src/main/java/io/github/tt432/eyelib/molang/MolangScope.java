@@ -59,7 +59,7 @@ public final class MolangScope {
         tempKeys = concurrent ? ConcurrentHashMap.newKeySet() : new HashSet<>();
     }
 
-    private Object hostRoleAt(int id) {
+    private @Nullable Object hostRoleAt(int id) {
         Object[] slots = hostRoleSlots;
         return id < slots.length && id < hostRoleHigh ? slots[id] : null;
     }
