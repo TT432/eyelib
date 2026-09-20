@@ -216,17 +216,22 @@ public final class BedrockParticleRenderer implements ParticleRenderManager.Part
     }
 
     private static int getLight(BedrockParticleInstance particle, @Nullable ParticleAppearanceLighting lighting) {
-        if (lighting != null) {
+        // Bedrock 语义：无 lighting 组件的粒子自发光（全亮）；声明 lighting 组件才按环境光照着色。
+        // 此前逻辑相反，导致声明了 lighting 的粒子恒全亮、未声明的粒子去查环境光。
+        if (lighting == null) {
             return fullBrightLight();
         }
         Level level = Minecraft.getInstance().level;
         if (level == null) {
             return fullBrightLight();
         }
+        // particle.position() 是发射器本地坐标（渲染路径 pose.translate(particle.position())
+        // 之后还叠加发射器位置），须换算到世界坐标再查光照，否则恒查世界原点附近 → 光照 0 → 黑。
+        Vector3f worldPosition = particle.position().add(particle.emitter().position(), new Vector3f());
         BlockPos blockPosition = new BlockPos(
-                Mth.floor(particle.position().x),
-                Mth.floor(particle.position().y),
-                Mth.floor(particle.position().z)
+                Mth.floor(worldPosition.x),
+                Mth.floor(worldPosition.y),
+                Mth.floor(worldPosition.z)
         );
         //? if <26.1 {
         return LightTexture.pack(

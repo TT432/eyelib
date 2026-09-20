@@ -30,7 +30,13 @@ public record Direction(Type type, @Nullable MolangValue3 custom) {
         return switch (type) {
             case INWARDS -> center.sub(other, new Vector3f()).normalize().mul(16);
             case OUTWARDS -> other.sub(center, new Vector3f()).normalize().mul(16);
-            case CUSTOM -> Objects.requireNonNull(custom, "custom direction").eval(scope);
+            // 与 INWARDS/OUTWARDS 一致：方向向量归一化并乘 16（运动积分按 1/16 单位空间，
+            // 见 ParticleMotionDynamic）；此前 CUSTOM 原样返回导致初速度只有预期的 1/16。
+            // 零向量（如 [0,0,0]）normalize 产生 NaN，保持原样返回由速度积分自然得零位移。
+            case CUSTOM -> {
+                Vector3f v = Objects.requireNonNull(custom, "custom direction").eval(scope);
+                yield v.lengthSquared() > 1.0E-6f ? v.normalize().mul(16) : v;
+            }
         };
     }
 
