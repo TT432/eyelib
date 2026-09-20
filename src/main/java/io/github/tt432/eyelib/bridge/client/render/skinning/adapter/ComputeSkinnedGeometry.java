@@ -87,11 +87,15 @@ final class ComputeSkinnedGeometry implements LegacyGpuGeometry {
         this.vertexCount = vertexCount;
     }
 
-    /** 同 {@link LegacySkinnedGeometry#create} 的前置条件；渲染线程调用。 */
+    /**
+     * 由烘焙模型创建 compute 蒙皮几何；仅全零顶点（slotCount=0）返回 null（调用方回退经典
+     * CPU 路径）。palette 走 SSBO（skin_batch.comp 的 mats[] 可变长），不受 VS 路径
+     * {@link SkinningLayout#MAX_BONES} uniform 数组上限约束。渲染线程调用。
+     */
     static @Nullable ComputeSkinnedGeometry create(BakedModel model) {
         RenderSystem.assertOnRenderThread();
         SkinningGeometryPacker.SlotPlan plan = SkinningGeometryPacker.planSlots(model);
-        if (plan.slotCount() == 0 || !SkinningLayout.skinnable(plan.slotCount())) {
+        if (plan.slotCount() == 0) {
             return null;
         }
 

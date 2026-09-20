@@ -47,7 +47,7 @@ layout(std430, binding = 1) writeonly buffer OutBuf {
     VertOut outVerts[];
 };
 
-// 全部实体调色板紧凑拼接（pose n 个 + normal n 个/实体），与 Java 侧 SkinningLayout.MAX_BONES 上限一致
+// 全部实体调色板紧凑拼接（pose n 个 + normal n 个/实体），n = 模型实际骨骼数；SSBO 可变长，不受 VS 路径 MAX_BONES 上限约束
 layout(std430, binding = 2) readonly buffer Palette {
     mat4 mats[];
 };

@@ -47,8 +47,8 @@ public final class LegacySkinningSession implements SkinningSession {
             return false;
         }
         this.geometry = geo;
-        this.pose = LegacySkinningManager.acquireArray();
-        this.normals = LegacySkinningManager.acquireArray();
+        this.pose = LegacySkinningManager.acquireArray(geo.slotCount() * 16);
+        this.normals = LegacySkinningManager.acquireArray(geo.slotCount() * 16);
         this.visible = new BitSet(geo.slotCount());
 
         if (tintColor != null) {

@@ -166,36 +166,43 @@ public final class LegacySkinningManager {
         return new LegacySkinningSession(routingType, variant);
     }
 
-    /** 几何缓存（按 BakedModel 实例身份；模型失效时整体清空）。渲染线程调用。 */
+    /**
+     * 几何缓存（按 BakedModel 实例身份；模型失效时整体清空）。渲染线程调用。
+     * null 值 = 负缓存（该模型在当前路径下不可蒙皮：全零顶点，或 VS 路径超骨骼上限），
+     * 避免此类模型每帧每组件重跑 {@code SkinningGeometryPacker.planSlots}（排序 + 分配）。
+     */
     static @Nullable LegacyGpuGeometry geometry(BakedModel model) {
         synchronized (GEOMETRIES) {
-            LegacyGpuGeometry cached = GEOMETRIES.get(model);
-            if (cached != null) {
-                return cached;
+            if (GEOMETRIES.containsKey(model)) {
+                return GEOMETRIES.get(model);
             }
         }
         // 创建放锁外：GPU 缓冲创建/上传可能触发驱动同步；并发创建同模型几何的最坏结果是多建一份，
-        // putIfAbsent 失败方立即 close，不影响正确性。
+        // 竞争失败方立即 close，不影响正确性。创建结果确定性一致（同模型同模式），失败（null）同样入缓存。
         LegacyGpuGeometry created = mode == Mode.COMPUTE
                 ? ComputeSkinnedGeometry.create(model)
                 : LegacySkinnedGeometry.create(model);
-        if (created == null) {
-            return null;
-        }
         synchronized (GEOMETRIES) {
-            LegacyGpuGeometry raced = GEOMETRIES.putIfAbsent(model, created);
-            if (raced != null) {
-                created.close();
-                return raced;
+            if (GEOMETRIES.containsKey(model)) {
+                if (created != null) {
+                    created.close();
+                }
+                return GEOMETRIES.get(model);
             }
+            GEOMETRIES.put(model, created);
         }
         return created;
     }
 
-    /** 池化 palette 暂存（16 浮点/骨骼 × MAX_BONES）。 */
-    static float[] acquireArray() {
+    /**
+     * 池化 palette 暂存（长度 ≥ minFloats；调用方传 slotCount × 16）。
+     * compute 路径 slotCount 可超 {@link SkinningLayout#MAX_BONES}，池内数组不足时新分配。
+     */
+    static float[] acquireArray(int minFloats) {
         float[] arr = ARRAY_POOL.pollFirst();
-        return arr != null ? arr : new float[SkinningLayout.MAX_BONES * 16];
+        return arr != null && arr.length >= minFloats
+                ? arr
+                : new float[Math.max(minFloats, SkinningLayout.MAX_BONES * 16)];
     }
 
     /** 归还池化暂存（null 安全）。slot 范围外数据不被读取，归还前无需清零。 */
@@ -402,7 +409,12 @@ public final class LegacySkinningManager {
 
     private static void clearGeometries() {
         synchronized (GEOMETRIES) {
-            GEOMETRIES.values().forEach(LegacyGpuGeometry::close);
+            // null = 负缓存条目，无 GPU 资源可关
+            GEOMETRIES.values().forEach(g -> {
+                if (g != null) {
+                    g.close();
+                }
+            });
             GEOMETRIES.clear();
         }
     }
