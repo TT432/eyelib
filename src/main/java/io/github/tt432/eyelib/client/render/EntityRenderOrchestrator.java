@@ -230,7 +230,7 @@ public final class EntityRenderOrchestrator {
         // 动画状态/时间轴音效（switchState 与 BrAnimationEntryDefinition 的 sound 回调）
         // 依赖 PORT_ENTITY 宿主角色提供播放坐标；fromCached 保持幂等写短路。
         scope.getHostContext().put(io.github.tt432.eyelib.molang.mapping.api.HostRoles.PORT_ENTITY,
-                io.github.tt432.eyelib.bridge.molang.adapter.EntityPortAdapter.fromCached(entity));
+                io.github.tt432.eyelib.bridge.molang.EntityPort.fromCached(entity));
 
         ClientEntityComponent clientEntityComponent = cap.getClientEntityComponent();
 

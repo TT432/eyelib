@@ -11,4 +11,8 @@ public interface EntityPort {
     static PortEntity from(Entity entity) {
         return EntityPortAdapter.from(entity);
     }
+    /** 缓存版：同一实体返回同一 PortEntity 实例，配合 MolangScope 宿主幂等写短路（每帧 tick 路径用）。 */
+    static PortEntity fromCached(Entity entity) {
+        return EntityPortAdapter.fromCached(entity);
+    }
 }
