@@ -184,13 +184,16 @@ public final class BedrockParticleRenderer implements ParticleRenderManager.Part
         poseStack.popPose();
     }
 
-    private static void vertex(VertexConsumer vertexConsumer, Vector3f position, int color, float u, float v, int light, Vector3f normal) {
+    // 包级可见：BedrockParticleRendererVertexColorTest 直接验证顶点颜色契约。
+    static void vertex(VertexConsumer vertexConsumer, Vector3f position, int color, float u, float v, int light, Vector3f normal) {
         //? if <1.20.6 {
+        // 该版本 VertexConsumer 颜色参数是 0..1 的 float；ARGB32 拆出的是 0..255 的 int，
+        // 不除 255 会被 BufferBuilder 强转 byte 溢出成乱色（表现为黑块 + 渐出变渐入）。
         vertexConsumer.vertex(position.x, position.y, position.z,
-                FastColor.ARGB32.red(color),
-                FastColor.ARGB32.green(color),
-                FastColor.ARGB32.blue(color),
-                FastColor.ARGB32.alpha(color),
+                FastColor.ARGB32.red(color) / 255.0F,
+                FastColor.ARGB32.green(color) / 255.0F,
+                FastColor.ARGB32.blue(color) / 255.0F,
+                FastColor.ARGB32.alpha(color) / 255.0F,
                 u, v,
                 OverlayTexture.NO_OVERLAY, light, normal.x, normal.y, normal.z);
         //?} else {
