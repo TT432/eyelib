@@ -61,5 +61,11 @@ public interface ParticleParticleComponent extends ParticleComponent {
             return Optional.empty();
         }
 
+        /** 世界坐标球域相交的方块碰撞盒（motion_collision 组件用；默认无碰撞）。 */
+        default java.util.List<io.github.tt432.eyelib.particle.runtime.bedrock.ParticleRuntimeEnvironment.CollisionBox> collisionBoxes(
+                Vector3f worldCenter, float radius) {
+            return java.util.List.of();
+        }
+
     }
 }

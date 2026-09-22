@@ -107,6 +107,29 @@ public record BrAnimationController(
             return owner().particles();
         }
 
+        /**
+         * 取出并清空本控制器全部已登记粒子：状态级（{@link #particles()}）与
+         * 嵌套子动画条目级（{@link BrAnimationEntry.Data#particles()}，条目 keyframe
+         * 触发的发射器登记在条目自己的 Data 上）。嵌套控制器递归处理。
+         * 模型切换/实体离场/资源重载的清理必须走本方法——只清状态级会让条目级
+         * looping 发射器永久失联（2026-09-21 换模型后 miaosula 粒子残留实证）。
+         */
+        public java.util.List<io.github.tt432.eyelib.animation.RuntimeParticlePlayData> drainAllParticles() {
+            java.util.List<io.github.tt432.eyelib.animation.RuntimeParticlePlayData> result =
+                    new java.util.ArrayList<>(owner().particles());
+            owner().particles().clear();
+            for (Object d : owner().entryData()) {
+                if (d instanceof io.github.tt432.eyelib.animation.bedrock.BrAnimationEntry.Data entryData
+                        && !entryData.particles().isEmpty()) {
+                    result.addAll(entryData.particles());
+                    entryData.particles().clear();
+                } else if (d instanceof Data nested) {
+                    result.addAll(nested.drainAllParticles());
+                }
+            }
+            return result;
+        }
+
         public float getStartTick() {
             return owner.startTick();
         }

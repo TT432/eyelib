@@ -59,6 +59,16 @@ final class BrControllerExecutor {
         blend(animations, infos, data, scope, data.getLastState(), currState, multiplier,
                 ticks - data.getStartTick(), effects, animationStartFeedback);
         effects.particles.add(data.owner().particles());
+        // 嵌套条目级登记也要逐帧回报：bindToActor 发射器的锚点位姿更新
+        // （updateParticleAnchors）只遍历 effects.particles，漏掉会让条目
+        // keyframe 触发的发射器在实体移动后滞留原地。
+        for (Object d : data.owner().entryData()) {
+            if (d instanceof BrAnimationEntry.Data entryData && !entryData.particles().isEmpty()) {
+                effects.particles.add(entryData.particles());
+            } else if (d instanceof BrAnimationController.Data nested && !nested.particles().isEmpty()) {
+                effects.particles.add(nested.particles());
+            }
+        }
     }
 
     @Nullable
@@ -70,14 +80,30 @@ final class BrControllerExecutor {
         if (lastState != null) {
             data.setLastState(lastState);
             lastState.onExit().eval(scope);
-            if (!data.owner().particles().isEmpty()) {
-            AnimationParticleSpawner spawner = scope.getHostContext().get(HostRoles.ANIMATION_PARTICLE_SPAWNER).orElse(null);
+            java.util.List<RuntimeParticlePlayData> toRemove =
+                    new java.util.ArrayList<>(data.owner().particles());
+            data.owner().particles().clear();
+            // 条目级登记：旧状态动画 keyframe 触发的发射器登记在条目 Data 上，
+            // 随状态退出一并移除；与新状态共用的动画保留其登记（播放不中断）。
+            for (String animName : lastState.animations().keySet()) {
+                if (currState.animations().containsKey(animName)) continue;
+                Animation animation = data.owner().resolveAnimation(animName);
+                if (animation == null) continue;
+                Object d = data.owner().peekData(animation.name());
+                if (d instanceof BrAnimationEntry.Data entryData && !entryData.particles().isEmpty()) {
+                    toRemove.addAll(entryData.particles());
+                    entryData.particles().clear();
+                } else if (d instanceof BrAnimationController.Data nested) {
+                    toRemove.addAll(nested.drainAllParticles());
+                }
+            }
+            if (!toRemove.isEmpty()) {
+                AnimationParticleSpawner spawner = scope.getHostContext().get(HostRoles.ANIMATION_PARTICLE_SPAWNER).orElse(null);
                 if (spawner != null) {
-                    for (var particle : data.owner().particles()) {
+                    for (var particle : toRemove) {
                         spawner.remove(particle.particleUUID());
                     }
                 }
-                data.owner().particles().clear();
             }
         }
 

@@ -173,4 +173,9 @@ public final class BedrockParticleInstance implements ParticleParticleComponent.
     public Optional<String> blockAtPosition() {
         return emitter.environment().blockAtPosition(position);
     }
+
+    @Override
+    public java.util.List<ParticleRuntimeEnvironment.CollisionBox> collisionBoxes(Vector3f worldCenter, float radius) {
+        return emitter.environment().collisionBoxes(worldCenter, radius);
+    }
 }

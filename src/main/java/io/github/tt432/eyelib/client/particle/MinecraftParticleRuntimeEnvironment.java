@@ -50,4 +50,34 @@ public record MinecraftParticleRuntimeEnvironment(Level level) implements Partic
                 position.z
         )).getBlock()).toString());
     }
+
+    @Override
+    public java.util.List<CollisionBox> collisionBoxes(Vector3f center, float radius) {
+        int minX = net.minecraft.util.Mth.floor(center.x - radius);
+        int minY = net.minecraft.util.Mth.floor(center.y - radius);
+        int minZ = net.minecraft.util.Mth.floor(center.z - radius);
+        int maxX = net.minecraft.util.Mth.floor(center.x + radius);
+        int maxY = net.minecraft.util.Mth.floor(center.y + radius);
+        int maxZ = net.minecraft.util.Mth.floor(center.z + radius);
+        java.util.List<CollisionBox> result = new java.util.ArrayList<>();
+        BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
+        for (int x = minX; x <= maxX; x++) {
+            for (int y = minY; y <= maxY; y++) {
+                for (int z = minZ; z <= maxZ; z++) {
+                    pos.set(x, y, z);
+                    var state = level.getBlockState(pos);
+                    if (state.isAir()) continue;
+                    var shape = state.getCollisionShape(level, pos,
+                            net.minecraft.world.phys.shapes.CollisionContext.empty());
+                    if (shape.isEmpty()) continue;
+                    for (AABB aabb : shape.toAabbs()) {
+                        result.add(new CollisionBox(
+                                aabb.minX + x, aabb.minY + y, aabb.minZ + z,
+                                aabb.maxX + x, aabb.maxY + y, aabb.maxZ + z));
+                    }
+                }
+            }
+        }
+        return result;
+    }
 }

@@ -69,7 +69,9 @@ public class AnimationComponent {
 
     private static java.util.List<RuntimeParticlePlayData> particleListOf(Object data) {
         if (data instanceof io.github.tt432.eyelib.animation.bedrock.controller.BrAnimationController.Data d) {
-            return d.particles();
+            // 控制器需全量 drain（含嵌套条目级登记；源头已在方法内清空，
+            // 调用方的 list.clear() 作用于返回的临时列表，无害）
+            return d.drainAllParticles();
         }
         if (data instanceof io.github.tt432.eyelib.animation.bedrock.BrAnimationEntry.Data d) {
             return d.particles();

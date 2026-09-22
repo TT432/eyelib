@@ -66,6 +66,16 @@ final class BrControllerStateOwner {
         return data.computeIfAbsent(animation.name(), s -> animation.createData());
     }
 
+    /** 全部子动画条目 Data（含条目级粒子登记的清理/锚点更新用）。 */
+    java.util.Collection<Object> entryData() {
+        return data.values();
+    }
+
+    /** 按动画名查看已有条目 Data；不创建缺失条目（状态退出清理用）。 */
+    @Nullable Object peekData(String animationName) {
+        return data.get(animationName);
+    }
+
     float startTick() { return startTick; }
     void startTick(float startTick) { this.startTick = startTick; }
     float currentTick() { return currentTick; }
