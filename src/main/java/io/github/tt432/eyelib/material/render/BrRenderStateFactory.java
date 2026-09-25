@@ -78,7 +78,10 @@ public final class BrRenderStateFactory {
                 // ResolvedBrMaterial.defines 已是 Set.copyOf 不可变副本（BrMaterialResolver.computeResolve），直接引用
                 material.defines(),
                 material.hasShaders(),
-                emissive
+                emissive,
+                // 实体材质默认方向光（ADR-0033）：Bedrock 实体着色含方向项，保持既有行为零变化；
+                // 粒子等无方向光消费方经 withLighting 覆盖
+                BrRenderState.LightingModel.DIRECTIONAL
         );
     }
 

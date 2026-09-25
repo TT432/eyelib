@@ -52,23 +52,4 @@ public final class RenderTypeResolver {
         return entry.getRenderType(texture, materials);
     }
 
-    /**
-     * 根据粒子材质名称返回渲染数据。
-     */
-    public static EntityRenderTypeData resolveParticle(String materialName) {
-        PortResourceLocation id = materialName.contains(":")
-                ? PortResourceLocation.parse(materialName)
-                : PortResourceLocation.of("minecraft", materialName);
-        return switch (id.path()) {
-            case "particles_opaque", "particles_base" -> new EntityRenderTypeData(id, true,
-                    tex -> PortRenderPass.of(PortRenderPass.Transparency.SOLID, false));
-            case "particles_alpha" -> new EntityRenderTypeData(id, false,
-                    tex -> PortRenderPass.of(PortRenderPass.Transparency.ALPHA_TEST, true));
-            case "particles_blend" -> new EntityRenderTypeData(id, false,
-                    tex -> PortRenderPass.of(PortRenderPass.Transparency.TRANSLUCENT, true));
-            case "particles_add" -> new EntityRenderTypeData(id, false,
-                    tex -> PortRenderPass.of(PortRenderPass.Transparency.ADDITIVE, true));
-            default -> resolve(id);
-        };
-    }
 }

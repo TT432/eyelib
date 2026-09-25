@@ -4,7 +4,9 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import io.github.tt432.eyelib.material.port.PortRenderPass;
 import io.github.tt432.eyelib.util.PortResourceLocation;
-import io.github.tt432.eyelib.material.render.RenderTypeResolver;
+import io.github.tt432.eyelib.bridge.material.RenderTypeResolver;
+import io.github.tt432.eyelib.bridge.material.adapter.RenderPassAdapter;
+import io.github.tt432.eyelib.material.render.RenderTypeResolver.EntityRenderTypeData;
 import io.github.tt432.eyelib.particle.runtime.ParticleDefinition;
 import io.github.tt432.eyelib.particle.runtime.bedrock.BedrockParticleEmitter;
 import io.github.tt432.eyelib.particle.runtime.bedrock.BedrockParticleInstance;
@@ -21,11 +23,6 @@ import net.minecraft.client.renderer.LightTexture;
 //?}
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.BlockPos;
-//? if <26.1 {
-import net.minecraft.resources.ResourceLocation;
-//?} else {
-import net.minecraft.resources.Identifier;
-//?}
 //? if <26.1 {
 import net.minecraft.util.FastColor;
 //?} else {
@@ -89,34 +86,14 @@ public final class BedrockParticleRenderer implements ParticleRenderManager.Part
             ParticleAppearanceLighting lighting = component(components, ParticleAppearanceLighting.class);
             ParticleAppearanceTinting tinting = component(components, ParticleAppearanceTinting.class);
 
-            RenderTypeResolver.EntityRenderTypeData factory = RenderTypeResolver.resolveParticle(definition.material());
-            //? if <1.20.6 {
-            net.minecraft.resources.ResourceLocation texture = new net.minecraft.resources.ResourceLocation(definition.texture()).withSuffix(".png");
-            //?} elif <26.1 {
-            net.minecraft.resources.ResourceLocation texture = net.minecraft.resources.ResourceLocation.parse(definition.texture()).withSuffix(".png");
-            //?} else {
-            net.minecraft.resources.Identifier texture = net.minecraft.resources.Identifier.parse(definition.texture()).withSuffix(".png");
-            //?}
-            PortRenderPass pass = factory.factory().apply(PortResourceLocation.of(texture.getNamespace(), texture.getPath()));
-            //? if <26.1 {
-            Object renderType = switch (pass.transparency()) {
-                case SOLID -> net.minecraft.client.renderer.RenderType.entitySolid(texture);
-                case ALPHA_TEST -> pass.disableCulling()
-                        ? net.minecraft.client.renderer.RenderType.entityCutoutNoCull(texture)
-                        : net.minecraft.client.renderer.RenderType.entityCutout(texture);
-                case TRANSLUCENT, ADDITIVE -> net.minecraft.client.renderer.RenderType.entityTranslucent(texture);
-                case TRANSLUCENT_EMISSIVE -> net.minecraft.client.renderer.RenderType.entityTranslucentEmissive(texture);
-            };
-            //?} else {
-            Object renderType = switch (pass.transparency()) {
-                case SOLID -> net.minecraft.client.renderer.rendertype.RenderTypes.entitySolid(texture);
-                case ALPHA_TEST -> pass.disableCulling()
-                        ? net.minecraft.client.renderer.rendertype.RenderTypes.entityCutout(texture)
-                        : net.minecraft.client.renderer.rendertype.RenderTypes.entityCutoutCull(texture);
-                case TRANSLUCENT, ADDITIVE -> net.minecraft.client.renderer.rendertype.RenderTypes.entityTranslucent(texture);
-                case TRANSLUCENT_EMISSIVE -> net.minecraft.client.renderer.rendertype.RenderTypes.entityTranslucentEmissive(texture);
-            };
-            //?}
+            EntityRenderTypeData factory = RenderTypeResolver.resolveParticle(
+                    definition.material(), lighting != null);
+            // 粒子光照语义（ADR-0033）：有 lighting 组件 → AMBIENT（仅环境光 tint），
+            // 无 → NONE（全亮）；两者都无 vanilla entity shader 的方向光（视角相关明暗根因）
+            PortResourceLocation texture = PortResourceLocation.parse(definition.texture());
+            PortResourceLocation texturePng = PortResourceLocation.of(texture.namespace(), texture.path() + ".png");
+            PortRenderPass pass = factory.factory().apply(texturePng);
+            Object renderType = RenderPassAdapter.toRenderType(pass, texturePng);
             return new CachedRender(billboard, lighting, tinting, renderType);
         }
     }

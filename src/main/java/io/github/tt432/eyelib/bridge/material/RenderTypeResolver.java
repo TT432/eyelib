@@ -159,22 +159,61 @@ public interface RenderTypeResolver {
             return entry.isAlphatest(Map.of());
         }
     }
-
-    public static EntityRenderTypeData resolveParticle(String materialName) {
+    /**
+     * 粒子材质解析（ADR-0033）：透明度/cull 映射与 domain 版一致，但统一构造带光照轴的
+     * {@link BrRenderState} 走 {@link BrRenderTypeFactory}——粒子光照无方向项，
+     * vanilla entity shader 的方向光对 lit/unlit 粒子都是误用（视角相关明暗）。
+     *
+     * @param lit 是否存在 {@code minecraft:particle_appearance_lighting} 组件：
+     *            true → AMBIENT（仅环境光 tint），false → NONE（全亮）
+     */
+    public static EntityRenderTypeData resolveParticle(String materialName, boolean lit) {
         PortResourceLocation id = materialName.contains(":")
                 ? PortResourceLocation.parse(materialName)
                 : PortResourceLocation.of("minecraft", materialName);
+        BrRenderState.LightingModel lighting = lit
+                ? BrRenderState.LightingModel.AMBIENT
+                : BrRenderState.LightingModel.NONE;
         return switch (id.path()) {
             case "particles_opaque", "particles_base" -> new EntityRenderTypeData(id, true,
-                    tex -> PortRenderPass.of(PortRenderPass.Transparency.SOLID, false));
+                    tex -> BrRenderTypeFactory.create(tex, particleState(
+                            BrRenderState.SurfaceClass.OPAQUE, BrRenderState.Transparency.NONE, true, lighting)));
             case "particles_alpha" -> new EntityRenderTypeData(id, false,
-                    tex -> PortRenderPass.of(PortRenderPass.Transparency.ALPHA_TEST, true));
+                    tex -> BrRenderTypeFactory.create(tex, particleState(
+                            BrRenderState.SurfaceClass.CUTOUT, BrRenderState.Transparency.ALPHA_TEST, false, lighting)));
             case "particles_blend" -> new EntityRenderTypeData(id, false,
-                    tex -> PortRenderPass.of(PortRenderPass.Transparency.TRANSLUCENT, true));
+                    tex -> BrRenderTypeFactory.create(tex, particleState(
+                            BrRenderState.SurfaceClass.TRANSLUCENT, BrRenderState.Transparency.BLEND, false, lighting)));
             case "particles_add" -> new EntityRenderTypeData(id, false,
-                    texture -> BrRenderTypeFactory.create(texture, BrRenderStateFactory.from(particleAdd())));
+                    tex -> BrRenderTypeFactory.create(tex,
+                            BrRenderStateFactory.from(particleAdd()).withLighting(lighting)));
+            // 非内建粒子材质：按实体材质语义解析（方向光），与原 fallback 行为一致
             default -> resolve(id);
         };
+    }
+
+    /** 内建粒子材质的渲染状态：默认深度/写掩码/无模板，lightmap/overlay 直通（同原 vanilla RenderType 组合）。 */
+    private static BrRenderState particleState(
+            BrRenderState.SurfaceClass surfaceClass,
+            BrRenderState.Transparency transparency,
+            boolean cull,
+            BrRenderState.LightingModel lighting
+    ) {
+        return new BrRenderState(
+                surfaceClass,
+                cull,
+                transparency,
+                new BrRenderState.Depth(true, Optional.empty()),
+                new BrRenderState.WriteMask(true, true),
+                Optional.empty(),
+                Optional.empty(),
+                true,
+                true,
+                Set.of(),
+                false,
+                false,
+                lighting
+        );
     }
 
     private static ResolvedBrMaterial particleAdd() {

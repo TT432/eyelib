@@ -32,6 +32,7 @@ import io.github.tt432.eyelib.material.render.BrRenderState;
 //? if <26.1 {
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.RenderStateShard;
+import net.minecraft.client.renderer.ShaderInstance;
 //?}
 //? if <26.1 {
 import net.minecraft.client.renderer.RenderType;
@@ -138,6 +139,11 @@ public final class BrRenderTypeFactory {
     }
     /** 与 {@link #shaderState} 的 vanilla shader 选择一一对应的蒙皮变体（GLINT 等不支持的回退 CPU）。 */
     private static int legacySkinningVariant(BrRenderState state) {
+        // 无方向光 state 使用 eyelib:particle_unlit（非 vanilla 逐行复刻对象），无对应蒙皮变体；
+        // 粒子本就不走蒙皮，登记 UNSUPPORTED 防御误路由（ADR-0033）
+        if (state.lighting() != BrRenderState.LightingModel.DIRECTIONAL) {
+            return LegacySkinningManager.VARIANT_UNSUPPORTED;
+        }
         return switch (state.surfaceClass()) {
             case CUTOUT -> LegacySkinningManager.VARIANT_CUTOUT;
             case EMISSIVE_CUTOUT, TRANSLUCENT_EMISSIVE ->
@@ -151,16 +157,25 @@ public final class BrRenderTypeFactory {
     }
 
     private static RenderStateShard.ShaderStateShard shaderState(BrRenderState state) {
-        return new RenderStateShard.ShaderStateShard(() -> switch (state.surfaceClass()) {
-            case CUTOUT -> GameRenderer.getRendertypeEntityCutoutShader();
-            case EMISSIVE_CUTOUT, TRANSLUCENT_EMISSIVE -> GameRenderer.getRendertypeEntityTranslucentEmissiveShader();
-            // emissive 材质必须走无光照贴图的发光着色器（BE 发光=不受场景光照）；
-            // entityTranslucent 会乘光照贴图，黑屋里发光层直接变暗（A&S 蜘蛛红眼教训）
-            case TRANSLUCENT, ADDITIVE -> state.emissive()
-                    ? GameRenderer.getRendertypeEntityTranslucentEmissiveShader()
-                    : GameRenderer.getRendertypeEntityTranslucentShader();
-            case GLINT -> GameRenderer.getRendertypeEntityGlintShader();
-            default -> GameRenderer.getRendertypeEntitySolidShader();
+        return new RenderStateShard.ShaderStateShard(() -> {
+            if (state.lighting() != BrRenderState.LightingModel.DIRECTIONAL) {
+                // 无方向光（粒子）：eyelib:particle_unlit；注册失败/重载窗口退化 vanilla（方向光近似），不崩
+                ShaderInstance unlit = ParticleUnlitShaders.unlitShader();
+                if (unlit != null) {
+                    return unlit;
+                }
+            }
+            return switch (state.surfaceClass()) {
+                case CUTOUT -> GameRenderer.getRendertypeEntityCutoutShader();
+                case EMISSIVE_CUTOUT, TRANSLUCENT_EMISSIVE -> GameRenderer.getRendertypeEntityTranslucentEmissiveShader();
+                // emissive 材质必须走无光照贴图的发光着色器（BE 发光=不受场景光照）；
+                // entityTranslucent 会乘光照贴图，黑屋里发光层直接变暗（A&S 蜘蛛红眼教训）
+                case TRANSLUCENT, ADDITIVE -> state.emissive()
+                        ? GameRenderer.getRendertypeEntityTranslucentEmissiveShader()
+                        : GameRenderer.getRendertypeEntityTranslucentShader();
+                case GLINT -> GameRenderer.getRendertypeEntityGlintShader();
+                default -> GameRenderer.getRendertypeEntitySolidShader();
+            };
         });
     }
 
@@ -235,6 +250,10 @@ public final class BrRenderTypeFactory {
                 .withDepthStencilState(Optional.of(buildDepthStencilState(state)));
         if (isCutout(state.surfaceClass())) {
             builder = builder.withShaderDefine("ALPHA_CUTOUT", 0.1f);
+        }
+        if (state.lighting() != BrRenderState.LightingModel.DIRECTIONAL) {
+            // vanilla entity.vsh 原生编译期分支：vertexColor = Color，去掉法线方向光（ADR-0033）
+            builder = builder.withShaderDefine("NO_CARDINAL_LIGHTING");
         }
         if (state.stencil().isPresent()) {
             builder = builder.withStencilTest(buildStencilTest(state.stencil().get()));

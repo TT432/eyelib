@@ -23,14 +23,21 @@ public record BrRenderState(
         boolean overlay,
         Set<String> shaderFeatures,
         boolean customShader,
-        boolean emissive
+        boolean emissive,
+        LightingModel lighting
 ) {
+    /** 光照模型不变式保持其余分量，仅切换光照轴（ADR-0033）。 */
+    public BrRenderState withLighting(LightingModel newLighting) {
+        return new BrRenderState(surfaceClass, cull, transparency, depth, writeMask, blend, stencil,
+                lightmap, overlay, shaderFeatures, customShader, emissive, newLighting);
+    }
     public boolean isSolid() {
         return transparency == Transparency.NONE && writeMask.writeDepth();
     }
 
     public boolean needsCustomRenderType() {
-        return blend.filter(value -> !value.isDefaultTranslucent()).isPresent()
+        return lighting != LightingModel.DIRECTIONAL
+                || blend.filter(value -> !value.isDefaultTranslucent()).isPresent()
                 || depth.func().filter(func -> func != DepthFunc.LessEqual).isPresent()
                 || !depth.test()
                 || !writeMask().writeColor()
@@ -44,6 +51,18 @@ public record BrRenderState(
                 || (transparency == Transparency.NONE && !cull)
                 //?}
                 ;
+    }
+
+    /**
+     * 光照模型（ADR-0033）：
+     * DIRECTIONAL = lightmap + 法线方向光（实体默认）；
+     * AMBIENT = 仅 lightmap tint（Bedrock lit 粒子语义）；
+     * NONE = 不受光照（Bedrock unlit 粒子；实现上与 AMBIENT 同 shader，差异由顶点 UV2 承载）。
+     */
+    public enum LightingModel {
+        NONE,
+        AMBIENT,
+        DIRECTIONAL
     }
 
     public enum SurfaceClass {
