@@ -52,6 +52,10 @@ BufferBuilder，GPU 端仅消费 vanilla entity shader。调研证实这是每�
   shader（VS 与 compute 批次路径同）绘制零像素；≤1.21.1 经
   `bridge/client/compat/oculus/OculusCompat`（IrisApi.isShaderPackInUse，反射）
   在光影激活期间令 createSession 返回 null 回退 CPU（2026-09-25）。
+  生产实例验证（2026-09-26，PCL + Forge 47.4.3 + Oculus 1.8.0 + Embeddium 0.3.31 +
+  AmberShader 激活 + A&S mcpack 覆盖实体）：修复前 jar 光影下召唤苦力怕零像素
+  （复现报告 bug），修复 jar 同场景正常渲染且日志出现「检测到 Oculus/Iris 光影
+  激活，GPU 蒙皮回退经典 CPU 路径」。
 - 浮点一致性风险（CPU double 中间值 vs GPU fp32）由 RenderDoc GetPostVSData
   数值对比定容差，验证方法见调研报告 §5 C1。
 
