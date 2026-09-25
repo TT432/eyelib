@@ -101,9 +101,18 @@ public final class BedrockParticleRenderer implements ParticleRenderManager.Part
             //? if <26.1 {
             Object renderType = switch (pass.transparency()) {
                 case SOLID -> net.minecraft.client.renderer.RenderType.entitySolid(texture);
-                case ALPHA_TEST -> pass.disableCulling()
-                        ? net.minecraft.client.renderer.RenderType.entityCutoutNoCull(texture)
-                        : net.minecraft.client.renderer.RenderType.entityCutout(texture);
+                case ALPHA_TEST -> {
+                    //? if <1.20.6 {
+                    // FULL_BRIGHT 只解决 lightmap；原版 cutout / emissive shader 仍按法线压暗 RGB。
+                    // 无 lighting 的粒子使用 Forge 无方向光 shader，同时保留 alpha-test 和深度写入。
+                    if (lighting == null) {
+                        yield UnlitParticleRenderType.cutout(texture, pass.disableCulling());
+                    }
+                    //?}
+                    yield pass.disableCulling()
+                            ? net.minecraft.client.renderer.RenderType.entityCutoutNoCull(texture)
+                            : net.minecraft.client.renderer.RenderType.entityCutout(texture);
+                }
                 case TRANSLUCENT, ADDITIVE -> net.minecraft.client.renderer.RenderType.entityTranslucent(texture);
                 case TRANSLUCENT_EMISSIVE -> net.minecraft.client.renderer.RenderType.entityTranslucentEmissive(texture);
             };
@@ -266,4 +275,3 @@ public final class BedrockParticleRenderer implements ParticleRenderManager.Part
                 .orElse(null);
     }
 }
-
