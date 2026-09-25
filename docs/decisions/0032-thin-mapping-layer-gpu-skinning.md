@@ -45,8 +45,13 @@ BufferBuilder，GPU 端仅消费 vanilla entity shader。调研证实这是每�
 - §9 对应关系表中「顶点缓冲系统」「着色器系统」两行的禁令解除，替换为
   「经 vanilla 抽象持有的自有 GPU 资源」；其余各行（不重写管线、接入点、
   上传委托 vanilla）不变。
-- CPU 蒙皮路径在 C1 落地期间保留为回退分支（AR 兼容 + 浮点回归兜底），
-  三版本 FBO 像素回归对齐后方可考虑移除。
+- CPU 蒙皮路径在 C1 落地期间保留为回退分支（AR 兼容 + 浮点回归兜底 +
+  Oculus/Iris 光影兼容），三版本 FBO 像素回归对齐后方可考虑移除。
+  Oculus/Iris 光影激活时其 MixinShaderInstance 对一切非 Iris ShaderInstance 的
+  apply() 锁定深度/颜色写入（DepthColorStorage.disableDepthColor），自定义蒙皮
+  shader（VS 与 compute 批次路径同）绘制零像素；≤1.21.1 经
+  `bridge/client/compat/oculus/OculusCompat`（IrisApi.isShaderPackInUse，反射）
+  在光影激活期间令 createSession 返回 null 回退 CPU（2026-09-25）。
 - 浮点一致性风险（CPU double 中间值 vs GPU fp32）由 RenderDoc GetPostVSData
   数值对比定容差，验证方法见调研报告 §5 C1。
 

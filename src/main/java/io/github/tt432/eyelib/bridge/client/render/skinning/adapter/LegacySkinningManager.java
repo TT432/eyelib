@@ -6,6 +6,7 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.VertexBuffer;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import io.github.tt432.eyelib.bridge.client.render.bake.BakedModel;
+import io.github.tt432.eyelib.bridge.client.compat.oculus.OculusCompat;
 import io.github.tt432.eyelib.bridge.event.ManagerEntryChangedEventPublisher;
 import io.github.tt432.eyelib.bridge.event.ManagerReplacedEventPublisher;
 import io.github.tt432.eyelib.bridge.material.ResourceLocationBridge;
@@ -49,6 +50,8 @@ import net.neoforged.neoforge.client.event.RegisterShadersEvent;
  * setupRenderState 内绑定（Sampler1/Sampler2），Sampler0 由其 TextureStateShard 绑定。
  *
  * <p>开关：{@code -Deyelib.gpuSkinning=false} 关闭（回到经典 CPU 蒙皮）。
+ * Oculus/Iris 光影激活期间 createSession 一律返回 null（自定义 shader 会被光影管线锁死
+ * 深度/颜色写入），除非用户显式 {@code -Deyelib.gpuSkinning.mode} 强制 GPU 路径。
  */
 //? if <1.20.6 {
 @Mod.EventBusSubscriber(modid = "eyelib", value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.MOD)
@@ -58,7 +61,8 @@ import net.neoforged.neoforge.client.event.RegisterShadersEvent;
 public final class LegacySkinningManager {
     private static final Logger LOGGER = LoggerFactory.getLogger(LegacySkinningManager.class);
     private static final boolean ENABLED = Boolean.parseBoolean(System.getProperty("eyelib.gpuSkinning", "true"));
-
+    /** 用户显式强制 GPU 路径（基准对照用）；此时 Oculus 光影兼容回退不介入。 */
+    private static final boolean USER_FORCED_MODE = Mode.requested() != null;
     /** 蒙皮路径；{@code -Deyelib.gpuSkinning.mode} 控制（auto = compute 优先，VS 兜底）。 */
     public enum Mode {
         OFF,
@@ -122,6 +126,7 @@ public final class LegacySkinningManager {
     private static final Deque<float[]> ARRAY_POOL = new ArrayDeque<>();
     private static @Nullable BatchSkinningProgram batchProgram;
     private static Mode mode = Mode.OFF;
+    private static boolean loggedOculusFallback;
     private static boolean hooksInstalled;
 
     private LegacySkinningManager() {
@@ -145,6 +150,16 @@ public final class LegacySkinningManager {
     /** ImmediateRenderSink 入口：创建一次提交的蒙皮会话；关闭/未知变体/重载窗口 → null（经典路径）。 */
     public static @Nullable LegacySkinningSession createSession(RenderType routingType) {
         if (!ENABLED || mode == Mode.OFF) {
+            return null;
+        }
+        // Oculus/Iris 光影激活：其 MixinShaderInstance 在非 Iris 的 ShaderInstance.apply() 后锁定
+        // 深度/颜色写入（DepthColorStorage.disableDepthColor），VS 与 compute 批次路径均零像素，
+        // 回退经典 CPU 路径（vanilla 批次由 Iris 接管渲染）。见 OculusCompat。
+        if (!USER_FORCED_MODE && OculusCompat.shaderPackActive()) {
+            if (!loggedOculusFallback) {
+                loggedOculusFallback = true;
+                LOGGER.info("[skinning] 检测到 Oculus/Iris 光影激活，GPU 蒙皮回退经典 CPU 路径");
+            }
             return null;
         }
         int variant;
