@@ -36,6 +36,7 @@ import net.minecraft.client.renderer.ShaderInstance;
 //?}
 //? if <26.1 {
 import net.minecraft.client.renderer.RenderType;
+import io.github.tt432.eyelib.bridge.client.compat.oculus.OculusCompat;
 import io.github.tt432.eyelib.bridge.client.render.skinning.adapter.LegacySkinningManager;
 //?} else {
 import net.minecraft.client.renderer.rendertype.RenderType;
@@ -158,8 +159,12 @@ public final class BrRenderTypeFactory {
 
     private static RenderStateShard.ShaderStateShard shaderState(BrRenderState state) {
         return new RenderStateShard.ShaderStateShard(() -> {
-            if (state.lighting() != BrRenderState.LightingModel.DIRECTIONAL) {
+            if (state.lighting() != BrRenderState.LightingModel.DIRECTIONAL
+                    && !OculusCompat.shaderPackActive()) {
                 // 无方向光（粒子）：eyelib:particle_unlit；注册失败/重载窗口退化 vanilla（方向光近似），不崩
+                // Oculus/Iris 光影激活时不走自定义 shader：非 Iris 自有 ShaderInstance.apply() 会被
+                // DepthColorStorage 锁深度/颜色写入（零像素，OculusCompat 实证）；光影下光照模型本就由
+                // pack 接管，vanilla 批次经 ExtendedShader/FallbackShader 豁免锁定，语义正确
                 ShaderInstance unlit = ParticleUnlitShaders.unlitShader();
                 if (unlit != null) {
                     return unlit;

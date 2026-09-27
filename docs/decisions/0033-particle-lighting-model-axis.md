@@ -55,6 +55,15 @@ hotfix，无合并价值，由本 ADR 的系统性修复替代）。
    `RenderPassAdapter.toRenderType`。
 4. **蒙皮变体**：`lighting != DIRECTIONAL` 的 state 登记
    `VARIANT_UNSUPPORTED`（粒子从不走蒙皮；防御性登记防误路由）。
+5. **Oculus/Iris 光影兼容（2026-09-26 补）**：≤1.21.1 的 shader 选择在
+   `OculusCompat.shaderPackActive()` 为 true 时**不走自定义
+   `particle_unlit`**，回退 vanilla entity shader 分支。理由：非 Iris 自有
+   `ShaderInstance.apply()` 在光影激活时被 `DepthColorStorage` 锁深度/颜色
+   写入（零像素，`OculusCompat`/ADR-0032 已实证）；光影下光照模型本就由 pack
+   接管，vanilla 批次经 ExtendedShader/FallbackShader 豁免锁定，回退语义正确。
+   检测在 ShaderStateShard lambda 内每次取值，运行期切换光影包即时生效。
+   26.1 不处理：其 unlit 走 vanilla 派生 RenderPipeline（非自定义
+   ShaderInstance），且 Iris 对 26.1 的接管形态未实证（未知项）。
 
 ## 后果
 
@@ -70,6 +79,9 @@ hotfix，无合并价值，由本 ADR 的系统性修复替代）。
   映射到 NONE/AMBIENT 并补蒙皮变体。
 - 新 shader 资产须与 vanilla fog/lightmap/overlay 语义同步维护（fsh 复用 vanilla
   已把该风险降到 vsh 一处）。
+- 光影激活时 unlit 粒子退化为 vanilla 着色（视角相关 diffuse 是否出现由 pack
+  决定，eyelib 不越权）——这是可验证语义下的唯一安全选择：自定义 shader 在
+  光影下必零像素，退化优于消失。
 
 ## 验证（2026-09-26，1.20.1 Forge dev client）
 
@@ -81,3 +93,11 @@ hotfix，无合并价值，由本 ADR 的系统性修复替代）。
   两视角下 RGB 比值 0.996/1.015/1.000（视角无关），绝对亮度 ≈(233-255) 全亮；
   带 lighting 组件粒子 ≈(74,74,116) 显著暗于 unlit（环境光 tint，Bedrock 语义）。
   修复前 vanilla 路径同场景俯视压暗至 ~40%（PR #25 探针数据 (80,220,120)→(32,88,48)）。
+
+- Oculus 回退补充验证（2026-09-27，1.20.1 Forge dev client，无光影=回归路径）：
+  三版本 compileJava + `:1.20.1:nullawayMain` + `:1.20.1:test` 全绿；实机
+  `OculusCompat.shaderPackActive()=false` 且 `unlitShader()!=null`，unlit 粒子
+  俯仰 0°/15° RGB 均 (255,255,255)（视角无关回归无损），lit 粒子 midnight
+  (74,75,117) 与原验证一致。光影激活分支（回退 vanilla）与 GPU 蒙皮回退共用
+  同一已实证 `OculusCompat` 判定与 vanilla 豁免机制，本机无 Oculus 实例未实机
+  覆盖——生产实例验证（PCL+Oculus+光影包）作为后续项，同 ADR-0032 验证法。
