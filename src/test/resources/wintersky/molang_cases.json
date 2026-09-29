@@ -1,0 +1,746 @@
+[
+  {
+    "name": "precedence_mul_add",
+    "seed": null,
+    "useRadians": false,
+    "handler": "none",
+    "exprs": [
+      "1+2*3"
+    ],
+    "expected": [
+      7
+    ]
+  },
+  {
+    "name": "parens",
+    "seed": null,
+    "useRadians": false,
+    "handler": "none",
+    "exprs": [
+      "(1+2)*3"
+    ],
+    "expected": [
+      9
+    ]
+  },
+  {
+    "name": "left_assoc_minus",
+    "seed": null,
+    "useRadians": false,
+    "handler": "none",
+    "exprs": [
+      "10-4-3"
+    ],
+    "expected": [
+      3
+    ]
+  },
+  {
+    "name": "mul_negative",
+    "seed": null,
+    "useRadians": false,
+    "handler": "none",
+    "exprs": [
+      "2*-3"
+    ],
+    "expected": [
+      -6
+    ]
+  },
+  {
+    "name": "unary_minus",
+    "seed": null,
+    "useRadians": false,
+    "handler": "none",
+    "exprs": [
+      "-5"
+    ],
+    "expected": [
+      -5
+    ]
+  },
+  {
+    "name": "minus_minus",
+    "seed": null,
+    "useRadians": false,
+    "handler": "none",
+    "exprs": [
+      "1--2"
+    ],
+    "expected": [
+      3
+    ]
+  },
+  {
+    "name": "division",
+    "seed": null,
+    "useRadians": false,
+    "handler": "none",
+    "exprs": [
+      "3/2",
+      "7/2"
+    ],
+    "expected": [
+      1.5,
+      3.5
+    ]
+  },
+  {
+    "name": "div_by_zero",
+    "seed": null,
+    "useRadians": false,
+    "handler": "none",
+    "exprs": [
+      "1/0"
+    ],
+    "expected": [
+      {
+        "special": "Infinity"
+      }
+    ]
+  },
+  {
+    "name": "zero_div_zero",
+    "seed": null,
+    "useRadians": false,
+    "handler": "none",
+    "exprs": [
+      "0/0"
+    ],
+    "expected": [
+      0
+    ]
+  },
+  {
+    "name": "negative_mod",
+    "seed": null,
+    "useRadians": false,
+    "handler": "none",
+    "exprs": [
+      "-3%2"
+    ],
+    "expected": [
+      0
+    ]
+  },
+  {
+    "name": "negator",
+    "seed": null,
+    "useRadians": false,
+    "handler": "none",
+    "exprs": [
+      "!0",
+      "!5",
+      "!!3"
+    ],
+    "expected": [
+      1,
+      0,
+      1
+    ]
+  },
+  {
+    "name": "and_chain",
+    "seed": null,
+    "useRadians": false,
+    "handler": "none",
+    "exprs": [
+      "2>1&&3>2",
+      "2>1&&0"
+    ],
+    "expected": [
+      1,
+      0
+    ]
+  },
+  {
+    "name": "or_chain",
+    "seed": null,
+    "useRadians": false,
+    "handler": "none",
+    "exprs": [
+      "0||5",
+      "0||0"
+    ],
+    "expected": [
+      1,
+      0
+    ]
+  },
+  {
+    "name": "ternary",
+    "seed": null,
+    "useRadians": false,
+    "handler": "none",
+    "exprs": [
+      "1?2:3",
+      "0?2:3",
+      "0?2",
+      "5?"
+    ],
+    "expected": [
+      2,
+      3,
+      0,
+      0
+    ]
+  },
+  {
+    "name": "compare_eq_chain",
+    "seed": null,
+    "useRadians": false,
+    "handler": "none",
+    "exprs": [
+      "1<2==1",
+      "2!=2",
+      "3>=3",
+      "3<=2"
+    ],
+    "expected": [
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  {
+    "name": "null_coalesce_unassigned",
+    "seed": null,
+    "useRadians": false,
+    "handler": "none",
+    "exprs": [
+      "q.x ?? 5"
+    ],
+    "expected": [
+      5
+    ]
+  },
+  {
+    "name": "null_coalesce_assigned",
+    "seed": null,
+    "useRadians": false,
+    "handler": "none",
+    "exprs": [
+      "v.a=7;v.a ?? 5"
+    ],
+    "expected": [
+      7
+    ]
+  },
+  {
+    "name": "math_abs",
+    "seed": null,
+    "useRadians": false,
+    "handler": "none",
+    "exprs": [
+      "math.abs(-3)"
+    ],
+    "expected": [
+      3
+    ]
+  },
+  {
+    "name": "math_sin_deg",
+    "seed": null,
+    "useRadians": false,
+    "handler": "none",
+    "exprs": [
+      "math.sin(90)",
+      "math.sin(30)"
+    ],
+    "expected": [
+      1,
+      0.49999999999999994
+    ]
+  },
+  {
+    "name": "math_cos_deg",
+    "seed": null,
+    "useRadians": false,
+    "handler": "none",
+    "exprs": [
+      "math.cos(180)"
+    ],
+    "expected": [
+      -1
+    ]
+  },
+  {
+    "name": "math_sin_rad",
+    "seed": null,
+    "useRadians": true,
+    "handler": "none",
+    "exprs": [
+      "math.sin(1.5707963267948966)"
+    ],
+    "expected": [
+      1
+    ]
+  },
+  {
+    "name": "math_sqrt_pow",
+    "seed": null,
+    "useRadians": false,
+    "handler": "none",
+    "exprs": [
+      "math.sqrt(2)",
+      "math.pow(2,10)"
+    ],
+    "expected": [
+      1.4142135623730951,
+      1024
+    ]
+  },
+  {
+    "name": "math_exp_ln",
+    "seed": null,
+    "useRadians": false,
+    "handler": "none",
+    "exprs": [
+      "math.exp(1)",
+      "math.ln(10)"
+    ],
+    "expected": [
+      2.718281828459045,
+      2.302585092994046
+    ]
+  },
+  {
+    "name": "math_ceil_round",
+    "seed": null,
+    "useRadians": false,
+    "handler": "none",
+    "exprs": [
+      "math.ceil(2.1)",
+      "math.round(2.5)",
+      "math.round(-2.5)"
+    ],
+    "expected": [
+      3,
+      3,
+      -2
+    ]
+  },
+  {
+    "name": "math_trunc_floor",
+    "seed": null,
+    "useRadians": false,
+    "handler": "none",
+    "exprs": [
+      "math.trunc(-2.7)",
+      "math.floor(-2.1)"
+    ],
+    "expected": [
+      -2,
+      -3
+    ]
+  },
+  {
+    "name": "math_mod",
+    "seed": null,
+    "useRadians": false,
+    "handler": "none",
+    "exprs": [
+      "math.mod(-7,3)",
+      "math.mod(7,3)"
+    ],
+    "expected": [
+      -1,
+      1
+    ]
+  },
+  {
+    "name": "math_min_max",
+    "seed": null,
+    "useRadians": false,
+    "handler": "none",
+    "exprs": [
+      "math.min(2,3)",
+      "math.max(2,3)"
+    ],
+    "expected": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "math_clamp",
+    "seed": null,
+    "useRadians": false,
+    "handler": "none",
+    "exprs": [
+      "math.clamp(5,1,3)",
+      "math.clamp(-5,1,3)"
+    ],
+    "expected": [
+      3,
+      1
+    ]
+  },
+  {
+    "name": "math_lerp",
+    "seed": null,
+    "useRadians": false,
+    "handler": "none",
+    "exprs": [
+      "math.lerp(0,10,0.25)"
+    ],
+    "expected": [
+      2.5
+    ]
+  },
+  {
+    "name": "math_lerprotate",
+    "seed": null,
+    "useRadians": false,
+    "handler": "none",
+    "exprs": [
+      "math.lerprotate(350,10,0.5)",
+      "math.lerprotate(10,50,0.5)"
+    ],
+    "expected": [
+      0,
+      30
+    ]
+  },
+  {
+    "name": "math_inverse_trig",
+    "seed": null,
+    "useRadians": false,
+    "handler": "none",
+    "exprs": [
+      "math.asin(1)",
+      "math.acos(-1)",
+      "math.atan(1)",
+      "math.atan2(1,1)"
+    ],
+    "expected": [
+      90,
+      180,
+      45,
+      45
+    ]
+  },
+  {
+    "name": "math_hermite",
+    "seed": null,
+    "useRadians": false,
+    "handler": "none",
+    "exprs": [
+      "math.hermite_blend(0.5)",
+      "math.hermite_blend(0.25)"
+    ],
+    "expected": [
+      0.5,
+      0.15625
+    ]
+  },
+  {
+    "name": "math_min_angle",
+    "seed": null,
+    "useRadians": false,
+    "handler": "none",
+    "exprs": [
+      "math.min_angle(190)",
+      "math.min_angle(-190)"
+    ],
+    "expected": [
+      -170,
+      170
+    ]
+  },
+  {
+    "name": "math_pi",
+    "seed": null,
+    "useRadians": false,
+    "handler": "none",
+    "exprs": [
+      "math.pi"
+    ],
+    "expected": [
+      3.141592653589793
+    ]
+  },
+  {
+    "name": "scope_loop_alloc",
+    "seed": null,
+    "useRadians": false,
+    "handler": "none",
+    "exprs": [
+      "t.a=0;loop(4,{t.a=t.a+1});t.a"
+    ],
+    "expected": [
+      4
+    ]
+  },
+  {
+    "name": "loop_break",
+    "seed": null,
+    "useRadians": false,
+    "handler": "none",
+    "exprs": [
+      "t.a=0;loop(10,{t.a=t.a+1;t.a>2?break});t.a"
+    ],
+    "expected": [
+      3
+    ]
+  },
+  {
+    "name": "loop_continue",
+    "seed": null,
+    "useRadians": false,
+    "handler": "none",
+    "exprs": [
+      "t.a=0;t.b=0;loop(5,{t.a=t.a+1;t.a==2?continue;t.b=t.b+10});t.b"
+    ],
+    "expected": [
+      40
+    ]
+  },
+  {
+    "name": "return_statement",
+    "seed": null,
+    "useRadians": false,
+    "handler": "none",
+    "exprs": [
+      "t.a=1;return t.a+1;t.a=5"
+    ],
+    "expected": [
+      2
+    ]
+  },
+  {
+    "name": "query_in_range",
+    "seed": null,
+    "useRadians": false,
+    "handler": "none",
+    "exprs": [
+      "query.in_range(5,1,10)",
+      "query.in_range(15,1,10)"
+    ],
+    "expected": [
+      1,
+      0
+    ]
+  },
+  {
+    "name": "query_all",
+    "seed": null,
+    "useRadians": false,
+    "handler": "none",
+    "exprs": [
+      "query.all(2,2,2)",
+      "query.all(2,2,3)",
+      "query.all(2)"
+    ],
+    "expected": [
+      1,
+      0,
+      1
+    ]
+  },
+  {
+    "name": "query_any",
+    "seed": null,
+    "useRadians": false,
+    "handler": "none",
+    "exprs": [
+      "query.any(2,1,2,3)",
+      "query.any(2,1,3)"
+    ],
+    "expected": [
+      1,
+      0
+    ]
+  },
+  {
+    "name": "query_approx_eq",
+    "seed": null,
+    "useRadians": false,
+    "handler": "none",
+    "exprs": [
+      "query.approx_eq(0.1+0.2,0.3)",
+      "query.approx_eq(1,2)"
+    ],
+    "expected": [
+      1,
+      0
+    ]
+  },
+  {
+    "name": "query_quoted_string_arg",
+    "seed": null,
+    "useRadians": false,
+    "handler": "none",
+    "exprs": [
+      "query.any(1,'a',1)",
+      "query.all('a','a','a')"
+    ],
+    "expected": [
+      1,
+      1
+    ]
+  },
+  {
+    "name": "string_literal_allocation",
+    "seed": null,
+    "useRadians": false,
+    "handler": "none",
+    "exprs": [
+      "v.x = 'abc'"
+    ],
+    "expected": [
+      0
+    ]
+  },
+  {
+    "name": "handler_query_add",
+    "seed": null,
+    "useRadians": false,
+    "handler": "values",
+    "exprs": [
+      "query.add(2,3)"
+    ],
+    "expected": [
+      5
+    ]
+  },
+  {
+    "name": "handler_variable",
+    "seed": null,
+    "useRadians": false,
+    "handler": "values",
+    "exprs": [
+      "variable.custom*2"
+    ],
+    "expected": [
+      8
+    ]
+  },
+  {
+    "name": "ctx_query_function",
+    "seed": null,
+    "useRadians": false,
+    "handler": "ctxfn",
+    "exprs": [
+      "query.double(21)"
+    ],
+    "expected": [
+      42
+    ]
+  },
+  {
+    "name": "temp_variable_persist",
+    "seed": null,
+    "useRadians": false,
+    "handler": "none",
+    "exprs": [
+      "t.a=5;variable.b=t.a*2;variable.b"
+    ],
+    "expected": [
+      10
+    ]
+  },
+  {
+    "name": "variable_sequence",
+    "seed": null,
+    "useRadians": false,
+    "handler": "none",
+    "exprs": [
+      "v.count = v.count + 1",
+      "v.count = v.count + 1",
+      "v.count"
+    ],
+    "expected": [
+      0,
+      0,
+      2
+    ]
+  },
+  {
+    "name": "nested_brackets",
+    "seed": null,
+    "useRadians": false,
+    "handler": "none",
+    "exprs": [
+      "((1))",
+      "{2}",
+      "math.clamp(math.sin(30)*10,0,10)"
+    ],
+    "expected": [
+      1,
+      2,
+      4.999999999999999
+    ]
+  },
+  {
+    "name": "unassigned_variable",
+    "seed": null,
+    "useRadians": false,
+    "handler": "none",
+    "exprs": [
+      "v.a"
+    ],
+    "expected": [
+      0
+    ]
+  },
+  {
+    "name": "seeded_random",
+    "seed": 42,
+    "useRadians": false,
+    "handler": "none",
+    "exprs": [
+      "math.random(0,1)",
+      "math.random(5,5)",
+      "math.random_integer(1,10)"
+    ],
+    "expected": [
+      0.6011037519201636,
+      5,
+      9
+    ]
+  },
+  {
+    "name": "seeded_die_roll",
+    "seed": 7,
+    "useRadians": false,
+    "handler": "none",
+    "exprs": [
+      "math.die_roll(3,1,6)",
+      "math.die_roll_integer(2,1,6)"
+    ],
+    "expected": [
+      8.252853217534721,
+      9
+    ]
+  },
+  {
+    "name": "seeded_loop_random",
+    "seed": 123,
+    "useRadians": false,
+    "handler": "none",
+    "exprs": [
+      "t.s=0;loop(5,{t.s=t.s+math.random(0,1)});t.s"
+    ],
+    "expected": [
+      2.0682642676401883
+    ]
+  },
+  {
+    "name": "number_fast_path",
+    "seed": null,
+    "useRadians": false,
+    "handler": "none",
+    "exprs": [
+      "42",
+      "-17",
+      "3.25"
+    ],
+    "expected": [
+      42,
+      -17,
+      3.25
+    ]
+  }
+]

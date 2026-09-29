@@ -1,0 +1,369 @@
+{
+ "cases": [
+  {
+   "kind": "parse_hex",
+   "input": {
+    "hex": "#ffffff"
+   },
+   "expected": {
+    "rgb": {
+     "r": 255,
+     "g": 255,
+     "b": 255,
+     "a": 1
+    },
+    "hex8": "#ffffffff"
+   }
+  },
+  {
+   "kind": "parse_hex",
+   "input": {
+    "hex": "#000000"
+   },
+   "expected": {
+    "rgb": {
+     "r": 0,
+     "g": 0,
+     "b": 0,
+     "a": 1
+    },
+    "hex8": "#000000ff"
+   }
+  },
+  {
+   "kind": "parse_hex",
+   "input": {
+    "hex": "#ff0000"
+   },
+   "expected": {
+    "rgb": {
+     "r": 255,
+     "g": 0,
+     "b": 0,
+     "a": 1
+    },
+    "hex8": "#ff0000ff"
+   }
+  },
+  {
+   "kind": "parse_hex",
+   "input": {
+    "hex": "#00ff88"
+   },
+   "expected": {
+    "rgb": {
+     "r": 0,
+     "g": 255,
+     "b": 136,
+     "a": 1
+    },
+    "hex8": "#00ff88ff"
+   }
+  },
+  {
+   "kind": "parse_hex",
+   "input": {
+    "hex": "#123456"
+   },
+   "expected": {
+    "rgb": {
+     "r": 18,
+     "g": 52,
+     "b": 86,
+     "a": 1
+    },
+    "hex8": "#123456ff"
+   }
+  },
+  {
+   "kind": "parse_hex",
+   "input": {
+    "hex": "#ffffffff"
+   },
+   "expected": {
+    "rgb": {
+     "r": 255,
+     "g": 255,
+     "b": 255,
+     "a": 1
+    },
+    "hex8": "#ffffffff"
+   }
+  },
+  {
+   "kind": "parse_hex",
+   "input": {
+    "hex": "#00000000"
+   },
+   "expected": {
+    "rgb": {
+     "r": 0,
+     "g": 0,
+     "b": 0,
+     "a": 0
+    },
+    "hex8": "#00000000"
+   }
+  },
+  {
+   "kind": "parse_hex",
+   "input": {
+    "hex": "#ff000080"
+   },
+   "expected": {
+    "rgb": {
+     "r": 255,
+     "g": 0,
+     "b": 0,
+     "a": 0.5019607843137255
+    },
+    "hex8": "#ff000080"
+   }
+  },
+  {
+   "kind": "parse_hex",
+   "input": {
+    "hex": "#12345678"
+   },
+   "expected": {
+    "rgb": {
+     "r": 18,
+     "g": 52,
+     "b": 86,
+     "a": 0.47058823529411764
+    },
+    "hex8": "#12345678"
+   }
+  },
+  {
+   "kind": "parse_hex",
+   "input": {
+    "hex": "#fff"
+   },
+   "expected": {
+    "rgb": {
+     "r": 255,
+     "g": 255,
+     "b": 255,
+     "a": 1
+    },
+    "hex8": "#ffffffff"
+   }
+  },
+  {
+   "kind": "parse_hex",
+   "input": {
+    "hex": "#f00"
+   },
+   "expected": {
+    "rgb": {
+     "r": 255,
+     "g": 0,
+     "b": 0,
+     "a": 1
+    },
+    "hex8": "#ff0000ff"
+   }
+  },
+  {
+   "kind": "parse_hex",
+   "input": {
+    "hex": "#1234"
+   },
+   "expected": {
+    "rgb": {
+     "r": 17,
+     "g": 34,
+     "b": 51,
+     "a": 0.26666666666666666
+    },
+    "hex8": "#11223344"
+   }
+  },
+  {
+   "kind": "parse_object",
+   "input": {
+    "obj": {
+     "r": 255,
+     "g": 128,
+     "b": 0,
+     "a": 1
+    }
+   },
+   "expected": {
+    "rgb": {
+     "r": 255,
+     "g": 128,
+     "b": 0,
+     "a": 1
+    },
+    "hex8": "#ff8000ff"
+   }
+  },
+  {
+   "kind": "parse_object",
+   "input": {
+    "obj": {
+     "r": 0,
+     "g": 0,
+     "b": 0,
+     "a": 0
+    }
+   },
+   "expected": {
+    "rgb": {
+     "r": 0,
+     "g": 0,
+     "b": 0,
+     "a": 0
+    },
+    "hex8": "#00000000"
+   }
+  },
+  {
+   "kind": "parse_object",
+   "input": {
+    "obj": {
+     "r": 12.5,
+     "g": 200.7,
+     "b": 255,
+     "a": 0.5
+    }
+   },
+   "expected": {
+    "rgb": {
+     "r": 13,
+     "g": 201,
+     "b": 255,
+     "a": 0.5
+    },
+    "hex8": "#0dc9ff80"
+   }
+  },
+  {
+   "kind": "parse_object",
+   "input": {
+    "obj": {
+     "r": 255.4,
+     "g": 0.2,
+     "b": 77.9,
+     "a": 0.999
+    }
+   },
+   "expected": {
+    "rgb": {
+     "r": 255,
+     "g": 0,
+     "b": 78,
+     "a": 0.999
+    },
+    "hex8": "#ff004eff"
+   }
+  },
+  {
+   "kind": "parse_object",
+   "input": {
+    "obj": {
+     "r": 51,
+     "g": 230,
+     "b": 128,
+     "a": 0.75
+    }
+   },
+   "expected": {
+    "rgb": {
+     "r": 51,
+     "g": 230,
+     "b": 128,
+     "a": 0.75
+    },
+    "hex8": "#33e680bf"
+   }
+  },
+  {
+   "kind": "mix",
+   "input": {
+    "c1": "#ff0000ff",
+    "c2": "#0000ffff",
+    "amount": 50
+   },
+   "expected": {
+    "rgb": {
+     "r": 128,
+     "g": 0,
+     "b": 128,
+     "a": 1
+    },
+    "hex8": "#800080ff"
+   }
+  },
+  {
+   "kind": "mix",
+   "input": {
+    "c1": "#ff0000ff",
+    "c2": "#0000ffff",
+    "amount": 0
+   },
+   "expected": {
+    "rgb": {
+     "r": 255,
+     "g": 0,
+     "b": 0,
+     "a": 1
+    },
+    "hex8": "#ff0000ff"
+   }
+  },
+  {
+   "kind": "mix",
+   "input": {
+    "c1": "#ff0000ff",
+    "c2": "#0000ffff",
+    "amount": 100
+   },
+   "expected": {
+    "rgb": {
+     "r": 0,
+     "g": 0,
+     "b": 255,
+     "a": 1
+    },
+    "hex8": "#0000ffff"
+   }
+  },
+  {
+   "kind": "mix",
+   "input": {
+    "c1": "#80ff00c0",
+    "c2": "#0080ff40",
+    "amount": 33.333
+   },
+   "expected": {
+    "rgb": {
+     "r": 85,
+     "g": 213,
+     "b": 85,
+     "a": 0.5856225882352941
+    },
+    "hex8": "#55d55595"
+   }
+  },
+  {
+   "kind": "mix",
+   "input": {
+    "c1": "#ffffffff",
+    "c2": "#00000000",
+    "amount": 66.7
+   },
+   "expected": {
+    "rgb": {
+     "r": 85,
+     "g": 85,
+     "b": 85,
+     "a": 0.33299999999999996
+    },
+    "hex8": "#55555555"
+   }
+  }
+ ]
+}
