@@ -24,10 +24,11 @@
 | `eyelib.nodegraph` | 节点图模块：可视化 Molang 语言（EVM）的权威图文档模型、节点类型系统、验证、 图 → Molang 代码生成、图 → ClientEntity/RC/AC 组装。 |
 | `eyelib.particle` | 粒子模块：粒子定义、运行时、组件系统、加载管线与客户端渲染的整合入口。 |
 | `eyelib.smoke` | Clientsmoke 入口类集合，承担 mcpack 数据的运行时完整性验证。 |
+| `eyelib.snowstorm` | Snowstorm 基岩粒子编辑器数据层的 as-is Java 移植（ADR-0036）。 |
 | `eyelib.track` | 追踪模块：为 ItemStack 提供单调递增 ID 分配、NBT 持久化及基于 ID 的通用缓存容器基础设施。 |
 | `eyelib.ui` | MC 无关的 GUI 抽象接口，由 bridge/ui/ 提供 MC 适配实现。 |
 | `eyelib.uitest` | LDLib2 in-client UI 测试场景（uitest 框架，规格见 gradle/ldlib2-uitest.gradle）。 |
 | `eyelib.util` | 共享工具模块，提供 Eyelib 的基础工具类集合。 |
 | `eyelib.wintersky` | wintersky 1.3.3 逐字移植：基岩版粒子格式运行时渲染库（原库基于 three.js，见 ADR-0034）。 |
 
-(21 modules)
+(22 modules)
