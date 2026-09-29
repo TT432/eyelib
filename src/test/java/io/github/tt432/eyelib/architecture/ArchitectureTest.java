@@ -47,7 +47,8 @@ class ArchitectureTest {
                     "io.github.tt432.eyelib.material..",
                     "io.github.tt432.eyelib.animation..",
                     "io.github.tt432.eyelib.particle..",
-                    "io.github.tt432.eyelib.wintersky.."
+                    "io.github.tt432.eyelib.wintersky..",
+                    "io.github.tt432.eyelib.snowstorm.."
             )
                     .and(resideOutsideOfPackage("io.github.tt432.eyelib.bridge.."))
                     .and(resideOutsideOfPackage("io.github.tt432.eyelib.client.."))

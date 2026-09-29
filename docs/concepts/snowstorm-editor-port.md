@@ -87,10 +87,19 @@ pre_effect_expression 导出补分号；unsupported_fields 捕获。
   （纹理 `assets/minecraft_block.png` 移植进 eyelib resources），可见性由 Options 控制
   （localStorage→eyelib 配置文件持久化）。
 - 粒子渲染：复用 `WinterskyParticleRenderer`/`WinterskyRenderTypes`，舞台相机四元数喂给
-  `Scene.updateFacingRotation`；帧渲染驱动 `emitter.tick(dt)`，dt 节流规则 as-is（帧间隔
-  >32ms 时按 Snowstorm Preview.vue 同规则处理）。
+  `Scene.updateFacingRotation`。**tick 节流 as-is（Preview.vue:253-262 实证）**：每 rAF 帧检查
+  `timestamp - last_frame_time > 32` 才调 `Emitter.tick()`（无参数，wintersky 内部固定步长
+  1/tick_rate）——即 tick 频率上限 ~30Hz 与 rAF 解耦；渲染每帧都做
+  （controls.update→updateFacingRotation→render）。MC 侧：Screen 渲染帧 = rAF 帧，
+  用系统纳秒戳实现同一 32ms 门。
+  **实证参数（Preview.vue 2026-09-29 全读）**：camera=PerspectiveCamera(45, 16/9, 0.1, 3000)
+  初始位置 (-6,3,-6)；OrbitControls target=(0,0.8,0)、screenSpacePanning=true、zoomSpeed=1.4；
+  GridHelper(64,64) 下沉 y-=0.0005；CustomAxesHelper(1)；minecraft_block Mesh 位于 (0,-0.51,0)；
+  渲染循环：controls.update()→Scene.updateFacingRotation(camera)→render；`View.placeholder_variables`
+  挂在 View 上（页脚 placeholder 栏数据源）；View.screenshot=renderer 截图（游戏内改 Screenshot.grab）。
 - 页脚控制条 as-is：loop_mode/parent_mode 下拉、ground_collision 开关、placeholder 栏（# 键）、
-  play/pause（空格/Ctrl+空格）、警告计数、粒子数/FPS、placeholder bake 对话框。
+  警告计数、粒子数/FPS、placeholder bake 对话框。键盘（Preview.vue:288-297 实证）：**空格=重新开始
+  （startAnimation=Emitter restart），Ctrl+空格=暂停切换**；焦点在输入框时快捷键不生效。
 
 ### D5 贴图编辑器（U3）
 
@@ -105,8 +114,8 @@ pre_effect_expression 导出补分号；unsupported_fields 捕获。
 
 - 导出：generateFile as-is → 写入 `run/snowstorm_exports/<identifier>.particle.json` + 复制到剪贴板
   （Screen 环境无浏览器下载）。
-- 导入：FileDialogService 选文件 + `Screen.onFilesDrop` 拖拽（**核对点 C3**：1.20.1 Screen 是否有
-  onFilesDrop，无则仅对话框）；VSCode 消息通道不适用，剔除。
+- 导入：FileDialogService 选文件 + `Screen.onFilesDrop` 拖拽双通道（C3 已验证存在，见 §6）；
+  VSCode 消息通道不适用，剔除。
 - 子效果（EventSubEffects）：`fetchParticleFile` 钩子接子效果注册表（编辑器内闭环，as-is）；
   子效果编辑用编辑器 Screen 堆叠新实例（对应 Snowstorm 新标签页）。
 
@@ -128,7 +137,6 @@ WarningDialog 以 LDLib2 弹层实现。
 
 ### domain（`io.github.tt432.eyelib.snowstorm`，零 MC）
 
-```
 snowstorm/
   input/Input.java  InputStructure.java  InputType.java（枚举: molang/text/number/checkbox/select/
         select_custom/color/gradient/image/event_list/event_timeline/event_speed_list）
@@ -194,9 +202,24 @@ client/gui/snowstorm/
   `client/gui/snowstorm`，版本守卫复制 nodegraph 编辑器先例；26.1 无 uitest 框架，测试只跑两个旧版。
 - R2 舞台内透视投影与 MC GUI ortho 的矩阵切换 → 参考 GuiRenderEntity/Inventory 实体渲染先例；
   核对点 C1：RenderSystem projection matrix 在 Screen 渲染中的压栈/恢复路径。
+  **实证约束（NodeAssetPreview javadoc，2026-08 实机）**：LDLib2/GUI 上下文中
+  `guiGraphics.bufferSource` 批渲染（含 entitySolid）零像素，唯一实证可用路径是
+  Tesselator + position_tex 直接 `drawWithShader`（同 `GuiGraphics.innerBlit`）；
+  且**禁止 enableScissor**（LDLib 画布 pose 变换与 scissor 屏幕坐标系冲突，剪出错误区域）。
+  → P4 舞台粒子渲染不能直接复用 WinterskyRenderHooks 的 BufferSource 批次路径，
+  须走立即模式 drawWithShader；顶点生成逻辑（wintersky quad/clr/uv）可复用，
+  提交机制重写。26.1 GUI 渲染路径未迁移（`//? if <26.1` 先例），P4 仅在 1.20.1/1.21.1 验收。
+  **实证约束（NodeAssetPreview javadoc，2026-08 实机）**：LDLib2/GUI 上下文中
+  `guiGraphics.bufferSource` 批渲染（含 entitySolid）零像素，唯一实证可用路径是
+  Tesselator + position_tex 直接 `drawWithShader`（同 `GuiGraphics.innerBlit`）；
+  且**禁止 enableScissor**（LDLib 画布 pose 变换与 scissor 屏幕坐标系冲突，剪出错误区域）。
+  → P4 舞台粒子渲染不能直接复用 WinterskyRenderHooks 的 BufferSource 批次路径，
+  须走立即模式 drawWithShader；顶点生成逻辑（wintersky quad/clr/uv）可复用，
+  提交机制重写。26.1 GUI 渲染路径未迁移（`//? if <26.1` 先例），P4 仅在 1.20.1/1.21.1 验收。
 - R3 Snowstorm 数据层对 Vue 响应式的隐性依赖（Input.value setter 触发 UI 刷新）→ 移植时以显式
   listener 替代，oracle 只覆盖数据语义不覆盖 UI 刷新。
 - R4 贴图编辑器 flood fill/插值连线精度 → 纯 int[] 实现与 canvas 2D 语义差（抗锯齿）：
   Snowstorm brush 依赖 canvas 抗锯齿，Java 侧 as-is 到「硬边像素」语义并记录偏离；**核对点 C2**。
 - R5 工程规模（~200KB 源，UI 占比大）→ 分期切片 + 子代理并行，每期独立验收。
-- C3（核对点）：1.20.1 `Screen.onFilesDrop` 存在性；不存在则导入仅走 FileDialogService。
+- C3 ~~（核对点）~~ **已验证（2026-09-29，forge-1.20.1-47.1.3-sources.jar Screen.java:489）**：
+  1.20.1 `Screen.onFilesDrop(List<Path>)` 存在，导入支持拖拽+对话框双通道。

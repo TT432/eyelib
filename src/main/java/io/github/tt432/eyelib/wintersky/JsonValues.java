@@ -14,8 +14,11 @@ import java.util.Map;
 /**
  * JSON 值辅助：Gson 树 → JS 风格 Map/List/Double/String/Boolean 结构，
  * 以及 wintersky 用到的 JS 标量转换（parseFloat、typeof 判定）。
+ *
+ * <p>public 可见性：snowstorm 编辑器模块（ADR-0036）同为 JS 移植层，复用本助手避免重复实现；
+ * 本类是移植辅助设施而非 wintersky JS 实体， widening 不改变任何 as-is 行为。
  */
-final class JsonValues {
+public final class JsonValues {
 
     private JsonValues() {
     }
