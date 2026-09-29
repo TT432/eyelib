@@ -23,6 +23,7 @@
 | C1 GPU 蒙皮 26.1.2 结果（正确性通过、性能中性） | [perf/c1-gpu-skinning-26.1.2.md](perf/c1-gpu-skinning-26.1.2.md) |
 | C1 GPU 蒙皮 ≤26.1 结果（1.20.1/1.21.1，正确性通过、性能中性） | [perf/c1-gpu-skinning-legacy.md](perf/c1-gpu-skinning-legacy.md) |
 | Wintersky 移植与集成（as-is 移植 ADR-0034 / 集成设计 ADR-0035） | [concepts/wintersky-integration.md](concepts/wintersky-integration.md) |
+| Snowstorm 编辑器游戏内复刻（完整复刻设计 ADR-0036） | [concepts/snowstorm-editor-port.md](concepts/snowstorm-editor-port.md) |
 
 ## Skill 索引
 
@@ -85,6 +86,7 @@
 | 0033 | 渲染状态增加光照模型轴——粒子光照根修（取代 PR #25 局部修补） | Accepted (2026-09-26) |
 | 0034 | Wintersky 基岩粒子运行时的 as-is Java 移植 | Accepted (2026-09-29，用户决策) |
 | 0035 | Wintersky 融入 eyelib 的集成架构决策（双运行时共存/渲染旁路/渲染帧驱动） | Accepted (2026-09-29) |
+| 0036 | Snowstorm 粒子编辑器游戏内完整复刻（用户决策 U1-U3：完整复刻/全屏 Screen/贴图编辑器 V1） | Accepted (2026-09-29，用户决策) |
 
 ## 核心原则
 
