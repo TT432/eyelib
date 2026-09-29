@@ -49,3 +49,33 @@
   JS 侧需 node-canvas 或将 brush/fill 操作抽象后注入 fake ctx（记录像素写入序列）。优先 fake ctx
   方案：TextureClass 的 ctx 调用点收口后注入记录型 proxy。
 - 冻结 golden 输出到 src/test/resources/snowstorm/*.json；脚本归 scripts/snowstorm-oracle/。
+
+## wave-3 落地差异（2026-09-29 harness 实证）
+
+harness 已落地（loader.mjs + hooks.mjs + stubs/ + run_cases.mjs），与原方案的差异：
+
+1. `vscode_extension` **未 stub**：真身在 Node 安全评估（`typeof acquireVsCodeApi == 'function'`
+   为 false，`document` 引用在 `if (vscode)` 分支内不触达），`export default false`，零偏差。
+2. **webpack 无扩展名相对导入**（`'./input'`）：resolve hook 捕获 ERR_MODULE_NOT_FOUND 后补
+   `.js` 重试（原方案未提及，必需）。
+3. Snowstorm 源无 package.json `type` 字段：load hook 对 `/_snowstorm_src/**.js` 直接声明
+   `format: 'module'`，消除 reparse 警告。
+4. bare 包映射到 **ESM 构建**（wintersky `dist/wintersky.esm.js`（有 `export default`）、
+   three `build/three.module.js`、molangjs `dist/molang.esm.js`）；tinycolor2 只有 CJS，
+   走 createRequire 解析真身（Node CJS-ESM 互操作）。wintersky.esm 内部 bare import 回本 hook。
+5. **循环 import 入口顺序**（TDZ 实证）：gradient.js 直接作入口崩溃
+   （`Cannot access 'Input' before initialization`，环 gradient→input→edits→export→
+   input_structure）。必须先经 input_structure.js（或 emitter.js）热身：input.js body 在环上
+   遇 in-progress 跳过而能先完成，与 webpack 实际加载顺序一致。run_cases.mjs gradient 段
+   已内置热身 import。
+6. 额外全局 stub（原方案未列）：`InputEvent`/`KeyboardEvent`（edits.js registerEdit 的
+   `instanceof` 必需，否则 ReferenceError）、`Image`（onerror 立即触发）、
+   `document`（fake canvas/ctx 仅保 TextureClass 可构造；像素级 texture oracle 需换记录型
+   proxy，同原方案结论）。
+7. `Math.random` 替换为 mulberry32（seed 0x5EED1234）：golden 跨运行逐字节可复现
+   （已 diff 验证）。Java 对拍不比随机产物，gradient 点 id 已在 golden 中归一化剔除。
+8. `lineify` 未含入首个用例集：它是 import.js `updateInputsFromConfig` 的闭包局部函数，
+   未导出，不改源无法直接调用；由 wave-2 import 用例经 updateInputsFromConfig 覆盖。
+
+运行：`node --import ./scripts/snowstorm-oracle/loader.mjs scripts/snowstorm-oracle/run_cases.mjs`
+（26 用例，golden → src/test/resources/snowstorm/snowstorm_cases.json）

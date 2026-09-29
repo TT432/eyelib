@@ -602,12 +602,12 @@ public class Input {
         if (img == null) throw new NullPointerException("image");
         return img;
     }
-
     /**
-     * JS {@code Config[this.id]} 动态属性访问。wintersky Config 无 get(key) API，
-     * 字段名与 key 一致，用反射读取；不存在的 key → null（JS undefined）。见偏离记录。
+     * JS {@code Config[key]} 动态属性访问。wintersky Config 无 get(key) API，
+     * 字段名与 key 一致，用反射读取；不存在的 key → null（JS undefined）。
+     * 共用助手（input/io 包统一入口）。
      */
-    private static @Nullable Object configGet(Config config, String key) {
+    public static @Nullable Object configGet(Config config, String key) {
         try {
             Field field = Config.class.getField(key);
             return field.get(config);

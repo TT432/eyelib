@@ -1,0 +1,327 @@
+{
+  "meta": {
+    "tool": "scripts/snowstorm-oracle/run_cases.mjs",
+    "snowstorm_version": "v3.2.2",
+    "node": "v24.3.0",
+    "math_random_seed": "0x5EED1234 (mulberry32，替换浏览器 Math.random 保证可复现)",
+    "notes": [
+      "lineify 为 import.js updateInputsFromConfig 闭包局部函数，未导出，本集不含；wave-2 import 用例覆盖。",
+      "gradient 点 id（bbuid 随机）已归一化剔除，Java 对拍不比随机产物。"
+    ]
+  },
+  "cases": [
+    {
+      "name": "util.compileJSON.default",
+      "input": {
+        "identifier": "test:demo",
+        "num": 0.123456789,
+        "rounded": 1.000000001,
+        "str": "line\n\"quoted\"\ttab\\back",
+        "bool": true,
+        "nil": null,
+        "inf": null,
+        "arr": [
+          1,
+          "two",
+          [
+            3
+          ],
+          {
+            "nested": false
+          }
+        ],
+        "empty_arr": [],
+        "empty_obj": {}
+      },
+      "output": "{\n\t\"identifier\": \"test:demo\",\n\t\"num\": 0.12346,\n\t\"rounded\": 1,\n\t\"str\": \"line\\n\\\"quoted\\\"\\ttab\\\\back\",\n\t\"bool\": true,\n\t\"nil\": null,\n\t\"inf\": Infinity,\n\t\"arr\": [1, \"two\",\n\t\t[3],\n\t\t{\n\t\t\t\"nested\": false\n\t\t}\n\t],\n\t\"empty_arr\": [],\n\t\"empty_obj\": {}\n}"
+    },
+    {
+      "name": "util.compileJSON.small",
+      "input": {
+        "identifier": "test:demo",
+        "num": 0.123456789,
+        "rounded": 1.000000001,
+        "str": "line\n\"quoted\"\ttab\\back",
+        "bool": true,
+        "nil": null,
+        "inf": null,
+        "arr": [
+          1,
+          "two",
+          [
+            3
+          ],
+          {
+            "nested": false
+          }
+        ],
+        "empty_arr": [],
+        "empty_obj": {}
+      },
+      "output": "{\"identifier\":\"test:demo\",\"num\":0.12346,\"rounded\":1,\"str\":\"line\\n\\\"quoted\\\"\\ttab\\\\back\",\"bool\":true,\"nil\":null,\"inf\":Infinity,\"arr\":[1,\"two\",[3],{\"nested\":false}],\"empty_arr\":[],\"empty_obj\":{}}"
+    },
+    {
+      "name": "util.pathToName.strip_ext",
+      "input": "textures/particle/snowflake.png",
+      "output": "snowflake"
+    },
+    {
+      "name": "util.pathToName.keep_ext",
+      "input": [
+        "textures/particle/snowflake.png",
+        true
+      ],
+      "output": "snowflake.png"
+    },
+    {
+      "name": "util.pathToName.backslash",
+      "input": "foo\\bar\\baz.qux",
+      "output": "baz"
+    },
+    {
+      "name": "util.pathToName.no_ext",
+      "input": "a/b/plain",
+      "output": "plain"
+    },
+    {
+      "name": "util.trimFloatNumber.long",
+      "input": 0.123456789,
+      "output": "0.1235"
+    },
+    {
+      "name": "util.trimFloatNumber.int",
+      "input": 3,
+      "output": "3"
+    },
+    {
+      "name": "util.trimFloatNumber.half",
+      "input": 2.5,
+      "output": "2.5"
+    },
+    {
+      "name": "util.trimFloatNumber.neg_zero_quirk",
+      "input": -0.00001,
+      "output": 0
+    },
+    {
+      "name": "util.trimFloatNumber.empty",
+      "input": "",
+      "output": ""
+    },
+    {
+      "name": "util.trimFloatNumber.digits",
+      "input": [
+        0.987654321,
+        2
+      ],
+      "output": "0.99"
+    },
+    {
+      "name": "util.snapToValues.no_snap",
+      "input": [
+        50,
+        [
+          0,
+          100
+        ],
+        12
+      ],
+      "output": 50
+    },
+    {
+      "name": "util.snapToValues.snap_low",
+      "input": [
+        11,
+        [
+          0,
+          100
+        ],
+        12
+      ],
+      "output": 0
+    },
+    {
+      "name": "util.snapToValues.snap_high",
+      "input": [
+        95,
+        [
+          0,
+          100
+        ],
+        12
+      ],
+      "output": 100
+    },
+    {
+      "name": "util.snapToValues.exact_epsilon_edge",
+      "input": [
+        12,
+        [
+          0,
+          100
+        ],
+        12
+      ],
+      "output": 12
+    },
+    {
+      "name": "options.defaults",
+      "input": null,
+      "output": {
+        "grid_visible": true,
+        "minecraft_block_visible": false,
+        "axis_helper_visible": true
+      }
+    },
+    {
+      "name": "options.after_setOption",
+      "input": [
+        "grid_visible=false",
+        "minecraft_block_visible=true"
+      ],
+      "output": {
+        "values": {
+          "grid_visible": false,
+          "minecraft_block_visible": true,
+          "axis_helper_visible": true
+        },
+        "stored": "{\"grid_visible\":false,\"minecraft_block_visible\":true,\"axis_helper_visible\":true}"
+      }
+    },
+    {
+      "name": "options.load_stored",
+      "input": "{\"grid_visible\":false,\"axis_helper_visible\":false,\"unknown_key\":123}",
+      "output": {
+        "grid_visible": false,
+        "minecraft_block_visible": false,
+        "axis_helper_visible": false
+      }
+    },
+    {
+      "name": "gradient.init",
+      "input": "{type:\"gradient\",value:[]}",
+      "output": {
+        "value": [
+          {
+            "percent": 0,
+            "color": "#ffffffff"
+          },
+          {
+            "percent": 100,
+            "color": "#000000ff"
+          }
+        ],
+        "selected": {
+          "percent": 0,
+          "color": "#ffffffff"
+        }
+      }
+    },
+    {
+      "name": "gradient.after_addPoint",
+      "input": null,
+      "output": {
+        "value": [
+          {
+            "percent": 0,
+            "color": "#ffffffff"
+          },
+          {
+            "percent": 50,
+            "color": "#ffffffff"
+          },
+          {
+            "percent": 100,
+            "color": "#000000ff"
+          }
+        ],
+        "selected": {
+          "percent": 50,
+          "color": "#ffffffff"
+        }
+      }
+    },
+    {
+      "name": "gradient.after_change",
+      "input": "{hex8:\"#ff000080\"}",
+      "output": {
+        "value": [
+          {
+            "percent": 0,
+            "color": "#ffffffff"
+          },
+          {
+            "percent": 50,
+            "color": "#ff000080"
+          },
+          {
+            "percent": 100,
+            "color": "#000000ff"
+          }
+        ],
+        "selected": {
+          "percent": 50,
+          "color": "#ff000080"
+        }
+      }
+    },
+    {
+      "name": "gradient.export_range1",
+      "input": 1,
+      "output": {
+        "0.0": "#ffffffff",
+        "0.5": "#80ff0000",
+        "1.0": "#ff000000"
+      }
+    },
+    {
+      "name": "gradient.export_range2_5",
+      "input": 2.5,
+      "output": {
+        "0.0": "#ffffffff",
+        "1.25": "#80ff0000",
+        "2.5": "#ff000000"
+      }
+    },
+    {
+      "name": "gradient.after_removePoint",
+      "input": null,
+      "output": {
+        "value": [
+          {
+            "percent": 0,
+            "color": "#ffffffff"
+          },
+          {
+            "percent": 100,
+            "color": "#000000ff"
+          }
+        ],
+        "selected": {
+          "percent": 0,
+          "color": "#ffffffff"
+        }
+      }
+    },
+    {
+      "name": "gradient.after_reset",
+      "input": null,
+      "output": {
+        "value": [
+          {
+            "percent": 0,
+            "color": "#ffffffff"
+          },
+          {
+            "percent": 100,
+            "color": "#000000ff"
+          }
+        ],
+        "selected": {
+          "percent": 0,
+          "color": "#ffffffff"
+        }
+      }
+    }
+  ]
+}

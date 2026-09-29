@@ -117,7 +117,10 @@ public class Gradient extends Input {
             // JS：super.update()（无参，Data=undefined）。Java 不能调 Input 无参 update()——它会
             // 经 this.update(null) 动态分派回本覆盖方法造成无限递归；直接 super.update(null) 等价。
             super.update(null);
-            this.selected = v.get((int) SnowstormUtil.clamp(selectedIndex, 0, v.size() - 1));
+            // JS：this.value[Math.clamp(selected_index, 0, length-1)]——value 为空时 clamp 得 -1，
+            // JS value[-1] = undefined（selected 变 undefined，不抛）；Java 映射为 null（as-is 语义）
+            int idx = (int) SnowstormUtil.clamp(selectedIndex, 0, v.size() - 1);
+            this.selected = idx >= 0 && idx < v.size() ? v.get(idx) : null;
         }
         return this;
     }

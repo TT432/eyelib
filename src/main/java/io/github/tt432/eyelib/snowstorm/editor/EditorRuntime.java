@@ -15,8 +15,10 @@ import io.github.tt432.eyelib.wintersky.three.TextureImage;
 import io.github.tt432.eyelib.wintersky.three.Vector3;
 import org.jspecify.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -92,6 +94,18 @@ public final class EditorRuntime {
     /** JS {@code View.placeholder_variables}：placeholder 变量兜底表（Preview.vue placeholder 栏填充）。 */
     public static final Map<String, Object> placeholder_variables = new LinkedHashMap<>();
 
+    /** JS Preview.vue 的 {@code placeholder_keys}（placeholder 栏变量 id 列表，View 组件数据 → domain 接缝）。 */
+    public static final List<String> placeholder_keys = new ArrayList<>();
+
+
+    /**
+     * JS {@code View.updateVariablePlaceholderList()}（Preview.vue:410 挂载时替换 stub）：
+     * 刷新 placeholder 栏变量列表。Java 侧列表归 domain，始终执行
+     * {@link VariablePlaceholders#updateVariablePlaceholderList(java.util.List)}。
+     */
+    public static void updateVariablePlaceholderList() {
+        VariablePlaceholders.updateVariablePlaceholderList(placeholder_keys);
+    }
     // ==================================================================
     // 模块加载顶层语句（emitter.js:8-153，原顺序）
     // ==================================================================
