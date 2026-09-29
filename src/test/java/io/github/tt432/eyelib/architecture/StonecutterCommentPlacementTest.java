@@ -42,7 +42,10 @@ class StonecutterCommentPlacementTest {
             "io/github/tt432/eyelib/client/nodegraph/",
             // uitest 场景（LDLib2 in-client UI 测试框架）：与 smoke/debug 同质的 client tooling；
             // //? 守卫因 26.1.2.33 尚无 uitest 框架（上游 26.1 分支停在 2.2.33）。
-            "io/github/tt432/eyelib/uitest/"
+            "io/github/tt432/eyelib/uitest/",
+            // client/gui/snowstorm 编辑器适配层（LDLib2 第三方库 ACL，同 client/nodegraph 性质）：
+            // 整文件 //? 包裹是单版本编译隔离的手段（26.1 LDLib2 API 漂移隔离），属 client tooling 基础设施。
+            "io/github/tt432/eyelib/client/gui/snowstorm/"
     );
 
     private static final String STONECUTTER_MARKER = "//?";
