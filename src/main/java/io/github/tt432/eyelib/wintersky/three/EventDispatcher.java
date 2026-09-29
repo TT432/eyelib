@@ -1,5 +1,6 @@
 package io.github.tt432.eyelib.wintersky.three;
 
+import org.jspecify.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -14,18 +15,16 @@ public class EventDispatcher {
     /** three.js 事件对象最小复刻：仅 type 字段被使用。 */
     public static final class Event {
         public final String type;
-        public Object target;
+        public @Nullable Object target;
 
         public Event(String type) {
             this.type = type;
         }
     }
 
-    private Map<String, List<Consumer<Event>>> listenerMap;
+    private final Map<String, List<Consumer<Event>>> listenerMap = new HashMap<>();
 
     public void addEventListener(String type, Consumer<Event> listener) {
-        if (listenerMap == null) listenerMap = new HashMap<>();
-
         List<Consumer<Event>> list = listenerMap.computeIfAbsent(type, k -> new ArrayList<>());
         if (!list.contains(listener)) {
             list.add(listener);
@@ -33,13 +32,11 @@ public class EventDispatcher {
     }
 
     public boolean hasEventListener(String type, Consumer<Event> listener) {
-        if (listenerMap == null) return false;
         List<Consumer<Event>> list = listenerMap.get(type);
         return list != null && list.contains(listener);
     }
 
     public void removeEventListener(String type, Consumer<Event> listener) {
-        if (listenerMap == null) return;
         List<Consumer<Event>> list = listenerMap.get(type);
         if (list != null) {
             list.remove(listener);
@@ -47,8 +44,6 @@ public class EventDispatcher {
     }
 
     public void dispatchEvent(Event event) {
-        if (listenerMap == null) return;
-
         List<Consumer<Event>> list = listenerMap.get(event.type);
 
         if (list != null) {

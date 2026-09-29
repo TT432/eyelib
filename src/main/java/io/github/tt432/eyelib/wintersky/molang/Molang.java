@@ -454,7 +454,7 @@ public class Molang {
         return null;
     }
 
-    private boolean compareValues(Object a, Object b, Map<String, Object> context) {
+    private boolean compareValues(Object a, @Nullable Object b, Map<String, Object> context) {
         Object av = (a instanceof String s && s.startsWith("'")) ? a : iterateExp(a, context, true);
         Object bv = (b instanceof String s && s.startsWith("'")) ? b : iterateExp(b, context, true);
         return JsSemantics.strictEquals(av, bv);

@@ -1,5 +1,6 @@
 package io.github.tt432.eyelib.wintersky.three;
 
+import org.jspecify.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -31,7 +32,7 @@ public class Object3D extends EventDispatcher {
     public String name = "";
     public String type = "Object3D";
 
-    public Object3D parent = null;
+    public @Nullable Object3D parent = null;
     public final List<Object3D> children = new ArrayList<>();
 
     public final Vector3 up = DefaultUp.clone();

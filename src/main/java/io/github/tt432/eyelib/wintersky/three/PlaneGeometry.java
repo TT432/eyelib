@@ -12,6 +12,11 @@ public class PlaneGeometry extends BufferGeometry {
         this(1, 1, 1, 1);
     }
 
+    /** three 默认 widthSegments/heightSegments = 1。 */
+    public PlaneGeometry(double width, double height) {
+        this(width, height, 1, 1);
+    }
+
     public PlaneGeometry(double width, double height, int widthSegments, int heightSegments) {
         super();
         this.type = "PlaneGeometry";

@@ -34,7 +34,7 @@ public class Texture extends EventDispatcher {
     public int anisotropy;
 
     public int format;
-    public String internalFormat = null;
+    public @Nullable String internalFormat = null;
     public int type;
 
     public final Vector2 offset = new Vector2(0, 0);

@@ -1,5 +1,6 @@
 package io.github.tt432.eyelib.wintersky.three;
 
+import org.jspecify.annotations.Nullable;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -24,17 +25,17 @@ public class ShaderMaterial extends Material {
     public final Map<String, Object> defines = new LinkedHashMap<>();
     public final Map<String, Uniform> uniforms = new LinkedHashMap<>();
 
-    public String vertexShader;
-    public String fragmentShader;
+    public @Nullable String vertexShader;
+    public @Nullable String fragmentShader;
 
     public double linewidth = 1;
 
     public boolean wireframe = false;
     public double wireframeLinewidth = 1;
 
-    public String glslVersion = null;
+    public @Nullable String glslVersion = null;
 
-    public String index0AttributeName = null;
+    public @Nullable String index0AttributeName = null;
     public boolean uniformsNeedUpdate = false;
 
     public ShaderMaterial() {
@@ -42,7 +43,7 @@ public class ShaderMaterial extends Material {
     }
 
     @SuppressWarnings("unchecked")
-    public ShaderMaterial(Map<String, Object> parameters) {
+    public ShaderMaterial(@Nullable Map<String, Object> parameters) {
         super();
 
         this.type = "ShaderMaterial";

@@ -1,5 +1,6 @@
 package io.github.tt432.eyelib.wintersky.three;
 
+import org.jspecify.annotations.Nullable;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -29,9 +30,9 @@ public class Material extends EventDispatcher {
     public int blendSrc = 204 /* SrcAlphaFactor */;
     public int blendDst = 205 /* OneMinusSrcAlphaFactor */;
     public int blendEquation = 100 /* AddEquation */;
-    public Integer blendSrcAlpha = null;
-    public Integer blendDstAlpha = null;
-    public Integer blendEquationAlpha = null;
+    public @Nullable Integer blendSrcAlpha = null;
+    public @Nullable Integer blendDstAlpha = null;
+    public @Nullable Integer blendEquationAlpha = null;
 
     public int depthFunc = 3 /* LessEqualDepth */;
     public boolean depthTest = true;
@@ -48,7 +49,7 @@ public class Material extends EventDispatcher {
 
     public boolean colorWrite = true;
 
-    public String precision = null;
+    public @Nullable String precision = null;
 
     public boolean polygonOffset = false;
     public double polygonOffsetFactor = 0;

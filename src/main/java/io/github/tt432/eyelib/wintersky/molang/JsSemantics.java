@@ -10,14 +10,15 @@ import org.jspecify.annotations.Nullable;
  * 本类实现移植代码依赖的 JS 运算符语义：truthiness、ToNumber、
  * {@code ==}/{@code ===}、{@code x || 0}、{@code Math.round}、substring/substr。
  */
-final class JsSemantics {
+public final class JsSemantics {
 
     private JsSemantics() {
     }
 
-    /** JS truthiness：undefined/null→false，0/NaN→false，""→false，其余 true。 */
-    static boolean truthy(@Nullable Object v) {
+    /** JS truthiness：undefined/null→false，false→false，0/NaN→false，""→false，其余 true。 */
+    public static boolean truthy(@Nullable Object v) {
         if (v == null) return false;
+        if (v instanceof Boolean b) return b;
         if (v instanceof Double d) return d != 0 && !Double.isNaN(d);
         if (v instanceof String s) return !s.isEmpty();
         return true;
@@ -27,7 +28,7 @@ final class JsSemantics {
      * JS {@code ToNumber}：undefined→NaN，Double→自身，String→按 JS Number() 解析。
      * 与 JS 的差异：不支持 0x 十六进制与 0b/0o 字面量（molang 表达式不会产出）。
      */
-    static double toNumber(@Nullable Object v) {
+    public static double toNumber(@Nullable Object v) {
         if (v == null) return Double.NaN;
         if (v instanceof Double d) return d;
         if (v instanceof String s) {
@@ -68,7 +69,7 @@ final class JsSemantics {
 
     /** JS {@code x || 0}：falsy → 0.0，否则原值（可能为 String）。 */
     static Object orZero(@Nullable Object v) {
-        return truthy(v) ? v : 0.0;
+        return truthy(v) ? java.util.Objects.requireNonNull(v) : 0.0;
     }
 
     /**
@@ -86,7 +87,7 @@ final class JsSemantics {
     }
 
     /** JS number→string（用于 {@code +} 字符串拼接路径）：5→"5"，5.5→"5.5"。 */
-    static String toJsString(@Nullable Object v) {
+    public static String toJsString(@Nullable Object v) {
         if (v == null) return "undefined";
         if (v instanceof String s) return s;
         if (v instanceof Double d) {
@@ -105,7 +106,7 @@ final class JsSemantics {
      * JS {@code Math.round}：四舍五入、平局向 +∞；(-0.5, 0) 区间返回 -0。
      * Java {@link Math#round} 在这些区间返回 +0 且返回 long，大数会溢出，故单独实现。
      */
-    static double jsRound(double x) {
+    public static double jsRound(double x) {
         if (Double.isNaN(x) || Double.isInfinite(x) || x == 0) return x;
         double r = Math.floor(x + 0.5);
         if (r == 0 && x < 0) return -0.0;
@@ -121,7 +122,7 @@ final class JsSemantics {
     }
 
     /** JS {@code String.prototype.substr}：负 start 从尾部计，负 length 得空串。 */
-    static String jsSubstr(String s, int start, int length) {
+    public static String jsSubstr(String s, int start, int length) {
         int len = s.length();
         if (start < 0) start = Math.max(len + start, 0);
         if (start >= len || length <= 0) return "";

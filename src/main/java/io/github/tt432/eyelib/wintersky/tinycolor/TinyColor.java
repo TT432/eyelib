@@ -109,9 +109,13 @@ public final class TinyColor {
     private static Rgba inputToRGB(Rgba color) {
         double r = 0, g = 0, b = 0, a = 1;
 
-        r = bound01(color.r, 255) * 255;
-        g = bound01(color.g, 255) * 255;
-        b = bound01(color.b, 255) * 255;
+        // tinycolor2：r/g/b 三者都通过 isValidCSSUnit 才走 rgbToRgb，
+        // 否则保持默认黑（{r:0,g:0,b:0}）；NaN/Infinity 不是合法 CSS 单位。
+        if (isValidCSSUnit(color.r) && isValidCSSUnit(color.g) && isValidCSSUnit(color.b)) {
+            r = bound01(color.r, 255) * 255;
+            g = bound01(color.g, 255) * 255;
+            b = bound01(color.b, 255) * 255;
+        }
 
         a = boundAlpha(color.a);
 
@@ -121,6 +125,11 @@ public final class TinyColor {
                 Math.min(255, Math.max(b, 0)),
                 a
         );
+    }
+
+    /** tinycolor2 isValidCSSUnit（number 输入）：NaN/Infinity 非法。 */
+    private static boolean isValidCSSUnit(double n) {
+        return !Double.isNaN(n) && !Double.isInfinite(n);
     }
 
     private record Parsed(double r, double g, double b, double a) {
