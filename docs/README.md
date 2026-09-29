@@ -22,6 +22,7 @@
 | 渲染系统 GPU 化调研（可行边界 + 分阶段路线图） | [research/2026-08-26-render-gpu-offload.md](research/2026-08-26-render-gpu-offload.md) |
 | C1 GPU 蒙皮 26.1.2 结果（正确性通过、性能中性） | [perf/c1-gpu-skinning-26.1.2.md](perf/c1-gpu-skinning-26.1.2.md) |
 | C1 GPU 蒙皮 ≤26.1 结果（1.20.1/1.21.1，正确性通过、性能中性） | [perf/c1-gpu-skinning-legacy.md](perf/c1-gpu-skinning-legacy.md) |
+| Wintersky 移植与集成（as-is 移植 ADR-0034 / 集成设计 ADR-0035） | [concepts/wintersky-integration.md](concepts/wintersky-integration.md) |
 
 ## Skill 索引
 
@@ -83,6 +84,7 @@
 | 0032 | 薄映射层原则修订——允许自有 shader 与 GPU 驻留几何（GPU 蒙皮） | Accepted |
 | 0033 | 渲染状态增加光照模型轴——粒子光照根修（取代 PR #25 局部修补） | Accepted (2026-09-26) |
 | 0034 | Wintersky 基岩粒子运行时的 as-is Java 移植 | Accepted (2026-09-29，用户决策) |
+| 0035 | Wintersky 融入 eyelib 的集成架构决策（双运行时共存/渲染旁路/渲染帧驱动） | Accepted (2026-09-29) |
 
 ## 核心原则
 
