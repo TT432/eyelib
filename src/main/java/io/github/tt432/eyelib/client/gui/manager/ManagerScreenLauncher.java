@@ -18,5 +18,9 @@ public final class ManagerScreenLauncher {
     public static void openUiPreviewScreen() {
         Minecraft.getInstance().setScreen(UiPort.wrap(io.github.tt432.eyelib.client.ui.preview.UiPreviewScreen.create()));
     }
+
+    public static void openParticleScreen() {
+        Minecraft.getInstance().setScreen(UiPort.wrap(new WinterskyParticleScreen()));
+    }
 }
 

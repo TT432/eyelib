@@ -83,7 +83,9 @@ public final class EyelibManagerScreen implements UIScreen {
                 action(x1, y3, w, h, "节点图", "eyelib:textures/gui/sprites/icons/nodegraph.png",
                         () -> io.github.tt432.eyelib.client.nodegraph.NodegraphGate.openEditor(null)),
                 action(x3, y1, w, h, "UI 预览", "eyelib:textures/gui/sprites/icons/texture.png",
-                        ManagerScreenLauncher::openUiPreviewScreen)
+                        ManagerScreenLauncher::openUiPreviewScreen),
+                action(x3, y2, w, h, "粒子", "eyelib:textures/gui/sprites/icons/texture.png",
+                        ManagerScreenLauncher::openParticleScreen)
         );
         for (UIWidget widget : widgets) {
             ctx.addWidget(widget);

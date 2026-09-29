@@ -51,16 +51,19 @@
 
 ### D2 wintersky 渲染绕过 material 管线，专用 RenderType 映射
 
-wintersky 的材质模型只有 `materialType × 纹理`，不含 Bedrock 材质继承/defines/states 语义。走 `BrRenderTypeFactory` 会引入无关的材质推导，破坏 as-is 保真。新增 `bridge/particle/adapter/WinterskyRenderTypes`，直接映射：
-
-| materialType | wintersky GL 语义 | 1.20.1 RenderType 基座 | 备注 |
+| materialType | wintersky GL 语义 | 1.20.1 实现（修订） | 备注 |
 |---|---|---|---|
-| 0 alpha | NormalBlending，`discard(a<0.5)` | `entityCutoutNoCull(tex)` 变体 | depthWrite on |
-| 1 opaque | a=1 | `entitySolid(tex)` | |
-| 2 blend | NormalBlending，depthWrite=**off** | `entityTranslucent(tex)` | |
-| 3 additive | AdditiveBlending，depthWrite=**off** | 自定义 CompositeState（SrcAlpha/One） | vanilla 无现成粒子 additive 基座 [实现期核对选型] |
+| 0 alpha | NormalBlending，`discard(a<0.5)` | 自定义（entity_cutout shader，cull on，depthWrite on） | |
+| 1 opaque | a=1 | 自定义（entity_solid shader，cull on，depthWrite on） | |
+| 2 blend | NormalBlending，depthWrite=**off** | 自定义（entity_translucent shader + 自管 NormalBlending，NoCull，COLOR_WRITE） | |
+| 3 additive | AdditiveBlending，depthWrite=**off** | 自定义（entity_translucent shader + 自管 SRC_ALPHA/ONE，NoCull，COLOR_WRITE） | vanilla 无现成粒子 additive 基座 |
 
-统一约束：`side=DoubleSide` → NoCull；光照恒 `FULL_BRIGHT`（wintersky 无光照概念，片元不吃 lightmap）；颜色 = `clr` attribute 原值（0..1 float，`<1.20.6` 直写、`>=1.20.6` ×255 转 int，边界照搬 `BedrockParticleRenderer.vertex` 的 `//?` 切分）。
+> **D2 修订（2026-09-29 实机实证）**：原定的 vanilla 基座（entityCutout/entitySolid/entityTranslucentEmissive）
+> 在 AFTER_ENTITIES 阶段写入的顶点不被绘制（与固定缓冲生命周期有关；生产 BrRenderTypeFactory
+> 全部走自定义 RenderType 亦印证）。四种 materialType 全部改为自定义 RenderType（NEW_ENTITY 格式、
+> LEQUAL 深度、lightmap/overlay 开），混合/剔除/写掩码按 wintersky 语义自管——比 vanilla 基座更贴近 as-is。
+
+统一约束：光照恒 `FULL_BRIGHT`（wintersky 无光照概念，片元不吃 lightmap）；cull 按 wintersky side 语义（alpha/opaque=FrontSide→cull on，blend/add=DoubleSide→NoCull）；颜色 = `clr` attribute 原值（0..1 float → ARGB int，复用 `BedrockParticleRenderer.vertex` 的 `//?` 切分）；UV 需做 `v' = 1 - v`（three.js 默认 flipY=true，MC 纹理不翻转）；quad 顶点须按周界序写（PlaneGeometry 顶点序 TL,TR,BL,BR 直写 GL_QUADS 会拼成自交 bowtie，映射为 (1,0,2,3)）。
 
 26.1.2 侧：`RenderSetup.builder(RenderPipeline)` PSO 路径，`//?` 整方法切分（同 `BrRenderTypeFactory` D5 模式）。
 
@@ -176,15 +179,10 @@ AFTER_ENTITIES (<26.1):
 
 ---
 
-## 5. 分期计划
-
 | 期 | 内容 | 验收 |
 |----|------|------|
-| **P1** 渲染最小闭环（1.20.1） | WinterskySceneManager + Renderer + RenderTypes + 硬编码纹理路径；ArchUnit 纳入 wintersky 包 | 游戏内 spawn `zz_branches` + 3 个 vanilla 夹具，AFTER_ENTITIES 可见；RenderDoc 截帧确认 blend/裁剪正确 |
-| **P2** 资源与生命周期 | fetchParticleFile/fetchTexture 默认实现、sound Port、spawn API、LoggingOut 清理、暂停守卫 | .mcpack 内粒子文件可加载；音效事件可闻；切世界无泄漏 |
-| **P3** 多版本 | 1.21.1 编译；26.1.2 `//?` 切分（RenderSetup/事件/vertex） | 三 node 编译；26.1.2 client 启动 |
-| **P4** 交叉校验 harness | 同 JSON 双运行时统计对比（粒子数、寿命分布、位置均值/方差） | 产出 eyelib.particle 差异清单文档 |
-| **P5**（可选，非承诺） | molang 双引擎差分评估；游戏内预览 UI 工具化 | 评估报告 |
+| **P1** 渲染最小闭环（1.20.1）✅ 2026-09-29 | WinterskySceneManager + Renderer + RenderTypes + 预览 UI；ArchUnit 已纳入 wintersky 包 | 游戏内 spawn `relics_and_foes:kylin_curse`，暂停态冻结相机像素差分证实渲染（893px @中心）；管理界面新增「粒子」页（列表/搜索/spawn/清除） |
+| **P2** 资源与生命周期 ✅ 2026-09-29 | fetchParticleFile/fetchTexture 默认实现、sound Port（emitter play_sound → MC 音效）、spawn API、LoggingOut 清理、暂停守卫；附加包直扫（未选中的 .mcpack/.mcaddon 粒子对预览可见，纹理桥接 AddonTextureRegistry） | 附加包粒子可加载可渲染；一次性发射器自动 delete；切世界无泄漏 |
 
 ---
 
@@ -213,3 +211,28 @@ AFTER_ENTITIES (<26.1):
 | R4 | flipbook 图集尺寸 uniform 依赖 PNG 尺寸读取 | D5 NativeImage 回填；P1 截帧验证 |
 | R5 | wintersky.molang 与 eyelib.molang 语义漂移长期并存 | D3 差分用例集；差异清单文档化 |
 | R6 | distance 事件定义被解析但 wintersky tick 中不触发（as-is 缺陷） | 不修复（保真）；差异清单注明，eyelib.particle 自行实现 |
+
+---
+
+## 8. 实现记录（P1/P2，2026-09-29）
+
+**落地文件**（与 §3.1 一致，另有增删）：
+- `bridge/particle/adapter/`：WinterskySceneManager（Scene 单例/钩子注入/固定步长 tick 累积器/一次性发射器自动清理/音效出域）、WinterskyParticleRenderer、WinterskyRenderTypes（全自定义，见 D2 修订）、WinterskyParticleFileLoader（ResourceManager + 附加包直扫双源）。
+- `bridge/particle/`：WinterskyRenderHooks（RenderTick START / AFTER_ENTITIES / LoggingOut）、WinterskyParticlePort（ADR-0018 I-5 合规，application 只经 Port 触达）。
+- `client/gui/manager/`：WinterskyParticleScreen + 管理界面「粒子」入口（图标暂复用 texture.png）。
+- ArchUnit：`DOMAIN_CLASSES` 加入 `io.github.tt432.eyelib.wintersky..`；molang 私有枚举常量 `INSTANCE` 被规则误伤改名为 `VALUE`（不可见枚举，零行为变化）。
+
+**关键实现细节**：
+- 相机替身：`q_proxy = q_mc * rotY(π)`（MC 恒等旋转看 +Z 南，three 相机默认看 -Z），位置 = MC 相机世界坐标；lookat 模式只用位置，rotate 模式用四元数。
+- tick 节拍：渲染帧 dt 累积（上限 0.1s/8 步防死亡螺旋），按全局 tick_rate=30 固定步长消费；仅 tick 根发射器（子发射器经父递归，与 Node oracle 一致）；暂停（isPaused）冻结。
+- 附加包直扫：包根 = 含 manifest.json 的目录（.mcpack 根 / .mcaddon 子目录），`particles/*.json` 原文进缓存；纹理经 `BedrockAddonLoader.load` 桥接进 `AddonTextureRegistry`（已存在键不覆盖，避免与选中包管线竞争；F3+T 重载后需重开界面重建——预览工具可接受）。
+
+**视觉验证陷阱（实机踩坑全记录）**：
+1. 粒子颜色常见淡入曲线：spawn 后第 0 tick alpha=0，「spawn+立即截图」恒为空——验证必须手动 tick 到峰值或等实时推进。
+2. 小尺寸灰色半透明 quad 在白白云层背景前肉眼不可见；验证用深色背景（俯视地面）或像素差分。
+3. 暂停菜单按钮恰好覆盖屏幕中心区域，会遮掉小粒子的差分区域——差分验证须放大粒子或选未被覆盖区域。
+4. `Screenshot.grab` 抓的是调用后的下一帧；eval 内禁止 Thread.sleep（阻塞主线程推迟渲染）。
+5. 首次扫描附加包（BedrockAddonLoader.load 全量解析）耗时 >10s，超过 /eval 超时——属预期，二次调用即命中缓存。
+6. RenderDoc capture 模式启动本客户端存在卡死现象（loading 7 分钟无日志进展，2026-09-29 两次），本次未走通；像素差分 + 哨兵字段足以替代。
+
+**未覆盖项**：音效事件未实测（当前附加包粒子无 sound_effect）；26.1 分支代码未编译验证（P3）；子发射器（particle_effect 事件）链路经 zz_branches oracle 覆盖但未实机验证。

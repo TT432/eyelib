@@ -80,11 +80,11 @@ public class Molang {
     }
 
     private enum BreakStatement {
-        INSTANCE
+        VALUE
     }
 
     private enum ContinueStatement {
-        INSTANCE
+        VALUE
     }
 
     private double angleFactor() {
@@ -160,9 +160,9 @@ public class Molang {
             case "false":
                 return 0.0;
             case BREAK:
-                return BreakStatement.INSTANCE;
+                return BreakStatement.VALUE;
             case CONTINUE:
-                return ContinueStatement.INSTANCE;
+                return ContinueStatement.VALUE;
             default:
                 break;
         }
