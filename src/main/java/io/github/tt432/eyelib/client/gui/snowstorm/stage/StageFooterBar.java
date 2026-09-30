@@ -107,7 +107,13 @@ public final class StageFooterBar extends UIElement {
         bar.addChild(new UIElement().layout(layout -> layout.flex(1).height(1))); // spacing
 
         warningLabel = text("", SnowstormTheme.ACCENT);
-        bar.addChild(warningLabel);
+        // Preview.vue warnings_count 点击 → WarningDialog 弹层（有警告时）
+        warningLabel.addEventListener(com.lowdragmc.lowdraglib2.gui.ui.event.UIEvents.CLICK, event -> {
+            if (stage.warningCount() > 0) {
+                io.github.tt432.eyelib.client.gui.snowstorm.dialog.WarningDialogView.open(
+                        getModularUI().ui.rootElement);
+            }
+        });
         particleLabel = text("0 P", SnowstormTheme.TEXT_GRAYED);
         bar.addChild(particleLabel);
         fpsLabel = text("0 FPS", SnowstormTheme.TEXT_GRAYED);
@@ -163,22 +169,30 @@ public final class StageFooterBar extends UIElement {
         }
         placeholderBar.clearAllChildren();
         List<String> keys = EditorRuntime.placeholder_keys;
-        if (keys.isEmpty()) {
+        if (!keys.isEmpty()) {
+            for (String key : keys) {
+                TextElement label = text(shortPlaceholderLabel(key), SnowstormTheme.TEXT);
+                label.layout(layout -> layout.height(CONTROL_HEIGHT));
+                TextField field = new TextField();
+                Object current = EditorRuntime.placeholder_variables.get(key);
+                field.setText(current != null ? JsSemantics.toJsString(current) : "0");
+                field.setTextResponder(text -> updatePlaceholderValue(key, text));
+                field.layout(layout -> layout.width(50).height(CONTROL_HEIGHT));
+                placeholderBar.addChildren(label, field);
+            }
+        } else {
             TextElement empty = text("No undefined variables found", SnowstormTheme.TEXT_GRAYED);
             empty.layout(layout -> layout.height(CONTROL_HEIGHT));
             placeholderBar.addChild(empty);
-            return;
         }
-        for (String key : keys) {
-            TextElement label = text(shortPlaceholderLabel(key), SnowstormTheme.TEXT);
-            label.layout(layout -> layout.height(CONTROL_HEIGHT));
-            TextField field = new TextField();
-            Object current = EditorRuntime.placeholder_variables.get(key);
-            field.setText(current != null ? JsSemantics.toJsString(current) : "0");
-            field.setTextResponder(text -> updatePlaceholderValue(key, text));
-            field.layout(layout -> layout.width(50).height(CONTROL_HEIGHT));
-            placeholderBar.addChildren(label, field);
-        }
+        // Preview.vue placeholder 栏 bake 按钮 → bake 对话框
+        Button bake = new Button();
+        bake.setText(net.minecraft.network.chat.Component.literal("Bake"))
+                .textStyle(style -> style.fontSize(9).textColor(SnowstormTheme.TEXT));
+        bake.setOnClick(event -> io.github.tt432.eyelib.client.gui.snowstorm.dialog.PlaceholderBakeDialogView
+                .open(getModularUI().ui.rootElement));
+        bake.layout(layout -> layout.width(36).height(CONTROL_HEIGHT));
+        placeholderBar.addChild(bake);
     }
 
     /** JS key.replace(key.substring(1, key.indexOf('.')), '')：variable.speed → v.speed。 */
