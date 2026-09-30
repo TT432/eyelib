@@ -69,6 +69,8 @@ public final class CodeViewerView extends UIElement {
     @Override
     protected void onAdded() {
         EditHistory.EditListeners.put("code_viewer", id -> dirty = true);
+        // JS v-if：切到 code tab 即重新挂载 → 内容现算（我们的实例复用下等价于显示时刷新）
+        refresh();
     }
 
     @Override
