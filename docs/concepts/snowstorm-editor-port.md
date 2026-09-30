@@ -246,3 +246,17 @@ client/gui/snowstorm/
   正确形式：`java.util.function.@Nullable Consumer`。
 - edit 工具行号漂移多次造成中途态破损（StageFooterBar/CodeViewerView/TextureBridge/GradientEditorView
   字段吞行），全部由各切片 owner 修复并复验；主代理手术编辑同受影响，修复后均经编译复验。
+
+**验证结果（2026-09-30 实机）**：
+
+- 门禁：三版本 compileJava、`:1.20.1:test`（1721 全绿）、`nullawayMain`（78→0 修复后零错误）。
+- in-client：`snowstorm_editor` uitest 场景 PASS（结构断言 + fire 预设加载断言）。
+- 实机截图验证（mcmcp）：编辑器布局、fire 预设火焰粒子舞台渲染、variables/texture/events
+  tab、Code tab（fire JSON）、管理界面「粒子编辑器」入口。
+- 实机验证暴露并修复：Selector null 候选 NPE（StageFooterBar/SelectInputView 双守卫）、
+  OrbitCamera.update() 漏调（舞台恒等旋转，参考方块巨大偏移实证）、CodeViewer 入 tab 不刷新
+  （v-if 等价 onAdded 刷新）、TextureSourceCodec 未安装（open 装 TextureBridge.install()）、
+  内置纹理未进 assets/ 路径（5 张 PNG 复制到 assets/eyelib/wintersky/textures/）、
+  导入/预设后 Sidebar 不刷新（notifyChanged 接线）。
+- 工具坑：`-PldTest` 会把 uitest 系统属性烘进 clientRunVmArgs.txt（createClientLaunchScript
+  生成），导致后续 mcmcp 启动自动跑 uitest 并退出——mcmcp_build 重生成即恢复。
