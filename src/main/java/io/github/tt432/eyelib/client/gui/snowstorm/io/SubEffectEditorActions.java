@@ -96,6 +96,8 @@ public final class SubEffectEditorActions {
             entry.texture = TextureClass.Texture.source;
             // 2) 恢复父编辑器（loadFileFromParentEffect 内部 loadFile(confirm=false)）
             SnowstormImport.loadFileFromParentEffect(snapshot.json(), snapshot.texture());
+            // 恢复父编辑器后 Sidebar 重建（Vue 响应式替代，ADR R3）
+            io.github.tt432.eyelib.client.gui.snowstorm.inputs.InputViewFactory.notifyChanged();
         } catch (Exception | LinkageError e) {
             LOGGER.warn("[snowstorm] close sub-effect editor failed: {}", snapshot.subEffectIdentifier(), e);
         }

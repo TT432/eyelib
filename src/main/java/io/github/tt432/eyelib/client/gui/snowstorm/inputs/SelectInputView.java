@@ -39,8 +39,9 @@ public final class SelectInputView extends UIElement {
         java.util.List<String> keys = new ArrayList<>(input.options != null ? input.options.keySet() : java.util.List.<String>of());
         selector.setCandidates(keys);
         selector.setCandidateUIProvider(key -> {
-            String label = input.options != null ? input.options.get(key) : key;
-            TextElement element = InputViewFactory.text(label != null ? label : key, SnowstormTheme.TEXT, 9);
+            // Selector 初始化会传 null 候选（setupDialog 实证栈）：label 与 key 双守卫
+            String label = key == null ? "" : (input.options != null ? input.options.get(key) : key);
+            TextElement element = InputViewFactory.text(label != null ? label : key != null ? key : "", SnowstormTheme.TEXT, 9);
             element.textStyle(style -> style.textAlignHorizontal(Horizontal.LEFT));
             return element;
         });

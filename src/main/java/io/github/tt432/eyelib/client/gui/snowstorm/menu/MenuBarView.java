@@ -104,7 +104,11 @@ public final class MenuBarView extends UIElement {
         addChild(menuButton("File", tree -> {
             tree.leaf("New File", () -> {
                 // 预确认（confirm 对话框）由 Screen 侧接缝承担（ADR-0036 confirmClear 文档）
-                if (onNew != null) onNew.run(); else SnowstormImport.startNewProject();
+                if (onNew != null) onNew.run(); else {
+                    SnowstormImport.startNewProject();
+                    // 导入/新建后 Sidebar 重建（Vue 响应式替代，ADR R3）
+                    io.github.tt432.eyelib.client.gui.snowstorm.inputs.InputViewFactory.notifyChanged();
+                }
             });
             // JS: !isVSCExtension 分支恒真——Import/Download 存在；文件 IO 归 Main 接线
             tree.leaf("Import", () -> {
@@ -116,14 +120,14 @@ public final class MenuBarView extends UIElement {
         }));
         addChild(menuButton("Examples", tree -> {
             // JS 顺序：Loading/Rainbow/Rain/Snow/Fire/Magic/Trail/Billboard
-            tree.leaf("Loading", () -> SnowstormImport.loadPreset("loading"));
-            tree.leaf("Rainbow", () -> SnowstormImport.loadPreset("rainbow"));
-            tree.leaf("Rain", () -> SnowstormImport.loadPreset("rain"));
-            tree.leaf("Snow", () -> SnowstormImport.loadPreset("snow"));
-            tree.leaf("Fire", () -> SnowstormImport.loadPreset("fire"));
-            tree.leaf("Magic", () -> SnowstormImport.loadPreset("magic"));
-            tree.leaf("Trail", () -> SnowstormImport.loadPreset("trail"));
-            tree.leaf("Billboard", () -> SnowstormImport.loadPreset("billboard"));
+            tree.leaf("Loading", () -> loadPresetAndRefresh("loading"));
+            tree.leaf("Rainbow", () -> loadPresetAndRefresh("rainbow"));
+            tree.leaf("Rain", () -> loadPresetAndRefresh("rain"));
+            tree.leaf("Snow", () -> loadPresetAndRefresh("snow"));
+            tree.leaf("Fire", () -> loadPresetAndRefresh("fire"));
+            tree.leaf("Magic", () -> loadPresetAndRefresh("magic"));
+            tree.leaf("Trail", () -> loadPresetAndRefresh("trail"));
+            tree.leaf("Billboard", () -> loadPresetAndRefresh("billboard"));
         }));
         addChild(menuButton("View", tree -> {
             tree.leaf("Grid", this::toggleGrid);
@@ -188,6 +192,12 @@ public final class MenuBarView extends UIElement {
         } else {
             System.out.println("[snowstorm] open link: " + link);
         }
+    }
+
+    /** loadPreset + Sidebar 重建（Vue 响应式替代，ADR R3）。 */
+    private static void loadPresetAndRefresh(String preset) {
+        SnowstormImport.loadPreset(preset);
+        io.github.tt432.eyelib.client.gui.snowstorm.inputs.InputViewFactory.notifyChanged();
     }
 
     // ==================================================================

@@ -213,7 +213,11 @@ public final class StageFooterBar extends UIElement {
         Selector<String> selector = new Selector<>();
         selector.setCandidates(values);
         selector.setCandidateUIProvider(UIElementProvider.text(
-                value -> Component.literal(labels.get(values.indexOf(value)))));
+                // LDLib2 初始/未知值会传 null 或候选外值：indexOf(null) NPE（ListN）、-1 越界，双守卫
+                value -> {
+                    int idx = value == null ? -1 : values.indexOf(value);
+                    return Component.literal(idx >= 0 ? labels.get(idx) : "");
+                }));
         selector.registerValueListener(onChange::accept);
         if (initial != null && values.contains(initial)) {
             selector.setValue(initial, false);

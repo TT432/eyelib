@@ -96,7 +96,8 @@ public final class EditorFileActions {
             Map<String, Object> data = (Map<String, Object>) JsonValues.toJava(JsonParser.parseString(raw));
             SnowstormImport.loadFile(data);
             EditorRuntime.restartEmitter();
-            LOGGER.info("[snowstorm] imported {}", file);
+            // 导入后 Sidebar 重建（Vue 响应式替代，ADR R3）
+            io.github.tt432.eyelib.client.gui.snowstorm.inputs.InputViewFactory.notifyChanged();
         } catch (Exception | LinkageError e) {
             // 导入 JSON 不合法 / IO 失败：WarningDialog 属 P5；此处告警不崩（I5）
             LOGGER.warn("[snowstorm] import failed: {}", file, e);

@@ -58,6 +58,8 @@ public final class SnowstormEditorScreen extends ModularUIScreen {
         EventSubEffects.edit_callback = SubEffectEditorActions::openSubEffect;
         // JS confirm() 同步语义不可得（LDLib2 Dialog 异步）：UI 层预确认（confirmIfDirty）后恒 true
         SnowstormImport.confirmClear = () -> true;
+        // 贴图编解码/保存接缝（TextureBridge 幂等安装；loadPreset/贴图编辑器依赖 codec）
+        io.github.tt432.eyelib.client.gui.snowstorm.texture.TextureBridge.install();
 
         Minecraft mc = Minecraft.getInstance();
         // blaze3d Window 访问集中在 bridge（ADR-0016 §5）：经 UiPort ACL 取 GUI 缩放宽度
