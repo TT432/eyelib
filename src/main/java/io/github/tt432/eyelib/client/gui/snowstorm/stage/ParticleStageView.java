@@ -214,7 +214,9 @@ public final class ParticleStageView extends UIElement {
             }
         }
 
-        // controls.update() + Scene.updateFacingRotation(camera)
+        // controls.update()（OrbitControls.js 每帧驱动，as-is；此前漏调用导致相机恒等——实机实证修复）
+        camera.update();
+        // Scene.updateFacingRotation(camera)
         cameraProxy.position.set(camera.position.x, camera.position.y, camera.position.z);
         cameraProxy.quaternion.set(camera.quaternion.getX(), camera.quaternion.getY(),
                 camera.quaternion.getZ(), camera.quaternion.getW());

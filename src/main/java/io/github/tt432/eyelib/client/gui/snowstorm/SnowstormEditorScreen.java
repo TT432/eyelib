@@ -102,6 +102,7 @@ public final class SnowstormEditorScreen extends ModularUIScreen {
                 .flexDirection(FlexDirection.COLUMN));
 
         MenuBarView menu = new MenuBarView();
+        menu.setId("menubar");
         menu.layout(layout -> layout.widthPercent(100).height(MENUBAR_HEIGHT));
         menu.setOnImport(() -> confirmIfDirty(root, EditorFileActions::importViaDialog));
         menu.setOnDownload(EditorFileActions::exportCurrent);
@@ -142,6 +143,9 @@ public final class SnowstormEditorScreen extends ModularUIScreen {
 
         SidebarView sidebar = new SidebarView();
         sidebar.layout(layout -> layout.width(sidebarWidth).heightPercent(100));
+        sidebar.setId("sidebar");
+        stageView.setId("stage");
+        codeViewer.setId("codeviewer");
 
         content.addChildren(left, sidebar);
         return new ContentParts(content, left, stageView, codeViewer);
