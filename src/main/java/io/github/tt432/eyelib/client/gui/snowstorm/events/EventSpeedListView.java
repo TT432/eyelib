@@ -47,7 +47,7 @@ public class EventSpeedListView extends UIElement {
 
     @SuppressWarnings("unchecked")
     private List<Object> values() {
-        return (List<Object>) input.getValue();
+        return (List<Object>) java.util.Objects.requireNonNull(input.getValue());
     }
 
     private String sig() {

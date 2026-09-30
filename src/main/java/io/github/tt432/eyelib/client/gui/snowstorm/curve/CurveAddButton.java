@@ -28,7 +28,8 @@ public class CurveAddButton extends UIElement {
         layout(l -> l.widthPercent(100).height(24));
         addEventListener(UIEvents.MOUSE_DOWN, e -> {
             if (!isHover() || e.button != 0) return;
-            InputStructure.Data.get("variables").group("curves").curves.add(new Curve());
+            java.util.Objects.requireNonNull(java.util.Objects.requireNonNull(
+                    InputStructure.Data.get("variables")).group("curves")).curves.add(new Curve());
         });
     }
 

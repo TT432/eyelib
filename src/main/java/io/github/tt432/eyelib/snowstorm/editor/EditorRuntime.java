@@ -59,12 +59,15 @@ public final class EditorRuntime {
     // ==================================================================
 
     /** emitter.js:8 {@code const Scene = new Wintersky.Scene({...})} */
+    @SuppressWarnings("NullAway.Init") // 由静态块→init() 赋值（resetForTesting 可重建）
     public static Scene Scene;
 
     /** emitter.js:73 {@code const Config = new Wintersky.Config(Scene)} */
+    @SuppressWarnings("NullAway.Init")
     public static Config Config;
 
     /** emitter.js:74 {@code const Emitter = new Wintersky.Emitter(Scene, Config, {loop_mode:'auto', parent_mode:'world'})} */
+    @SuppressWarnings("NullAway.Init")
     public static Emitter Emitter;
 
     /**

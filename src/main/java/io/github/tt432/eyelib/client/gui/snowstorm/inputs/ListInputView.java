@@ -39,7 +39,8 @@ public final class ListInputView extends UIElement {
 
     @SuppressWarnings("unchecked")
     private List<Object> values() {
-        return (List<Object>) input.getValue();
+        // JS：axis_count==-1 输入的 value 恒为 Config 数组；undefined 时 JS push/remove 抛 TypeError
+        return (List<Object>) java.util.Objects.requireNonNull(input.getValue());
     }
 
     private void rebuild() {

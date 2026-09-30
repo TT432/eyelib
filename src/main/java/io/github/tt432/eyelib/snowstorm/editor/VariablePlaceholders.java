@@ -60,7 +60,10 @@ public final class VariablePlaceholders {
             }
         });
         // Data.events.events.events：events 组的 events 数组（List<Object>，元素为 EditorEvent）
-        for (Object entry : InputStructure.Data.get("events").group("events").events) {
+        // JS：Data.events.events.events 恒存在（as-is；缺失时 requireNonNull 对应 JS TypeError）
+        InputStructure.Subject eventsSubject = java.util.Objects.requireNonNull(InputStructure.Data.get("events"));
+        InputStructure.Group eventsGroup = java.util.Objects.requireNonNull(eventsSubject.group("events"));
+        for (Object entry : eventsGroup.events) {
             if (entry instanceof EditorEvent editorEvent) {
                 handleEventSubpart(editorEvent.event, molangStrings);
             }

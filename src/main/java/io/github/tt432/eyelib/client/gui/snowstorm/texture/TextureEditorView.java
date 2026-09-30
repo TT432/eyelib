@@ -464,7 +464,7 @@ public final class TextureEditorView extends UIElement {
         if (value instanceof Number n) {
             return n.doubleValue() + amount;
         }
-        String str = value.toString();
+        String str = java.util.Objects.requireNonNull(value).toString();
         Matcher start = UV_START.matcher(str);
         if (start.find()) {
             String match = start.group();
@@ -503,7 +503,7 @@ public final class TextureEditorView extends UIElement {
     }
 
     /** JS number→string（dragUV 的 .toString()）。 */
-    private static String jsToString(Object value) {
+    private static String jsToString(@Nullable Object value) {
         return JsSemantics.toJsString(value);
     }
 
@@ -725,7 +725,7 @@ public final class TextureEditorView extends UIElement {
         // ------------------------------------------------------------ UV overlay 计算（JS calculateUV*）
 
         /** JS calculateUVSample()：{left, top, width, height}（wrapper content 坐标）。 */
-        private float[] calculateUVSample() {
+        private float @Nullable [] calculateUVSample() {
             Input uv = uvInput("uv");
             Input uvSize = uvInput("uv_size");
             Object[] uvValue = inputArrayValue(uv);
@@ -745,7 +745,7 @@ public final class TextureEditorView extends UIElement {
 
         /** JS calculateUVPerimeter()：5 个 random 采样的包围盒。 */
         @SuppressWarnings("unchecked")
-        private float[] calculateUVPerimeter() {
+        private float @Nullable [] calculateUVPerimeter() {
             Input uv = uvInput("uv");
             Input uvSize = uvInput("uv_size");
             Object[] uvValue = inputArrayValue(uv);

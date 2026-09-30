@@ -216,7 +216,7 @@ public class EventSubpart {
      * JS quirk：连续两次 {@code this.is_extension = !this.is_extension}（无操作）。
      */
     public void applySelectedParticleFile(@Nullable String identifier) {
-        if (particle_effect != null && JsSemantics.truthy(identifier)
+        if (particle_effect != null && identifier != null && JsSemantics.truthy(identifier)
                 && !identifier.equals(particle_effect.effect)) {
             particle_effect.effect = identifier;
             modifyEvent(null, null);

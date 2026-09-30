@@ -1,5 +1,7 @@
 package io.github.tt432.eyelib.snowstorm.editor;
 
+import org.jspecify.annotations.Nullable;
+
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.Executors;
@@ -43,21 +45,23 @@ public final class EditHistory {
     private static String last_edit_id = "";
     private static LongSupplier clock = System::currentTimeMillis;
 
-    private static ScheduledExecutorService scheduler;
-    private static ScheduledFuture<?> timeout;
+    private static @Nullable ScheduledExecutorService scheduler;
+    private static @Nullable ScheduledFuture<?> timeout;
     /** 当前待派发合并编辑的截止时刻（clock 基准，毫秒）；无待派发时为 0。 */
     private static long deadline;
 
     private static ScheduledExecutorService scheduler() {
         synchronized (LOCK) {
-            if (scheduler == null) {
-                scheduler = Executors.newSingleThreadScheduledExecutor(r -> {
+            ScheduledExecutorService current = scheduler;
+            if (current == null) {
+                current = Executors.newSingleThreadScheduledExecutor(r -> {
                     Thread thread = new Thread(r, "snowstorm-edit-history");
                     thread.setDaemon(true);
                     return thread;
                 });
+                scheduler = current;
             }
-            return scheduler;
+            return current;
         }
     }
 

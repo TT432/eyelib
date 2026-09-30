@@ -56,7 +56,7 @@ public final class NumberInputView extends UIElement {
             if (axis < 0) {
                 input.setValue(text); // JS v-model（number setter：Config 收 parseFloat）
             } else {
-                List<Object> list = cast((List<?>) input.getValue());
+                List<Object> list = cast((List<?>) java.util.Objects.requireNonNull(input.getValue()));
                 while (list.size() <= axis) list.add("");
                 list.set(axis, text); // JS：原始字符串直写
             }

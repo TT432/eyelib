@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * Snowstorm curves.js 逐字移植（Curve 类 + updateCurvesPanel）。
@@ -98,7 +99,7 @@ public class Curve {
                 .type(InputType.TEXT)
                 .value(data != null ? "" : "variable.")
                 // JS: onchange() { scope.updateName(this.value); }（this = 该 Input）
-                .onchange(event -> updateName(JsSemantics.toJsString(inputs.get("id").getValue()))));
+                .onchange(event -> updateName(JsSemantics.toJsString(in("id").getValue()))));
         Input mode = new Input(new Input.Data()
                 .type(InputType.SELECT)
                 .label("Mode")
@@ -109,13 +110,13 @@ public class Curve {
                 .options(CurveMode.optionPairs())
                 .onchange(event -> {
                     updateSVG();
-                    if ("bezier".equals(inputs.get("mode").getValue())) {
+                    if ("bezier".equals(in("mode").getValue())) {
                         // JS: nodes.splice(4, Infinity, 0, 0, 0, 0); nodes.splice(4);
                         // 净效果：恰好保留前 4 个节点，不足补 0
                         while (nodes.size() > 4) nodes.remove(nodes.size() - 1);
                         while (nodes.size() < 4) nodes.add(0.0);
                     }
-                    if ("bezier_chain".equals(inputs.get("mode").getValue())) {
+                    if ("bezier_chain".equals(in("mode").getValue())) {
                         // JS: nodes.splice(0, Infinity, {time:0,...}, {time:1,...})
                         nodes.clear();
                         nodes.add(bezierNode(0, 0, 0, 0, 0));
@@ -144,7 +145,7 @@ public class Curve {
                 .value(data != null ? data.range : "v.particle_lifetime")
                 // JS: condition(curve) { return curve.inputs.mode.value !== 'bezier_chain' }
                 // （isVisible 传入的 group 即本 Curve，闭包引用等价）
-                .condition(group -> !"bezier_chain".equals(inputs.get("mode").getValue()))
+                .condition(group -> !"bezier_chain".equals(in("mode").getValue()))
                 .onchange(event -> syncConfig()));
 
         inputs.put("id", id);
@@ -197,7 +198,7 @@ public class Curve {
         // JS for-in + delete：先收集键再删除，语义等价
         for (String key : new ArrayList<>(curves.keySet())) {
             if (!key.equals(valid_name)
-                    && curveList.stream().noneMatch(curve -> key.equals(JsSemantics.toJsString(curve.inputs.get("id").getValue())))) {
+                    && curveList.stream().noneMatch(curve -> key.equals(JsSemantics.toJsString(curve.in("id").getValue())))) {
                 curves.remove(key);
             }
         }
@@ -209,7 +210,7 @@ public class Curve {
         if (nodes.size() <= 2) return;
         Object node = nodes.get(index);
         nodes.remove(index);
-        if ("bezier_chain".equals(inputs.get("mode").getValue())) {
+        if ("bezier_chain".equals(in("mode").getValue())) {
             Config.BezierNode removed = (Config.BezierNode) node;
             List<Object> sorted = new ArrayList<>(nodes);
             sorted.sort((a, b) -> Double.compare(
@@ -227,7 +228,7 @@ public class Curve {
     /** JS setNode(index, value)：parseFloat + 两位舍入；bezier_chain 同时写左右值。 */
     public void setNode(int index, Object value) {
         double v = JsSemantics.jsRound(JsonValues.jsParseFloat(value) * 100) / 100;
-        if ("bezier_chain".equals(inputs.get("mode").getValue())) {
+        if ("bezier_chain".equals(in("mode").getValue())) {
             Config.BezierNode node = (Config.BezierNode) nodes.get(index);
             node.left_value = node.right_value = v;
         } else {
@@ -238,14 +239,14 @@ public class Curve {
 
     /** JS remove()：从 Config.curves 与 Data 曲线列表中移除自身。 */
     public void remove() {
-        EditorRuntime.Config.curves.remove(JsSemantics.toJsString(inputs.get("id").getValue()));
+        EditorRuntime.Config.curves.remove(JsSemantics.toJsString(in("id").getValue()));
         dataCurves().remove(this);
         EditHistory.registerEdit("remove curve");
     }
 
     /** JS curves.js updateCurvesPanel()（Vue.nextTick 延迟去除）。 */
     public static void updateCurvesPanel() {
-        if (InputStructure.Data.get("variables").group("curves")._folded) return;
+        if (curvesGroup()._folded) return;
         for (Curve curve : dataCurves()) {
             curve.svg_needs_update = true;
         }
@@ -253,14 +254,24 @@ public class Curve {
 
     /** JS Data.variables.curves.curves。 */
     private static List<Curve> dataCurves() {
-        return InputStructure.Data.get("variables").group("curves").curves;
+        return curvesGroup().curves;
+    }
+
+    /** inputs 四键构造后恒在（JS 对象字面量语义），requireNonNull 收口（NullAway）。 */
+    private Input in(String key) {
+        return Objects.requireNonNull(inputs.get(key));
+    }
+
+    /** Data.variables.curves 组（InputStructure 初始化后恒在），requireNonNull 收口。 */
+    private static InputStructure.Group curvesGroup() {
+        return Objects.requireNonNull(Objects.requireNonNull(InputStructure.Data.get("variables")).group("curves"));
     }
 
     /** config 惰性 getter 的即时同步等价物（见类文档）。 */
     private void syncConfig() {
-        config.mode = JsSemantics.toJsString(inputs.get("mode").getValue());
-        config.input = JsSemantics.toJsString(inputs.get("input").getValue());
-        config.range = JsSemantics.toJsString(inputs.get("range").getValue());
+        config.mode = JsSemantics.toJsString(in("mode").getValue());
+        config.input = JsSemantics.toJsString(in("input").getValue());
+        config.range = JsSemantics.toJsString(in("range").getValue());
     }
 
     private static Config.BezierNode bezierNode(double time, double leftValue, double rightValue,

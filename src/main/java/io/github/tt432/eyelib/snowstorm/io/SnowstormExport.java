@@ -48,6 +48,17 @@ public final class SnowstormExport {
         return Input.configGet(config, key);
     }
 
+    // ---- InputStructure 骨架访问（字面量键；缺失即 NPE ≈ JS 读 undefined 属性后崩溃） ----
+
+    private static InputStructure.Group group(String subject, String group) {
+        return java.util.Objects.requireNonNull(java.util.Objects.requireNonNull(
+                InputStructure.Data.get(subject)).group(group));
+    }
+
+    private static Input input(String subject, String group, String key) {
+        return java.util.Objects.requireNonNull(group(subject, group).inputs.get(key));
+    }
+
     /** JS {@code Config.constructor.types[key]}（Config.TYPES/Entry 为包私有，反射读取）。 */
     private static @Nullable TypeInfo typeInfo(String key) {
         try {
@@ -98,7 +109,8 @@ public final class SnowstormExport {
 
         if (type.array()) {
             List<Object> result = new ArrayList<>();
-            for (Object num : JsonValues.asList(value) != null ? JsonValues.asList(value) : List.<Object>of()) {
+            // JS: for (var num of value) —— value 非数组则 JS TypeError；requireNonNull 等价
+            for (Object num : java.util.Objects.requireNonNull(JsonValues.asList(value))) {
                 Object processed = processValue(num, type.type());
                 if ("string".equals(type.type()) && processed instanceof String s && s.contains("\n")) {
                     // JS: value.split(/\s*\n+\s*/g).filter(line => line.length)
@@ -217,7 +229,7 @@ public final class SnowstormExport {
         Map<String, Object> basicRenderParameters = new LinkedHashMap<>();
         description.put("basic_render_parameters", basicRenderParameters);
         basicRenderParameters.put("material",
-                InputStructure.Data.get("appearance").group("appearance").inputs.get("material").getValue());
+                input("appearance", "appearance", "material").getValue());
         Object texturePath = getValue("particle_texture_path", false);
         basicRenderParameters.put("texture",
                 JsSemantics.truthy(texturePath) ? texturePath : "textures/blocks/wool_colored_white");
@@ -258,7 +270,7 @@ public final class SnowstormExport {
         }
 
         //Events
-        List<Object> editorEvents = InputStructure.Data.get("events").group("events").events;
+        List<Object> editorEvents = group("events", "events").events;
         if (!editorEvents.isEmpty()) {
             Map<String, Object> events = new LinkedHashMap<>();
             particleEffect.put("events", events);
@@ -538,7 +550,9 @@ public final class SnowstormExport {
         comps.put("minecraft:particle_kill_plane", getValue("particle_lifetime_kill_plane", false));
 
         //Texture
-        String facingCameraMode = (String) getValue("particle_appearance_facing_camera_mode", false);
+        // JS: facing_camera_mode 为 undefined 时 .substring 抛 TypeError；requireNonNull 等价
+        String facingCameraMode = (String) java.util.Objects.requireNonNull(
+                getValue("particle_appearance_facing_camera_mode", false));
         Map<String, Object> texComp = new LinkedHashMap<>();
         comps.put("minecraft:particle_appearance_billboard", texComp);
         texComp.put("size", getValue("particle_appearance_size", true));
@@ -598,7 +612,8 @@ public final class SnowstormExport {
         if ("static".equals(colorMode)) {
             Object staticColor = getValue("particle_color_static", false);
             // JS: getValue('particle_color_static').substr(1, 8)（undefined 会抛 TypeError，as-is）
-            String value = JsSemantics.jsSubstr((String) staticColor, 1, 8);
+            String value = JsSemantics.jsSubstr(
+                    (String) java.util.Objects.requireNonNull(staticColor), 1, 8);
             if (!value.toLowerCase(Locale.ROOT).equals("ffffff")) {
                 // JS: value.match(/.{2}/g).map(c => parseInt(c, 16) / 255)
                 List<Object> color = new ArrayList<>();
@@ -614,7 +629,7 @@ public final class SnowstormExport {
             Object range = getValue("particle_color_range", false);
             Map<String, Object> color = new LinkedHashMap<>();
             color.put("interpolant", getValue("particle_color_interpolant", false));
-            Gradient gradient = (Gradient) InputStructure.Data.get("appearance").group("color").inputs.get("gradient");
+            Gradient gradient = (Gradient) input("appearance", "color", "gradient");
             // JS: range || 1（0 也取 1，as-is）
             color.put("gradient", gradient.export(JsSemantics.truthy(range) ? JsSemantics.toNumber(range) : 1));
             Map<String, Object> comp = new LinkedHashMap<>();
@@ -650,7 +665,7 @@ public final class SnowstormExport {
 
     /** export.js getName()（JS 内部函数；公开给 MC 侧落盘命名用）。 */
     public static String getName() {
-        Object name = InputStructure.Data.get("effect").group("meta").inputs.get("identifier").getValue();
+        Object name = input("effect", "meta", "identifier").getValue();
         if (JsSemantics.truthy(name)) {
             return JsSemantics.toJsString(name).replaceFirst("^\\w+:", "");
         }

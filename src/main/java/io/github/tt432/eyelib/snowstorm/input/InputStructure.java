@@ -33,8 +33,8 @@ public final class InputStructure {
     public static final class Group {
         public String label = "";
         public boolean _folded;
-        /** 由持有 mode_groups 的 Input 在 {@link Input#update} 中回写；初值为 JS undefined 哨兵。 */
-        public Object _selected_mode = UNDEFINED;
+        /** 由持有 mode_groups 的 Input 在 {@link Input#update} 中回写；初值为 JS undefined 哨兵。值为 JS 动态值（可为 null=JS null/undefined）。 */
+        public @Nullable Object _selected_mode = UNDEFINED;
         public final Map<String, Input> inputs = new LinkedHashMap<>();
         /** 特殊组类型：{@code "events"} / {@code "curves"}；普通输入组为 null。 */
         public @Nullable String type;
@@ -99,9 +99,15 @@ public final class InputStructure {
         return g;
     }
 
-    /** 跨输入引用（onchange/condition 里的 {@code Data.x.y.inputs.z}）。 */
+    /** 跨输入引用（onchange/condition 里的 {@code Data.x.y.inputs.z}）。骨架键为编译期常量，缺失即 NPE（≈ JS 读 undefined 属性后崩溃）。 */
     private static Input in(String subject, String group, String key) {
-        return Objects.requireNonNull(Data.get(subject).group(group)).inputs.get(key);
+        return Objects.requireNonNull(Objects.requireNonNull(Objects.requireNonNull(
+                Data.get(subject)).group(group)).inputs.get(key));
+    }
+
+    /** condition 里的 {@code group.inputs.X.value}（字面量键；非字符串值 → CCE ≈ JS 调 .substr 抛 TypeError）。 */
+    private static String groupString(Group group, String key) {
+        return (String) Objects.requireNonNull(Objects.requireNonNull(group.inputs.get(key)).getValue());
     }
 
     private static List<Object> list(Object... values) {
@@ -288,8 +294,8 @@ public final class InputStructure {
                 .info("The direction of emitted particles")
                 .axis_count(3)
                 .enabled_modes("dynamic")
-                .condition(group -> "dynamic".equals(group.inputs.get("mode").getValue())
-                        && "direction".equals(group.inputs.get("direction_mode").getValue()))));
+                .condition(group -> "dynamic".equals(Objects.requireNonNull(group.inputs.get("mode")).getValue())
+                        && "direction".equals(Objects.requireNonNull(group.inputs.get("direction_mode")).getValue()))));
         motionMotion.inputs.put("linear_speed", new Input(d()
                 .id("particle_motion_linear_speed")
                 .label("Speed")
@@ -437,7 +443,7 @@ public final class InputStructure {
                 .label("Direction")
                 .options("derive_from_velocity", "From Motion", "custom", "Custom")
                 .condition(group -> {
-                    String facing = (String) group.inputs.get("facing_camera_mode").getValue();
+                    String facing = groupString(group, "facing_camera_mode");
                     return JsSemantics.jsSubstr(facing, 0, 9).equals("direction")
                             || "lookat_direction".equals(facing);
                 })));
@@ -449,10 +455,10 @@ public final class InputStructure {
                 .step(0.01)
                 // JS 优先级怪癖 as-is：substr=='direction' || (lookat_direction && derive_from_velocity)
                 .condition(group -> {
-                    String facing = (String) group.inputs.get("facing_camera_mode").getValue();
+                    String facing = groupString(group, "facing_camera_mode");
                     return JsSemantics.jsSubstr(facing, 0, 9).equals("direction")
                             || ("lookat_direction".equals(facing)
-                            && "derive_from_velocity".equals(group.inputs.get("direction_mode").getValue()));
+                            && "derive_from_velocity".equals(Objects.requireNonNull(group.inputs.get("direction_mode")).getValue()));
                 })));
         appearanceAppearance.inputs.put("direction", new Input(d()
                 .id("particle_appearance_direction")
@@ -461,10 +467,10 @@ public final class InputStructure {
                 .axis_count(3)
                 // JS 优先级怪癖 as-is：substr=='direction' || (lookat_direction && custom)
                 .condition(group -> {
-                    String facing = (String) group.inputs.get("facing_camera_mode").getValue();
+                    String facing = groupString(group, "facing_camera_mode");
                     return JsSemantics.jsSubstr(facing, 0, 9).equals("direction")
                             || ("lookat_direction".equals(facing)
-                            && "custom".equals(group.inputs.get("direction_mode").getValue()));
+                            && "custom".equals(Objects.requireNonNull(group.inputs.get("direction_mode")).getValue()));
                 })));
         appearanceAppearance.inputs.put("light", new Input(d()
                 .id("particle_color_light")

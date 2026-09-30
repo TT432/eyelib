@@ -63,7 +63,8 @@ public class Gradient extends Input {
     /** Input value 的类型化视图（元素保证为 GradientStop，见 {@link #normalizeValue()}）。 */
     @SuppressWarnings("unchecked")
     public List<GradientStop> value() {
-        return (List<GradientStop>) getValue();
+        // JS：gradient 构造后 value 恒为数组（Input 构造器 data.value || []）；null 即用法错误（as-is 抛）
+        return (List<GradientStop>) java.util.Objects.requireNonNull(getValue());
     }
 
     /** Config 回填的 Map 元素就地替换为 GradientStop（Java 类型化适配，JS 为鸭子类型）。 */

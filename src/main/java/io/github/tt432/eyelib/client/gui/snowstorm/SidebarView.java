@@ -46,7 +46,6 @@ public final class SidebarView extends UIElement {
     private static final int TAB_BAR_HEIGHT = 45;
     private static final int TAB_HEIGHT = 24;
     private static final int GROUP_HEADER_HEIGHT = 14;
-    private static final int INPUT_ROW_HEIGHT = 11;
 
     /** Sidebar.vue data：selected_subject_key 初值 'effect'。 */
     private String selectedSubjectKey = "effect";
@@ -77,6 +76,9 @@ public final class SidebarView extends UIElement {
         groupList.layout(layout -> layout.widthPercent(100).flex(1));
 
         addChildren(tabBar, subjectTitle, groupList);
+        // Vue 响应式替代（ADR R3）：控件变更 → 重建当前 subject 的 group 列表
+        io.github.tt432.eyelib.client.gui.snowstorm.inputs.InputViewFactory.onInputChanged =
+                () -> rebuildGroups(InputStructure.Data.get(selectedSubjectKey));
         rebuild();
     }
 
@@ -127,8 +129,8 @@ public final class SidebarView extends UIElement {
             return;
         }
         if ("setup".equals(selectedSubjectKey)) {
-            // QuickSetup 本体属 P5（editor/QuickSetupPresets 归其他代理）
-            groupList.addScrollViewChild(placeholderBar("[ Quick Setup — P5 ]"));
+            groupList.addScrollViewChild(
+                    new io.github.tt432.eyelib.client.gui.snowstorm.quicksetup.QuickSetupView());
             return;
         }
         for (Map.Entry<String, InputStructure.Group> e : subject.groups.entrySet()) {
@@ -209,14 +211,17 @@ public final class SidebarView extends UIElement {
             indicator.layout(layout -> layout.widthPercent(100).height(10));
             block.addChild(indicator);
         } else if ("curves".equals(group.type)) {
-            block.addChild(placeholderBar(
-                    "[ Curve editor — P5 ]  (" + group.curves.size() + " curves)"));
+            // Sidebar.vue curves 组：Curve 列表 + 新增按钮（Curve.vue as-is 接线）
+            for (io.github.tt432.eyelib.snowstorm.curve.Curve curve : group.curves) {
+                block.addChild(new io.github.tt432.eyelib.client.gui.snowstorm.curve.CurveEditorView(curve));
+            }
+            block.addChild(new io.github.tt432.eyelib.client.gui.snowstorm.curve.CurveAddButton());
         } else if ("events".equals(group.type)) {
-            block.addChild(placeholderBar(
-                    "[ Event list — P5 ]  (" + group.events.size() + " events)"));
+            block.addChild(new io.github.tt432.eyelib.client.gui.snowstorm.events.EventListView(group));
         } else {
-            for (Map.Entry<String, Input> e : group.inputs.entrySet()) {
-                block.addChild(buildInputRow(e.getValue(), e.getKey()));
+            for (UIElement row : io.github.tt432.eyelib.client.gui.snowstorm.inputs.InputViewFactory
+                    .createForGroup(group)) {
+                block.addChild(row);
             }
         }
         return block;
@@ -228,30 +233,6 @@ public final class SidebarView extends UIElement {
         rebuildGroups(InputStructure.Data.get(selectedSubjectKey));
     }
 
-    /** 普通输入占位行（P3 后续切片换成 12 种真实控件视图）。 */
-    private static UIElement buildInputRow(Input input, String key) {
-        String label = input.label != null ? input.label : key;
-        TextElement row = text(label + "  ·  " + key, SnowstormTheme.TEXT, 9);
-        row.textStyle(style -> style.textAlignHorizontal(Horizontal.LEFT));
-        row.layout(layout -> layout
-                .widthPercent(100)
-                .height(INPUT_ROW_HEIGHT)
-                .paddingHorizontal(8));
-        return row;
-    }
-
-    private static UIElement placeholderBar(String text) {
-        UIElement bar = new UIElement().layout(layout -> layout
-                .widthPercent(100)
-                .height(16)
-                .flexDirection(FlexDirection.ROW)
-                .justifyContent(AlignContent.CENTER)
-                .alignItems(AlignItems.CENTER)
-                .marginAll(4));
-        bar.style(style -> style.backgroundTexture(new ColorRectTexture(SnowstormTheme.DARK)));
-        bar.addChild(text(text, SnowstormTheme.TEXT_GRAYED, 9));
-        return bar;
-    }
 
     private static TextElement text(String text, int color, int fontSize) {
         TextElement element = new TextElement();

@@ -58,7 +58,7 @@ public class EventSubpartView extends UIElement {
 
     /** 当前 sequence/randomize 的 option 容器（排序 hover 计算用，rebuild 时重填）。 */
     private final List<UIElement> optionContainers = new ArrayList<>();
-    private Object dragKind;
+    private @Nullable Object dragKind;
     private int dragOriginal = -1;
     private int dragHover = -1;
 
@@ -178,8 +178,7 @@ public class EventSubpartView extends UIElement {
     // ==================================================================
 
     private UIElement buildParticleSection() {
-        EventSubpart.ParticleEffect particle = subpart.particle_effect;
-        assert particle != null;
+        EventSubpart.ParticleEffect particle = java.util.Objects.requireNonNull(subpart.particle_effect);
         UIElement section = new UIElement();
         section.layout(l -> l.widthPercent(100).flexDirection(FlexDirection.COLUMN));
         section.addChild(descriptorBar("Particle Effect", subpart::disableParticleSection));
@@ -299,8 +298,7 @@ public class EventSubpartView extends UIElement {
     }
 
     private UIElement buildSoundSection() {
-        EventSubpart.SoundEffect sound = subpart.sound_effect;
-        assert sound != null;
+        EventSubpart.SoundEffect sound = java.util.Objects.requireNonNull(subpart.sound_effect);
         UIElement section = new UIElement();
         section.layout(l -> l.widthPercent(100).flexDirection(FlexDirection.COLUMN));
         section.addChild(descriptorBar("Sound", subpart::disableSoundSection));

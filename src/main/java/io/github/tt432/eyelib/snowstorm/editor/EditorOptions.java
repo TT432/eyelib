@@ -86,7 +86,7 @@ public final class EditorOptions {
         }
     }
 
-    private static Object fromJson(JsonElement element) {
+    private static @Nullable Object fromJson(JsonElement element) {
         if (element.isJsonNull()) return null;
         if (element.isJsonPrimitive()) {
             var primitive = element.getAsJsonPrimitive();

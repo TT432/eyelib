@@ -72,7 +72,7 @@ public final class TextureClass {
     // ---------------------------------------------------------------- 模块级/内部状态
 
     /** JS 模块级 {@code let line_start = null}：shift 直线起点，跨笔画保留。 */
-    private int[] line_start;
+    private int @Nullable [] line_start;
     /** JS {@code this.current_undo_entry}（beforeEdit/afterEdit 之间）。 */
     private @Nullable HistoryEntry current_undo_entry;
     /** JS 模块级 {@code main_config}。 */
@@ -350,8 +350,9 @@ public final class TextureClass {
             double r = 0;
             if ("brush".equals(context.tool)) {
                 // JS: getImageData 区域 → 全通道覆写 → putImageData 原处（越界裁剪）。
-                // color 为 null 时此处 NPE，对应 JS color[0] TypeError（as-is）。
-                int packed = RasterCanvas.pack(color[0], color[1], color[2], color[3]);
+                // color 为 null 时此处 NPE，对应 JS color[0] TypeError（as-is）
+                int[] c = Objects.requireNonNull(color);
+                int packed = RasterCanvas.pack(c[0], c[1], c[2], c[3]);
                 int origin_x = x - (int) Math.round(r);
                 int origin_y = y - (int) Math.round(r);
                 for (int dy = 0; dy < 1 + r; dy++) {

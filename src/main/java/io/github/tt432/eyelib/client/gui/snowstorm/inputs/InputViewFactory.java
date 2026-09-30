@@ -15,7 +15,6 @@ import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Consumer;
 
 /**
  * InputGroup.vue 的控件分发（12 种 InputType + axis_count 形态）。
@@ -24,7 +23,7 @@ import java.util.function.Consumer;
  * {@link NumberInputView}、checkbox → {@link CheckboxInputView}、select/select_custom →
  * {@link SelectInputView}、color → {@link ColorInputView}；axis_count == -1 →
  * {@link ListInputView}（列表形态）；gradient/image/event_list/event_timeline/
- * event_speed_list → {@link PlaceholderInputView}（占位条，本体归 P5）。
+ * event_speed_list → 各编辑器视图（P5 切片落地，集成接线）。
  *
  * <p>Vue 响应式替代（ADR R3）：任何控件 change/toggle/结构变化后调
  * {@link #notifyChanged()}，宿主（Sidebar 集成）重建 group 以刷新
@@ -37,9 +36,6 @@ public final class InputViewFactory {
     /** expand 状态行高（.expanded 的近似：展开的多行编辑区）。 */
     public static final int EXPANDED_HEIGHT = 44;
     public static final int LABEL_WIDTH = 62;
-
-    /** P5 占位控件（gradient/image/event_*）的点击接缝。 */
-    public static @Nullable Consumer<Input> placeholderAction;
 
     /** 任一输入变更后的重绘请求（Vue 响应式替代；由 Sidebar 集成注入）。 */
     public static @Nullable Runnable onInputChanged;
@@ -114,11 +110,14 @@ public final class InputViewFactory {
             case CHECKBOX -> new CheckboxInputView(input);
             case SELECT, SELECT_CUSTOM -> new SelectInputView(input);
             case COLOR -> new ColorInputView(input);
-            case GRADIENT -> new PlaceholderInputView(input, "Gradient");
-            case IMAGE -> new PlaceholderInputView(input, "Texture");
-            case EVENT_LIST -> new PlaceholderInputView(input, "Event list");
-            case EVENT_TIMELINE -> new PlaceholderInputView(input, "Event timeline");
-            case EVENT_SPEED_LIST -> new PlaceholderInputView(input, "Event speed list");
+            // 集成（P6）：gradient→GradientEditorView（Gradient extends Input）；image→TextureEditorView
+            // （绑定 TextureClass.Texture 全局单例，as-is）；event 三类→events 包视图
+            case GRADIENT -> new io.github.tt432.eyelib.client.gui.snowstorm.gradient.GradientEditorView(
+                    (io.github.tt432.eyelib.snowstorm.gradient.Gradient) input);
+            case IMAGE -> io.github.tt432.eyelib.client.gui.snowstorm.texture.TextureEditorView.create();
+            case EVENT_LIST -> new io.github.tt432.eyelib.client.gui.snowstorm.events.EventListInputView(input);
+            case EVENT_TIMELINE -> new io.github.tt432.eyelib.client.gui.snowstorm.events.EventTimelineView(input);
+            case EVENT_SPEED_LIST -> new io.github.tt432.eyelib.client.gui.snowstorm.events.EventSpeedListView(input);
         };
     }
 

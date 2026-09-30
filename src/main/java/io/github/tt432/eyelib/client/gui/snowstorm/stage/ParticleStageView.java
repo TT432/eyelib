@@ -35,7 +35,7 @@ import org.joml.Matrix4fStack;
 import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvent;
 import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvents;
 import com.lowdragmc.lowdraglib2.gui.ui.rendering.GUIContext;
-import io.github.tt432.eyelib.bridge.particle.adapter.WinterskyRenderTypes;
+import io.github.tt432.eyelib.bridge.particle.WinterskyParticlePort;
 import io.github.tt432.eyelib.util.PortResourceLocation;
 import io.github.tt432.eyelib.wintersky.Config;
 import io.github.tt432.eyelib.wintersky.Particle;
@@ -491,7 +491,7 @@ public final class ParticleStageView extends UIElement {
             if (texture == null) {
                 continue;
             }
-            RenderType renderType = (RenderType) WinterskyRenderTypes.get(
+            RenderType renderType = (RenderType) WinterskyParticlePort.renderType(
                     emitter.config.particle_appearance_material, texture);
             BufferBuilder builder = beginQuads(DefaultVertexFormat.NEW_ENTITY);
             for (Particle particle : new ArrayList<>(emitter.particles)) {

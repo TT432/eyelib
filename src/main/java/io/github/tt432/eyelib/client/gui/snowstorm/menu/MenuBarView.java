@@ -47,6 +47,7 @@ public final class MenuBarView extends UIElement {
     // 接缝（Main/Screen 接线）
     // ==================================================================
 
+    private @Nullable Runnable onNew;
     private @Nullable Runnable onImport;
     private @Nullable Runnable onDownload;
     private @Nullable Runnable onScreenshot;
@@ -54,6 +55,8 @@ public final class MenuBarView extends UIElement {
     private @Nullable BiConsumer<String, String> onOpenHelpPage;
     private @Nullable Consumer<String> onOpenLink;
     private @Nullable BiConsumer<String, Boolean> onViewVisibilityChanged;
+
+    public MenuBarView setOnNew(@Nullable Runnable value) { onNew = value; return this; }
 
     public MenuBarView setOnImport(@Nullable Runnable value) { onImport = value; return this; }
 
@@ -99,7 +102,10 @@ public final class MenuBarView extends UIElement {
 
         // JS Menu 常量：File / Examples / View / Help（顺序 as-is）
         addChild(menuButton("File", tree -> {
-            tree.leaf("New File", SnowstormImport::startNewProject);
+            tree.leaf("New File", () -> {
+                // 预确认（confirm 对话框）由 Screen 侧接缝承担（ADR-0036 confirmClear 文档）
+                if (onNew != null) onNew.run(); else SnowstormImport.startNewProject();
+            });
             // JS: !isVSCExtension 分支恒真——Import/Download 存在；文件 IO 归 Main 接线
             tree.leaf("Import", () -> {
                 if (onImport != null) onImport.run();

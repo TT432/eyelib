@@ -123,7 +123,11 @@ class ArchitectureTest {
                     "io.github.tt432.eyelib.bridge..",
                     "io.github.tt432.eyelib.mixin..",
                     "io.github.tt432.eyelib.smoke..",
-                    "io.github.tt432.eyelib.debug.."
+                    "io.github.tt432.eyelib.debug..",
+                    // client/gui/snowstorm 编辑器舞台/贴图 UI（ADR-0036）：立即模式 drawWithShader
+                    // 渲染路径必须直触 blaze3d（Tesselator/RenderSystem/NativeImage），
+                    // 与 debug/smoke 的 client tooling 同性质的基础设施。
+                    "io.github.tt432.eyelib.client.gui.snowstorm.."
             ).as("ACL + Infrastructure（版本特定 MC 的合法栖息地）");
 
     /**

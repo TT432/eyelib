@@ -88,6 +88,12 @@ public final class SnowstormImport {
         return (Map<String, Object>) JsonValues.toJava(JsonParser.parseString(raw));
     }
 
+    /** {@code Data.get(subject).group(group)} 空守卫访问（结构固定，守卫仅为 NullAway）。 */
+    private static InputStructure.@Nullable Group groupOf(String subject, String group) {
+        InputStructure.Subject s = InputStructure.Data.get(subject);
+        return s != null ? s.group(group) : null;
+    }
+
     // ==================================================================
     // import.js:32-75 updateInputsFromConfig
     // ==================================================================
@@ -118,7 +124,7 @@ public final class SnowstormImport {
         });
 
         // import.js:54-62 曲线重建
-        InputStructure.Group curvesGroup = InputStructure.Data.get("variables").group("curves");
+        InputStructure.@Nullable Group curvesGroup = groupOf("variables", "curves");
         if (curvesGroup != null) {
             curvesGroup.curves.clear(); // JS: splice(0, Infinity)
             for (Map.Entry<String, Config.Curve> e : config.curves.entrySet()) {
@@ -135,14 +141,14 @@ public final class SnowstormImport {
         // import.js:63-70 事件重建（EventList 模型 + 镜像到 events 组列表，见类 doc 偏离）
         EventList eventList = new EventList(config);
         eventList.updateFromConfig();
-        InputStructure.Group eventsGroup = InputStructure.Data.get("events").group("events");
+        InputStructure.@Nullable Group eventsGroup = groupOf("events", "events");
         if (eventsGroup != null) {
             eventsGroup.events.clear(); // JS: splice(0)
             eventsGroup.events.addAll(eventList.events);
         }
 
         // import.js:72 Data.effect.meta.inputs.identifier.onchange()
-        InputStructure.Group metaGroup = InputStructure.Data.get("effect").group("meta");
+        InputStructure.@Nullable Group metaGroup = groupOf("effect", "meta");
         Input identifier = metaGroup != null ? metaGroup.inputs.get("identifier") : null;
         if (identifier != null && identifier.onchange != null) {
             identifier.onchange.call(null);
@@ -207,7 +213,7 @@ public final class SnowstormImport {
     public static void loadFileFromParentEffect(String rawJson, @Nullable String textureUrl) {
         loadFile(parseJsonObject(rawJson), false);
         if (textureUrl != null && !textureUrl.isEmpty()) {
-            InputStructure.Group textureGroup = InputStructure.Data.get("texture").group("texture");
+            InputStructure.@Nullable Group textureGroup = groupOf("texture", "texture");
             Input input = textureGroup != null ? textureGroup.inputs.get("image") : null;
             Input.ImageData image = input != null ? input.image : null;
             if (image != null) {

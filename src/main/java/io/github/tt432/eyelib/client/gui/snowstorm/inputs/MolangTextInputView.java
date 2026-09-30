@@ -64,7 +64,7 @@ public final class MolangTextInputView extends UIElement {
                 input.setValue(text); // JS v-model="input.value"（setter）
             } else {
                 // JS v-model="input.value[i-1]"：元素直写，越界则扩展数组
-                List<Object> list = cast((List<?>) input.getValue());
+                List<Object> list = cast((List<?>) java.util.Objects.requireNonNull(input.getValue()));
                 while (list.size() <= axis) list.add("");
                 list.set(axis, text);
             }
