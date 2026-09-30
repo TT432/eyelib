@@ -12,7 +12,7 @@ import net.minecraft.client.Minecraft;
 //? if <26.1 {
 import net.minecraft.client.renderer.LightTexture;
 //?}
-import net.minecraft.resources.ResourceLocation;
+import io.github.tt432.eyelib.util.PortResourceLocation;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
@@ -70,7 +70,7 @@ public final class WinterskyParticleRenderer {
         if (material == null) {
             return;
         }
-        ResourceLocation texture = resolveTexture(emitter);
+        PortResourceLocation texture = resolveTexture(emitter);
         if (texture == null) {
             return;
         }
@@ -149,19 +149,19 @@ public final class WinterskyParticleRenderer {
     }
 
     /**
-     * {@code texture.image.src} → ResourceLocation：
+     * {@code texture.image.src} → PortResourceLocation：
      * 带冒号直解析（fetchTexture 钩子返回值）；{@code wintersky/} 前缀 → eyelib 内置纹理。
      */
-    private static ResourceLocation resolveTexture(Emitter emitter) {
+    private static PortResourceLocation resolveTexture(Emitter emitter) {
         var image = emitter.config.texture.image;
         String src = image != null ? image.getSrc() : null;
         if (src == null || src.isEmpty()) {
             src = Config.MISSING_TEX;
         }
         if (src.indexOf(':') >= 0) {
-            return ResourceLocation.tryParse(src);
+            return PortResourceLocation.parse(src);
         }
-        return ResourceLocation.tryBuild("eyelib", src);
+        return PortResourceLocation.of("eyelib", src);
     }
 
 

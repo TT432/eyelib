@@ -85,7 +85,11 @@ public final class EyelibManagerScreen implements UIScreen {
                 action(x3, y1, w, h, "UI 预览", "eyelib:textures/gui/sprites/icons/texture.png",
                         ManagerScreenLauncher::openUiPreviewScreen),
                 action(x3, y2, w, h, "粒子", "eyelib:textures/gui/sprites/icons/texture.png",
-                        ManagerScreenLauncher::openParticleScreen)
+                        ManagerScreenLauncher::openParticleScreen),
+                // 占位图标：icons/ 无粒子编辑器专用图，暂复用 nodegraph.png（编辑器类入口）
+                // LDLib2 缺失时由 SnowstormEditorGate.openEditor() 内部 warn + no-op（可选前置语义）
+                action(x3, y3, w, h, "粒子编辑器", "eyelib:textures/gui/sprites/icons/nodegraph.png",
+                        io.github.tt432.eyelib.client.gui.snowstorm.SnowstormEditorGate::openEditor)
         );
         for (UIWidget widget : widgets) {
             ctx.addWidget(widget);

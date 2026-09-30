@@ -7,10 +7,16 @@ import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.RenderStateShard;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.ShaderInstance;
-//?} else {
-import net.minecraft.client.renderer.rendertype.RenderType;
-//?}
 import net.minecraft.resources.ResourceLocation;
+//?} else {
+import com.mojang.blaze3d.pipeline.RenderPipeline;
+import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.client.renderer.rendertype.RenderSetup;
+import net.minecraft.client.renderer.rendertype.RenderType;
+import net.minecraft.resources.Identifier;
+//?}
+import io.github.tt432.eyelib.bridge.material.ResourceLocationBridge;
+import io.github.tt432.eyelib.util.PortResourceLocation;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -82,7 +88,7 @@ public final class WinterskyRenderTypes {
     }
     //?}
 
-    private record Key(String material, ResourceLocation texture) {
+    private record Key(String material, PortResourceLocation texture) {
     }
 
     private static final Map<Key, Object> CACHE = new HashMap<>();
@@ -91,35 +97,39 @@ public final class WinterskyRenderTypes {
      * 按 wintersky 材质名取 RenderType（以 Object 存放，消费点按版本 {@code //?} 转型，
      * 同 {@link BedrockParticleRenderer} 的 renderType 处理）。
      */
-    public static Object get(String material, ResourceLocation texture) {
+    public static Object get(String material, PortResourceLocation texture) {
         return CACHE.computeIfAbsent(new Key(material, texture),
                 key -> create(key.material(), key.texture()));
     }
 
-    private static Object create(String material, ResourceLocation texture) {
+    private static Object create(String material, PortResourceLocation texture) {
         //? if <26.1 {
         return switch (material) {
             // opaque：a=1，FrontSide，depthWrite on
-            case "particles_opaque" -> custom("eyelib_wintersky_opaque", texture,
+            case "particles_opaque" -> custom("eyelib_wintersky_opaque", ResourceLocationBridge.toMc(texture),
                     GameRenderer::getRendertypeEntitySolidShader, NO_TRANSPARENCY, true, true);
             // blend：NormalBlending + depthWrite off，DoubleSide
-            case "particles_blend" -> custom("eyelib_wintersky_blend", texture,
+            case "particles_blend" -> custom("eyelib_wintersky_blend", ResourceLocationBridge.toMc(texture),
                     GameRenderer::getRendertypeEntityTranslucentShader, WINTERSKY_TRANSLUCENT, false, false);
             // add：AdditiveBlending + depthWrite off，DoubleSide
-            case "particles_add" -> custom("eyelib_wintersky_add", texture,
+            case "particles_add" -> custom("eyelib_wintersky_add", ResourceLocationBridge.toMc(texture),
                     GameRenderer::getRendertypeEntityTranslucentShader, WINTERSKY_ADDITIVE, false, false);
             // alpha（默认）：discard 近似 cutout，FrontSide，depthWrite on
-            default -> custom("eyelib_wintersky_alpha", texture,
+            default -> custom("eyelib_wintersky_alpha", ResourceLocationBridge.toMc(texture),
                     GameRenderer::getRendertypeEntityCutoutShader, NO_TRANSPARENCY, true, true);
         };
         //?} else {
-        // 26.1 PSO 路径（ADR-0035 D2/§3.3）：P3 多版本期补 RenderSetup 直映射，
-        // 现阶段用 vanilla 基座近似（add 退化为 translucent emissive）。
-        return switch (material) {
-            case "particles_opaque" -> RenderType.entitySolid(texture);
-            case "particles_blend", "particles_add" -> RenderType.entityTranslucentEmissive(texture);
-            default -> RenderType.entityCutout(texture);
+        // 26.1 PSO 路径（ADR-0035 D2/§3.3）：RenderSetup 直映射 RenderPipelines 基座近似
+        // （无公开 additive 管线常量，add 退化为 translucent emissive）。
+        Identifier mcTexture = ResourceLocationBridge.toMc(texture);
+        RenderPipeline pipeline = switch (material) {
+            case "particles_opaque" -> RenderPipelines.ENTITY_SOLID;
+            case "particles_blend", "particles_add" -> RenderPipelines.ENTITY_TRANSLUCENT_EMISSIVE;
+            default -> RenderPipelines.ENTITY_CUTOUT;
         };
+        return RenderType.create("eyelib_wintersky_" + material + "_" + mcTexture,
+                RenderSetup.builder(pipeline).withTexture("Sampler0", mcTexture)
+                        .useLightmap().useOverlay().createRenderSetup());
         //?}
     }
 

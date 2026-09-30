@@ -7,7 +7,8 @@ import io.github.tt432.eyelib.importer.addon.BedrockAddonLoader;
 import io.github.tt432.eyelib.importer.model.importer.AddonTextureRegistry;
 import io.github.tt432.eyelib.wintersky.Config;
 import net.minecraft.client.Minecraft;
-import net.minecraft.resources.ResourceLocation;
+import io.github.tt432.eyelib.bridge.material.ResourceLocationBridge;
+import io.github.tt432.eyelib.util.PortResourceLocation;
 import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.server.packs.resources.ResourceManager;
 import org.jspecify.annotations.Nullable;
@@ -49,7 +50,7 @@ public final class WinterskyParticleFileLoader {
     }
 
     /** identifier → 资源位置（仅 ResourceManager 来源；附加包直扫直接进 JSON_CACHE）。 */
-    private static final Map<String, ResourceLocation> BY_IDENTIFIER = new LinkedHashMap<>();
+    private static final Map<String, PortResourceLocation> BY_IDENTIFIER = new LinkedHashMap<>();
     /** identifier → Gson 解析后的 JSON（Map 结构，数字为 Double，与 JsonValues 语义匹配）。 */
     private static final Map<String, Map<String, Object>> JSON_CACHE = new LinkedHashMap<>();
 
@@ -72,7 +73,7 @@ public final class WinterskyParticleFileLoader {
         if (cached != null) {
             return cached;
         }
-        ResourceLocation location = BY_IDENTIFIER.get(identifier);
+        PortResourceLocation location = BY_IDENTIFIER.get(identifier);
         if (location == null) {
             return null;
         }
@@ -106,12 +107,12 @@ public final class WinterskyParticleFileLoader {
         }
         scanned = true;
         ResourceManager manager = Minecraft.getInstance().getResourceManager();
-        for (Map.Entry<ResourceLocation, Resource> entry
+        for (var entry
                 : manager.listResources("particles", loc -> loc.getPath().endsWith(".json")).entrySet()) {
             try (Reader reader = entry.getValue().openAsReader()) {
                 String identifier = parseIdentifier(reader);
                 if (identifier != null) {
-                    BY_IDENTIFIER.putIfAbsent(identifier, entry.getKey());
+                    BY_IDENTIFIER.putIfAbsent(identifier, ResourceLocationBridge.fromMc(entry.getKey()));
                 }
             } catch (Exception e) {
                 LOGGER.warn("[wintersky] 扫描粒子文件失败 {}: {}", entry.getKey(), e.toString());
@@ -221,9 +222,9 @@ public final class WinterskyParticleFileLoader {
     }
 
     @SuppressWarnings("unchecked")
-    private static @Nullable Map<String, Object> readJson(ResourceManager manager, ResourceLocation location)
+    private static @Nullable Map<String, Object> readJson(ResourceManager manager, PortResourceLocation location)
             throws IOException {
-        try (Reader reader = manager.getResourceOrThrow(location).openAsReader()) {
+        try (Reader reader = manager.getResourceOrThrow(ResourceLocationBridge.toMc(location)).openAsReader()) {
             return GSON.fromJson(reader, Map.class);
         }
     }

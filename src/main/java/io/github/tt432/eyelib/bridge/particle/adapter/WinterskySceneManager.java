@@ -8,7 +8,8 @@ import io.github.tt432.eyelib.wintersky.three.Vector3;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import io.github.tt432.eyelib.bridge.material.ResourceLocationBridge;
+import io.github.tt432.eyelib.util.PortResourceLocation;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.phys.Vec3;
@@ -173,19 +174,38 @@ public final class WinterskySceneManager {
             if (level == null) {
                 return;
             }
-            ResourceLocation soundId = ResourceLocation.tryParse(sound.toString());
-            if (soundId == null) {
+            if (!isValidResourceId(sound.toString())) {
                 return;
             }
+            PortResourceLocation soundId = PortResourceLocation.parse(sound.toString());
             Vector3 position = new Vector3();
             emitter.getActiveSpace().getWorldPosition(position);
-            SoundEvent event = BuiltInRegistries.SOUND_EVENT.containsKey(soundId)
-                    ? BuiltInRegistries.SOUND_EVENT.get(soundId)
-                    : SoundEvent.createVariableRangeEvent(soundId);
+            //? if <26.1 {
+            SoundEvent event = BuiltInRegistries.SOUND_EVENT.containsKey(ResourceLocationBridge.toMc(soundId))
+                    ? BuiltInRegistries.SOUND_EVENT.get(ResourceLocationBridge.toMc(soundId))
+                    : SoundEvent.createVariableRangeEvent(ResourceLocationBridge.toMc(soundId));
+            //?} else {
+            // 26.1：Registry.get 返回 Optional<Reference<SoundEvent>>
+            SoundEvent event = BuiltInRegistries.SOUND_EVENT.get(ResourceLocationBridge.toMc(soundId))
+                    .map(net.minecraft.core.Holder.Reference::value)
+                    .orElseGet(() -> SoundEvent.createVariableRangeEvent(ResourceLocationBridge.toMc(soundId)));
+            //?}
             level.playLocalSound(position.x, position.y, position.z, event,
                     SoundSource.AMBIENT, 1.0F, 1.0F, false);
         });
     }
+    /** ResourceLocation.tryParse 的 null 语义等价：非法字符（非 [a-z0-9_./:-]）直接拒播。 */
+    private static boolean isValidResourceId(String id) {
+        for (int i = 0; i < id.length(); i++) {
+            char c = id.charAt(i);
+            if (!(c >= 'a' && c <= 'z' || c >= '0' && c <= '9'
+                    || c == '_' || c == '.' || c == '/' || c == ':' || c == '-')) {
+                return false;
+            }
+        }
+        return !id.isEmpty();
+    }
+
 
     /**
      * {@code Scene.fetchTexture} 默认实现（D5）：Bedrock 纹理路径
@@ -200,13 +220,13 @@ public final class WinterskySceneManager {
         }
         String png = path.endsWith(".png") ? path : path + ".png";
         ResourceManager manager = Minecraft.getInstance().getResourceManager();
-        ResourceLocation vanilla = ResourceLocation.tryBuild("minecraft", png);
-        if (vanilla != null && manager.getResource(vanilla).isPresent()) {
+        PortResourceLocation vanilla = PortResourceLocation.of("minecraft", png);
+        if (manager.getResource(ResourceLocationBridge.toMc(vanilla)).isPresent()) {
             return vanilla.toString();
         }
         for (String namespace : manager.getNamespaces()) {
-            ResourceLocation candidate = ResourceLocation.tryBuild(namespace, png);
-            if (candidate != null && manager.getResource(candidate).isPresent()) {
+            PortResourceLocation candidate = PortResourceLocation.of(namespace, png);
+            if (manager.getResource(ResourceLocationBridge.toMc(candidate)).isPresent()) {
                 return candidate.toString();
             }
         }

@@ -209,13 +209,6 @@ client/gui/snowstorm/
   → P4 舞台粒子渲染不能直接复用 WinterskyRenderHooks 的 BufferSource 批次路径，
   须走立即模式 drawWithShader；顶点生成逻辑（wintersky quad/clr/uv）可复用，
   提交机制重写。26.1 GUI 渲染路径未迁移（`//? if <26.1` 先例），P4 仅在 1.20.1/1.21.1 验收。
-  **实证约束（NodeAssetPreview javadoc，2026-08 实机）**：LDLib2/GUI 上下文中
-  `guiGraphics.bufferSource` 批渲染（含 entitySolid）零像素，唯一实证可用路径是
-  Tesselator + position_tex 直接 `drawWithShader`（同 `GuiGraphics.innerBlit`）；
-  且**禁止 enableScissor**（LDLib 画布 pose 变换与 scissor 屏幕坐标系冲突，剪出错误区域）。
-  → P4 舞台粒子渲染不能直接复用 WinterskyRenderHooks 的 BufferSource 批次路径，
-  须走立即模式 drawWithShader；顶点生成逻辑（wintersky quad/clr/uv）可复用，
-  提交机制重写。26.1 GUI 渲染路径未迁移（`//? if <26.1` 先例），P4 仅在 1.20.1/1.21.1 验收。
 - R3 Snowstorm 数据层对 Vue 响应式的隐性依赖（Input.value setter 触发 UI 刷新）→ 移植时以显式
   listener 替代，oracle 只覆盖数据语义不覆盖 UI 刷新。
 - R4 贴图编辑器 flood fill/插值连线精度 → 纯 int[] 实现与 canvas 2D 语义差（抗锯齿）：
@@ -223,3 +216,33 @@ client/gui/snowstorm/
 - R5 工程规模（~200KB 源，UI 占比大）→ 分期切片 + 子代理并行，每期独立验收。
 - C3 ~~（核对点）~~ **已验证（2026-09-29，forge-1.20.1-47.1.3-sources.jar Screen.java:489）**：
   1.20.1 `Screen.onFilesDrop(List<Path>)` 存在，导入支持拖拽+对话框双通道。
+
+## 7. 实施实况（2026-09-29，随实施回填）
+
+**已落地（三版本编译粒度验收，逐切片报告在 git 历史）**：
+
+- domain 数据层（`io.github.tt432.eyelib.snowstorm`）：util/input(81 输入)/curve/gradient/event/texture/
+  io(export/import)/editor(EditorRuntime/Options/EditHistory/Placeholders/MolangData/QuickSetupPresets/
+  Validator) 全量 as-is 移植；Node golden oracle 26 用例冻结（scripts/snowstorm-oracle/，
+  loader.mjs+hooks.mjs stub 方案见 NOTES.md），JUnit `SnowstormOracleTest` 7/7 绿；
+  ArchUnit DOMAIN_CLASSES 白名单已含 snowstorm。
+- UI（`client.gui.snowstorm`，LDLib2）：Screen 骨架/Sidebar/12 种 Input 视图（inputs/）/
+  ExpressionBar+MenuBar+CodeViewer（bar/+menu/）/曲线编辑器（curve/）/渐变编辑器（gradient/）/
+  贴图编辑器（texture/）/事件控件（events/）/3D 舞台（stage/：OrbitCamera oracle ≤1e-9 对齐 three
+  OrbitControls、立即模式 drawWithShader 渲染路径、页脚）/QuickSetup+弹层（quicksetup/+dialog/）/
+  文件 IO（io/：导出落盘+剪贴板、对话框+onFilesDrop 导入、子效果快照栈）。
+- 管理界面第 9 项「粒子编辑器」入口（EyelibManagerScreen，经 SnowstormEditorGate 反射门控）。
+
+**实施期发现与修复**：
+
+- **wu7 遗留 26.1.2 回归（本任务暴露）**：wu7 的 bridge/particle/adapter 四文件直接 import
+  `net.minecraft.resources.ResourceLocation`（26.1 已改名 Identifier）且无版本守卫——wu7 门禁只跑了
+  1.20.1。修复：四文件内部统一 PortResourceLocation，MC 边界经 ResourceLocationBridge.toMc/fromMc；
+  WinterskyRenderTypes 26.1 分支从 vanilla RenderType 静态工厂（26.1 不存在）改为 RenderSetup.builder
+  +RenderPipelines 基座（BrRenderTypeFactory 先例）；WinterskySceneManager 注册表 get 的
+  Optional<Reference> 差异加守卫。
+- jspecify TYPE_USE 注解误用于限定嵌套类型（`@Nullable java.util.function.Consumer`）会致 javac
+  报错并**级联杀死 Lombok AP**（全项目数百个幻影错误）——两度实证（SidebarView、EventSubpartView）。
+  正确形式：`java.util.function.@Nullable Consumer`。
+- edit 工具行号漂移多次造成中途态破损（StageFooterBar/CodeViewerView/TextureBridge/GradientEditorView
+  字段吞行），全部由各切片 owner 修复并复验；主代理手术编辑同受影响，修复后均经编译复验。
