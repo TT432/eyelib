@@ -35,6 +35,15 @@ final class ImmediateRenderSink implements RenderSink {
     public void submit(PortRenderPass renderPass, PortResourceLocation texture,
                        PoseStack pose, GeometryWriter writer) {
         RenderType renderType = MaterialPort.toRenderType(renderPass, texture);
+        //? if <1.20.6 {
+        if (io.github.tt432.eyelib.bridge.material.adapter.TextureColorMaterial.contains(renderType)) {
+            if (io.github.tt432.eyelib.bridge.client.compat.oculus.OculusCompat.renderingShadowPass()) return;
+            if (io.github.tt432.eyelib.bridge.client.render.adapter.TextureColorWorldPass.collecting()) {
+                writer.write(pose.last(), io.github.tt432.eyelib.bridge.client.render.adapter.TextureColorWorldPass.buffer(renderType), null);
+                return;
+            }
+        }
+        //?}
         VertexConsumer consumer = bufferSource.getBuffer(renderType);
         // C1 GPU 蒙皮（P2）：会话非空时 writer 可跳过顶点写入（palette 采集），
         // 绘制由 flush 接管；routing RenderType 仅承担状态机与缓冲归类，共享缓冲保持为空。

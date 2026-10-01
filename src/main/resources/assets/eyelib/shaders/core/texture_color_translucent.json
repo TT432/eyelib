@@ -1,0 +1,80 @@
+{
+  "vertex": "eyelib:texture_color",
+  "fragment": "eyelib:texture_color",
+  "attributes": [
+    "Position",
+    "Color",
+    "UV0",
+    "UV1",
+    "UV2",
+    "Normal"
+  ],
+  "samplers": [
+    {
+      "name": "Sampler0"
+    }
+  ],
+  "uniforms": [
+    {
+      "name": "ModelViewMat",
+      "type": "matrix4x4",
+      "count": 16,
+      "values": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "name": "ProjMat",
+      "type": "matrix4x4",
+      "count": 16,
+      "values": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "name": "AlphaCutoff",
+      "type": "float",
+      "count": 1,
+      "values": [
+        0.0039215686
+      ]
+    }
+  ],
+  "blend": {
+    "dstrgb": "1-srcalpha",
+    "srcalpha": "1",
+    "func": "add",
+    "dstalpha": "1-srcalpha",
+    "srcrgb": "srcalpha"
+  }
+}

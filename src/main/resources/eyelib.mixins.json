@@ -26,6 +26,9 @@
     //?}
   ],
   "client": [
+    //? if legacy {
+    "client.TextureColorGameRendererMixin",
+    //?}
     "client.TextureManagerMixin",
     //? if !legacy {
     "PoseStackPoseAccessor",

@@ -1,5 +1,5 @@
 /**
- * bridge 渲染阶段 adapter 子包，存放 Forge 平台具体实现（发现器 + 生命周期钩子）。
+ * bridge 渲染阶段 adapter 子包，存放 Forge 平台具体实现（发现器、生命周期钩子与世界原色绘制）。
  * 被规则 8 {@code aclPublicApiMustBeInterfaceOrAnnotation} 排除检查。
  */
 @NullMarked

@@ -31,6 +31,16 @@ public interface RenderTypeResolver {
 
     static EntityRenderTypeData resolve(PortResourceLocation id) {
         return switch (id.toString()) {
+            //? if <1.20.6 {
+            case "eyelib:texture_unlit" -> new EntityRenderTypeData(id, false,
+                    tex -> io.github.tt432.eyelib.bridge.material.adapter.TextureColorMaterial.create(tex, PortRenderPass.Transparency.TRANSLUCENT));
+            case "eyelib:texture_unlit_alpha" -> new EntityRenderTypeData(id, false,
+                    tex -> io.github.tt432.eyelib.bridge.material.adapter.TextureColorMaterial.create(tex, PortRenderPass.Transparency.ALPHA_TEST));
+            case "eyelib:texture_unlit_add" -> new EntityRenderTypeData(id, false,
+                    tex -> io.github.tt432.eyelib.bridge.material.adapter.TextureColorMaterial.create(tex, PortRenderPass.Transparency.ADDITIVE));
+            case "eyelib:texture_unlit_opaque" -> new EntityRenderTypeData(id, true,
+                    tex -> io.github.tt432.eyelib.bridge.material.adapter.TextureColorMaterial.create(tex, PortRenderPass.Transparency.SOLID));
+            //?}
             case "minecraft:cutout" -> new EntityRenderTypeData(id, false,
                     tex -> PortRenderPass.of(PortRenderPass.Transparency.ALPHA_TEST, false));
             case "minecraft:cutout_no_cull" -> new EntityRenderTypeData(id, false,

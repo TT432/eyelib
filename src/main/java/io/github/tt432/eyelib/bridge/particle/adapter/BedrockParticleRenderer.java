@@ -64,6 +64,16 @@ public final class BedrockParticleRenderer implements ParticleRenderManager.Part
     @Override
     public void render(BedrockParticleInstance particle) {
         CachedRender cached = RENDER_CACHE.computeIfAbsent(particle.emitter().definition(), CachedRender::create);
+        //? if <1.20.6 {
+        net.minecraft.client.renderer.RenderType type = (net.minecraft.client.renderer.RenderType) cached.renderType();
+        if (io.github.tt432.eyelib.bridge.material.adapter.TextureColorMaterial.contains(type)) {
+            if (io.github.tt432.eyelib.bridge.client.compat.oculus.OculusCompat.renderingShadowPass()) return;
+            if (io.github.tt432.eyelib.bridge.client.render.adapter.TextureColorWorldPass.collecting()) {
+                render(particle, poseStack, io.github.tt432.eyelib.bridge.client.render.adapter.TextureColorWorldPass.buffer(type), cached);
+                return;
+            }
+        }
+        //?}
         //? if <26.1 {
         VertexConsumer buffer = Minecraft.getInstance().renderBuffers().bufferSource()
                 .getBuffer((net.minecraft.client.renderer.RenderType) cached.renderType());

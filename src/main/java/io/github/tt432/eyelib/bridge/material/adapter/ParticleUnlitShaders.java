@@ -3,12 +3,17 @@ package io.github.tt432.eyelib.bridge.material.adapter;
 
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import io.github.tt432.eyelib.bridge.material.ResourceLocationBridge;
+import io.github.tt432.eyelib.material.port.PortRenderPass.Transparency;
 import net.minecraft.client.renderer.ShaderInstance;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.EnumMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
 //? if <1.20.6 {
 import net.minecraftforge.api.distmarker.Dist;
@@ -50,12 +55,19 @@ public final class ParticleUnlitShaders {
     //?}
 
     private static @Nullable ShaderInstance unlit;
+    //? if <1.20.6 {
+    private static final Map<Transparency, ShaderInstance> TEXTURE_COLOR = new EnumMap<>(Transparency.class);
+    //?}
 
     private ParticleUnlitShaders() {
     }
 
     @SubscribeEvent
     public static void onRegisterShaders(RegisterShadersEvent event) {
+        //? if <1.20.6 {
+        TEXTURE_COLOR.clear();
+        io.github.tt432.eyelib.bridge.client.render.adapter.TextureColorWorldPass.clear();
+        //?}
         // 重载清理：vanilla 负责关闭旧 ShaderInstance
         unlit = null;
         try {
@@ -68,11 +80,30 @@ public final class ParticleUnlitShaders {
             // 客户端必崩（2026-08-27 实证）；回退 vanilla entity shader（方向光近似）
             LOGGER.error("eyelib:{} 注册失败，粒子回退 vanilla 方向光着色", SHADER_NAME, e);
         }
+        //? if <1.20.6 {
+        try {
+            for (var transparency : List.of(Transparency.TRANSLUCENT, Transparency.ADDITIVE,
+                    Transparency.ALPHA_TEST, Transparency.SOLID)) {
+                event.registerShader(new ShaderInstance(event.getResourceProvider(),
+                                ResourceLocationBridge.fromParts("eyelib", "texture_color_" + transparency.name().toLowerCase(Locale.ROOT)),
+                                DefaultVertexFormat.NEW_ENTITY), shader -> TEXTURE_COLOR.put(transparency, shader));
+            }
+        } catch (IOException e) {
+            LOGGER.error("eyelib 原色 shader 注册失败，缺失的变体回退 vanilla emissive shader，无法保证原色", e);
+        }
+        //?}
     }
 
     /** 无方向光粒子 shader；重载窗口期或注册失败为 null，调用方须回退 vanilla shader。 */
     public static @Nullable ShaderInstance unlitShader() {
         return unlit;
     }
+
+    //? if <1.20.6 {
+    public static @Nullable ShaderInstance textureColorShader(Transparency transparency) {
+        ShaderInstance shader = TEXTURE_COLOR.get(transparency);
+        return shader != null ? shader : net.minecraft.client.renderer.GameRenderer.getRendertypeEntityTranslucentEmissiveShader();
+    }
+    //?}
 }
 //?}
