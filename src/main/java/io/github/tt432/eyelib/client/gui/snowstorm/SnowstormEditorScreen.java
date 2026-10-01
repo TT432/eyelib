@@ -66,12 +66,14 @@ public final class SnowstormEditorScreen extends ModularUIScreen {
         ContentParts parts = buildContent(
                 initialSidebarWidth(io.github.tt432.eyelib.bridge.ui.UiPort.guiScaledWidth()));
 
+        // App.vue grid-template-areas "sidebar header" / "sidebar preview"（实证修正）：
+        // sidebar 左置全高；右上 header（MenuBar+ExpressionBar）；右下 preview/code
         UIElement root = new UIElement().layout(layout -> layout
                 .widthPercent(100)
                 .heightPercent(100)
-                .flexDirection(FlexDirection.COLUMN));
+                .flexDirection(FlexDirection.ROW));
         root.style(style -> style.backgroundTexture(new ColorRectTexture(SnowstormTheme.BACKGROUND)));
-        root.addChildren(buildHeader(root, parts), parts.content());
+        root.addChildren(parts.sidebar(), buildRightColumn(root, parts));
 
         mc.setScreen(new SnowstormEditorScreen(new ModularUI(UI.of(root), mc.player), parts.stage()));
     }
@@ -90,8 +92,18 @@ public final class SnowstormEditorScreen extends ModularUIScreen {
     }
 
     /** 内容区构建产物（tab 切换接线用）。 */
-    private record ContentParts(UIElement content, UIElement left,
+    private record ContentParts(UIElement left, UIElement sidebar,
                                 ParticleStageView stage, CodeViewerView codeViewer) {
+    }
+
+    /** 右列：header（MenuBar+ExpressionBar）+ preview/code 内容区。 */
+    private static UIElement buildRightColumn(UIElement root, ContentParts parts) {
+        UIElement column = new UIElement().layout(layout -> layout
+                .flex(1)
+                .heightPercent(100)
+                .flexDirection(FlexDirection.COLUMN));
+        column.addChildren(buildHeader(root, parts), parts.left());
+        return column;
     }
 
     /** header（App.vue）：MenuBar + ExpressionBar。 */
@@ -126,18 +138,14 @@ public final class SnowstormEditorScreen extends ModularUIScreen {
         return header;
     }
 
-    /** 内容行：左 Preview 舞台/CodeViewer（flex 1）+ 右 Sidebar（固定宽）。 */
+    /** 内容区（App.vue "sidebar preview"）：Sidebar（左，固定宽全高）+ Preview/Code 容器（右）。 */
     private static ContentParts buildContent(int sidebarWidth) {
-        UIElement content = new UIElement().layout(layout -> layout
-                .widthPercent(100)
-                .flex(1)
-                .flexDirection(FlexDirection.ROW));
-
         ParticleStageView stageView = new ParticleStageView();
         stageView.layout(layout -> layout.widthPercent(100).heightPercent(100));
         CodeViewerView codeViewer = new CodeViewerView();
         codeViewer.layout(layout -> layout.widthPercent(100).heightPercent(100));
 
+        // preview/code 容器（右列下部，flex 1）
         UIElement left = new UIElement().layout(layout -> layout.flex(1).heightPercent(100));
         left.addChild(stageView);
 
@@ -147,8 +155,7 @@ public final class SnowstormEditorScreen extends ModularUIScreen {
         stageView.setId("stage");
         codeViewer.setId("codeviewer");
 
-        content.addChildren(left, sidebar);
-        return new ContentParts(content, left, stageView, codeViewer);
+        return new ContentParts(left, sidebar, stageView, codeViewer);
     }
 
     /**

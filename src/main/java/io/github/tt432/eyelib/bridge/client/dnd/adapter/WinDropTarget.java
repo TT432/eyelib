@@ -157,7 +157,7 @@ final class WinDropTarget {
         p.setInt(0, sx);
         p.setInt(4, sy);
         try {
-            User32Lib.INSTANCE.ScreenToClient(DragDropManager.INSTANCE.getHwnd(), p);
+            User32Lib.INSTANCE.ScreenToClient(java.util.Objects.requireNonNull(DragDropManager.INSTANCE.getHwnd()), p);
         } catch (Throwable t) {
             LOGGER.warn("ScreenToClient failed", t);
         }
@@ -217,6 +217,7 @@ final class WinDropTarget {
         }
     }
 
+    @SuppressWarnings("NullAway") // JNA 惯例：null buffer = 查询长度（Win32 契约），null 参数均在契约内
     private List<String> readHdropPaths(Pointer hDrop) {
         List<String> paths = new ArrayList<>();
         int count = Shell32Lib.INSTANCE.DragQueryFileW(hDrop, 0xFFFFFFFF, (char[]) null, 0);

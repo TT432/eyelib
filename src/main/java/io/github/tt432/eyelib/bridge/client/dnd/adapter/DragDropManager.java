@@ -32,9 +32,9 @@ public final class DragDropManager {
     private volatile boolean dragging = false;
     private volatile int hoverX = 0;
     private volatile int hoverY = 0;
-    private volatile String hoveredFirstPath;
+    private volatile @org.jspecify.annotations.Nullable String hoveredFirstPath;
 
-    private volatile Pointer hwnd;
+    private volatile @org.jspecify.annotations.Nullable Pointer hwnd;
 
     private DragDropManager() {
     }
@@ -55,11 +55,11 @@ public final class DragDropManager {
         return hoverY;
     }
 
-    Pointer getHwnd() {
+    @org.jspecify.annotations.Nullable Pointer getHwnd() {
         return hwnd;
     }
 
-    public String getHoveredFirstPath() {
+    public @org.jspecify.annotations.Nullable String getHoveredFirstPath() {
         return hoveredFirstPath;
     }
 
@@ -108,7 +108,7 @@ public final class DragDropManager {
         }
         this.hwnd = new Pointer(hwndVal);
 
-        int hr = WinNative.Ole32.INSTANCE.OleInitialize(null);
+        int hr = WinNative.Ole32.INSTANCE.OleInitialize(Pointer.NULL);
         // S_OK(0) 或 S_FALSE(1=已初始化) 都可接受
         LOGGER.debug("OleInitialize hr=0x{}", Integer.toHexString(hr));
 
@@ -127,7 +127,7 @@ public final class DragDropManager {
 
     // ---- OLE 回调（主线程）----
 
-    void onDragEnter(int clientX, int clientY, String firstPath) {
+    void onDragEnter(int clientX, int clientY, @org.jspecify.annotations.Nullable String firstPath) {
         dragging = true;
         hoverX = toGui(clientX);
         hoverY = toGui(clientY);
@@ -179,7 +179,7 @@ public final class DragDropManager {
 
     // target 的强引用持有处（与 INSTANCE 同生命周期）
     @SuppressWarnings("unused")
-    private volatile Object aliveRef;
+    private volatile @org.jspecify.annotations.Nullable Object aliveRef;
 
     private void keepAlive(Object target) {
         this.aliveRef = target;
