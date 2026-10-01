@@ -177,6 +177,21 @@ public final class SnowstormEditorScreen extends ModularUIScreen {
         dialog.show(root);
     }
 
+    // ---- 拖入悬停向导（yessteveskill dnd 模式；Snowstorm web 的 document.ondrop as-is）----
+
+    //? if <26.1 {
+    @Override
+    public void render(net.minecraft.client.gui.GuiGraphics gfx, int mouseX, int mouseY, float partialTick) {
+        super.render(gfx, mouseX, mouseY, partialTick);
+        // 拖入悬停：OLE hover 状态可读（Windows），全屏半透明遮罩 + 提示（yessteveskill 模式）
+        if (io.github.tt432.eyelib.bridge.ui.UiPort.isDraggingFiles()) {
+            gfx.fill(0, 0, width, height, 0xA0000000);
+            gfx.drawCenteredString(font, Component.literal("Drop .json file to import"),
+                    width / 2, height / 2 - 4, 0xFFFFFFFF);
+        }
+    }
+    //?}
+
     @Override
     public void onClose() {
         // I4：发射器/舞台资源释放 + 子效果编辑栈回灌

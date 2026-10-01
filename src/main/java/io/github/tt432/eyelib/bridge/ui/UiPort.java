@@ -41,4 +41,9 @@ public interface UiPort {
         return (int) (net.minecraft.client.Minecraft.getInstance().mouseHandler.ypos()
                 * window.getGuiScaledHeight() / window.getScreenHeight());
     }
+
+    /** 是否有文件正被拖入窗口（OLE hover，Windows；其它平台恒 false）。 */
+    static boolean isDraggingFiles() {
+        return io.github.tt432.eyelib.bridge.client.dnd.adapter.DragDropManager.INSTANCE.isDragging();
+    }
 }
