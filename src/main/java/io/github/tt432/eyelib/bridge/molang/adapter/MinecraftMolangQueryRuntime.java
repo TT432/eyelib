@@ -9,6 +9,15 @@ import net.minecraft.world.entity.Entity;
  * @author TT432
  */
 public final class MinecraftMolangQueryRuntime implements MolangQueryRuntime {
+    /** 本帧最终渲染摄像机的位置，包含第三人称及相机模组的偏移。 */
+    public static net.minecraft.world.phys.Vec3 renderCameraPosition() {
+        //? if <26.1 {
+        return Minecraft.getInstance().gameRenderer.getMainCamera().getPosition();
+        //?} else {
+        return Minecraft.getInstance().gameRenderer.getMainCamera().position();
+        //?}
+    }
+
     @Override
     public float actorCount() {
         if (Minecraft.getInstance().level == null) {
