@@ -260,3 +260,17 @@ client/gui/snowstorm/
   导入/预设后 Sidebar 不刷新（notifyChanged 接线）。
 - 工具坑：`-PldTest` 会把 uitest 系统属性烘进 clientRunVmArgs.txt（createClientLaunchScript
   生成），导致后续 mcmcp 启动自动跑 uitest 并退出——mcmcp_build 重生成即恢复。
+
+**二期（2026-10-01：拖入 + 视觉对齐）**：
+
+- 拖入文件：移植 yessteveskill client/dnd OLE 拖放基础设施（bridge/client/dnd/adapter/，
+  Windows IDropTarget 接管 GLFW 窗口，hover 状态 + 落点坐标；其它平台退回 MC 原生
+  onFilesDrop）；编辑器拖入悬停遮罩 + onFilesDrop → importFromDroppedFiles（实机验证
+  identifier 切换生效）。
+- 视觉对齐：布局修正为 App.vue 实证结构（grid "sidebar header"/"sidebar preview"——
+  sidebar 左置全高，此前误置右侧）；kit 组件库（client/gui/snowstorm/kit/：SsMetrics/
+  SsButton/SsTextField/SsIcon/SsIconButton/SsSlider/SsGroupSection/SsListAddRow/SsJsonColors）；
+  59 个 lucide 图标光栅化进 assets/eyelib/snowstorm/icons/（scripts/snowstorm-icons/README.md
+  管线记录）+ SNOWSTORM logo（Logo.vue SVG 光栅化）；全界面文字占位符退役。
+- 实机暴露并修复：LDLib2 Button 默认 translation 'Button' 文本覆盖（tab/sprite 格需
+  setText(Component.empty())）。
