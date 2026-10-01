@@ -67,19 +67,13 @@ public final class InputViewFactory {
             row.addChild(label);
         }
         if (input.expandable) {
-            // InputGroup.vue .input_expand_button（ChevronDown/Up）
-            Button expand = new Button();
-            expand.setText(Component.literal(input.expanded ? "⌃" : "⌄"))
-                    .textStyle(style -> style.fontSize(9).textColor(SnowstormTheme.TEXT_GRAYED))
-                    .buttonStyle(style -> style
-                            .baseTexture(IGuiTexture.EMPTY)
-                            .hoverTexture(new ColorRectTexture(SnowstormTheme.SELECTION))
-                            .pressedTexture(new ColorRectTexture(SnowstormTheme.SELECTION)))
-                    .setOnClick(event -> {
+            // InputGroup.vue .input_expand_button（ChevronDown/Up → lucide 图标）
+            Button expand = io.github.tt432.eyelib.client.gui.snowstorm.kit.SsIconButton.ghost(
+                    input.expanded ? "chevron-up" : "chevron-down", 10, event -> {
                         input.toggleExpand(); // InputGroup.vue toggleExpand as-is
                         notifyChanged();
                     });
-            expand.layout(layout -> layout.width(10).heightPercent(100));
+            expand.layout(layout -> layout.width(12).heightPercent(100));
             row.addChild(expand);
         }
         UIElement control = control(input);

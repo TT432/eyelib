@@ -98,12 +98,13 @@ public final class CodeViewerView extends UIElement {
         Minecraft.getInstance().keyboardHandler.setClipboard(code);
     }
 
-    /** Prism 高亮不移植：逐行纯文本（空行以空格占位保持行高）。 */
+    /** Prism 高亮：kit SsJsonColors 逐行着色（common.css Prism token 色 as-is）。 */
     private void rebuildLines() {
         scroller.clearAllScrollViewChildren();
         for (String line : code.split("\n", -1)) {
             TextElement element = new TextElement();
-            element.setText(Component.literal(line.isEmpty() ? " " : line));
+            element.setText(io.github.tt432.eyelib.client.gui.snowstorm.kit.SsJsonColors
+                    .highlightLine(line.isEmpty() ? " " : line));
             element.textStyle(style -> style.fontSize(9).textColor(SnowstormTheme.TEXT));
             element.layout(layout -> layout.widthPercent(100).height(10));
             scroller.addScrollViewChild(element);

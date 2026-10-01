@@ -62,16 +62,14 @@ public class EventListView extends UIElement {
         rows.layout(l -> l.widthPercent(100).flexDirection(FlexDirection.COLUMN));
         addChild(rows);
         // list-add-button：Add Event
-        Button add = new Button();
-        add.setText(Component.literal("＋"))
-                .textStyle(s -> s.fontSize(10).textColor(SnowstormTheme.TEXT_GRAYED))
-                .buttonStyle(s -> s
-                        .baseTexture(new ColorRectTexture(SnowstormTheme.DARK))
-                        .hoverTexture(new ColorRectTexture(SnowstormTheme.INTERFACE)))
-                .setOnClick(e -> {
+        Button add = io.github.tt432.eyelib.client.gui.snowstorm.kit.SsIconButton.bar(
+                "plus", 10, e -> {
                     model.addEvent();
                     afterModelOp();
                 });
+        add.buttonStyle(s -> s
+                .baseTexture(new ColorRectTexture(SnowstormTheme.DARK))
+                .hoverTexture(new ColorRectTexture(SnowstormTheme.INTERFACE)));
         add.layout(l -> l.widthPercent(100).height(16));
         add.style(s -> s.tooltips("Add Event"));
         addChild(add);
@@ -159,13 +157,8 @@ public class EventListView extends UIElement {
             UIElement header = new UIElement();
             header.layout(l -> l.widthPercent(100).height(16).flexDirection(FlexDirection.ROW).gapAll(2));
             header.style(s -> s.backgroundTexture(new ColorRectTexture(SnowstormTheme.BAR)));
-            Button grip = new Button();
-            grip.setText(Component.literal("≡"))
-                    .textStyle(s -> s.fontSize(9).textColor(SnowstormTheme.TEXT_GRAYED))
-                    .buttonStyle(s -> s
-                            .baseTexture(IGuiTexture.EMPTY)
-                            .hoverTexture(new ColorRectTexture(SnowstormTheme.SELECTION)))
-                    .setOnClick(e -> {
+            Button grip = io.github.tt432.eyelib.client.gui.snowstorm.kit.SsIconButton.ghost(
+                    "grip-vertical", 10, e -> {
                     });
             grip.layout(l -> l.width(12).heightPercent(100));
             grip.addEventListener(UIEvents.MOUSE_DOWN, e -> {

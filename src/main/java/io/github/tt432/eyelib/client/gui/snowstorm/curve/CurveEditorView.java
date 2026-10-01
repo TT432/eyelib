@@ -306,9 +306,8 @@ public class CurveEditorView extends UIElement {
 
         // 删除节点工具（v-if mode !== 'bezier'；JS 字符 ⴩）
         if (!"bezier".equals(mode())) {
-            Button removeNode = new Button();
-            removeNode.setText(Component.literal("⴩"));
-            removeNode.setOnClick(e -> curve.removeNode(curve.selected_point));
+            Button removeNode = io.github.tt432.eyelib.client.gui.snowstorm.kit.SsIconButton.ghost(
+                    "x", 9, e -> curve.removeNode(curve.selected_point));
             removeNode.layout(l -> l.width(24).heightPercent(100));
             optionsBar.addChild(removeNode);
         }

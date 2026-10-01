@@ -116,13 +116,8 @@ public class EventTimelineView extends UIElement {
             label.textStyle(s -> s.fontSize(9).textColor(SnowstormTheme.TEXT));
             label.layout(l -> l.flex(1).heightPercent(100));
             eventRow.addChild(label);
-            Button remove = new Button();
-            remove.setText(Component.literal("×"))
-                    .textStyle(s -> s.fontSize(9).textColor(SnowstormTheme.TEXT_GRAYED))
-                    .buttonStyle(s -> s
-                            .baseTexture(IGuiTexture.EMPTY)
-                            .hoverTexture(new ColorRectTexture(SnowstormTheme.SELECTION)))
-                    .setOnClick(e -> {
+            Button remove = io.github.tt432.eyelib.client.gui.snowstorm.kit.SsIconButton.ghost(
+                    "x", 8, e -> {
                         entry.event.remove(eventObj);
                         input.change(EventUiEvents.simple(), null);
                     });
@@ -137,13 +132,8 @@ public class EventTimelineView extends UIElement {
         row.addChild(eventList);
 
         // 删除时间点
-        Button removeEntry = new Button();
-        removeEntry.setText(Component.literal("×"))
-                .textStyle(s -> s.fontSize(9).textColor(SnowstormTheme.TEXT_GRAYED))
-                .buttonStyle(s -> s
-                        .baseTexture(IGuiTexture.EMPTY)
-                        .hoverTexture(new ColorRectTexture(SnowstormTheme.SELECTION)))
-                .setOnClick(e -> {
+        Button removeEntry = io.github.tt432.eyelib.client.gui.snowstorm.kit.SsIconButton.ghost(
+                "x", 8, e -> {
                     input.timeline.remove(entry);
                     input.change(EventUiEvents.simple(), null);
                 });

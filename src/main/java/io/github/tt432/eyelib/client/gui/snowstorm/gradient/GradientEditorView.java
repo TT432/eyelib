@@ -243,12 +243,12 @@ public final class GradientEditorView extends UIElement {
         UIElement spacer = new UIElement().layout(layout -> layout.flex(1).heightPercent(100));
         toolRow.addChild(spacer);
         // JS float:right：＋ 恒在；⨉ 仅 selected 有颜色时
-        toolRow.addChild(toolButton("＋", event -> {
+        toolRow.addChild(toolButton("plus", event -> {
             input.addPoint();
             rebuild();
         }));
         if (input.selected != null && JsSemantics.truthy(input.selected.color())) {
-            toolRow.addChild(toolButton("⨉", event -> {
+            toolRow.addChild(toolButton("x", event -> {
                 input.removePoint();
                 rebuild();
             }));
@@ -256,14 +256,9 @@ public final class GradientEditorView extends UIElement {
     }
 
     private static Button toolButton(String icon, UIEventListener onClick) {
-        Button button = new Button();
-        button.setText(Component.literal(icon))
-                .textStyle(style -> style.fontSize(9).textColor(SnowstormTheme.TEXT))
-                .buttonStyle(style -> style
-                        .baseTexture(IGuiTexture.EMPTY)
-                        .hoverTexture(new ColorRectTexture(SnowstormTheme.SELECTION))
-                        .pressedTexture(new ColorRectTexture(SnowstormTheme.SELECTION)))
-                .setOnClick(onClick);
+        // lucide 图标钮（文字占位已退役，kit SsIconButton）
+        Button button = io.github.tt432.eyelib.client.gui.snowstorm.kit.SsIconButton.ghost(
+                icon, 10, onClick);
         button.layout(layout -> layout.width(14).heightPercent(100));
         return button;
     }

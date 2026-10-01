@@ -116,7 +116,7 @@ public class EventSubpartView extends UIElement {
                 EventSubpart option = sequence.get(i);
                 UIElement container = new UIElement();
                 container.layout(l -> l.widthPercent(100).flexDirection(FlexDirection.COLUMN));
-                container.addChild(optionHeader("≡", "#" + i, null,
+                container.addChild(optionHeader("grip-vertical", "#" + i, null,
                         () -> subpart.removeSequenceOption(option), DRAG_SEQUENCE, i));
                 container.addChild(new EventSubpartView(option));
                 optionContainers.add(container);
@@ -140,7 +140,7 @@ public class EventSubpartView extends UIElement {
                             subpart.modifyEvent(null, "text");
                         });
                 weight.layout(l -> l.width(48).heightPercent(100));
-                container.addChild(optionHeader("≡", "Weight", weight,
+                container.addChild(optionHeader("grip-vertical", "Weight", weight,
                         () -> subpart.removeRandomizeOption(option), DRAG_RANDOMIZE, i));
                 container.addChild(new EventSubpartView(option));
                 optionContainers.add(container);
@@ -195,23 +195,23 @@ public class EventSubpartView extends UIElement {
         identifierRow.addChild(identifier);
         if (!EventSubpart.is_extension && !subpart.canEditParticleFile()) {
             // Create New Particle（JS dialog → 行内表单）
-            identifierRow.addChild(iconButton("🗋", "Create New Particle", () -> {
+            identifierRow.addChild(iconButton("file-plus-2", "Create New Particle", () -> {
                 newParticleFormOpen = !newParticleFormOpen;
                 rebuild();
             }));
         }
         if (!EventSubpart.is_extension) {
-            identifierRow.addChild(iconButton("⇪", "Select File", () -> {
+            identifierRow.addChild(iconButton("upload", "Select File", () -> {
                 if (selectParticleFileAction != null) selectParticleFileAction.accept(subpart);
             }));
         }
         if (!EventSubpart.is_extension && subpart.canEditParticleFile()) {
-            identifierRow.addChild(iconButton("🖼", "Select Texture", () -> {
+            identifierRow.addChild(iconButton("image-plus", "Select Texture", () -> {
                 if (selectParticleTextureAction != null) selectParticleTextureAction.accept(subpart);
             }));
         }
         if (subpart.canEditParticleFile()) {
-            identifierRow.addChild(iconButton("✎", "Edit Linked Particle Effect", subpart::editParticleFile));
+            identifierRow.addChild(iconButton("pencil", "Edit Linked Particle Effect", subpart::editParticleFile));
         }
         section.addChild(identifierRow);
 
@@ -386,7 +386,7 @@ public class EventSubpartView extends UIElement {
         label.layout(l -> l.flex(1).heightPercent(100));
         bar.addChild(label);
         if (onDisable != null) {
-            bar.addChild(iconButton("×", "Disable " + title, onDisable));
+            bar.addChild(iconButton("x", "Disable " + title, onDisable));
         }
         return bar;
     }
@@ -396,13 +396,8 @@ public class EventSubpartView extends UIElement {
                                    Runnable onRemove, Object dragToken, int index) {
         UIElement header = new UIElement();
         header.layout(l -> l.widthPercent(100).height(14).flexDirection(FlexDirection.ROW).gapAll(2));
-        Button gripButton = new Button();
-        gripButton.setText(Component.literal(grip))
-                .textStyle(s -> s.fontSize(9).textColor(SnowstormTheme.TEXT_GRAYED))
-                .buttonStyle(s -> s
-                        .baseTexture(IGuiTexture.EMPTY)
-                        .hoverTexture(new ColorRectTexture(SnowstormTheme.SELECTION)))
-                .setOnClick(e -> {
+        Button gripButton = io.github.tt432.eyelib.client.gui.snowstorm.kit.SsIconButton.ghost(
+                grip, 10, e -> {
                 });
         gripButton.layout(l -> l.width(12).heightPercent(100));
         gripButton.addEventListener(UIEvents.MOUSE_DOWN, e -> {
@@ -420,7 +415,7 @@ public class EventSubpartView extends UIElement {
         UIElement fill = new UIElement();
         fill.layout(l -> l.flex(1).heightPercent(100));
         header.addChild(fill);
-        header.addChild(iconButton("×", "Remove Option", onRemove));
+        header.addChild(iconButton("x", "Remove Option", onRemove));
         return header;
     }
 
@@ -451,13 +446,8 @@ public class EventSubpartView extends UIElement {
     }
 
     private UIElement iconButton(String icon, String title, Runnable onClick) {
-        Button button = new Button();
-        button.setText(Component.literal(icon))
-                .textStyle(s -> s.fontSize(9).textColor(SnowstormTheme.TEXT_GRAYED))
-                .buttonStyle(s -> s
-                        .baseTexture(IGuiTexture.EMPTY)
-                        .hoverTexture(new ColorRectTexture(SnowstormTheme.SELECTION)))
-                .setOnClick(e -> onClick.run());
+        Button button = io.github.tt432.eyelib.client.gui.snowstorm.kit.SsIconButton.ghost(
+                icon, 9, e -> onClick.run());
         button.layout(l -> l.width(16).heightPercent(100));
         button.style(s -> s.tooltips(title));
         return button;

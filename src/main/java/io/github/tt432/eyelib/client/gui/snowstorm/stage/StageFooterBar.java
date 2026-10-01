@@ -85,7 +85,7 @@ public final class StageFooterBar extends UIElement {
         bar.addChild(buildSelector("parent_mode", PARENT_MODES, PARENT_LABELS,
                 EditorRuntime.Emitter.parent_mode, value -> EditorRuntime.Emitter.parent_mode = value));
 
-        collisionButton = toolButton("⇅", collisionDisplay, event -> {
+        collisionButton = toolButton("flip-vertical-2", collisionDisplay, event -> {
             // Preview.vue toggleCollision()
             Emitter emitter = EditorRuntime.Emitter;
             emitter.ground_collision = !emitter.ground_collision;
@@ -96,13 +96,13 @@ public final class StageFooterBar extends UIElement {
         refreshToggle(collisionButton, collisionDisplay);
         bar.addChild(collisionButton);
 
-        placeholderButton = toolButton("#", false, event -> togglePlaceholderBar());
+        placeholderButton = toolButton("hash", false, event -> togglePlaceholderBar());
         bar.addChild(placeholderButton);
 
         bar.addChild(new UIElement().layout(layout -> layout.flex(1).height(1))); // spacing
 
-        bar.addChild(toolButton("▶", false, event -> PlaybackController.startAnimation()));
-        bar.addChild(toolButton("⏸", false, event -> PlaybackController.togglePause()));
+        bar.addChild(toolButton("play", false, event -> PlaybackController.startAnimation()));
+        bar.addChild(toolButton("pause", false, event -> PlaybackController.togglePause()));
 
         bar.addChild(new UIElement().layout(layout -> layout.flex(1).height(1))); // spacing
 
@@ -244,10 +244,9 @@ public final class StageFooterBar extends UIElement {
 
     private static Button toolButton(String icon, boolean selected,
                                      com.lowdragmc.lowdraglib2.gui.ui.event.UIEventListener listener) {
-        Button button = new Button();
-        button.setText(Component.literal(icon))
-                .textStyle(style -> style.fontSize(9).textColor(SnowstormTheme.TEXT));
-        button.setOnClick(listener);
+        // lucide 图标钮（文字占位已退役，kit SsIconButton）
+        Button button = io.github.tt432.eyelib.client.gui.snowstorm.kit.SsIconButton.ghost(
+                icon, 10, listener);
         button.layout(layout -> layout.width(16).height(CONTROL_HEIGHT));
         refreshToggle(button, selected);
         return button;

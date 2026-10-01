@@ -83,13 +83,8 @@ public class EventSpeedListView extends UIElement {
             label.layout(l -> l.flex(1).heightPercent(100));
             row.addChild(label);
 
-            Button remove = new Button();
-            remove.setText(Component.literal("×"))
-                    .textStyle(s -> s.fontSize(9).textColor(SnowstormTheme.TEXT_GRAYED))
-                    .buttonStyle(s -> s
-                            .baseTexture(IGuiTexture.EMPTY)
-                            .hoverTexture(new ColorRectTexture(SnowstormTheme.SELECTION)))
-                    .setOnClick(e -> {
+            Button remove = io.github.tt432.eyelib.client.gui.snowstorm.kit.SsIconButton.ghost(
+                    "x", 8, e -> {
                         values.remove(value);
                         input.change(EventUiEvents.simple(), null);
                     });

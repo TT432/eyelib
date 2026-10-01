@@ -66,13 +66,13 @@ public final class QuickSetupView extends UIElement {
         UIElement group = groupBlock("Shape & Motion");
         UIElement list = optionList();
         list.addChildren(
-                optionCell("◯", "Sphere", "sphere".equals(QuickSetupPresets.getShape()),
+                optionCell("sparkles", "Sphere", "sphere".equals(QuickSetupPresets.getShape()),
                         () -> apply("shape", "sphere")),
-                optionCell("☂", "Rain", "rain".equals(QuickSetupPresets.getShape()),
+                optionCell("cloud-rain", "Rain", "rain".equals(QuickSetupPresets.getShape()),
                         () -> apply("shape", "rain")),
-                optionCell("◎", "Ring", "ring".equals(QuickSetupPresets.getShape()),
+                optionCell("torus", "Ring", "ring".equals(QuickSetupPresets.getShape()),
                         () -> apply("shape", "ring")),
-                optionCell("∪", "Gravitate to Center", "gravitate".equals(QuickSetupPresets.getShape()),
+                optionCell("magnet", "Gravitate to Center", "gravitate".equals(QuickSetupPresets.getShape()),
                         () -> apply("shape", "gravitate")));
         group.addChild(list);
         group.addChild(sliderBar("Speed", 0, 20, 0.5,
@@ -84,9 +84,9 @@ public final class QuickSetupView extends UIElement {
         UIElement group = groupBlock("Timing");
         UIElement list = optionList();
         list.addChildren(
-                optionCell("✸", "Burst", "burst".equals(QuickSetupPresets.getTiming()),
+                optionCell("bomb", "Burst", "burst".equals(QuickSetupPresets.getTiming()),
                         () -> apply("timing", "burst")),
-                optionCell("⏱", "Steady", "steady".equals(QuickSetupPresets.getTiming()),
+                optionCell("timer", "Steady", "steady".equals(QuickSetupPresets.getTiming()),
                         () -> apply("timing", "steady")));
         group.addChild(list);
         group.addChild(sliderBar("Amount", 1, 120, 1,
@@ -100,15 +100,15 @@ public final class QuickSetupView extends UIElement {
         UIElement group = groupBlock("Physics");
         UIElement list = optionList();
         list.addChildren(
-                optionCell("⊘", "None", "none".equals(QuickSetupPresets.getCollision()),
+                optionCell("circle-slash", "None", "none".equals(QuickSetupPresets.getCollision()),
                         () -> apply("collision", "none")),
-                optionCell("▣", "Solid", "solid".equals(QuickSetupPresets.getCollision()),
+                optionCell("cuboid", "Solid", "solid".equals(QuickSetupPresets.getCollision()),
                         () -> apply("collision", "solid")),
-                optionCell("☁", "Smoke", "smoke".equals(QuickSetupPresets.getCollision()),
+                optionCell("cloud", "Smoke", "smoke".equals(QuickSetupPresets.getCollision()),
                         () -> apply("collision", "smoke")),
-                optionCell("◉", "Ball", "ball".equals(QuickSetupPresets.getCollision()),
+                optionCell("aperture", "Ball", "ball".equals(QuickSetupPresets.getCollision()),
                         () -> apply("collision", "ball")),
-                optionCell("▤", "Paper", "paper".equals(QuickSetupPresets.getCollision()),
+                optionCell("scroll", "Paper", "paper".equals(QuickSetupPresets.getCollision()),
                         () -> apply("collision", "paper")));
         group.addChild(list);
         return group;
@@ -186,21 +186,22 @@ public final class QuickSetupView extends UIElement {
                 .gapAll(2));
     }
 
-    /** 预设选项格（80px 宽，选中 bg=--color-bar as-is；lucide 图标文字占位）。 */
-    private static Button optionCell(String icon, String label, boolean selected, Runnable onClick) {
-        Button cell = new Button();
-        cell.setText(Component.literal(icon + "\n" + label))
-                .textStyle(style -> style
-                        .fontSize(9)
-                        .textColor(selected ? SnowstormTheme.HIGHLIGHT : SnowstormTheme.TEXT))
-                .buttonStyle(style -> style
-                        .baseTexture(selected
-                                ? new ColorRectTexture(SnowstormTheme.BAR)
-                                : com.lowdragmc.lowdraglib2.gui.texture.IGuiTexture.EMPTY)
-                        .hoverTexture(new ColorRectTexture(SnowstormTheme.SELECTION))
-                        .pressedTexture(new ColorRectTexture(SnowstormTheme.SELECTION)))
-                .setOnClick(event -> onClick.run());
-        cell.layout(layout -> layout.width(80).height(30));
+    /** 预设选项格（80px 宽，选中 bg=--color-bar as-is；lucide 图标 + 标签）。 */
+    private static UIElement optionCell(String iconName, String label, boolean selected, Runnable onClick) {
+        UIElement cell = new UIElement().layout(layout -> layout
+                .width(80).height(34)
+                .flexDirection(FlexDirection.COLUMN)
+                .alignItems(AlignItems.CENTER)
+                .justifyContent(dev.vfyjxf.taffy.style.AlignContent.CENTER)
+                .gapAll(1));
+        cell.style(style -> style.backgroundTexture(selected
+                ? new ColorRectTexture(SnowstormTheme.BAR)
+                : com.lowdragmc.lowdraglib2.gui.texture.IGuiTexture.EMPTY));
+        cell.addEventListener(com.lowdragmc.lowdraglib2.gui.ui.event.UIEvents.CLICK,
+                event -> onClick.run());
+        cell.addChild(io.github.tt432.eyelib.client.gui.snowstorm.kit.SsIcon.of(iconName, 16));
+        TextElement text = text(label, selected ? SnowstormTheme.HIGHLIGHT : SnowstormTheme.TEXT, 9);
+        cell.addChild(text);
         return cell;
     }
 
@@ -213,6 +214,7 @@ public final class QuickSetupView extends UIElement {
                                 : com.lowdragmc.lowdraglib2.gui.texture.IGuiTexture.EMPTY)
                         .hoverTexture(new ColorRectTexture(SnowstormTheme.SELECTION))
                         .pressedTexture(new ColorRectTexture(SnowstormTheme.SELECTION)));
+        cell.setText(Component.empty()); // LDLib2 Button 默认 'Button' 文本，清空防覆盖 sprite 图
         cell.layout(layout -> layout.width(80).height(64).paddingAll(8));
 
         String texture = ClasspathSpriteTextures.sprite(id);

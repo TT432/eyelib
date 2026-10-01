@@ -166,16 +166,16 @@ public final class TextureEditorView extends UIElement {
         prevFrameButton = smallButton("<", () -> moveByFrame(-1));
         nextFrameButton = smallButton(">", () -> moveByFrame(1));
         infoBar.addChildren(dimsText, cursorText, zoomText, prevFrameButton, nextFrameButton,
-                smallButton("max", this::maximizeViewport));
+                smallIconButton("maximize", this::maximizeViewport));
 
         // meta 工具栏（JS .meta.toolbar：reset / reload / new / save）
         UIElement metaBar = new UIElement()
                 .layout(l -> l.widthPercent(100).height(16).flexDirection(FlexDirection.ROW).gapAll(1));
-        metaBar.addChild(smallButton("X", this::onReset));
-        reloadButton = smallButton("reload", this::onReload);
+        metaBar.addChild(smallIconButton("x", this::onReset));
+        reloadButton = smallIconButton("refresh-ccw", this::onReload);
         metaBar.addChild(reloadButton);
-        metaBar.addChild(smallButton("new", this::openNewTextureDialog));
-        saveButton = smallButton("save", this::onSave);
+        metaBar.addChild(smallIconButton("file-plus-2", this::openNewTextureDialog));
+        saveButton = smallIconButton("save", this::onSave);
         metaBar.addChild(saveButton);
 
         addChildren(toolbar, viewport, infoBar, metaBar, colorOverlay);
@@ -214,12 +214,22 @@ public final class TextureEditorView extends UIElement {
         }
     }
 
+    /** 工具 id → lucide 图标名（TextureInput.vue 工具栏 as-is）。 */
+    private static final java.util.Map<String, String> TOOL_ICONS = java.util.Map.of(
+            "select", "mouse-pointer",
+            "brush", "paintbrush",
+            "eraser", "eraser",
+            "fill_tool", "paint-bucket",
+            "color_picker", "pipette");
+
     private void addToolButton(UIElement parent, String toolId, String label, String tooltip) {
-        Button button = smallButton(label, () -> {
-            // JS selectTool(tool)
-            this.tool = toolId;
-            updateToolSelection();
-        });
+        Button button = io.github.tt432.eyelib.client.gui.snowstorm.kit.SsIconButton.ghost(
+                TOOL_ICONS.getOrDefault(toolId, "help-circle"), 10, event -> {
+                    // JS selectTool(tool)
+                    this.tool = toolId;
+                    updateToolSelection();
+                });
+        button.layout(l -> l.width(18).height(14));
         toolButtons.add(new ToolButton(toolId, button));
         parent.addChild(button);
     }
@@ -245,6 +255,17 @@ public final class TextureEditorView extends UIElement {
                         .baseTexture(new ColorRectTexture(SnowstormTheme.BAR))
                         .hoverTexture(new ColorRectTexture(SnowstormTheme.TITLE)))
                 .layout(l -> l.width(Math.max(14, label.length() * 5 + 6)).height(14));
+        return button;
+    }
+
+    /** 图标小按钮（kit SsIconButton ghost 形态 + 尺寸）。 */
+    private Button smallIconButton(String lucideName, Runnable onClick) {
+        Button button = io.github.tt432.eyelib.client.gui.snowstorm.kit.SsIconButton.ghost(
+                lucideName, 10, event -> onClick.run());
+        button.buttonStyle(s -> s
+                .baseTexture(new ColorRectTexture(SnowstormTheme.BAR))
+                .hoverTexture(new ColorRectTexture(SnowstormTheme.TITLE)));
+        button.layout(l -> l.width(18).height(14));
         return button;
     }
 

@@ -29,7 +29,7 @@ public class EventPickerView extends UIElement {
 
     private final EventPicker picker = new EventPicker(EditorRuntime.Config);
     private final Consumer<String> onSelect;
-    private final Button button = new Button();
+    private final Button button;
     private final UIElement list = new UIElement();
     private boolean isOpen;
 
@@ -47,12 +47,9 @@ public class EventPickerView extends UIElement {
         picker.blacklist = blacklist;
 
         layout(l -> l.flexDirection(FlexDirection.COLUMN));
-        button.setText(Component.literal(replace ? "⚡" : "＋"))
-                .textStyle(s -> s.fontSize(10).textColor(SnowstormTheme.TEXT))
-                .buttonStyle(s -> s
-                        .baseTexture(new ColorRectTexture(SnowstormTheme.BAR))
-                        .hoverTexture(new ColorRectTexture(SnowstormTheme.SELECTION)))
-                .setOnClick(e -> toggleMenu());
+        // lucide 图标（replace=Zap / 追加=Plus，as-is）
+        button = io.github.tt432.eyelib.client.gui.snowstorm.kit.SsIconButton.bar(
+                replace ? "zap" : "plus", 10, e -> toggleMenu());
         button.layout(l -> l.width(22).height(14));
         list.layout(l -> l.widthPercent(100).flexDirection(FlexDirection.COLUMN));
         addChildren(button, list);

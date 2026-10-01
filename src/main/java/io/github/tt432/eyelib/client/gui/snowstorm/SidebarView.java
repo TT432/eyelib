@@ -30,21 +30,21 @@ import java.util.Map;
  */
 public final class SidebarView extends UIElement {
 
-    /** Sidebar.vue tab 图标（lucide）的文字占位。 */
+    /** Sidebar.vue tab 图标（lucide 名，资产 eyelib:snowstorm/icons/）。 */
     private static final Map<String, String> TAB_ICONS = Map.of(
-            "setup", "QS",
-            "effect", "FI",
-            "emitter", "EM",
-            "motion", "MO",
-            "appearance", "AP",
-            "texture", "TX",
-            "lifetime", "LT",
-            "events", "EV",
-            "variables", "VA");
+            "setup", "wand",
+            "effect", "file",
+            "emitter", "party-popper",
+            "motion", "feather",
+            "appearance", "sparkles",
+            "texture", "image",
+            "lifetime", "clock-8",
+            "events", "zap",
+            "variables", "tangent");
 
-    /** Sidebar.vue #sidebar_tab_bar。 */
-    private static final int TAB_BAR_HEIGHT = 45;
-    private static final int TAB_HEIGHT = 24;
+    /** Sidebar.vue #sidebar_tab_bar height:45px（web 像素；MC gui 侧 22px 等比）。 */
+    private static final int TAB_BAR_HEIGHT = 22;
+    private static final int TAB_ICON_SIZE = 12;
     private static final int GROUP_HEADER_HEIGHT = 14;
 
     /** Sidebar.vue data：selected_subject_key 初值 'effect'。 */
@@ -60,7 +60,7 @@ public final class SidebarView extends UIElement {
 
         tabBar = new UIElement().layout(layout -> layout
                 .widthPercent(100)
-                .height(TAB_HEIGHT)
+                .height(TAB_BAR_HEIGHT)
                 .flexDirection(FlexDirection.ROW));
         tabBar.style(style -> style.backgroundTexture(new ColorRectTexture(SnowstormTheme.BAR)));
 
@@ -75,7 +75,13 @@ public final class SidebarView extends UIElement {
         groupList = new ScrollerView();
         groupList.layout(layout -> layout.widthPercent(100).flex(1));
 
-        addChildren(tabBar, subjectTitle, groupList);
+        // Sidebar.vue：<logo v-if="!portrait_view"/>（landscape 即显示，MC 恒 landscape）
+        UIElement logo = new UIElement().layout(layout -> layout
+                .widthPercent(100)
+                .height(16));
+        logo.style(style -> style.backgroundTexture(
+                com.lowdragmc.lowdraglib2.gui.texture.SpriteTexture.of("eyelib:snowstorm/logo.png")));
+        addChildren(logo, tabBar, subjectTitle, groupList);
         // Vue 响应式替代（ADR R3）：控件变更 → 重建当前 subject 的 group 列表
         io.github.tt432.eyelib.client.gui.snowstorm.inputs.InputViewFactory.onInputChanged =
                 () -> rebuildGroups(InputStructure.Data.get(selectedSubjectKey));
@@ -112,12 +118,13 @@ public final class SidebarView extends UIElement {
                                     : IGuiTexture.EMPTY)
                             .hoverTexture(new ColorRectTexture(SnowstormTheme.SELECTION))
                             .pressedTexture(new ColorRectTexture(SnowstormTheme.SELECTION)))
-                    .setText(Component.literal(TAB_ICONS.getOrDefault(key, key)))
-                    .textStyle(style -> style
-                            .fontSize(9)
-                            .textColor(selected ? SnowstormTheme.HIGHLIGHT : SnowstormTheme.TEXT))
                     .setOnClick(event -> selectSubject(key));
-            tab.layout(layout -> layout.flex(1).heightPercent(100));
+            // lucide 图标（文字占位已退役，kit SsIcon）
+            tab.setText(Component.empty()); // LDLib2 Button 默认 translation 'Button'，清空防覆盖图标
+            tab.addChild(io.github.tt432.eyelib.client.gui.snowstorm.kit.SsIcon.of(
+                    TAB_ICONS.getOrDefault(key, "file"), TAB_ICON_SIZE));
+            tab.layout(layout -> layout.flex(1).heightPercent(100)
+                    .justifyContent(AlignContent.CENTER).alignItems(AlignItems.CENTER));
             tabBar.addChild(tab);
         }
     }
@@ -138,14 +145,8 @@ public final class SidebarView extends UIElement {
         }
         // Sidebar.vue：effect tab 尾部 Quick Setup 入口按钮（as-is #test_quick_setup_button）
         if ("effect".equals(selectedSubjectKey)) {
-            Button quickSetup = new Button();
-            quickSetup.setText(Component.literal("✦ Quick Setup"))
-                    .textStyle(style -> style.fontSize(9).textColor(SnowstormTheme.TEXT))
-                    .buttonStyle(style -> style
-                            .baseTexture(new ColorRectTexture(SnowstormTheme.BAR))
-                            .hoverTexture(new ColorRectTexture(SnowstormTheme.SELECTION))
-                            .pressedTexture(new ColorRectTexture(SnowstormTheme.SELECTION)))
-                    .setOnClick(event -> selectSubject("setup"));
+            Button quickSetup = io.github.tt432.eyelib.client.gui.snowstorm.kit.SsButton.of(
+                    "✦ Quick Setup", event -> selectSubject("setup"));
             quickSetup.layout(layout -> layout
                     .width(90)
                     .height(14)
@@ -155,76 +156,34 @@ public final class SidebarView extends UIElement {
         }
     }
 
-    /** 一个 input_group：h4（label + help「?」占位）+ 内容（折叠时「...」指示条）。 */
+    /** 一个 input_group：kit SsGroupSection（h4 + help + 折叠）+ 内容。 */
     private UIElement buildGroupBlock(InputStructure.Group group) {
-        UIElement block = new UIElement().layout(layout -> layout
-                .widthPercent(100)
-                .flexDirection(FlexDirection.COLUMN));
-        block.style(style -> style.backgroundTexture(new ColorRectTexture(SnowstormTheme.INTERFACE)));
-
-        // h4 行：折叠按钮（label）+ help 占位按钮
-        UIElement header = new UIElement().layout(layout -> layout
-                .widthPercent(100)
-                .height(GROUP_HEADER_HEIGHT)
-                .flexDirection(FlexDirection.ROW)
-                .paddingHorizontal(4)
-                .gapAll(2));
-
-        Button foldButton = new Button();
-        foldButton.setText(Component.literal((group._folded ? "▸ " : "▾ ") + group.label))
-                .textStyle(style -> style
-                        .fontSize(10)
-                        .textColor(SnowstormTheme.TEXT_GRAYED)
-                        .textAlignHorizontal(Horizontal.LEFT))
-                .buttonStyle(style -> style
-                        .baseTexture(IGuiTexture.EMPTY)
-                        .hoverTexture(new ColorRectTexture(SnowstormTheme.SELECTION))
-                        .pressedTexture(new ColorRectTexture(SnowstormTheme.SELECTION)))
-                .setOnClick(event -> fold(group));
-        foldButton.layout(layout -> layout.flex(1).heightPercent(100));
-
-        Button helpButton = new Button();
-        helpButton.setText(Component.literal("?"))
-                .textStyle(style -> style.fontSize(9).textColor(SnowstormTheme.TEXT_GRAYED))
-                .buttonStyle(style -> style
-                        .baseTexture(IGuiTexture.EMPTY)
-                        .hoverTexture(new ColorRectTexture(SnowstormTheme.SELECTION))
-                        .pressedTexture(new ColorRectTexture(SnowstormTheme.SELECTION)))
-                .setOnClick(event -> {
-                    // HelpPanel 属 P5；占位按钮（as-is 位置）
-                });
-        helpButton.layout(layout -> layout.width(14).heightPercent(100));
-
-        header.addChildren(foldButton, helpButton);
-        block.addChild(header);
+        var section = io.github.tt432.eyelib.client.gui.snowstorm.kit.SsGroupSection.of(
+                group.label, group._folded,
+                event -> {
+                    // HelpPanel 未移植：占位（as-is 位置）
+                },
+                event -> fold(group));
+        section.style(style -> style.backgroundTexture(new ColorRectTexture(SnowstormTheme.INTERFACE)));
 
         if (group._folded) {
-            // Sidebar.vue .input_group_folded_indicator「...」（点击展开）
-            Button indicator = new Button();
-            indicator.setText(Component.literal("..."))
-                    .textStyle(style -> style.fontSize(9).textColor(SnowstormTheme.TEXT_GRAYED))
-                    .buttonStyle(style -> style
-                            .baseTexture(IGuiTexture.EMPTY)
-                            .hoverTexture(new ColorRectTexture(SnowstormTheme.SELECTION))
-                            .pressedTexture(new ColorRectTexture(SnowstormTheme.SELECTION)))
-                    .setOnClick(event -> fold(group));
-            indicator.layout(layout -> layout.widthPercent(100).height(10));
-            block.addChild(indicator);
-        } else if ("curves".equals(group.type)) {
+            return section;
+        }
+        if ("curves".equals(group.type)) {
             // Sidebar.vue curves 组：Curve 列表 + 新增按钮（Curve.vue as-is 接线）
             for (io.github.tt432.eyelib.snowstorm.curve.Curve curve : group.curves) {
-                block.addChild(new io.github.tt432.eyelib.client.gui.snowstorm.curve.CurveEditorView(curve));
+                section.content().addChild(new io.github.tt432.eyelib.client.gui.snowstorm.curve.CurveEditorView(curve));
             }
-            block.addChild(new io.github.tt432.eyelib.client.gui.snowstorm.curve.CurveAddButton());
+            section.content().addChild(new io.github.tt432.eyelib.client.gui.snowstorm.curve.CurveAddButton());
         } else if ("events".equals(group.type)) {
-            block.addChild(new io.github.tt432.eyelib.client.gui.snowstorm.events.EventListView(group));
+            section.content().addChild(new io.github.tt432.eyelib.client.gui.snowstorm.events.EventListView(group));
         } else {
             for (UIElement row : io.github.tt432.eyelib.client.gui.snowstorm.inputs.InputViewFactory
                     .createForGroup(group)) {
-                block.addChild(row);
+                section.content().addChild(row);
             }
         }
-        return block;
+        return section;
     }
 
     /** Sidebar.vue fold() as-is。 */
