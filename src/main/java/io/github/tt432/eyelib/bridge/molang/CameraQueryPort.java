@@ -8,4 +8,8 @@ public interface CameraQueryPort {
     static Vec3 position() {
         return MinecraftMolangQueryRuntime.renderCameraPosition();
     }
+
+    static float rotation(float axis, float partialTick) {
+        return MinecraftMolangQueryRuntime.renderCameraRotation(axis, partialTick);
+    }
 }

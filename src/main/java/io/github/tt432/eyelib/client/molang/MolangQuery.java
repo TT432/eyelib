@@ -226,14 +226,14 @@ public final class MolangQuery {
         return MolangQueryRuntimeBridge.resolvePartialTick(scope);
     }
 
-    @MolangFunction(value = "camera_rotation", description = "相机旋转（0=x/pitch，1=y/yaw；JE 取相机实体视角旋转近似）")
+    @MolangFunction(value = "camera_rotation", description = "相机旋转（0=x/pitch，1=y/yaw）")
     public static float cameraRotation(MolangScope scope, float axis) {
         Entity cameraEntity = Minecraft.getInstance().getCameraEntity();
         if (cameraEntity == null) {
             return 0F;
         }
         float partialTick = frameAlpha(scope);
-        return axis == 0 ? cameraEntity.getViewXRot(partialTick) : cameraEntity.getViewYRot(partialTick);
+        return io.github.tt432.eyelib.bridge.molang.CameraQueryPort.rotation(axis, partialTick);
     }
 
     @MolangFunction(value = "rotation_to_camera", description = "实体对准相机所需旋转（0=x/pitch，1=y/yaw）")
