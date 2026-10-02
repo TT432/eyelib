@@ -44,7 +44,7 @@ import static io.github.tt432.eyelib.molang.MolangValue.TRUE;
  */
 @MolangMapping(value = "query", pureFunction = false)
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
-@SuppressWarnings("unused")
+@SuppressWarnings({"unused", "PMD.LawOfDemeter"})
 public final class MolangQuery {
 
     private static final HostRole<Creeper> CREEPER = HostRole.of("Creeper", Creeper.class);

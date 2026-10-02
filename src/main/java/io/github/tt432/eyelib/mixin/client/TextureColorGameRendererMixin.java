@@ -11,6 +11,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /** 在调用方注入，确保晚于 Oculus 的 LevelRenderer RETURN 合成回调。 */
 @Mixin(GameRenderer.class)
+@SuppressWarnings({"unused", "PMD.UnusedPrivateMethod", "PMD.UnusedFormalParameter", "PMD.MethodNamingConventions"})
 public abstract class TextureColorGameRendererMixin {
     @Inject(method = "renderLevel", at = @At("HEAD"))
     private void eyelib$beginTextureColor(float partialTick, long finishTime, PoseStack pose, CallbackInfo ci) {

@@ -17,6 +17,7 @@ import java.util.Map;
 import java.util.LinkedHashMap;
 
 /** 收集世界原色几何，在光影主要合成后、手持物清除世界深度前提交。 */
+@SuppressWarnings({"PMD.LawOfDemeter", "PMD.UseConcurrentHashMap"})
 public final class TextureColorWorldPass {
     /** 世界渲染队列只在当前渲染线程内可见，避免跨帧及重入时共享可变状态。 */
     private static final ThreadLocal<RenderState> STATE = ThreadLocal.withInitial(RenderState::new);

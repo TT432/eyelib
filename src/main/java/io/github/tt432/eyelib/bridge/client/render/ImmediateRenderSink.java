@@ -24,6 +24,7 @@ import java.util.List;
  *
  * @author TT432
  */
+@SuppressWarnings("PMD.LawOfDemeter")
 final class ImmediateRenderSink implements RenderSink {
     private final MultiBufferSource bufferSource;
     /** 本实体已完成的蒙皮会话（flush 时绘制，见 DESIGN-P2 §2）。 */

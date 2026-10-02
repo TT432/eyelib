@@ -25,6 +25,11 @@ import java.util.Map;
 
 /** 在真实相机更新后验证动画表达式、越肩偏移和跨 ±180° 身体旋转。 */
 @ClientSmoke(description = "摄像机 Molang 与 Bedrock 骨骼朝向回归", priority = 1, delayTicks = 300)
+@SuppressWarnings({
+        "PMD.CyclomaticComplexity", "PMD.CognitiveComplexity", "PMD.NPathComplexity",
+        "PMD.ExcessiveMethodLength", "PMD.LawOfDemeter", "PMD.AvoidInstantiatingObjectsInLoops",
+        "PMD.AvoidLiteralsInIfCondition", "PMD.AvoidCatchingGenericException"
+})
 public class CameraMolangSmoke {
     public CameraMolangSmoke() {
         Minecraft mc = Minecraft.getInstance();
