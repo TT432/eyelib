@@ -30,7 +30,24 @@ public class TextureColorWorldSmoke {
         pixels.setPixelRGBA(0, 0, 0xFFE08040);
         mc.getTextureManager().register(texture, new DynamicTexture(pixels));
         int[] frames = {0};
-        java.util.function.Consumer<RenderLevelStageEvent> listener = event -> {
+        java.util.function.Consumer<RenderLevelStageEvent> listener = createListener(mc, frames);
+        MinecraftForge.EVENT_BUS.addListener(listener);
+        ClientSmokeVisualHooks.set(m -> {}, image -> {
+            try {
+                if (frames[0] == 0) throw new AssertionError("截图前没有执行世界入队");
+                TextureColorSmoke.check(image, .15F, 64, 128, 224);
+                TextureColorSmoke.check(image, .40F, 64, 128, 224);
+                TextureColorSmoke.check(image, .625F, 32, 64, 112);
+                TextureColorSmoke.check(image, .85F, 64, 128, 224);
+            } finally {
+                MinecraftForge.EVENT_BUS.unregister(listener);
+                mc.getTextureManager().release(texture);
+            }
+        });
+    }
+
+    private static java.util.function.Consumer<RenderLevelStageEvent> createListener(Minecraft mc, int[] frames) {
+        return event -> {
             if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_ENTITIES || OculusCompat.renderingShadowPass()) return;
             if (!TextureColorWorldPass.collecting()) throw new AssertionError("世界帧未开启原色队列");
             frames[0]++;
@@ -60,19 +77,6 @@ public class TextureColorWorldSmoke {
                 RenderSystem.setProjectionMatrix(projection, sorting);
             }
         };
-        MinecraftForge.EVENT_BUS.addListener(listener);
-        ClientSmokeVisualHooks.set(m -> {}, image -> {
-            try {
-                if (frames[0] == 0) throw new AssertionError("截图前没有执行世界入队");
-                TextureColorSmoke.check(image, .15F, 64, 128, 224);
-                TextureColorSmoke.check(image, .40F, 64, 128, 224);
-                TextureColorSmoke.check(image, .625F, 32, 64, 112);
-                TextureColorSmoke.check(image, .85F, 64, 128, 224);
-            } finally {
-                MinecraftForge.EVENT_BUS.unregister(listener);
-                mc.getTextureManager().release(texture);
-            }
-        });
     }
 }
 //?}
