@@ -12,6 +12,7 @@
 | 架构决策（为什么这么设计） | [decisions/](decisions/) — ADR 编号索引 |
 | 系统架构总览（构建布局 + 模块分层） | [concepts/architecture.md](concepts/architecture.md) |
 | 行为规格（测试 oracle） | [specs/](specs/) |
+| 模型动画的摄像机朝向查询 | [specs/molang-render-camera.md](specs/molang-render-camera.md) |
 | Bedrock 差距分析 | [gap-analysis/](gap-analysis/) |
 | 六边形架构 Port 清单与提取进度 | [architecture/domain-module-map.md](architecture/domain-module-map.md) |
 | Molang 重构路线图 | [molang/ROADMAP.md](molang/ROADMAP.md) |
