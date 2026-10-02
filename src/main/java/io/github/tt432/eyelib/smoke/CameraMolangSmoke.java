@@ -56,6 +56,7 @@ public class CameraMolangSmoke {
         });
     }
 
+    @SuppressWarnings("PMD.CyclomaticComplexity")
     private static java.util.function.Consumer<RenderLevelStageEvent> createListener(
             Minecraft mc, int modes, float[] pitches, int[] frames, int[] verified, Throwable[] failure) {
         return event -> {
@@ -146,6 +147,7 @@ public class CameraMolangSmoke {
         }
     }
 
+    @SuppressWarnings("PMD.CyclomaticComplexity")
     private static void verify(Minecraft mc, boolean requireOffset) { // NOPMD — 组合多种相机模式的回归矩阵
         if (mc.level == null || mc.getCameraEntity() == null) throw new AssertionError("缺少世界或相机宿主");
         Vec3 camera = mc.gameRenderer.getMainCamera().getPosition();

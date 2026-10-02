@@ -60,6 +60,7 @@ public class TextureColorSmoke {
         });
     }
 
+    @SuppressWarnings("PMD.LawOfDemeter")
     static void submit(RenderSink sink, PortResourceLocation tex, String material, QuadSpec spec) {
         var pass = RenderTypeResolver.resolve(PortResourceLocation.parse(material)).factory().apply(tex);
         sink.submit(pass, tex, new PoseStack(), (pose, consumer, skinning) -> { // NOPMD — smoke 只验证适配层转发
