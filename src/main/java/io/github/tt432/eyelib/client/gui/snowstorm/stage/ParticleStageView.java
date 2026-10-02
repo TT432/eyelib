@@ -266,9 +266,11 @@ public final class ParticleStageView extends UIElement {
         Matrix4f perspective = new Matrix4f().perspective(
                 (float) Math.toRadians(OrbitCamera.FOV), w / h,
                 (float) OrbitCamera.NEAR, (float) OrbitCamera.FAR);
-        // NDC → 舞台矩形映射（GUI 像素空间 y 向下 → sy 取负翻转）
+        // NDC → 舞台矩形映射。我们整体替换投影矩阵，故输出走 GL 约定（NDC y+ = 窗口顶），
+        // MC 自身的 GUI y-down 正交矩阵已被替换、不参与——sy 取正（实证 2026-10-02：
+        // 此前取负导致整个世界 Y 翻转：粒子弧倒扣在网格下方、参考方块/绿色 Y 轴没入网格）。
         float sx = w / guiW;
-        float sy = -h / guiH;
+        float sy = h / guiH;
         float tx = 2f * (x + w / 2f) / guiW - 1f;
         float ty = 1f - 2f * (y + h / 2f) / guiH;
         Matrix4f projection = new Matrix4f().translate(tx, ty, 0).scale(sx, sy, 1).mul(perspective);
@@ -660,11 +662,13 @@ public final class ParticleStageView extends UIElement {
     // ==================================================================
 
     private void onMouseDown(UIEvent event) {
-        if (!isHover()) {
-            return;
-        }
+        // 实证 2026-10-02 两个断点（真实 GLFW 输入注入复现）：
+        // 1) 不得在外层方法里调 isHover()——悬停元素是 StageCanvas（最深层），
+        //    ParticleStageView.isHover() 恒 false；监听器只在事件途经画布时触发，语义已等价。
+        // 2) startDrag 必须以事件路径上的画布为 dragSource——DRAG_SOURCE_UPDATE 只派发到
+        //    dragSource 及其祖先路径，以 ParticleStageView 为 source 时子级画布监听器收不到。
         if (event.button == 0 || event.button == 1) {
-            startDrag(event.button == 0 ? DRAG_ROTATE : DRAG_PAN, null);
+            ((UIElement) event.currentElement).startDrag(event.button == 0 ? DRAG_ROTATE : DRAG_PAN, null);
             event.stopPropagation();
         }
     }

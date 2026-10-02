@@ -291,3 +291,17 @@ client/gui/snowstorm/
   稳定修复（SsColorSwatch，根因未明，flush 为实证最小修复）。排查教训：mcmcp /eval
   在渲染线程执行，`Thread.sleep` 会冻结当次渲染——跨 eval 读帧计数器才有效，同 eval 内
   sleep+读数恒为 0（曾误判为"LDLib2 离屏缓存"）。
+- 实机暴露并修复（2026-10-02 舞台，用户报告"画面反了+无法拖动"）：
+  ① NDC→舞台映射 sy 误取负——render3D 整体替换了投影矩阵，输出走 GL 约定
+  （NDC y+ = 窗口顶），MC 的 GUI y-down 正交矩阵已被替换不参与，sy 必须为正；
+  负值致整个世界 Y 翻转（粒子弧倒扣网格下方、参考方块/绿色 Y 轴没入网格；
+  XZ 平面对称掩盖了症状）。② 舞台拖动双断点：onMouseDown 在外层
+  ParticleStageView 上调 isHover()（悬停元素是最深层 StageCanvas，恒 false），
+  且 startDrag 以 this 为 dragSource（DRAG_SOURCE_UPDATE 只派发到 dragSource
+  及其祖先路径，子级画布监听器收不到）；改为以 event.currentElement 为 source。
+  左拖旋转/滚轮缩放/右拖平移全部实机复验（相机位置随操作变化）。③ 排查方法：
+  真实输入注入——`glfwSetCursorPos` 产生真实光标回调（悬停/拖拽路径全走通），
+  `MouseHandler.onPress/onScroll`（private，反射）产生真实按键事件；优于合成
+  `screen.mouseClicked`（后者 hover 用的是真实光标位置，坐标对不上恒 miss）。
+  另：rainbow 数值对照（原版 window.Emitter vs EditorRuntime.Emitter 同龄采样）
+  证实模拟层完全一致（发射点 cos/sin·90°/s 圆轨迹吻合），差异纯在渲染映射。
