@@ -12,14 +12,13 @@ import net.minecraft.client.renderer.RenderStateShard;
 import net.minecraft.client.renderer.RenderType;
 import org.lwjgl.opengl.GL11;
 
-import java.util.HashMap;
-import java.util.IdentityHashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /** Forge 1.20.1 贴图原色材质；材质标记同时供世界延迟提交使用。 */
 public final class TextureColorMaterial {
-    private static final Map<Key, RenderType> CACHE = new HashMap<>();
-    private static final Map<RenderType, PortRenderPass.Transparency> TYPES = new IdentityHashMap<>();
+    private static final Map<Key, RenderType> CACHE = new ConcurrentHashMap<>();
+    private static final Map<RenderType, PortRenderPass.Transparency> TYPES = new ConcurrentHashMap<>();
 
     private TextureColorMaterial() {}
 

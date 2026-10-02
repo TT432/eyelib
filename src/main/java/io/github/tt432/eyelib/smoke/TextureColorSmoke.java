@@ -38,11 +38,11 @@ public class TextureColorSmoke {
                 TextureColorWorldPass.begin();
                 RenderSink sink = RenderSink.of(mc.renderBuffers().bufferSource());
                 PortResourceLocation tex = PortResourceLocation.of("eyelib", "texture_color_smoke");
-                submit(sink, tex, "eyelib:texture_unlit", -.9F, -.5F, 1, 0, 0, 0);
-                submit(sink, tex, "eyelib:texture_unlit", -.4F, 0F, 1, 15728880, 1, 0);
-                submit(sink, tex, "eyelib:texture_unlit", .1F, .4F, .5F, 0, 0, 0);
-                submit(sink, tex, "eyelib:texture_unlit_opaque", .5F, .9F, 1, 0, 0, -.5F);
-                submit(sink, tex, "eyelib:texture_unlit_add", .5F, .9F, 1, 0, 0, .5F);
+                submit(sink, tex, "eyelib:texture_unlit", new QuadSpec(-.9F, -.5F, 1, 0, 0, 0));
+                submit(sink, tex, "eyelib:texture_unlit", new QuadSpec(-.4F, 0F, 1, 15728880, 1, 0));
+                submit(sink, tex, "eyelib:texture_unlit", new QuadSpec(.1F, .4F, .5F, 0, 0, 0));
+                submit(sink, tex, "eyelib:texture_unlit_opaque", new QuadSpec(.5F, .9F, 1, 0, 0, -.5F));
+                submit(sink, tex, "eyelib:texture_unlit_add", new QuadSpec(.5F, .9F, 1, 0, 0, .5F));
                 sink.flush();
                 TextureColorWorldPass.draw();
             } finally {
@@ -59,16 +59,18 @@ public class TextureColorSmoke {
         });
     }
 
-    static void submit(RenderSink sink, PortResourceLocation tex, String material,
-                               float left, float right, float alpha, int light, float normal, float z) {
+    static void submit(RenderSink sink, PortResourceLocation tex, String material, QuadSpec spec) {
         var pass = RenderTypeResolver.resolve(PortResourceLocation.parse(material)).factory().apply(tex);
         sink.submit(pass, tex, new PoseStack(), (pose, consumer, skinning) -> {
             if (skinning != null) throw new AssertionError("原色必须走 CPU 顶点路径");
-            vertex(consumer, left, -.8F, z, alpha, light, normal);
-            vertex(consumer, right, -.8F, z, alpha, light, normal);
-            vertex(consumer, right, .8F, z, alpha, light, normal);
-            vertex(consumer, left, .8F, z, alpha, light, normal);
+            vertex(consumer, spec.left(), -.8F, spec.z(), spec.alpha(), spec.light(), spec.normal());
+            vertex(consumer, spec.right(), -.8F, spec.z(), spec.alpha(), spec.light(), spec.normal());
+            vertex(consumer, spec.right(), .8F, spec.z(), spec.alpha(), spec.light(), spec.normal());
+            vertex(consumer, spec.left(), .8F, spec.z(), spec.alpha(), spec.light(), spec.normal());
         });
+    }
+
+    record QuadSpec(float left, float right, float alpha, int light, float normal, float z) {
     }
 
     private static void vertex(VertexConsumer c, float x, float y, float z, float alpha, int light, float normal) {

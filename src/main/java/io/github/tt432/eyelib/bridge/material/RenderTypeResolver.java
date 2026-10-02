@@ -1,5 +1,6 @@
 package io.github.tt432.eyelib.bridge.material;
 import io.github.tt432.eyelib.bridge.material.adapter.BrRenderTypeFactory;
+import io.github.tt432.eyelib.bridge.material.adapter.TextureColorMaterial;
 
 import io.github.tt432.eyelib.material.gl.GLStates;
 import io.github.tt432.eyelib.material.material.BrMaterialEntry;
@@ -33,13 +34,13 @@ public interface RenderTypeResolver {
         return switch (id.toString()) {
             //? if <1.20.6 {
             case "eyelib:texture_unlit" -> new EntityRenderTypeData(id, false,
-                    tex -> io.github.tt432.eyelib.bridge.material.adapter.TextureColorMaterial.create(tex, PortRenderPass.Transparency.TRANSLUCENT));
+                    tex -> TextureColorMaterial.create(tex, PortRenderPass.Transparency.TRANSLUCENT));
             case "eyelib:texture_unlit_alpha" -> new EntityRenderTypeData(id, false,
-                    tex -> io.github.tt432.eyelib.bridge.material.adapter.TextureColorMaterial.create(tex, PortRenderPass.Transparency.ALPHA_TEST));
+                    tex -> TextureColorMaterial.create(tex, PortRenderPass.Transparency.ALPHA_TEST));
             case "eyelib:texture_unlit_add" -> new EntityRenderTypeData(id, false,
-                    tex -> io.github.tt432.eyelib.bridge.material.adapter.TextureColorMaterial.create(tex, PortRenderPass.Transparency.ADDITIVE));
+                    tex -> TextureColorMaterial.create(tex, PortRenderPass.Transparency.ADDITIVE));
             case "eyelib:texture_unlit_opaque" -> new EntityRenderTypeData(id, true,
-                    tex -> io.github.tt432.eyelib.bridge.material.adapter.TextureColorMaterial.create(tex, PortRenderPass.Transparency.SOLID));
+                    tex -> TextureColorMaterial.create(tex, PortRenderPass.Transparency.SOLID));
             //?}
             case "minecraft:cutout" -> new EntityRenderTypeData(id, false,
                     tex -> PortRenderPass.of(PortRenderPass.Transparency.ALPHA_TEST, false));

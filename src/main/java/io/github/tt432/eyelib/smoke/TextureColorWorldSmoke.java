@@ -49,11 +49,11 @@ public class TextureColorWorldSmoke {
                     c.vertex(.95F, .85F, -.98F, 0, 0, 0, 1, .5F, .5F, 0, 0, 0, 1, 0);
                     c.vertex(-.95F, .85F, -.98F, 0, 0, 0, 1, .5F, .5F, 0, 0, 0, 1, 0);
                 });
-                TextureColorSmoke.submit(sink, tex, "eyelib:texture_unlit", -.9F, -.5F, 1, 0, 0, -.99F);
-                TextureColorSmoke.submit(sink, tex, "eyelib:texture_unlit", -.4F, 0F, 1, 15728880, 1, -.99F);
-                TextureColorSmoke.submit(sink, tex, "eyelib:texture_unlit", .1F, .4F, .5F, 0, 0, -.99F);
-                TextureColorSmoke.submit(sink, tex, "eyelib:texture_unlit_opaque", .5F, .9F, 1, 0, 0, -.999F);
-                TextureColorSmoke.submit(sink, tex, "eyelib:texture_unlit_add", .5F, .9F, 1, 0, 0, -.99F);
+                TextureColorSmoke.submit(sink, tex, "eyelib:texture_unlit", new TextureColorSmoke.QuadSpec(-.9F, -.5F, 1, 0, 0, -.99F));
+                TextureColorSmoke.submit(sink, tex, "eyelib:texture_unlit", new TextureColorSmoke.QuadSpec(-.4F, 0F, 1, 15728880, 1, -.99F));
+                TextureColorSmoke.submit(sink, tex, "eyelib:texture_unlit", new TextureColorSmoke.QuadSpec(.1F, .4F, .5F, 0, 0, -.99F));
+                TextureColorSmoke.submit(sink, tex, "eyelib:texture_unlit_opaque", new TextureColorSmoke.QuadSpec(.5F, .9F, 1, 0, 0, -.999F));
+                TextureColorSmoke.submit(sink, tex, "eyelib:texture_unlit_add", new TextureColorSmoke.QuadSpec(.5F, .9F, 1, 0, 0, -.99F));
             } finally {
                 mv.popPose(); RenderSystem.applyModelViewMatrix();
                 RenderSystem.setProjectionMatrix(projection, sorting);

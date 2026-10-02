@@ -13,42 +13,38 @@ import net.minecraft.client.renderer.RenderType;
 import org.joml.Matrix4f;
 
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.LinkedHashMap;
 
 /** 收集世界原色几何，在光影主要合成后、手持物清除世界深度前提交。 */
 public final class TextureColorWorldPass {
-    private static final Map<RenderType, Batch> BATCHES = new LinkedHashMap<>();
-    private static boolean collecting;
+    /** 世界渲染队列只在当前渲染线程内可见，避免跨帧及重入时共享可变状态。 */
+    private static final ThreadLocal<RenderState> STATE = ThreadLocal.withInitial(RenderState::new);
 
     private TextureColorWorldPass() {}
 
     public static void begin() {
-        clear();
-        collecting = true;
+        RenderState state = STATE.get();
+        state.clear();
+        state.collecting = true;
     }
 
     public static boolean collecting() {
-        return collecting;
+        return STATE.get().collecting;
     }
 
     public static VertexConsumer buffer(RenderType type) {
-        return BATCHES.computeIfAbsent(type, Batch::new).buffer;
+        return STATE.get().batches.computeIfAbsent(type, Batch::new).buffer;
     }
 
     public static void clear() {
-        for (Batch batch : BATCHES.values()) {
-            batch.buffer.discard();
-            // 1.20.1 BufferBuilder 使用 native malloc，丢弃 Java 对象不会释放它。
-            org.lwjgl.system.MemoryUtil.memFree(batch.buffer.buffer);
-        }
-        BATCHES.clear();
-        collecting = false;
+        STATE.get().clear();
     }
 
     public static void draw() {
-        collecting = false;
-        if (BATCHES.isEmpty()) return;
+        RenderState state = STATE.get();
+        state.collecting = false;
+        if (state.batches.isEmpty()) return;
         Matrix4f projection = new Matrix4f(RenderSystem.getProjectionMatrix());
         VertexSorting sorting = RenderSystem.getVertexSorting();
         boolean depthWrite = org.lwjgl.opengl.GL11.glGetBoolean(org.lwjgl.opengl.GL11.GL_DEPTH_WRITEMASK);
@@ -57,7 +53,7 @@ public final class TextureColorWorldPass {
         try {
             Minecraft.getInstance().getMainRenderTarget().bindWrite(true);
             // 实体与粒子共用批次；不透明/裁切先写深度，半透明随后绘制。
-            ArrayList<Map.Entry<RenderType, Batch>> ordered = new ArrayList<>(BATCHES.entrySet());
+            ArrayList<Map.Entry<RenderType, Batch>> ordered = new ArrayList<>(state.batches.entrySet());
             ordered.sort(java.util.Comparator.comparing(entry -> TextureColorMaterial.isBlended(entry.getKey())));
             for (Map.Entry<RenderType, Batch> entry : ordered) {
                 RenderType type = entry.getKey();
@@ -78,11 +74,26 @@ public final class TextureColorWorldPass {
                 }
             }
         } finally {
-            clear();
+            state.clear();
             modelView.popPose();
             RenderSystem.applyModelViewMatrix();
             RenderSystem.setProjectionMatrix(projection, sorting);
             RenderSystem.depthMask(depthWrite);
+        }
+    }
+
+    private static final class RenderState {
+        final Map<RenderType, Batch> batches = new LinkedHashMap<>();
+        boolean collecting;
+
+        void clear() {
+            for (Batch batch : batches.values()) {
+                batch.buffer.discard();
+                // 1.20.1 BufferBuilder 使用 native malloc，丢弃 Java 对象不会释放它。
+                org.lwjgl.system.MemoryUtil.memFree(batch.buffer.buffer);
+            }
+            batches.clear();
+            collecting = false;
         }
     }
 
