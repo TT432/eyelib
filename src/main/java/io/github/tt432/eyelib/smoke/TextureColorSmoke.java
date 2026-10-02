@@ -18,6 +18,7 @@ import org.joml.Matrix4f;
 
 /** 真实 GPU 像素验证：方向/光照独立、alpha 混合以及晚绘制深度遮挡。 */
 @ClientSmoke(description = "原色材质像素、透明度、世界队列深度验证", priority = 1)
+@SuppressWarnings("PMD.UseUtilityClass")
 public class TextureColorSmoke {
     public TextureColorSmoke() {
         ClientSmokeVisualHooks.set(mc -> {
@@ -61,7 +62,7 @@ public class TextureColorSmoke {
 
     static void submit(RenderSink sink, PortResourceLocation tex, String material, QuadSpec spec) {
         var pass = RenderTypeResolver.resolve(PortResourceLocation.parse(material)).factory().apply(tex);
-        sink.submit(pass, tex, new PoseStack(), (pose, consumer, skinning) -> {
+        sink.submit(pass, tex, new PoseStack(), (pose, consumer, skinning) -> { // NOPMD — smoke 只验证适配层转发
             if (skinning != null) throw new AssertionError("原色必须走 CPU 顶点路径");
             vertex(consumer, spec.left(), -.8F, spec.z(), spec.alpha(), spec.light(), spec.normal());
             vertex(consumer, spec.right(), -.8F, spec.z(), spec.alpha(), spec.light(), spec.normal());

@@ -22,7 +22,7 @@ import org.joml.Matrix4f;
 /** 经真实世界事件入队，由 GameRenderer mixin 提交，验证光影合成后的调用顺序。 */
 @ClientSmoke(description = "世界渲染钩子与光影合成顺序像素验证", priority = 2)
 public class TextureColorWorldSmoke {
-    public TextureColorWorldSmoke() {
+    public TextureColorWorldSmoke() { // NOPMD — 世界渲染 smoke 必须在构造时安装生命周期回调
         Minecraft mc = Minecraft.getInstance();
         ResourceLocation texture = new ResourceLocation("eyelib", "texture_color_world_smoke");
         NativeImage pixels = new NativeImage(1, 1, false);

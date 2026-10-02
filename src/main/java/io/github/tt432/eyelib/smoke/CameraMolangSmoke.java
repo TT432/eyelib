@@ -42,7 +42,23 @@ public class CameraMolangSmoke {
         int[] verified = {0};
         Throwable[] failure = {null};
         mc.options.setCameraType(CameraType.FIRST_PERSON);
-        java.util.function.Consumer<RenderLevelStageEvent> listener = event -> {
+        java.util.function.Consumer<RenderLevelStageEvent> listener = createListener(mc, modes, pitches, frames, verified, failure);
+        MinecraftForge.EVENT_BUS.addListener(listener);
+        ClientSmokeVisualHooks.set(m -> {}, image -> {
+            try {
+                if (failure[0] != null) throw new AssertionError("摄像机查询验证失败", failure[0]);
+                if (verified[0] != modes * pitches.length) throw new AssertionError("摄像机模式验证不足: " + verified[0]);
+            } finally {
+                MinecraftForge.EVENT_BUS.unregister(listener);
+                mc.options.setCameraType(original);
+                if (mc.player != null) { mc.player.setXRot(originalPitch); mc.player.xRotO = originalPitch; }
+            }
+        });
+    }
+
+    private static java.util.function.Consumer<RenderLevelStageEvent> createListener(
+            Minecraft mc, int modes, float[] pitches, int[] frames, int[] verified, Throwable[] failure) {
+        return event -> {
             if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_ENTITIES || failure[0] != null) return;
             int frame = frames[0]++;
             int scenario = frame / 12;
@@ -69,21 +85,10 @@ public class CameraMolangSmoke {
                     verified[0]++;
                     org.slf4j.LoggerFactory.getLogger(CameraMolangSmoke.class).info("Camera Molang scenario {} passed, pitch={}", scenario, mc.gameRenderer.getMainCamera().getXRot());
                 }
-            } catch (Throwable error) {
+            } catch (Throwable error) { // NOPMD — 事件回调必须捕获断言错误并在截图阶段报告
                 failure[0] = error;
             }
         };
-        MinecraftForge.EVENT_BUS.addListener(listener);
-        ClientSmokeVisualHooks.set(m -> {}, image -> {
-            try {
-                if (failure[0] != null) throw new AssertionError("摄像机查询验证失败", failure[0]);
-                if (verified[0] != modes * pitches.length) throw new AssertionError("摄像机模式验证不足: " + verified[0]);
-            } finally {
-                MinecraftForge.EVENT_BUS.unregister(listener);
-                mc.options.setCameraType(original);
-                if (mc.player != null) { mc.player.setXRot(originalPitch); mc.player.xRotO = originalPitch; }
-            }
-        });
     }
 
     private static void setShoulderPitch(float pitch) throws ReflectiveOperationException {
@@ -141,7 +146,7 @@ public class CameraMolangSmoke {
         }
     }
 
-    private static void verify(Minecraft mc, boolean requireOffset) {
+    private static void verify(Minecraft mc, boolean requireOffset) { // NOPMD — 组合多种相机模式的回归矩阵
         if (mc.level == null || mc.getCameraEntity() == null) throw new AssertionError("缺少世界或相机宿主");
         Vec3 camera = mc.gameRenderer.getMainCamera().getPosition();
         if (requireOffset && camera.distanceTo(mc.getCameraEntity().getEyePosition(1)) < .25) {
