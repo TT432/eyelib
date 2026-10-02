@@ -305,3 +305,10 @@ client/gui/snowstorm/
   `screen.mouseClicked`（后者 hover 用的是真实光标位置，坐标对不上恒 miss）。
   另：rainbow 数值对照（原版 window.Emitter vs EditorRuntime.Emitter 同龄采样）
   证实模拟层完全一致（发射点 cos/sin·90°/s 圆轨迹吻合），差异纯在渲染映射。
+- 实机暴露并修复（2026-10-02 贴图编辑器画布空白，两个断点）：
+  ① `decodeExternal` 对 bedrock 风格无命名空间路径（basic_render_parameters.texture
+  ="textures/particle/particles"）恒走 eyelib 命名空间且不补扩展名——ResourceManager
+  按物理文件查找，vanilla 图集永不命中；修复为 minecraft → eyelib 候选 + 无扩展名补
+  ".png"。② 外部 decode 只填充领域层 RasterCanvas，GPU 侧常驻 DynamicTexture 不更新
+  （NativeImage 停 16×16 初值）——解码成功即 ensureImage 写像素 + upload。
+  复验：vanilla 粒子图集 128×128 完整显示，UV 框定位正确。

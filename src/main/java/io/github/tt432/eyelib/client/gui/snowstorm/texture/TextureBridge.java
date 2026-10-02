@@ -102,7 +102,20 @@ public final class TextureBridge {
             if (CANVAS_TEXTURE_ID.equals(source)) {
                 return readBackCanvas();
             }
-            return decodeExternal(source);
+            DecodedImage decoded = decodeExternal(source);
+            // 外部解码只填充领域层 RasterCanvas，GPU 侧常驻 DynamicTexture 不更新则视口
+            // 永远显示旧内容（实证 2026-10-02：rainbow 图集解码成功但视口空白，
+            // NativeImage 停在 16×16 初值）——解码成功即同步上传
+            if (decoded != null) {
+                NativeImage image = ensureImage(decoded.width, decoded.height);
+                for (int y = 0; y < decoded.height; y++) {
+                    for (int x = 0; x < decoded.width; x++) {
+                        setPixel(image, x, y, decoded.abgr[y * decoded.width + x]);
+                    }
+                }
+                uploadTexture();
+            }
+            return decoded;
         }
     }
     private static NativeImage ensureImage(int width, int height) {
@@ -149,10 +162,15 @@ public final class TextureBridge {
     /**
      * 外部 source 解码：wintersky 内置（"wintersky/…" → eyelib 命名空间）/ "namespace:path" /
      * addon 注册表（无命名空间键，小写）。失败返回 null（JS img.onerror 语义）。
+     *
+     * <p>bedrock 风格无命名空间路径（basic_render_parameters.texture，如
+     * "textures/particle/particles"）按序尝试 minecraft → eyelib 命名空间，且无扩展名时
+     * 补 ".png"（ResourceManager 按物理文件查找；实证 2026-10-02：此前恒走 eyelib 命名空间
+     * 且不补扩展名，vanilla 粒子图集永远解析失败、画布空白）。
      */
     @SuppressWarnings("DataFlowIssue")
     private static TextureSourceCodec.@Nullable DecodedImage decodeExternal(String source) {
-        String namespace = "eyelib"; // WinterskyParticleRenderer.resolveTexture 无冒号回退
+        String namespace = null;
         String path = source;
         int colon = source.indexOf(':');
         if (colon >= 0) {
@@ -164,10 +182,23 @@ public final class TextureBridge {
         if (addon != null) {
             return toDecoded(argbToAbgr(addon), addon.width(), addon.height());
         }
-        // ResourceManager（内置/vanilla/资源包 PNG）
-        //? if <1.20.6 {
-        ResourceLocation location = ResourceLocation.tryBuild(namespace, path);
-        //?} elif <26.1 {
+        // ResourceManager（内置/vanilla/资源包 PNG）：命名空间候选
+        java.util.List<String> namespaces = namespace != null
+                ? java.util.List.of(namespace)
+                : java.util.List.of("minecraft", "eyelib");
+        for (String ns : namespaces) {
+            TextureSourceCodec.DecodedImage decoded = tryDecodeResource(ns, path);
+            if (decoded != null) return decoded;
+            if (!path.endsWith(".png")) {
+                decoded = tryDecodeResource(ns, path + ".png");
+                if (decoded != null) return decoded;
+            }
+        }
+        return null;
+    }
+
+    private static TextureSourceCodec.@Nullable DecodedImage tryDecodeResource(String namespace, String path) {
+        //? if <26.1 {
         ResourceLocation location = ResourceLocation.tryBuild(namespace, path);
         //?} else {
         Identifier location = Identifier.tryBuild(namespace, path);
@@ -180,7 +211,7 @@ public final class TextureBridge {
             if (png == null) return null;
             return toDecoded(argbToAbgr(png), png.width(), png.height());
         } catch (Exception e) {
-            LOGGER.warn("decode texture source failed: {}", source, e);
+            LOGGER.warn("decode texture source failed: {}:{}", namespace, path, e);
             return null;
         }
     }
