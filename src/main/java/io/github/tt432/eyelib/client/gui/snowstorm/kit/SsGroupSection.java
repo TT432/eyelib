@@ -6,6 +6,7 @@ import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 import com.lowdragmc.lowdraglib2.gui.ui.data.Horizontal;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.Button;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.TextElement;
+import dev.vfyjxf.taffy.style.AlignItems;
 import dev.vfyjxf.taffy.style.FlexDirection;
 import io.github.tt432.eyelib.client.gui.snowstorm.SnowstormTheme;
 import net.minecraft.network.chat.Component;
@@ -22,25 +23,32 @@ public final class SsGroupSection extends UIElement {
 
     private final UIElement content;
 
-    private SsGroupSection(String label, boolean folded,
+    private SsGroupSection(String label, boolean folded, boolean lastGroup,
                            com.lowdragmc.lowdraglib2.gui.ui.event.UIEventListener @Nullable [] helpAndFold) {
         layout(l -> l.widthPercent(100).flexDirection(FlexDirection.COLUMN));
 
-        // h4 行：label + 可选 help
+        // h4 行：左对齐灰字（无箭头字符），整行点击折叠；help「?」右浮
         UIElement header = new UIElement().layout(l -> l
                 .widthPercent(100)
-                .height(SsMetrics.GROUP_HEADER_PADDING * 2 + 12)
+                .height(SsMetrics.GROUP_HEADER_PADDING * 2 + 21)
                 .flexDirection(FlexDirection.ROW)
-                .paddingHorizontal(SsMetrics.GROUP_HEADER_PADDING_LEFT)
-                .paddingVertical(2));
-        Button fold = SsButton.ghost((folded ? "▸ " : "▾ ") + label, e -> {
+                .alignItems(AlignItems.CENTER)
+                .paddingLeft(SsMetrics.GROUP_HEADER_PADDING_LEFT)
+                .paddingRight(SsMetrics.GROUP_HEADER_PADDING));
+        TextElement title = new TextElement();
+        title.setText(Component.literal(label));
+        title.textStyle(s -> s.fontSize(11).textColor(SnowstormTheme.TEXT_GRAYED)
+                .textAlignHorizontal(Horizontal.LEFT));
+        title.layout(l -> l.flex(1).heightPercent(100));
+        header.addChild(title);
+        // h4 @click=fold(group)：整行可点
+        header.addEventListener(com.lowdragmc.lowdraglib2.gui.ui.event.UIEvents.CLICK, e -> {
             if (helpAndFold != null && helpAndFold[1] != null) helpAndFold[1].handleEvent(e);
         });
-        fold.layout(l -> l.flex(1).heightPercent(100));
-        header.addChild(fold);
         if (helpAndFold != null && helpAndFold[0] != null) {
             Button help = SsButton.ghost("?", helpAndFold[0]);
-            help.layout(l -> l.width(14).heightPercent(100));
+            help.layout(l -> l.width(SsMetrics.HELP_BUTTON_WIDTH).height(SsMetrics.HELP_BUTTON_HEIGHT)
+                    .marginTop(-5).marginRight(-9));
             header.addChild(help);
         }
         addChild(header);
@@ -62,10 +70,12 @@ public final class SsGroupSection extends UIElement {
             addChild(indicator);
         }
 
-        // 组间分隔线（.input_group:not(:last-of-type) border-bottom 1px border）
-        UIElement divider = new UIElement().layout(l -> l.widthPercent(100).height(1));
-        divider.style(s -> s.backgroundTexture(new ColorRectTexture(SnowstormTheme.BORDER)));
-        addChild(divider);
+        // 组间分隔线（.input_group:not(:last-of-type) border-bottom 1px border）：末组不画
+        if (!lastGroup) {
+            UIElement divider = new UIElement().layout(l -> l.widthPercent(100).height(1));
+            divider.style(s -> s.backgroundTexture(new ColorRectTexture(SnowstormTheme.BORDER)));
+            addChild(divider);
+        }
     }
 
     public UIElement content() {
@@ -78,10 +88,19 @@ public final class SsGroupSection extends UIElement {
     public static SsGroupSection of(String label, boolean folded,
                                     com.lowdragmc.lowdraglib2.gui.ui.event.@Nullable UIEventListener helpAction,
                                     com.lowdragmc.lowdraglib2.gui.ui.event.@Nullable UIEventListener foldAction) {
+        return of(label, folded, false, helpAction, foldAction);
+    }
+
+    /**
+     * @param lastGroup true = 末组（不画底部分隔线，:not(:last-of-type) as-is）
+     */
+    public static SsGroupSection of(String label, boolean folded, boolean lastGroup,
+                                    com.lowdragmc.lowdraglib2.gui.ui.event.@Nullable UIEventListener helpAction,
+                                    com.lowdragmc.lowdraglib2.gui.ui.event.@Nullable UIEventListener foldAction) {
         @SuppressWarnings("unchecked")
         com.lowdragmc.lowdraglib2.gui.ui.event.UIEventListener[] pair =
                 new com.lowdragmc.lowdraglib2.gui.ui.event.UIEventListener[]{helpAction, foldAction};
-        return new SsGroupSection(label, folded, pair);
+        return new SsGroupSection(label, folded, lastGroup, pair);
     }
 }
 //?}

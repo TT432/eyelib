@@ -54,10 +54,18 @@ public final class MolangTextInputView extends UIElement {
     /** 一个文本框；axis&lt;0 为单轴（JS focus(-1)），否则轴索引。 */
     static TextField field(Input input, int axis, @Nullable Object value) {
         TextField field = new TextField();
-        field.textFieldStyle(style -> style
-                .fontSize(9)
+        io.github.tt432.eyelib.client.gui.snowstorm.kit.SsTextField.applyTextStyle(field,
+                io.github.tt432.eyelib.client.gui.snowstorm.SnowstormTheme.TEXT);
+        // placeholder 同 origin（important）后写覆盖先写，避免被 applyTextStyle 的空占位压制
+        com.lowdragmc.lowdraglib2.gui.ui.Style.importantPipeline(field.getTextFieldStyle(), style -> style
                 .placeholder(Component.literal(input.placeholder != null ? input.placeholder : "")));
-        // JS :value="input.value.toString()"
+        // .prism-editor-component border: 1px solid var(--color-border)
+        field.style(style -> style.backgroundTexture(
+                com.lowdragmc.lowdraglib2.gui.texture.GuiTextureGroup.of(
+                        new com.lowdragmc.lowdraglib2.gui.texture.ColorRectTexture(
+                                io.github.tt432.eyelib.client.gui.snowstorm.SnowstormTheme.DARK),
+                        new com.lowdragmc.lowdraglib2.gui.texture.ColorBorderTexture(-1,
+                                io.github.tt432.eyelib.client.gui.snowstorm.SnowstormTheme.BORDER))));
         field.setText(value != null ? JsSemantics.toJsString(value) : "", false);
         field.setTextResponder(text -> {
             if (axis < 0) {

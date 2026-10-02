@@ -30,7 +30,8 @@ import net.minecraft.network.chat.Component;
  */
 public final class CodeViewerView extends UIElement {
 
-    private static final int MENU_HEIGHT = 22;
+    /** CodeViewer.vue .menu flex: 0 0 42px。 */
+    private static final int MENU_HEIGHT = 42;
 
     private final ScrollerView scroller;
 
@@ -43,24 +44,37 @@ public final class CodeViewerView extends UIElement {
         layout(layout -> layout.widthPercent(100).heightPercent(100).flexDirection(FlexDirection.COLUMN));
         style(style -> style.backgroundTexture(new ColorRectTexture(SnowstormTheme.BACKGROUND)));
 
-        // CodeViewer.vue .menu：Copy 按钮
+        // CodeViewer.vue .menu：高 42px padding 5px；Copy 钮宽 100px + Copy 图标 20px
+        UIElement menuRow = new UIElement().layout(layout -> layout
+                .widthPercent(100).height(MENU_HEIGHT).flexDirection(FlexDirection.ROW)
+                .paddingAll(5).alignItems(dev.vfyjxf.taffy.style.AlignItems.CENTER));
         Button copy = new Button();
         copy.setText(Component.literal("Copy"))
                 .textStyle(style -> style.fontSize(10).textColor(SnowstormTheme.TEXT))
                 .buttonStyle(style -> style
                         .baseTexture(new ColorRectTexture(SnowstormTheme.BAR))
-                        .hoverTexture(new ColorRectTexture(SnowstormTheme.SELECTION))
-                        .pressedTexture(new ColorRectTexture(SnowstormTheme.SELECTION)))
+                        .hoverTexture(new ColorRectTexture(SnowstormTheme.ACCENT))
+                        .pressedTexture(new ColorRectTexture(SnowstormTheme.ACCENT)))
                 .setOnClick(event -> copyToClipboard());
-        copy.layout(layout -> layout.width(48).height(14).marginAll(4));
-        UIElement menuRow = new UIElement().layout(layout -> layout
-                .widthPercent(100).height(MENU_HEIGHT).flexDirection(FlexDirection.ROW));
-
-        scroller = new ScrollerView();
-        scroller.layout(layout -> layout.widthPercent(100).flex(1));
-
-        addChildren(menuRow, scroller);
+        copy.layout(layout -> layout.width(100).height(32)
+                .flexDirection(FlexDirection.ROW)
+                .alignItems(dev.vfyjxf.taffy.style.AlignItems.CENTER)
+                .justifyContent(dev.vfyjxf.taffy.style.AlignContent.CENTER)
+                .gapAll(4));
+        copy.addChild(io.github.tt432.eyelib.client.gui.snowstorm.kit.SsIcon.of("copy", 20));
         menuRow.addChild(copy);
+
+        // main#code pre：dark 底、宽 100%、max-width 1000px 居中
+        UIElement preWrapper = new UIElement().layout(layout -> layout
+                .widthPercent(100).flex(1)
+                .alignItems(dev.vfyjxf.taffy.style.AlignItems.CENTER)
+                .flexDirection(FlexDirection.COLUMN));
+        preWrapper.style(style -> style.backgroundTexture(new ColorRectTexture(SnowstormTheme.DARK)));
+        scroller = io.github.tt432.eyelib.client.gui.snowstorm.kit.SsScroller.plain(new ScrollerView());
+        scroller.layout(layout -> layout.widthPercent(100).maxWidth(1000).flex(1));
+        preWrapper.addChild(scroller);
+
+        addChildren(menuRow, preWrapper);
 
         refresh();
     }

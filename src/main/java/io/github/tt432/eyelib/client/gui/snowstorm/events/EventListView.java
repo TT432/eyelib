@@ -58,21 +58,15 @@ public class EventListView extends UIElement {
         this.group = group;
         this.model = new EventList(EditorRuntime.Config);
         syncModelFromGroup();
-        layout(l -> l.widthPercent(100).flexDirection(FlexDirection.COLUMN));
+        // #event_list：margin-block 12px
+        layout(l -> l.widthPercent(100).flexDirection(FlexDirection.COLUMN).marginVertical(12));
         rows.layout(l -> l.widthPercent(100).flexDirection(FlexDirection.COLUMN));
         addChild(rows);
-        // list-add-button：Add Event
-        Button add = io.github.tt432.eyelib.client.gui.snowstorm.kit.SsIconButton.bar(
-                "plus", 10, e -> {
-                    model.addEvent();
-                    afterModelOp();
-                });
-        add.buttonStyle(s -> s
-                .baseTexture(new ColorRectTexture(SnowstormTheme.DARK))
-                .hoverTexture(new ColorRectTexture(SnowstormTheme.INTERFACE)));
-        add.layout(l -> l.widthPercent(100).height(16));
-        add.style(s -> s.tooltips("Add Event"));
-        addChild(add);
+        // list-add-button：Add Event（虚线框 + Plus 20px，SsListAddRow as-is）
+        addChild(io.github.tt432.eyelib.client.gui.snowstorm.kit.SsListAddRow.of(e -> {
+            model.addEvent();
+            afterModelOp();
+        }));
         rebuildRows();
     }
 
@@ -151,16 +145,28 @@ public class EventListView extends UIElement {
         for (int i = 0; i < model.events.size(); i++) {
             EditorEvent entry = model.events.get(i);
             RowElement row = new RowElement();
-            row.layout(l -> l.widthPercent(100).flexDirection(FlexDirection.COLUMN));
+            // .event：padding 20px 6px；border-top 2px bar（首项透明 + padding-top 4 + margin-top 0）
+            boolean first = i == 0;
+            row.layout(l -> l.widthPercent(100).flexDirection(FlexDirection.COLUMN)
+                    .paddingHorizontal(6)
+                    .paddingTop(first ? 4 : 20)
+                    .paddingBottom(20));
+            if (!first) {
+                UIElement topBorder = new UIElement().layout(l -> l.widthPercent(100).height(2)
+                        .positionType(dev.vfyjxf.taffy.style.TaffyPosition.ABSOLUTE).left(0).top(0));
+                topBorder.style(s -> s.backgroundTexture(new ColorRectTexture(SnowstormTheme.BAR)));
+                row.addChild(topBorder);
+            }
 
-            // header bar：握把 + Event ID + rename 框 + Remove Event
+            // .event_header_bar：flex gap 4px、bar 底、padding 5px（→ 高 = 5*2 + 30 = 40）
             UIElement header = new UIElement();
-            header.layout(l -> l.widthPercent(100).height(16).flexDirection(FlexDirection.ROW).gapAll(2));
+            header.layout(l -> l.widthPercent(100).height(40).flexDirection(FlexDirection.ROW).gapAll(4)
+                    .paddingAll(5).alignItems(dev.vfyjxf.taffy.style.AlignItems.CENTER));
             header.style(s -> s.backgroundTexture(new ColorRectTexture(SnowstormTheme.BAR)));
             Button grip = io.github.tt432.eyelib.client.gui.snowstorm.kit.SsIconButton.ghost(
-                    "grip-vertical", 10, e -> {
+                    "grip-vertical", 20, e -> {
                     });
-            grip.layout(l -> l.width(12).heightPercent(100));
+            grip.layout(l -> l.width(24).heightPercent(100));
             grip.addEventListener(UIEvents.MOUSE_DOWN, e -> {
                 if (e.button != 0) return;
                 sortOriginal = rowIndex(row);
@@ -171,15 +177,17 @@ public class EventListView extends UIElement {
             grip.addEventListener(UIEvents.DRAG_END, this::onSortDragEnd);
             header.addChild(grip);
 
+            // .event_header_bar > label：min-width 80px、padding 4px、右对齐
             TextElement idLabel = new TextElement();
             idLabel.setText(Component.literal("Event ID"));
-            idLabel.textStyle(s -> s.fontSize(9).textColor(SnowstormTheme.TEXT));
-            idLabel.layout(l -> l.width(52).heightPercent(100));
+            idLabel.textStyle(s -> s.fontSize(9).textColor(SnowstormTheme.TEXT)
+                    .textAlignHorizontal(com.lowdragmc.lowdraglib2.gui.ui.data.Horizontal.RIGHT));
+            idLabel.layout(l -> l.minWidth(80).heightPercent(100).paddingAll(4));
             header.addChild(idLabel);
 
             // rename：JS @input 逐键 renameEvent（删旧键插新键 quirk 在模型）
             TextField rename = new TextField();
-            rename.textFieldStyle(s -> s.fontSize(9));
+            io.github.tt432.eyelib.client.gui.snowstorm.kit.SsTextField.applyTextStyle(rename, io.github.tt432.eyelib.client.gui.snowstorm.SnowstormTheme.TEXT);
             rename.setText(entry.id, false);
             rename.setTextResponder(text -> model.renameEvent(entry, text));
             rename.layout(l -> l.flex(1).heightPercent(100));

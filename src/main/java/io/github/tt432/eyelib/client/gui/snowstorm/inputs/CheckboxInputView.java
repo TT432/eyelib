@@ -33,10 +33,20 @@ public final class CheckboxInputView extends UIElement {
         });
     }
 
-    /** 勾选态图标刷新（Square/CheckSquare as-is）。 */
+    /** 勾选态图标刷新（Square/CheckSquare 21×21 as-is；勾选 path 色 #20ddff → 图标着色 ACCENT）。 */
     private void rebuild(Input input) {
         clearAllChildren();
-        addChild(SsIcon.of(JsSemantics.truthy(input.getValue()) ? "check-square" : "square", 10));
+        boolean checked = JsSemantics.truthy(input.getValue());
+        UIElement icon = SsIcon.of(checked ? "check-square" : "square",
+                io.github.tt432.eyelib.client.gui.snowstorm.kit.SsMetrics.CHECKBOX_SIZE);
+        if (checked) {
+            // Checkbox.vue: 勾选 path stroke #20ddff stroke-width 3 → 整图标着色近似
+            icon.style(s -> s.backgroundTexture(
+                    ((com.lowdragmc.lowdraglib2.gui.texture.SpriteTexture)
+                            io.github.tt432.eyelib.client.gui.snowstorm.kit.SsIcon.texture("check-square"))
+                            .setColor(io.github.tt432.eyelib.client.gui.snowstorm.SnowstormTheme.ACCENT)));
+        }
+        addChild(icon);
     }
 }
 //?}

@@ -26,7 +26,8 @@ public final class SsSlider extends UIElement {
         this.max = max;
         this.value = value;
         this.onChange = onChange;
-        layout(l -> l.widthPercent(100).height(20));
+        // 宽度由父布局决定（widthPercent(100) 在 flex 行内会挤飞兄弟，实证 2026-10-01）
+        layout(l -> l.height(20));
 
         // 轨道
         UIElement track = new UIElement();
@@ -47,7 +48,8 @@ public final class SsSlider extends UIElement {
     private void applyMouse(double mouseX) {
         double w = getSizeWidth();
         if (w <= 0) return;
-        double t = Math.max(0, Math.min(1, mouseX / w));
+        // 事件坐标为 GUI 绝对坐标 → 减元素左缘
+        double t = Math.max(0, Math.min(1, (mouseX - getPositionX()) / w));
         setValue(min + t * (max - min));
     }
 

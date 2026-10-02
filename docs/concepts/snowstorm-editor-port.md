@@ -42,6 +42,10 @@ Snowstorm 源（已全量盘点，克隆于 `build/_snowstorm_src`，~200KB）�
 | U1 | 复刻范围 | **完整复刻**：表单+曲线编辑器+事件编辑器+渐变+贴图绘制+QuickSetup+CodeViewer+子效果，Snowstorm 全部功能 |
 | U2 | 宿主形态 | **游戏内全屏 Screen**：预览用 3D 舞台（自由轨道相机，脱离世界）；管理界面加入口 |
 | U3 | 贴图编辑器 | **V1 就复刻**：brush/eraser/fill/undo 全套（texture_edit.js 移植） |
+| U4 | 1:1 对齐验收标准（2026-10-01 ask 确认） | **布局像素级，字体豁免**：逐区域从 v3.2.2 CSS/Vue 提取像素尺寸/间距/颜色/图标 1:1 复刻；MC 位图字体与 Web 字体的渲染差异记为已知偏离豁免。实机截图并排比对验收 |
+| U5 | 1:1 对齐参考基准（2026-10-01 ask 确认） | **克隆的 v3.2.2 源码**（`build/_snowstorm_src`），不以 snowstorm.app 在线新版为准 |
+| U6 | 1:1 对齐范围（2026-10-01 ask 确认） | **全编辑器所有界面**：主界面骨架 + 9 subject tab 表单 + 曲线/渐变/事件/贴图编辑器 + QuickSetup/CodeViewer/对话框/菜单/页脚/舞台 |
+| U7 | portrait 模式（2026-10-01 ask 确认） | **只复刻横向模式**：原版 body 宽 100~720px 时切换 portrait 纵向布局（header 124px + 底部 38px Config/Code/Help/Preview 选择器，App.vue:74），不移植；记入保留偏离。验证截图统一用 ≥720 GUI 宽度 |
 
 ## 2. 架构决策
 
@@ -204,11 +208,18 @@ client/gui/snowstorm/
   核对点 C1：RenderSystem projection matrix 在 Screen 渲染中的压栈/恢复路径。
   **实证约束（NodeAssetPreview javadoc，2026-08 实机）**：LDLib2/GUI 上下文中
   `guiGraphics.bufferSource` 批渲染（含 entitySolid）零像素，唯一实证可用路径是
-  Tesselator + position_tex 直接 `drawWithShader`（同 `GuiGraphics.innerBlit`）；
-  且**禁止 enableScissor**（LDLib 画布 pose 变换与 scissor 屏幕坐标系冲突，剪出错误区域）。
+  Tesselator + position_tex 直接 `drawWithShader`（同 `GuiGraphics.innerBlit`）。
   → P4 舞台粒子渲染不能直接复用 WinterskyRenderHooks 的 BufferSource 批次路径，
   须走立即模式 drawWithShader；顶点生成逻辑（wintersky quad/clr/uv）可复用，
   提交机制重写。26.1 GUI 渲染路径未迁移（`//? if <26.1` 先例），P4 仅在 1.20.1/1.21.1 验收。
+  **R2 修正（2026-10-01 实机，三条舞台渲染硬结论）**：
+  1. ~~禁止 enableScissor~~ **已证伪**：scissor 用设备像素坐标（`x*fbW/guiW`，y 自底向上翻转）
+     即正确；不裁剪时网格经 NDC→舞台映射仍溢出全屏（实证），必须裁剪。
+  2. **GL_LINES 立即模式在 GUI 上下文零像素**（quad 同管线正常；2026-09-30 截图即无网格，
+     当时误判「已对齐」）→ 网格/坐标轴改细 quad 条（半径 0.01 世界单位 ≈ 1px@默认距离）。
+  3. **必须每帧清深度**（three.js autoClear 语义）：共享 MC framebuffer 时世界/GUI 残留深度
+     让舞台内容 LEQUAL 全灭——2026-09-30 的 fire 粒子截图其实只有天空深度区通过，
+     「舞台已渲染」是深度残留造成的幸存者偏差。
 - R3 Snowstorm 数据层对 Vue 响应式的隐性依赖（Input.value setter 触发 UI 刷新）→ 移植时以显式
   listener 替代，oracle 只覆盖数据语义不覆盖 UI 刷新。
 - R4 贴图编辑器 flood fill/插值连线精度 → 纯 int[] 实现与 canvas 2D 语义差（抗锯齿）：
@@ -274,3 +285,9 @@ client/gui/snowstorm/
   管线记录）+ SNOWSTORM logo（Logo.vue SVG 光栅化）；全界面文字占位符退役。
 - 实机暴露并修复：LDLib2 Button 默认 translation 'Button' 文本覆盖（tab/sprite 格需
   setText(Component.empty())）。
+- 实机暴露并修复（2026-10-02 贴图编辑器色板）：ScrollerView 深层子树内某元素经
+  style/buttonStyle/drawBackgroundAdditional 提交的纹理批次均不落屏（绘制每帧被调用、
+  不在裁剪区外、剪刀包含绘制区；同帧兄弟元素正常），纹理提交后显式 `graphics.flush()`
+  稳定修复（SsColorSwatch，根因未明，flush 为实证最小修复）。排查教训：mcmcp /eval
+  在渲染线程执行，`Thread.sleep` 会冻结当次渲染——跨 eval 读帧计数器才有效，同 eval 内
+  sleep+读数恒为 0（曾误判为"LDLib2 离屏缓存"）。

@@ -26,4 +26,9 @@ public interface SnowstormTheme {
     int TEXT_GRAYED = 0xFF939AA3;
     /** --color-accent: #20ddff */
     int ACCENT = 0xFF20DDFF;
+    /** common.css .token.number / input[type=number]: #b99cff */
+    int NUMBER = 0xFFB99CFF;
+    /** Preview.vue 警告计数 / WarningDialog.vue 条目: #ffc107（hover #ffe060） */
+    int WARNING = 0xFFFFC107;
+    int WARNING_HOVER = 0xFFFFE060;
 }

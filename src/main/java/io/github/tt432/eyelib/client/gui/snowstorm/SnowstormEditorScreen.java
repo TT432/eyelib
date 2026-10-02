@@ -41,8 +41,8 @@ public final class SnowstormEditorScreen extends ModularUIScreen {
 
     /** App.vue grid-template-rows: 74px。 */
     private static final int HEADER_HEIGHT = 74;
-    /** MenuBar 行高（剩余给 ExpressionBar）。 */
-    private static final int MENUBAR_HEIGHT = 40;
+    /** MenuBar 行高（MenuBar.vue:166 32px；ExpressionBar 实得 74-32-1(border)=41px）。 */
+    private static final int MENUBAR_HEIGHT = 32;
 
     /** 舞台引用（onClose 释放，I4）。 */
     private final ParticleStageView stageView;
@@ -62,9 +62,12 @@ public final class SnowstormEditorScreen extends ModularUIScreen {
         io.github.tt432.eyelib.client.gui.snowstorm.texture.TextureBridge.install();
 
         Minecraft mc = Minecraft.getInstance();
-        // blaze3d Window 访问集中在 bridge（ADR-0016 §5）：经 UiPort ACL 取 GUI 缩放宽度
-        ContentParts parts = buildContent(
-                initialSidebarWidth(io.github.tt432.eyelib.bridge.ui.UiPort.guiScaledWidth()));
+        int guiWidth = io.github.tt432.eyelib.bridge.ui.UiPort.guiScaledWidth();
+        // App.vue data 初始化：sidebar_width = 记忆值（clamp 100..w-200）或 getInitialSidebarWidth()
+        if (sidebarWidth < 0) {
+            sidebarWidth = initialSidebarWidth(guiWidth);
+        }
+        ContentParts parts = buildContent(isSidebarOpen ? sidebarWidth : 0);
 
         // App.vue grid-template-areas "sidebar header" / "sidebar preview"（实证修正）：
         // sidebar 左置全高；右上 header（MenuBar+ExpressionBar）；右下 preview/code
@@ -74,6 +77,34 @@ public final class SnowstormEditorScreen extends ModularUIScreen {
                 .flexDirection(FlexDirection.ROW));
         root.style(style -> style.backgroundTexture(new ColorRectTexture(SnowstormTheme.BACKGROUND)));
         root.addChildren(parts.sidebar(), buildRightColumn(root, parts));
+
+        // App.vue .resizer：6px 拖拽条（absolute，left = sidebarWidth）+ 收起态 PanelLeftOpen 钮
+        UIElement resizer = buildSidebarResizer(root, parts, guiWidth);
+        root.addChild(resizer);
+
+        // App.vue help-panel：右浮层（right 0 / top 32 / bottom 33 / 宽 482），is_help_panel_open 驱动
+        io.github.tt432.eyelib.client.gui.snowstorm.help.HelpPanelView helpPanel =
+                new io.github.tt432.eyelib.client.gui.snowstorm.help.HelpPanelView();
+        helpPanel.layout(layout -> layout
+                .positionType(dev.vfyjxf.taffy.style.TaffyPosition.ABSOLUTE)
+                .right(0).top(32).bottom(33));
+        helpPanel.setDisplay(isHelpPanelOpen);
+        helpPanel.setOnClose(() -> helpPanel.setDisplay(isHelpPanelOpen = false));
+        //? if <26.1 {
+        helpPanel.setOnOpenLink(url -> net.minecraft.Util.getPlatform().openUri(url));
+        //?} else {
+        helpPanel.setOnOpenLink(url -> net.minecraft.util.Util.getPlatform().openUri(url));
+        //?}
+        root.addChild(helpPanel);
+
+        // MenuBar/Sidebar 的 open_help_page → App.vue openHelpPage(tab_key, group_key)
+        java.util.function.BiConsumer<String, String> openHelpPage = (category, page) -> {
+            isHelpPanelOpen = true;
+            helpPanel.setDisplay(true);
+            helpPanel.openPage(category, page);
+        };
+        parts.sidebar().setOnOpenHelpPage(openHelpPage);
+        parts.menuBar().setOnOpenHelpPage(openHelpPage);
 
         mc.setScreen(new SnowstormEditorScreen(new ModularUI(UI.of(root), mc.player), parts.stage()));
     }
@@ -91,10 +122,20 @@ public final class SnowstormEditorScreen extends ModularUIScreen {
         return number;
     }
 
-    /** 内容区构建产物（tab 切换接线用）。 */
-    private record ContentParts(UIElement left, UIElement sidebar,
-                                ParticleStageView stage, CodeViewerView codeViewer) {
+    /** 内容区构建产物（tab 切换/help 接线用）。 */
+    private record ContentParts(UIElement left, SidebarView sidebar,
+                                ParticleStageView stage, CodeViewerView codeViewer,
+                                MenuBarView menuBar) {
     }
+
+    /**
+     * App.vue data as-is：sidebar_width / is_sidebar_open / is_help_panel_open。
+     * JS 持久化走 localStorage（snowstorm_sidebar_width / snowstorm_is_sidebar_open）；
+     * MC 侧 EditorOptions 持久化接缝未安装，退化为会话级静态（偏离记录）。
+     */
+    private static int sidebarWidth = -1; // -1 = 未初始化（用 initialSidebarWidth）
+    private static boolean isSidebarOpen = true;
+    private static boolean isHelpPanelOpen = false;
 
     /** 右列：header（MenuBar+ExpressionBar）+ preview/code 内容区。 */
     private static UIElement buildRightColumn(UIElement root, ContentParts parts) {
@@ -113,7 +154,7 @@ public final class SnowstormEditorScreen extends ModularUIScreen {
                 .height(HEADER_HEIGHT)
                 .flexDirection(FlexDirection.COLUMN));
 
-        MenuBarView menu = new MenuBarView();
+        MenuBarView menu = parts.menuBar();
         menu.setId("menubar");
         menu.layout(layout -> layout.widthPercent(100).height(MENUBAR_HEIGHT));
         menu.setOnImport(() -> confirmIfDirty(root, EditorFileActions::importViaDialog));
@@ -150,14 +191,85 @@ public final class SnowstormEditorScreen extends ModularUIScreen {
         left.addChild(stageView);
 
         SidebarView sidebar = new SidebarView();
+        // getEffectiveSidebarWidth() = is_sidebar_open * sidebar_width：收起即 0 宽 + 隐藏
         sidebar.layout(layout -> layout.width(sidebarWidth).heightPercent(100));
+        sidebar.setDisplay(sidebarWidth > 0);
         sidebar.setId("sidebar");
         stageView.setId("stage");
         codeViewer.setId("codeviewer");
 
-        return new ContentParts(left, sidebar, stageView, codeViewer);
+        return new ContentParts(left, sidebar, stageView, codeViewer, new MenuBarView());
     }
 
+    /**
+     * App.vue .resizer（vertical 6px、ew-resize、margin-left -3px）+ 收起态
+     * .resizer_toggle_button（PanelLeftOpen 30×30 @ top:120）。拖拽即 setSidebarSize：
+     * &gt;80 → clamp(240, w-200) 并展开；否则收起（记忆原宽）。
+     */
+    private static UIElement buildSidebarResizer(UIElement root, ContentParts parts, int guiWidth) {
+        return new SidebarResizer(parts, guiWidth, root);
+    }
+
+    /** App.vue resizer + resizeSidebarStart/setSidebarSize as-is（拖拽状态为实例字段）。 */
+    private static final class SidebarResizer extends UIElement {
+        private final ContentParts parts;
+        private final int guiWidth;
+        private final Button toggle;
+        private float dragStartX;
+        private int dragStartWidth;
+        private boolean dragging;
+
+        SidebarResizer(ContentParts parts, int guiWidth, UIElement root) {
+            this.parts = parts;
+            this.guiWidth = guiWidth;
+            layout(l -> l
+                    .positionType(dev.vfyjxf.taffy.style.TaffyPosition.ABSOLUTE)
+                    .width(6).heightPercent(100)
+                    .left(isSidebarOpen ? sidebarWidth - 3 : 0).top(0));
+
+            // .resizer_toggle_button：PanelLeftOpen 30×30 @ top:120（收起时可见）
+            toggle = io.github.tt432.eyelib.client.gui.snowstorm.kit.SsIconButton.bar(
+                    "panel-left-open", 22, event -> {
+                        isSidebarOpen = true;
+                        apply();
+                    });
+            toggle.layout(l -> l.width(30).height(30).top(120));
+            toggle.setDisplay(!isSidebarOpen);
+            addChild(toggle);
+
+            // resizeSidebarStart：mousedown 记起点；document mousemove/mouseup → root 级监听
+            //（6px 条拖拽中鼠标必然离条，move/up 必须挂 root）
+            addEventListener(com.lowdragmc.lowdraglib2.gui.ui.event.UIEvents.MOUSE_DOWN, event -> {
+                if (!isSidebarOpen) return;
+                dragging = true;
+                dragStartX = event.x;
+                dragStartWidth = sidebarWidth;
+            });
+            root.addEventListener(com.lowdragmc.lowdraglib2.gui.ui.event.UIEvents.MOUSE_MOVE, event -> {
+                if (!dragging) return;
+                int size = dragStartWidth + (int) event.x - (int) dragStartX;
+                // App.vue setSidebarSize as-is（>80 展开否则收起，宽度记忆原值）
+                if (size > 80) {
+                    sidebarWidth = clamp(size, 240, guiWidth - 200);
+                    isSidebarOpen = true;
+                } else {
+                    isSidebarOpen = false;
+                }
+                apply();
+            });
+            root.addEventListener(com.lowdragmc.lowdraglib2.gui.ui.event.UIEvents.MOUSE_UP,
+                    event -> dragging = false);
+        }
+
+        /** 应用当前 sidebarWidth/isSidebarOpen 到 sidebar/resizer 布局。 */
+        private void apply() {
+            int effective = isSidebarOpen ? clamp(sidebarWidth, 100, guiWidth - 200) : 0;
+            parts.sidebar().layout(l -> l.width(effective).heightPercent(100));
+            parts.sidebar().setDisplay(effective > 0);
+            layout(l -> l.left(effective > 0 ? effective - 3 : 0));
+            toggle.setDisplay(!isSidebarOpen);
+        }
+    }
     /**
      * JS confirm() 预确认（{@link SnowstormImport#confirmClear} 接缝文档）：编辑器有内容
      * （curves/events 非空）时先弹确认对话框，确认后执行动作；空则直执行。

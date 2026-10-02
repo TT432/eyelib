@@ -56,9 +56,13 @@ public final class PlaceholderBakeDialogView extends UIElement {
         panel = new UIElement().layout(layout -> layout
                 .width(308) // JS modal_dialog max-width: 308px
                 .flexDirection(FlexDirection.COLUMN)
-                .paddingAll(10)
-                .gapAll(4));
-        panel.style(style -> style.backgroundTexture(new ColorRectTexture(SnowstormTheme.INTERFACE)));
+                .paddingAll(12) // .modal_dialog padding 12px
+                .gapAll(8));
+        // .modal_dialog：1px solid bar 边框 + interface 底
+        panel.style(style -> style.backgroundTexture(
+                com.lowdragmc.lowdraglib2.gui.texture.GuiTextureGroup.of(
+                        new ColorRectTexture(SnowstormTheme.INTERFACE),
+                        new com.lowdragmc.lowdraglib2.gui.texture.ColorBorderTexture(-1, SnowstormTheme.BAR))));
         addChild(panel);
 
         rebuild();
@@ -95,7 +99,7 @@ public final class PlaceholderBakeDialogView extends UIElement {
             // JS placeholder_bar 空态文案
             panel.addChild(text("No undefined variables found", SnowstormTheme.TEXT_GRAYED, 9));
         }
-        ScrollerView list = new ScrollerView();
+        ScrollerView list = io.github.tt432.eyelib.client.gui.snowstorm.kit.SsScroller.plain(new ScrollerView());
         list.layout(layout -> layout.widthPercent(100).height(Math.min(140, Math.max(18, keys.size() * 16))));
         for (String key : keys) {
             if (!key.startsWith("variable")) {
@@ -113,6 +117,7 @@ public final class PlaceholderBakeDialogView extends UIElement {
             label.layout(layout -> layout.flex(1));
 
             TextField valueField = new TextField();
+            io.github.tt432.eyelib.client.gui.snowstorm.kit.SsTextField.applyTextStyle(valueField, SnowstormTheme.NUMBER);
             Object current = EditorRuntime.placeholder_variables.get(key);
             valueField.setText(current != null ? JsSemantics.toJsString(current) : "0");
             valueField.setTextResponder(value -> {

@@ -106,7 +106,7 @@ public final class GradientEditorView extends UIElement {
 
         toolRow = new UIElement().layout(layout -> layout
                 .widthPercent(100)
-                .height(14)
+                .height(32)
                 .flexDirection(FlexDirection.ROW)
                 .marginHorizontal(5));
 
@@ -256,10 +256,10 @@ public final class GradientEditorView extends UIElement {
     }
 
     private static Button toolButton(String icon, UIEventListener onClick) {
-        // lucide 图标钮（文字占位已退役，kit SsIconButton）
+        // App.vue .tool 基线：宽 35px；Gradient.vue unicode_icon 24×24
         Button button = io.github.tt432.eyelib.client.gui.snowstorm.kit.SsIconButton.ghost(
-                icon, 10, onClick);
-        button.layout(layout -> layout.width(14).heightPercent(100));
+                icon, 24, onClick);
+        button.layout(layout -> layout.width(35).heightPercent(100));
         return button;
     }
 

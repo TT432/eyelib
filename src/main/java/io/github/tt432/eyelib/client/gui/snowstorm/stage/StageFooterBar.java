@@ -32,9 +32,10 @@ import java.util.List;
  */
 public final class StageFooterBar extends UIElement {
 
-    /** Preview.vue footer 高度（.tool 22px + padding）。 */
-    static final int HEIGHT = 22;
-    private static final int CONTROL_HEIGHT = 14;
+    /** Preview.vue --footer-height: 34px。 */
+    static final int HEIGHT = 34;
+    /** footer 控件行高（footer > * padding 4px 8px → 内容 26px；取 26）。 */
+    private static final int CONTROL_HEIGHT = 26;
 
     /** loop_mode 选项（Preview.vue select#loop_mode as-is）。 */
     private static final List<String> LOOP_MODES = List.of("auto", "looping", "once");
@@ -60,16 +61,31 @@ public final class StageFooterBar extends UIElement {
         this.stage = stage;
         layout(layout -> layout
                 .flexDirection(FlexDirection.COLUMN));
-        style(style -> style.backgroundTexture(new ColorRectTexture(SnowstormTheme.DARK)));
+        // Preview.vue footer：background var(--color-bar) + border-top 1px var(--color-border)
+        //（ColorBorderTexture 四边同画，不符；顶边框用 1px 条实现）
+        style(style -> style.backgroundTexture(new ColorRectTexture(SnowstormTheme.BAR)));
+        UIElement topBorder = new UIElement().layout(l -> l
+                .positionType(dev.vfyjxf.taffy.style.TaffyPosition.ABSOLUTE)
+                .left(0).right(0).top(0).height(1));
+        topBorder.style(s -> s.backgroundTexture(new ColorRectTexture(SnowstormTheme.BORDER)));
+        addChild(topBorder);
 
-        // placeholder 栏（默认隐藏，# 键切换；JS 覆盖在 canvas 顶部，此处收进页脚区域上方一行）
+        // placeholder 栏（Preview.vue .placeholder_bar：absolute bottom 34 覆盖画布下缘、
+        // min-height 35、90% 透明底 + 顶边框；blur(4px) LDLib2 无等价——半透明近似）
         placeholderBar = new UIElement().layout(layout -> layout
                 .widthPercent(100)
                 .flexDirection(FlexDirection.ROW)
                 .alignItems(AlignItems.CENTER)
-                .paddingHorizontal(4)
-                .gapAll(4));
-        placeholderBar.style(style -> style.backgroundTexture(new ColorRectTexture(SnowstormTheme.BAR)));
+                .paddingHorizontal(10)
+                .paddingVertical(2)
+                .gapAll(12));
+        placeholderBar.style(style -> style.backgroundTexture(
+                new ColorRectTexture(0xE629323A))); // color-mix(background 90%) 近似
+        UIElement phTopBorder = new UIElement().layout(l -> l
+                .positionType(dev.vfyjxf.taffy.style.TaffyPosition.ABSOLUTE)
+                .left(0).right(0).top(0).height(1));
+        phTopBorder.style(s -> s.backgroundTexture(new ColorRectTexture(SnowstormTheme.BORDER)));
+        placeholderBar.addChild(phTopBorder);
         placeholderBar.setDisplay(dev.vfyjxf.taffy.style.TaffyDisplay.NONE);
 
         UIElement bar = new UIElement().layout(layout -> layout
@@ -77,7 +93,7 @@ public final class StageFooterBar extends UIElement {
                 .height(HEIGHT)
                 .flexDirection(FlexDirection.ROW)
                 .alignItems(AlignItems.CENTER)
-                .paddingHorizontal(4)
+                .paddingHorizontal(8)
                 .gapAll(4));
 
         bar.addChild(buildSelector("loop_mode", LOOP_MODES, LOOP_LABELS,
@@ -106,7 +122,7 @@ public final class StageFooterBar extends UIElement {
 
         bar.addChild(new UIElement().layout(layout -> layout.flex(1).height(1))); // spacing
 
-        warningLabel = text("", SnowstormTheme.ACCENT);
+        warningLabel = text("", SnowstormTheme.WARNING);
         // Preview.vue warnings_count 点击 → WarningDialog 弹层（有警告时）
         warningLabel.addEventListener(com.lowdragmc.lowdraglib2.gui.ui.event.UIEvents.CLICK, event -> {
             if (stage.warningCount() > 0) {
@@ -114,13 +130,23 @@ public final class StageFooterBar extends UIElement {
                         getModularUI().ui.rootElement);
             }
         });
-        particleLabel = text("0 P", SnowstormTheme.TEXT_GRAYED);
+        bar.addChild(warningLabel);
+        // Preview.vue div.stat：色 --color-text、min-width 72、右对齐
+        particleLabel = text("0 P", SnowstormTheme.TEXT);
+        particleLabel.textStyle(s -> s.textAlignHorizontal(Horizontal.RIGHT));
+        particleLabel.layout(layout -> layout.minWidth(72));
         bar.addChild(particleLabel);
-        fpsLabel = text("0 FPS", SnowstormTheme.TEXT_GRAYED);
-        fpsLabel.layout(layout -> layout.width(40));
+        fpsLabel = text("0 FPS", SnowstormTheme.TEXT);
+        fpsLabel.textStyle(s -> s.textAlignHorizontal(Horizontal.RIGHT));
+        fpsLabel.layout(layout -> layout.minWidth(72));
         bar.addChild(fpsLabel);
 
-        addChildren(placeholderBar, bar);
+        addChildren(bar);
+    }
+
+    /** Preview.vue .placeholder_bar 浮层（由 {@link ParticleStageView} 绝对定位挂到画布下缘 bottom=34）。 */
+    public UIElement placeholderBar() {
+        return placeholderBar;
     }
 
     /** 每帧由舞台刷新统计（fps/粒子数/警告计数在舞台侧按 JS 周期采样）。 */
@@ -174,10 +200,11 @@ public final class StageFooterBar extends UIElement {
                 TextElement label = text(shortPlaceholderLabel(key), SnowstormTheme.TEXT);
                 label.layout(layout -> layout.height(CONTROL_HEIGHT));
                 TextField field = new TextField();
+                io.github.tt432.eyelib.client.gui.snowstorm.kit.SsTextField.applyTextStyle(field, SnowstormTheme.NUMBER);
                 Object current = EditorRuntime.placeholder_variables.get(key);
                 field.setText(current != null ? JsSemantics.toJsString(current) : "0");
                 field.setTextResponder(text -> updatePlaceholderValue(key, text));
-                field.layout(layout -> layout.width(50).height(CONTROL_HEIGHT));
+                field.layout(layout -> layout.width(70).height(CONTROL_HEIGHT));
                 placeholderBar.addChildren(label, field);
             }
         } else {
@@ -238,24 +265,39 @@ public final class StageFooterBar extends UIElement {
         } else {
             selector.setValue(values.get(0), false);
         }
-        selector.layout(layout -> layout.width(56).height(CONTROL_HEIGHT));
+        // Preview.vue footer select：height 100%（=34）、padding 2px 6px、margin-left 4、dark 底无边框；
+        // 宽随最长标签（LDLib2 无内容自适应，用 MC font 度量 + 下拉箭头余量）
+        int maxLabel = 0;
+        for (String label : labels) {
+            maxLabel = Math.max(maxLabel, net.minecraft.client.Minecraft.getInstance().font.width(label));
+        }
+        final int selectWidth = maxLabel + 14; // padding 6×2 + 余量（无箭头）
+        // Preview.vue footer select：height 100%（=34）、padding 2px 6px、margin-left 4、dark 底、
+        // 1px border（top 与 footer 顶边框重叠）；appearance:none → 隐藏 LDLib2 Selector 自带箭头
+        selector.buttonIcon.setDisplay(false);
+        selector.style(style -> style.backgroundTexture(
+                com.lowdragmc.lowdraglib2.gui.texture.GuiTextureGroup.of(
+                        new ColorRectTexture(SnowstormTheme.DARK),
+                        new com.lowdragmc.lowdraglib2.gui.texture.ColorBorderTexture(-1, SnowstormTheme.BORDER))));
+        selector.layout(layout -> layout.heightPercent(100).width(selectWidth).marginLeft(4)
+                .paddingHorizontal(6));
         return selector;
     }
 
     private static Button toolButton(String icon, boolean selected,
                                      com.lowdragmc.lowdraglib2.gui.ui.event.UIEventListener listener) {
-        // lucide 图标钮（文字占位已退役，kit SsIconButton）
+        // App.vue .tool：宽 35px、padding 2px 8px、图标 20px
         Button button = io.github.tt432.eyelib.client.gui.snowstorm.kit.SsIconButton.ghost(
-                icon, 10, listener);
-        button.layout(layout -> layout.width(16).height(CONTROL_HEIGHT));
+                icon, 20, listener);
+        button.layout(layout -> layout.width(35).heightPercent(100));
         refreshToggle(button, selected);
         return button;
     }
 
-    /** Preview.vue .tool.toggle_enabled（选中态高亮底）。 */
+    /** Preview.vue .tool.toggle_enabled（选中态底 = --color-background，比 footer 的 BAR 更深）。 */
     private static void refreshToggle(Button button, boolean enabled) {
         button.buttonStyle(style -> style
-                .baseTexture(enabled ? new ColorRectTexture(SnowstormTheme.TITLE) : IGuiTexture.EMPTY)
+                .baseTexture(enabled ? new ColorRectTexture(SnowstormTheme.BACKGROUND) : IGuiTexture.EMPTY)
                 .hoverTexture(new ColorRectTexture(SnowstormTheme.SELECTION))
                 .pressedTexture(new ColorRectTexture(SnowstormTheme.SELECTION)));
     }

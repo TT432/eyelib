@@ -57,6 +57,11 @@ public final class SelectInputView extends UIElement {
             input.change(InputUiEvents.selectChangeEvent(key)); // JS <select> change event
             InputViewFactory.notifyChanged(); // meta_value 变化可能影响 custom 框可见性
         });
+        // common.css select：dark 底 + 1px border var(--color-border)
+        selector.style(style -> style.backgroundTexture(
+                com.lowdragmc.lowdraglib2.gui.texture.GuiTextureGroup.of(
+                        new com.lowdragmc.lowdraglib2.gui.texture.ColorRectTexture(SnowstormTheme.DARK),
+                        new com.lowdragmc.lowdraglib2.gui.texture.ColorBorderTexture(-1, SnowstormTheme.BORDER))));
         selector.layout(layout -> layout.flex(1).heightPercent(100));
         addChild(selector);
 
@@ -65,7 +70,7 @@ public final class SelectInputView extends UIElement {
                 && Objects.equals(input.meta_value, input.options.get("custom"))) {
             com.lowdragmc.lowdraglib2.gui.ui.elements.TextField customField =
                     new com.lowdragmc.lowdraglib2.gui.ui.elements.TextField();
-            customField.textFieldStyle(style -> style.fontSize(9));
+            io.github.tt432.eyelib.client.gui.snowstorm.kit.SsTextField.applyTextStyle(customField, SnowstormTheme.TEXT);
             customField.setText(JsSemantics.toJsString(input.getValue()), false);
             customField.setTextResponder(text -> {
                 input.setValue(text); // JS v-model="input.value"

@@ -75,7 +75,11 @@ public class EventSpeedListView extends UIElement {
             Map<String, Object> eventObj = (Map<String, Object>) value;
             String id = String.valueOf(eventObj.get("event"));
             UIElement row = new UIElement();
-            row.layout(l -> l.widthPercent(100).height(14).flexDirection(FlexDirection.ROW).gapAll(2));
+            // .event_list_event（chip 高 30 padding 4px 13px bar 底）+ .event_speed_list padding 5px
+            row.layout(l -> l.widthPercent(100).height(30).flexDirection(FlexDirection.ROW).gapAll(5)
+                    .marginAll(2).paddingAll(5)
+                    .alignItems(dev.vfyjxf.taffy.style.AlignItems.CENTER));
+            row.style(s -> s.backgroundTexture(new ColorRectTexture(SnowstormTheme.BAR)));
 
             TextElement label = new TextElement();
             label.setText(Component.literal(id));
@@ -84,11 +88,11 @@ public class EventSpeedListView extends UIElement {
             row.addChild(label);
 
             Button remove = io.github.tt432.eyelib.client.gui.snowstorm.kit.SsIconButton.ghost(
-                    "x", 8, e -> {
+                    "x", 18, e -> {
                         values.remove(value);
                         input.change(EventUiEvents.simple(), null);
                     });
-            remove.layout(l -> l.width(16).heightPercent(100));
+            remove.layout(l -> l.width(22).heightPercent(100));
             row.addChild(remove);
 
             // Min Speed（v-model.number + @change）
@@ -98,7 +102,7 @@ public class EventSpeedListView extends UIElement {
             speedLabel.layout(l -> l.heightPercent(100));
             row.addChild(speedLabel);
             TextField speed = new TextField();
-            speed.textFieldStyle(s -> s.fontSize(9));
+            io.github.tt432.eyelib.client.gui.snowstorm.kit.SsTextField.applyTextStyle(speed, io.github.tt432.eyelib.client.gui.snowstorm.SnowstormTheme.NUMBER);
             speed.setText(JsSemantics.toJsString(eventObj.get("min_speed")), false);
             speed.setTextResponder(text ->
                     eventObj.put("min_speed", JsonValues.jsParseFloat(text))); // v-model.number 实写

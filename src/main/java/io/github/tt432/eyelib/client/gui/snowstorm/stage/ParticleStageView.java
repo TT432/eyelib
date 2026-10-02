@@ -114,19 +114,26 @@ public final class ParticleStageView extends UIElement {
         StageCanvas canvas = new StageCanvas();
         canvas.layout(layout -> layout.widthPercent(100).flex(1));
 
-        // #overlay_timestamp（canvas 左上角）
+        // #overlay_timestamp（canvas 左上角）：padding 4px 10px、opacity 0.5、色 --color-text
         timestampOverlay = new TextElement();
         timestampOverlay.setText(Component.literal("0:0"));
-        timestampOverlay.textStyle(style -> style.fontSize(9).textColor(SnowstormTheme.TEXT_GRAYED));
+        timestampOverlay.textStyle(style -> style.fontSize(9).textColor(0x80BCC3CA)); // opacity 0.5 近似（alpha 通道）
         timestampOverlay.layout(layout -> layout
                 .positionType(TaffyPosition.ABSOLUTE)
-                .left(4).top(2));
+                .left(0).top(0)
+                .paddingHorizontal(10).paddingVertical(4));
         canvas.addChild(timestampOverlay);
 
         footer = new StageFooterBar(this);
         footer.layout(layout -> layout.widthPercent(100));
 
-        addChildren(canvas, footer);
+        // .placeholder_bar：absolute bottom 34 覆盖画布下缘（挂根容器，z 序在 footer 前无碍——display NONE 默认）
+        UIElement placeholderBar = footer.placeholderBar();
+        placeholderBar.layout(layout -> layout
+                .positionType(TaffyPosition.ABSOLUTE)
+                .left(0).right(0).bottom(34));
+
+        addChildren(canvas, footer, placeholderBar);
 
         // emitter.js initParticles(View)：View.scene.add(Scene.space)
         EditorRuntime.initParticles(viewSceneRoot);
@@ -282,6 +289,19 @@ public final class ParticleStageView extends UIElement {
         RenderSystem.setProjectionMatrix(projection, VertexSorting.ORTHOGRAPHIC_Z);
         RenderSystem.enableDepthTest();
         RenderSystem.depthMask(true);
+        // three.js renderer.autoClear 等价（as-is）：舞台是独立 canvas，每帧清深度；
+        // 共享 MC framebuffer 时世界/GUI 残留深度会让网格/坐标轴 LEQUAL 全灭（实机实证）
+        RenderSystem.clear(0x100 /* GL_DEPTH_BUFFER_BIT */, Minecraft.ON_OSX);
+        // three.js 独立 canvas 视口语义（as-is）：舞台内容裁剪到舞台矩形（device px，y 自底向上）。
+        // 此前「禁止 scissor」结论已证伪——设备像素坐标即不错位；实证无裁剪时网格溢出全屏。
+        int fbW = mc.getWindow().getWidth();
+        int fbH = mc.getWindow().getHeight();
+        double sc = fbW / (double) guiW;
+        RenderSystem.enableScissor(
+                (int) Math.round(x * sc),
+                (int) Math.round(fbH - (y + h) * sc),
+                (int) Math.round(w * sc),
+                (int) Math.round(h * sc));
         try {
             if (JsSemantics.truthy(EditorOptions.OptionValues.get("axis_helper_visible"))) {
                 drawAxes();
@@ -297,6 +317,7 @@ public final class ParticleStageView extends UIElement {
             // 舞台渲染失败不崩编辑器（NodeAssetPreview 同款处理）
             LOGGER.warn("[snowstorm] stage render failed", e);
         } finally {
+            RenderSystem.disableScissor();
             RenderSystem.setProjectionMatrix(oldProjection, VertexSorting.ORTHOGRAPHIC_Z);
             //? if <1.20.6 {
             modelViewStack.popPose();
@@ -308,18 +329,22 @@ public final class ParticleStageView extends UIElement {
         }
     }
 
-    /** GridHelper(64, 64, grid, grid)，position.y -= 0.0005（as-is）。 */
+    /** 线条厚度半径（世界单位）：默认相机距离下 ≈1 设备像素（three r134 桌面线宽恒 1px 的近似）。 */
+    private static final float LINE_HALF = 0.01f;
+
+    /**
+     * GridHelper(64, 64, grid, grid)，position.y -= 0.0005（as-is）。
+     * GUI 上下文 GL_LINES 立即模式实证零像素（quad 正常）→ 细 quad 条等效。
+     */
     private static void drawGrid() {
         float y = -0.0005f;
         int r = (COLOR_GRID >> 16) & 0xFF;
         int g = (COLOR_GRID >> 8) & 0xFF;
         int b = COLOR_GRID & 0xFF;
-        BufferBuilder builder = beginLines(DefaultVertexFormat.POSITION_COLOR);
+        BufferBuilder builder = beginQuads(DefaultVertexFormat.POSITION_COLOR);
         for (int i = -32; i <= 32; i++) {
-            colorVertex(builder, i, y, -32, r, g, b, 255);
-            colorVertex(builder, i, y, 32, r, g, b, 255);
-            colorVertex(builder, -32, y, i, r, g, b, 255);
-            colorVertex(builder, 32, y, i, r, g, b, 255);
+            thinLine(builder, -32, y, i, 32, y, i, r, g, b);
+            thinLine(builder, i, y, -32, i, y, 32, r, g, b);
         }
         RenderSystem.setShader(GameRenderer::getPositionColorShader);
         RenderSystem.disableCull();
@@ -329,22 +354,48 @@ public final class ParticleStageView extends UIElement {
 
     /** CustomAxesHelper(1)：原点 → (1,0,0)/(0,1,0)/(0,0,1)，vertexColors（as-is）。 */
     private static void drawAxes() {
-        BufferBuilder builder = beginLines(DefaultVertexFormat.POSITION_COLOR);
-        axisLine(builder, 1, 0, 0, COLOR_AXIS_R);
-        axisLine(builder, 0, 1, 0, COLOR_AXIS_G);
-        axisLine(builder, 0, 0, 1, COLOR_AXIS_B);
+        BufferBuilder builder = beginQuads(DefaultVertexFormat.POSITION_COLOR);
+        thinLine(builder, 0, 0, 0, 1, 0, 0, (COLOR_AXIS_R >> 16) & 0xFF, (COLOR_AXIS_R >> 8) & 0xFF, COLOR_AXIS_R & 0xFF);
+        thinLine(builder, 0, 0, 0, 0, 1, 0, (COLOR_AXIS_G >> 16) & 0xFF, (COLOR_AXIS_G >> 8) & 0xFF, COLOR_AXIS_G & 0xFF);
+        thinLine(builder, 0, 0, 0, 0, 0, 1, (COLOR_AXIS_B >> 16) & 0xFF, (COLOR_AXIS_B >> 8) & 0xFF, COLOR_AXIS_B & 0xFF);
         RenderSystem.setShader(GameRenderer::getPositionColorShader);
         RenderSystem.disableCull();
         drawNow(builder);
         RenderSystem.enableCull();
     }
 
-    private static void axisLine(BufferBuilder builder, float x, float y, float z, int color) {
-        int r = (color >> 16) & 0xFF;
-        int g = (color >> 8) & 0xFF;
-        int b = color & 0xFF;
-        colorVertex(builder, 0, 0, 0, r, g, b, 255);
-        colorVertex(builder, x, y, z, r, g, b, 255);
+    /** 线段 → 两个互相垂直的细 quad（任意视角至少其一可见；disableCull 双面）。 */
+    private static void thinLine(BufferBuilder builder,
+                                 float x1, float y1, float z1, float x2, float y2, float z2,
+                                 int r, int g, int b) {
+        float dx = x2 - x1, dy = y2 - y1, dz = z2 - z1;
+        // u = normalize(dir × up)；dir 平行 up 时取 (1,0,0)；v = normalize(dir × u)
+        float ux = -dz, uy = 0, uz = dx;
+        float len = (float) Math.sqrt(ux * ux + uz * uz);
+        if (len < 1e-6f) {
+            ux = 1;
+            uz = 0;
+            len = 1;
+        }
+        ux = ux / len * LINE_HALF;
+        uz = uz / len * LINE_HALF;
+        float vx = dy * uz - dz * uy, vy = dz * ux - dx * uz, vz = dx * uy - dy * ux;
+        float vlen = (float) Math.sqrt(vx * vx + vy * vy + vz * vz);
+        if (vlen > 1e-6f) {
+            vx = vx / vlen * LINE_HALF;
+            vy = vy / vlen * LINE_HALF;
+            vz = vz / vlen * LINE_HALF;
+        }
+        // ±u quad
+        colorVertex(builder, x1 + ux, y1 + uy, z1 + uz, r, g, b, 255);
+        colorVertex(builder, x2 + ux, y2 + uy, z2 + uz, r, g, b, 255);
+        colorVertex(builder, x2 - ux, y2 - uy, z2 - uz, r, g, b, 255);
+        colorVertex(builder, x1 - ux, y1 - uy, z1 - uz, r, g, b, 255);
+        // ±v quad
+        colorVertex(builder, x1 + vx, y1 + vy, z1 + vz, r, g, b, 255);
+        colorVertex(builder, x2 + vx, y2 + vy, z2 + vz, r, g, b, 255);
+        colorVertex(builder, x2 - vx, y2 - vy, z2 - vz, r, g, b, 255);
+        colorVertex(builder, x1 - vx, y1 - vy, z1 - vz, r, g, b, 255);
     }
 
     // ==================================================================
@@ -362,15 +413,6 @@ public final class ParticleStageView extends UIElement {
         //?}
     }
 
-    private static BufferBuilder beginLines(VertexFormat format) {
-        //? if <1.20.6 {
-        BufferBuilder builder = Tesselator.getInstance().getBuilder();
-        builder.begin(VertexFormat.Mode.LINES, format);
-        return builder;
-        //?} else {
-        return Tesselator.getInstance().begin(VertexFormat.Mode.LINES, format);
-        //?}
-    }
 
     /** 以当前 shader 立即绘制（1.20.1 Tesselator.end 内部即 drawWithShader）。 */
     private static void drawNow(BufferBuilder builder) {

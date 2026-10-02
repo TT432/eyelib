@@ -31,11 +31,12 @@ import java.util.List;
  */
 public final class InputViewFactory {
 
-    /** 行高（SidebarView.INPUT_ROW_HEIGHT=11 同量级）。 */
-    public static final int ROW_HEIGHT = 12;
+    /** 行高：控件 30px + margin 2px 0 → 34px（common.css:83 + InputGroup.vue:264-266）。 */
+    public static final int ROW_HEIGHT = 34;
     /** expand 状态行高（.expanded 的近似：展开的多行编辑区）。 */
-    public static final int EXPANDED_HEIGHT = 44;
-    public static final int LABEL_WIDTH = 62;
+    public static final int EXPANDED_HEIGHT = 120;
+    /** .input_wrapper > label width: 100px。 */
+    public static final int LABEL_WIDTH = 100;
 
     /** 任一输入变更后的重绘请求（Vue 响应式替代；由 Sidebar 集成注入）。 */
     public static @Nullable Runnable onInputChanged;
@@ -51,34 +52,59 @@ public final class InputViewFactory {
     /** InputGroup.vue li.input_wrapper：label（可选）+ expand 按钮（expandable）+ 控件。 */
     public static UIElement create(Input input) {
         boolean tall = input.expandable && input.expanded;
-        UIElement row = new UIElement().layout(layout -> layout
-                .widthPercent(100)
-                .height(tall ? EXPANDED_HEIGHT : ROW_HEIGHT)
-                .flexDirection(FlexDirection.ROW)
-                .paddingHorizontal(2)
-                .gapAll(2));
+        // 自高控件（image 贴图编辑器/gradient/事件列表系）不按 30px 裁剪——
+        // 原版这些组件撑开 .input_wrapper（TextureInput.vue 视口 258px 等）；实证 2026-10-01：
+        // 固定 30px 会把贴图工具栏压到下一组头上、画布整体不可见
+        boolean autoHeight = switch (input.type) {
+            case IMAGE, GRADIENT, EVENT_LIST, EVENT_TIMELINE, EVENT_SPEED_LIST -> true;
+            default -> tall;
+        };
+        UIElement row = new UIElement().layout(layout -> {
+            layout.widthPercent(100)
+                    .minHeight(io.github.tt432.eyelib.client.gui.snowstorm.kit.SsMetrics.INPUT_HEIGHT)
+                    .flexDirection(FlexDirection.ROW)
+                    // InputGroup.vue：li margin 2px 0（无水平 padding）；label→控件 margin-left 4、右端余量 6
+                    //（.input_right width calc(100%-110px) / expandable calc(100%-134px) as-is）
+                    .marginVertical(io.github.tt432.eyelib.client.gui.snowstorm.kit.SsMetrics.ROW_MARGIN_V);
+            if (tall) layout.height(EXPANDED_HEIGHT);
+            else if (autoHeight) layout.heightAuto();
+            else layout.height(io.github.tt432.eyelib.client.gui.snowstorm.kit.SsMetrics.INPUT_HEIGHT);
+        });
         // JS v-bind:title="input.info"
         if (input.info != null && !input.info.isEmpty()) {
             row.style(style -> style.tooltips(input.info));
         }
         if (input.label != null) {
             TextElement label = text(input.label, SnowstormTheme.TEXT, 9);
-            label.layout(layout -> layout.width(LABEL_WIDTH).heightPercent(100));
+            // .input_wrapper > label：宽 100px、右对齐、vertical-align middle
+            label.textStyle(style -> style.textAlignHorizontal(
+                    com.lowdragmc.lowdraglib2.gui.ui.data.Horizontal.RIGHT)
+                    .textAlignVertical(com.lowdragmc.lowdraglib2.gui.ui.data.Vertical.CENTER));
+            label.layout(layout -> layout.width(LABEL_WIDTH).heightPercent(100).marginRight(4));
             row.addChild(label);
         }
+        UIElement control = control(input);
+        // .input_right：margin-left 4（label 侧）+ 控件宽 calc(100%-110px)（右端余量 6）；
+        // 自高行控件高度由自身决定（heightPercent(100) 与 auto 父行循环依赖）
+        control.layout(layout -> {
+            layout.flex(1).marginRight(input.expandable ? 2 : 6);
+            if (autoHeight && !tall) layout.heightAuto(); else layout.heightPercent(100);
+        });
+        row.addChild(control);
         if (input.expandable) {
-            // InputGroup.vue .input_expand_button（ChevronDown/Up → lucide 图标）
+            // InputGroup.vue .input_expand_button：float right（视觉在行右端，DOM 顺序调整等价）；
+            // 宽 22 + 右余量 6 → expandable 控件宽 calc(100%-134px) as-is
             Button expand = io.github.tt432.eyelib.client.gui.snowstorm.kit.SsIconButton.ghost(
-                    input.expanded ? "chevron-up" : "chevron-down", 10, event -> {
+                    input.expanded ? "chevron-up" : "chevron-down", 20, event -> {
                         input.toggleExpand(); // InputGroup.vue toggleExpand as-is
                         notifyChanged();
                     });
-            expand.layout(layout -> layout.width(12).heightPercent(100));
+            expand.layout(layout -> layout
+                    .width(io.github.tt432.eyelib.client.gui.snowstorm.kit.SsMetrics.EXPAND_BUTTON_WIDTH)
+                    .heightPercent(100)
+                    .marginRight(6));
             row.addChild(expand);
         }
-        UIElement control = control(input);
-        control.layout(layout -> layout.flex(1).heightPercent(100));
-        row.addChild(control);
         return row;
     }
 

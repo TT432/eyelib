@@ -5,7 +5,6 @@ import com.lowdragmc.lowdraglib2.gui.texture.SpriteTexture;
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 import com.lowdragmc.lowdraglib2.gui.ui.data.Horizontal;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.Button;
-import com.lowdragmc.lowdraglib2.gui.ui.elements.Slider;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.Switch;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.TextElement;
 import dev.vfyjxf.taffy.style.AlignItems;
@@ -117,10 +116,9 @@ public final class QuickSetupView extends UIElement {
     private UIElement buildSpriteGroup() {
         UIElement group = groupBlock("Sprite");
 
-        // CC0 许可开关（CreativeCommons 图标 → © 文字占位）
+        // CC0 许可开关（CreativeCommons 图标 20px as-is）
         Button licenseToggle = new Button();
-        licenseToggle.setText(Component.literal("©"))
-                .textStyle(style -> style.fontSize(9).textColor(SnowstormTheme.TEXT_GRAYED))
+        licenseToggle.setText(Component.empty())
                 .buttonStyle(style -> style
                         .baseTexture(com.lowdragmc.lowdraglib2.gui.texture.IGuiTexture.EMPTY)
                         .hoverTexture(new ColorRectTexture(SnowstormTheme.SELECTION))
@@ -129,9 +127,12 @@ public final class QuickSetupView extends UIElement {
                     showSpriteLicense = !showSpriteLicense;
                     rebuild();
                 });
+        licenseToggle.addChild(io.github.tt432.eyelib.client.gui.snowstorm.kit.SsIcon.of("creative-commons", 20));
         licenseToggle.layout(layout -> layout
                 .positionType(dev.vfyjxf.taffy.style.TaffyPosition.ABSOLUTE)
-                .right(8).top(4).width(14).height(12));
+                .right(8).top(4).width(24).height(24)
+                .justifyContent(dev.vfyjxf.taffy.style.AlignContent.CENTER)
+                .alignItems(AlignItems.CENTER));
         group.addChild(licenseToggle);
         if (showSpriteLicense) {
             TextElement license = text(
@@ -171,8 +172,9 @@ public final class QuickSetupView extends UIElement {
                 .widthPercent(100)
                 .flexDirection(FlexDirection.COLUMN));
         group.style(style -> style.backgroundTexture(new ColorRectTexture(SnowstormTheme.INTERFACE)));
-        TextElement header = text(title, SnowstormTheme.TEXT_GRAYED, 10);
-        header.layout(layout -> layout.widthPercent(100).height(12).paddingLeft(12).paddingTop(10));
+        // .input_group h4：padding 10px（左 12）、1.2em、灰字
+        TextElement header = text(title, SnowstormTheme.TEXT_GRAYED, 11);
+        header.layout(layout -> layout.widthPercent(100).height(32).paddingLeft(12).paddingVertical(10));
         group.addChild(header);
         return group;
     }
@@ -186,20 +188,20 @@ public final class QuickSetupView extends UIElement {
                 .gapAll(2));
     }
 
-    /** 预设选项格（80px 宽，选中 bg=--color-bar as-is；lucide 图标 + 标签）。 */
+    /** 预设选项格（80px 宽 padding 8px、图标 38px；选中 bg=--color-bar as-is；hover 字色 highlight）。 */
     private static UIElement optionCell(String iconName, String label, boolean selected, Runnable onClick) {
         UIElement cell = new UIElement().layout(layout -> layout
-                .width(80).height(34)
+                .width(80)
                 .flexDirection(FlexDirection.COLUMN)
                 .alignItems(AlignItems.CENTER)
-                .justifyContent(dev.vfyjxf.taffy.style.AlignContent.CENTER)
-                .gapAll(1));
+                .paddingAll(8)
+                .gapAll(2));
         cell.style(style -> style.backgroundTexture(selected
                 ? new ColorRectTexture(SnowstormTheme.BAR)
                 : com.lowdragmc.lowdraglib2.gui.texture.IGuiTexture.EMPTY));
         cell.addEventListener(com.lowdragmc.lowdraglib2.gui.ui.event.UIEvents.CLICK,
                 event -> onClick.run());
-        cell.addChild(io.github.tt432.eyelib.client.gui.snowstorm.kit.SsIcon.of(iconName, 16));
+        cell.addChild(io.github.tt432.eyelib.client.gui.snowstorm.kit.SsIcon.of(iconName, 38));
         TextElement text = text(label, selected ? SnowstormTheme.HIGHLIGHT : SnowstormTheme.TEXT, 9);
         cell.addChild(text);
         return cell;
@@ -215,7 +217,7 @@ public final class QuickSetupView extends UIElement {
                         .hoverTexture(new ColorRectTexture(SnowstormTheme.SELECTION))
                         .pressedTexture(new ColorRectTexture(SnowstormTheme.SELECTION)));
         cell.setText(Component.empty()); // LDLib2 Button 默认 'Button' 文本，清空防覆盖 sprite 图
-        cell.layout(layout -> layout.width(80).height(64).paddingAll(8));
+        cell.layout(layout -> layout.width(80).height(77).paddingAll(8));
 
         String texture = ClasspathSpriteTextures.sprite(id);
         if (texture != null) {
@@ -228,7 +230,7 @@ public final class QuickSetupView extends UIElement {
             }
             UIElement image = new UIElement().layout(layout -> layout
                     .positionType(dev.vfyjxf.taffy.style.TaffyPosition.ABSOLUTE)
-                    .left(17).top(2).width(45).height(45));
+                    .left(9).top(8).width(45).height(45));
             image.style(style -> style.backgroundTexture(sprite));
             cell.addChild(image);
         }
@@ -254,31 +256,31 @@ public final class QuickSetupView extends UIElement {
     /** .input_bar 滑杆行：label + range + range_number_label（46px as-is）。 */
     private static UIElement sliderBar(String label, double min, double max, double step,
                                        double current, java.util.function.DoubleConsumer onChange) {
+        // .input_bar：margin 10px 14px、gap 8px、align center（column 父级默认 stretch，不写死 100% 防 margin 溢出）
         UIElement bar = new UIElement().layout(layout -> layout
-                .widthPercent(100)
-                .height(14)
+                .height(30)
                 .flexDirection(FlexDirection.ROW)
                 .alignItems(AlignItems.CENTER)
-                .paddingHorizontal(14)
+                .marginHorizontal(14)
                 .gapAll(8)
-                .marginVertical(5));
+                .marginVertical(10));
         TextElement labelElement = text(label, SnowstormTheme.TEXT, 9);
+        labelElement.layout(l -> l.width(net.minecraft.client.Minecraft.getInstance().font.width(label) + 2).height(12));
         bar.addChild(labelElement);
 
         TextElement numberLabel = text(JsSemantics.toJsString(current), SnowstormTheme.TEXT, 9);
         numberLabel.textStyle(style -> style.textAlignHorizontal(Horizontal.CENTER));
         numberLabel.layout(layout -> layout.width(46));
 
-        Slider slider = new Slider.Horizontal();
-        slider.setRange((float) min, (float) max);
-        slider.setValue((float) current, false);
-        slider.setOnValueChanged(value -> {
-            // JS input[type=range] step（0.5/1/0.1）：回调取整对齐
-            double stepped = Math.round(value / step) * step;
-            onChange.accept(stepped);
-            numberLabel.setText(Component.literal(JsSemantics.toJsString(stepped)));
-        });
-        slider.layout(layout -> layout.flex(1).height(12));
+        // common.css input[type=range]：track 4px bar、thumb 20px 圆 accent 边（kit SsSlider）
+        io.github.tt432.eyelib.client.gui.snowstorm.kit.SsSlider slider =
+                new io.github.tt432.eyelib.client.gui.snowstorm.kit.SsSlider(min, max, current, value -> {
+                    // JS input[type=range] step（0.5/1/0.1）：回调取整对齐
+                    double stepped = Math.round(value / step) * step;
+                    onChange.accept(stepped);
+                    numberLabel.setText(Component.literal(JsSemantics.toJsString(stepped)));
+                });
+        slider.layout(layout -> layout.flex(1).height(20));
 
         bar.addChildren(slider, numberLabel);
         return bar;
@@ -288,15 +290,14 @@ public final class QuickSetupView extends UIElement {
     private static UIElement switchBar(String label, boolean current,
                                        java.util.function.Consumer<Boolean> onChange) {
         UIElement bar = new UIElement().layout(layout -> layout
-                .widthPercent(100)
-                .height(14)
+                .height(30)
                 .flexDirection(FlexDirection.ROW)
                 .alignItems(AlignItems.CENTER)
-                .paddingHorizontal(14)
+                .marginHorizontal(14)
                 .gapAll(8)
-                .marginVertical(5));
+                .marginVertical(10));
         TextElement labelElement = text(label, SnowstormTheme.TEXT, 9);
-        labelElement.layout(layout -> layout.flex(1));
+        labelElement.layout(layout -> layout.flex(1).height(12));
         Switch toggle = new Switch();
         toggle.setOn(current, false);
         toggle.setOnSwitchChanged(value -> onChange.accept(value));

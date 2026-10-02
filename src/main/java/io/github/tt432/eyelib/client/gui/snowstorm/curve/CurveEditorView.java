@@ -115,7 +115,9 @@ public class CurveEditorView extends UIElement {
 
     public CurveEditorView(Curve curve) {
         this.curve = curve;
-        layout(l -> l.widthPercent(100).flexDirection(FlexDirection.COLUMN));
+        // .curve：padding-top 12px、padding-bottom 8px
+        layout(l -> l.widthPercent(100).flexDirection(FlexDirection.COLUMN)
+                .paddingTop(12).paddingBottom(8));
 
         display.layout(l -> l.widthPercent(100).height(height + 10));
         display.addEventListener(UIEvents.MOUSE_DOWN, this::onDisplayMouseDown);
@@ -219,7 +221,7 @@ public class CurveEditorView extends UIElement {
             optionsBar.addChild(index);
 
             TextField value = new TextField();
-            value.textFieldStyle(s -> s.fontSize(9));
+            io.github.tt432.eyelib.client.gui.snowstorm.kit.SsTextField.applyTextStyle(value, io.github.tt432.eyelib.client.gui.snowstorm.SnowstormTheme.TEXT);
             value.setText(JsSemantics.toJsString(curve.nodes.get(sel)), false);
             value.setTextResponder(text -> curve.setNode(curve.selected_point, text));
             value.layout(l -> l.flex(1).heightPercent(100));
@@ -311,7 +313,8 @@ public class CurveEditorView extends UIElement {
             removeNode.layout(l -> l.width(24).heightPercent(100));
             optionsBar.addChild(removeNode);
         }
-        optionsBar.layout(l -> l.height(14));
+        // .curve_point_options：label padding 4px 8px + input 30px 高 → 行 30px
+        optionsBar.layout(l -> l.height(30).alignItems(dev.vfyjxf.taffy.style.AlignItems.CENTER));
     }
 
     private Label label(String text) {
@@ -323,7 +326,7 @@ public class CurveEditorView extends UIElement {
 
     private TextField numberField(String initial, java.util.function.Consumer<String> responder) {
         TextField field = new TextField();
-        field.textFieldStyle(s -> s.fontSize(9));
+        io.github.tt432.eyelib.client.gui.snowstorm.kit.SsTextField.applyTextStyle(field, io.github.tt432.eyelib.client.gui.snowstorm.SnowstormTheme.TEXT);
         field.setText(initial, false);
         field.setTextResponder(responder);
         field.layout(l -> l.flex(1).heightPercent(100));
@@ -618,6 +621,19 @@ public class CurveEditorView extends UIElement {
     /** 绘制基元抽象：两版本 GUIContext 均为 drawTexture(IGuiTexture, x, y, w, h)。 */
     private interface Sink {
         void rect(IGuiTexture tex, float x, float y, float w, float h);
+
+        /** CSS border-radius 50% 圆形近似（弦分割 5 条带；Curve.vue .curve_point/.curve_handle_point）。 */
+        default void disc(IGuiTexture tex, float cx, float cy, float r) {
+            // 弦高比例（半宽/半径）: 1.0, 0.95, 0.8, 0.55 —— 5 条带近似圆
+            float[] half = {1.0f, 0.95f, 0.8f, 0.55f};
+            float step = r / half.length;
+            for (int i = 0; i < half.length; i++) {
+                float hw = r * half[i];
+                float y0 = cy - r + i * step;
+                rect(tex, cx - hw, y0, 2 * hw, step);
+                rect(tex, cx - hw, cy + r - (i + 1) * step, 2 * hw, step);
+            }
+        }
     }
 
     private class CurveDisplay extends UIElement {
@@ -771,17 +787,18 @@ public class CurveEditorView extends UIElement {
                 double dotX = chainDotX(node), dotY = valueY(node.left_value);
                 boolean selected = curve.selected_point == i;
                 IGuiTexture tex = selected ? TEX_DOT_SEL : TEX_DOT;
+                // .curve_node .curve_point：8×8（选中 10×10）圆形
                 double r = selected ? 5 : 4;
-                s.rect(tex, (float) (ox + dotX - r), (float) (oy + dotY - r), (float) (2 * r), (float) (2 * r));
+                s.disc(tex, (float) (ox + dotX), (float) (oy + dotY), (float) r);
                 if (hasLeftHandle(i)) {
                     double hx = dotX - HANDLE_OFFSET * Math.cos(Math.atan(node.left_slope));
                     double hy = dotY + HANDLE_OFFSET * Math.sin(Math.atan(node.left_slope));
-                    s.rect(TEX_HANDLE, (float) (ox + hx - 4), (float) (oy + hy - 4), 8, 8);
+                    s.disc(TEX_HANDLE, (float) (ox + hx), (float) (oy + hy), 4);
                 }
                 if (hasRightHandle(i)) {
                     double hx = dotX + HANDLE_OFFSET * Math.cos(Math.atan(node.right_slope));
                     double hy = dotY - HANDLE_OFFSET * Math.sin(Math.atan(node.right_slope));
-                    s.rect(TEX_HANDLE, (float) (ox + hx - 4), (float) (oy + hy - 4), 8, 8);
+                    s.disc(TEX_HANDLE, (float) (ox + hx), (float) (oy + hy), 4);
                 }
                 if (selected || (hoverInside && Math.abs(hoverX - dotX) <= 10 && Math.abs(hoverY - dotY) <= 10)) {
                     String valueText = node.left_value != node.right_value
@@ -803,9 +820,9 @@ public class CurveEditorView extends UIElement {
                 boolean hovered = hoverInside && !isChain() && hoverColumnIndex() == i;
                 IGuiTexture tex = selected ? TEX_DOT_SEL : (hovered ? TEX_DOT_HOVER : TEX_DOT);
                 double r = selected ? 5 : 4;
-                // 点以列中心（非路径 +1）对齐，同 CSS li 内居中
+                // 点以列中心（非路径 +1）对齐，同 CSS li 内居中；CSS 圆形 → disc
                 double cx = xs[i] - 1;
-                s.rect(tex, (float) (ox + cx - r), (float) (oy + ys[i] - r), (float) (2 * r), (float) (2 * r));
+                s.disc(tex, (float) (ox + cx), (float) (oy + ys[i]), (float) r);
                 if (hovered || selected) {
                     s.rect(new TextTexture(JsSemantics.toJsString(v), COLOR_TEXT),
                             (float) (ox + cx + 12), (float) (oy + ys[i] - 8), 0, 0);

@@ -156,8 +156,11 @@ public final class MenuBarView extends UIElement {
         spacer.layout(layout -> layout.flex(1).heightPercent(100));
         addChild(spacer);
 
-        // HelpCircle 按钮（Documentation）：openHelpPanel() → open_help_page(undefined, undefined)
-        addChild(modeButton("?", "help", () -> openHelpPage("", "")));
+        // HelpCircle 按钮（Documentation，图标 20px；mode_selector padding 2px 8px）
+        Button helpButton = io.github.tt432.eyelib.client.gui.snowstorm.kit.SsIconButton.ghost(
+                "help-circle", 20, event -> openHelpPage("", ""));
+        helpButton.layout(layout -> layout.width(36).heightPercent(100));
+        addChild(helpButton);
         addChild(modeButton("Preview", "preview", () -> changeTab("preview")));
         addChild(modeButton("Code", "code", () -> changeTab("code")));
     }
@@ -237,6 +240,11 @@ public final class MenuBarView extends UIElement {
     // 下拉弹层（LDLib2 Menu + TreeBuilder.Menu；JS 为 CSS hover 下拉）
     // ==================================================================
 
+    /** 文本像素宽（MC font 度量 × fontSize/9）。 */
+    private static int textWidth(String label, int fontSize) {
+        return net.minecraft.client.Minecraft.getInstance().font.width(label) * fontSize / 9;
+    }
+
     private UIElement menuButton(String label, Consumer<TreeBuilder.Menu> children) {
         Button button = new Button();
         button.setText(Component.literal(label))
@@ -246,7 +254,8 @@ public final class MenuBarView extends UIElement {
                         .hoverTexture(new ColorRectTexture(SnowstormTheme.BAR))
                         .pressedTexture(new ColorRectTexture(SnowstormTheme.BAR)))
                 .setOnClick(event -> toggleDropdown(button, children));
-        button.layout(layout -> layout.width(48).heightPercent(100));
+        // MenuBar.vue a：padding 2px 12px（padding-top 3px），宽度随文字自适应
+        button.layout(layout -> layout.width(textWidth(label, 10) + 24).heightPercent(100));
         return button;
     }
 
@@ -264,7 +273,8 @@ public final class MenuBarView extends UIElement {
                         .hoverTexture(new ColorRectTexture(SnowstormTheme.INTERFACE))
                         .pressedTexture(new ColorRectTexture(SnowstormTheme.INTERFACE)))
                 .setOnClick(event -> action.run());
-        button.layout(layout -> layout.width("help".equals(tab) ? 24 : 48).heightPercent(100));
+        // .mode_selector padding 2px 8px（padding-top 3px），宽度随文字自适应
+        button.layout(layout -> layout.width(textWidth(label, 10) + 16).heightPercent(100));
         return button;
     }
 

@@ -25,8 +25,16 @@ public interface SsMetrics {
     int HELP_BUTTON_HEIGHT = 32;
     /** .input_group > ul padding: 8px（右 2px）。 */
     int GROUP_BODY_PADDING = 8;
-    /** input/select 高度（common.css：30px；sidebar 实测按 24px 档）。 */
-    int INPUT_HEIGHT = 24;
+    /** input/select 控件高度（common.css：30px）。 */
+    int INPUT_HEIGHT = 30;
+    /** .input_wrapper / .input_list li margin: 2px 0。 */
+    int ROW_MARGIN_V = 2;
+    /** .input_wrapper > label width: 100px（text-align right）。 */
+    int LABEL_WIDTH = 100;
+    /** .tool.input_expand_button width: 22px。 */
+    int EXPAND_BUTTON_WIDTH = 22;
+    /** Form/Checkbox.vue Square/CheckSquare 21×21。 */
+    int CHECKBOX_SIZE = 21;
     /** button padding: 8px 12px。 */
     int BUTTON_PADDING_V = 8;
     int BUTTON_PADDING_H = 12;
@@ -35,7 +43,7 @@ public interface SsMetrics {
     /** slider track 4px / thumb 20px 圆 2px accent 边。 */
     int SLIDER_TRACK_HEIGHT = 4;
     int SLIDER_THUMB_SIZE = 20;
-    /** 图标渲染边长（lucide 24px 网格，MC 侧 12px 显示）。 */
-    int ICON_SIZE = 12;
+    /** lucide 图标默认渲染边长 24px。 */
+    int ICON_SIZE = 24;
 }
 //?}

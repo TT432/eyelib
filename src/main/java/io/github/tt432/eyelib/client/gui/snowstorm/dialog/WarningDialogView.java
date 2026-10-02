@@ -32,54 +32,61 @@ public final class WarningDialogView extends UIElement {
     private static final int BLACKOUT = 0x50000000; // App.vue #dialog_blackout #00000050
 
     private WarningDialogView() {
-        // 全屏 blackout 覆盖层
+        // App.vue #dialog_blackout：全屏半透明黑（#00000050）+ 点击关闭
         layout(layout -> layout
                 .positionType(TaffyPosition.ABSOLUTE)
                 .left(0).top(0).right(0).bottom(0)
-                .flexDirection(FlexDirection.COLUMN)
-                .justifyContent(AlignContent.CENTER)
-                .alignItems(AlignItems.CENTER));
+                .flexDirection(FlexDirection.ROW)
+                .justifyContent(AlignContent.CENTER));
         style(style -> style.backgroundTexture(new ColorRectTexture(BLACKOUT)));
+        addEventListener(com.lowdragmc.lowdraglib2.gui.ui.event.UIEvents.CLICK, event -> removeSelf());
 
         List<SnowstormValidator.Warning> errors = SnowstormValidator.validate();
 
+        // App.vue dialog：宽 800、max-width 100%、top 20 / bottom 20（顶对齐非居中）、
+        // padding 20px 28px、1px solid bar、radius 4、shadow
         UIElement panel = new UIElement().layout(layout -> layout
-                .width(280)
+                .width(800)
+                .maxWidthPercent(100)
+                .marginTop(20)
+                .marginBottom(20)
                 .flexDirection(FlexDirection.COLUMN)
-                .paddingAll(10)
+                .paddingHorizontal(28)
+                .paddingVertical(20)
                 .gapAll(4));
-        panel.style(style -> style.backgroundTexture(new ColorRectTexture(SnowstormTheme.INTERFACE)));
+        panel.style(style -> style.backgroundTexture(
+                com.lowdragmc.lowdraglib2.gui.texture.GuiTextureGroup.of(
+                        new ColorRectTexture(SnowstormTheme.INTERFACE),
+                        new com.lowdragmc.lowdraglib2.gui.texture.ColorBorderTexture(-1, SnowstormTheme.BAR))));
+        panel.addEventListener(com.lowdragmc.lowdraglib2.gui.ui.event.UIEvents.CLICK,
+                event -> event.stopPropagation()); // 面板内点击不关弹层
 
-        // 标题行：h2 + 关闭按钮（JS unicode_icon \u2A09）
+        // 标题行：h2 + 关闭钮（dialog .close_button：absolute top 6 right 6、高 30、✕ 24px）
         UIElement titleBar = new UIElement().layout(layout -> layout
                 .widthPercent(100)
-                .height(14)
-                .flexDirection(FlexDirection.ROW));
-        TextElement title = text("Warnings", SnowstormTheme.HIGHLIGHT, 12);
+                .height(30)
+                .flexDirection(FlexDirection.ROW)
+                .alignItems(AlignItems.CENTER));
+        TextElement title = text("Warnings", SnowstormTheme.HIGHLIGHT, 13);
         title.layout(layout -> layout.flex(1));
-        Button close = new Button();
-        close.setText(Component.literal("⤫"))
-                .textStyle(style -> style.fontSize(9).textColor(SnowstormTheme.TEXT))
-                .buttonStyle(style -> style
-                        .baseTexture(IGuiTexture.EMPTY)
-                        .hoverTexture(new ColorRectTexture(SnowstormTheme.SELECTION))
-                        .pressedTexture(new ColorRectTexture(SnowstormTheme.SELECTION)))
-                .setOnClick(event -> removeSelf());
-        close.layout(layout -> layout.width(14).heightPercent(100));
+        Button close = io.github.tt432.eyelib.client.gui.snowstorm.kit.SsIconButton.ghost(
+                "x", 24, event -> removeSelf());
+        close.layout(layout -> layout.width(30).height(30));
         titleBar.addChildren(title, close);
 
         // JS: There are {{errors.length}} warning {{errors.length == 1 ? 'note' : 'notes'}}:
         TextElement summary = text(
                 "There are " + errors.size() + " warning " + (errors.size() == 1 ? "note" : "notes") + ":",
-                SnowstormTheme.TEXT, 9);
+                SnowstormTheme.TEXT, 10);
         summary.textStyle(style -> style.textAlignHorizontal(Horizontal.LEFT));
 
-        ScrollerView list = new ScrollerView();
-        list.layout(layout -> layout.widthPercent(100).height(Math.min(160, Math.max(20, errors.size() * 14))));
+        ScrollerView list = io.github.tt432.eyelib.client.gui.snowstorm.kit.SsScroller.plain(new ScrollerView());
+        list.layout(layout -> layout.widthPercent(100).flex(1));
         for (SnowstormValidator.Warning warning : errors) {
-            TextElement row = text("• " + warning.text, WARNING_COLOR, 9);
+            // WarningDialog.vue li.warning：list-style inside、padding 10px、#ffc107
+            TextElement row = text("• " + warning.text, WARNING_COLOR, 10);
             row.textStyle(style -> style.textAlignHorizontal(Horizontal.LEFT));
-            row.layout(layout -> layout.widthPercent(100).paddingVertical(4));
+            row.layout(layout -> layout.widthPercent(100).paddingAll(10));
             list.addScrollViewChild(row);
         }
 

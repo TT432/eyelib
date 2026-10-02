@@ -41,7 +41,9 @@ public class EventTimelineView extends UIElement {
 
     public EventTimelineView(Input input) {
         this.input = input;
-        layout(l -> l.widthPercent(100).flexDirection(FlexDirection.COLUMN).gapAll(2));
+        // ul.event_timeline：padding 0 10px、margin-left 20px；has_entries 时 left -11 竖线 6px bar
+        layout(l -> l.widthPercent(100).flexDirection(FlexDirection.COLUMN).gapAll(2)
+                .paddingHorizontal(10).marginLeft(20));
         rebuild();
     }
 
@@ -80,6 +82,14 @@ public class EventTimelineView extends UIElement {
             input.change(EventUiEvents.simple(), null);
         }));
 
+        // ul.event_timeline.has_entries:before：left -11 竖线（宽 6px、bar 底、radius 3）
+        if (!input.timeline.isEmpty()) {
+            UIElement spine = new UIElement();
+            spine.layout(l -> l.positionType(dev.vfyjxf.taffy.style.TaffyPosition.ABSOLUTE)
+                    .left(-11).top(-4).bottom(-2).width(6));
+            spine.style(s -> s.backgroundTexture(new ColorRectTexture(SnowstormTheme.BAR)));
+            addChild(spine);
+        }
         for (Input.TimelineEntry entry : input.timeline) {
             addChild(buildEntry(entry));
         }
@@ -89,19 +99,27 @@ public class EventTimelineView extends UIElement {
         UIElement container = new UIElement();
         container.layout(l -> l.widthPercent(100).flexDirection(FlexDirection.COLUMN).gapAll(2));
 
-        UIElement row = new UIElement();
-        row.layout(l -> l.widthPercent(100).flexDirection(FlexDirection.ROW).gapAll(2));
+        // li::before 节点：16×16 圆（--color-title），left -26px top 7px（绝对定位近似）
+        UIElement node = new UIElement();
+        node.layout(l -> l.positionType(dev.vfyjxf.taffy.style.TaffyPosition.ABSOLUTE)
+                .left(-24).top(7).width(16).height(16));
+        node.style(s -> s.backgroundTexture(new ColorRectTexture(SnowstormTheme.TITLE)));
+        container.addChild(node);
 
-        // 时间数值框：v-model.number entry.time + @input edit('change event timeline') + @blur input.change
+        UIElement row = new UIElement();
+        row.layout(l -> l.widthPercent(100).flexDirection(FlexDirection.ROW).gapAll(6)
+                .marginVertical(2).paddingLeft(2));
+
+        // 时间数值框（ul.event_timeline > li > input：width 69px；控件高 30）
         TextField time = new TextField();
-        time.textFieldStyle(s -> s.fontSize(9));
+        io.github.tt432.eyelib.client.gui.snowstorm.kit.SsTextField.applyTextStyle(time, io.github.tt432.eyelib.client.gui.snowstorm.SnowstormTheme.NUMBER);
         time.setText(JsSemantics.toJsString(entry.time), false);
         time.setTextResponder(text -> {
             entry.time = JsonValues.jsParseFloat(text); // JS v-model.number（空串 quirk 见报告）
             EditHistory.registerEdit("change event timeline", true); // JS edit($event, ...) InputEvent → typing
         });
         time.addEventListener(UIEvents.BLUR, e -> input.change(EventUiEvents.simple(), null));
-        time.layout(l -> l.width(48).height(14));
+        time.layout(l -> l.width(69).height(30));
         row.addChild(time);
 
         // 行内事件列表（label + X / picker 追加）
@@ -110,18 +128,18 @@ public class EventTimelineView extends UIElement {
         for (Object eventObj : entry.event) {
             String id = String.valueOf(eventObj);
             UIElement eventRow = new UIElement();
-            eventRow.layout(l -> l.widthPercent(100).height(14).flexDirection(FlexDirection.ROW));
+            eventRow.layout(l -> l.widthPercent(100).height(22).flexDirection(FlexDirection.ROW));
             TextElement label = new TextElement();
             label.setText(Component.literal(id));
             label.textStyle(s -> s.fontSize(9).textColor(SnowstormTheme.TEXT));
-            label.layout(l -> l.flex(1).heightPercent(100));
+            label.layout(l -> l.flex(1).heightPercent(100).paddingAll(3));
             eventRow.addChild(label);
             Button remove = io.github.tt432.eyelib.client.gui.snowstorm.kit.SsIconButton.ghost(
-                    "x", 8, e -> {
+                    "x", 18, e -> {
                         entry.event.remove(eventObj);
                         input.change(EventUiEvents.simple(), null);
                     });
-            remove.layout(l -> l.width(16).heightPercent(100));
+            remove.layout(l -> l.width(22).heightPercent(100));
             eventRow.addChild(remove);
             eventList.addChild(eventRow);
         }
@@ -131,13 +149,13 @@ public class EventTimelineView extends UIElement {
         }));
         row.addChild(eventList);
 
-        // 删除时间点
+        // 删除时间点（X :size=18，margin-left auto）
         Button removeEntry = io.github.tt432.eyelib.client.gui.snowstorm.kit.SsIconButton.ghost(
-                "x", 8, e -> {
+                "x", 18, e -> {
                     input.timeline.remove(entry);
                     input.change(EventUiEvents.simple(), null);
                 });
-        removeEntry.layout(l -> l.width(16).height(14));
+        removeEntry.layout(l -> l.width(22).height(22).marginTop(2));
         row.addChild(removeEntry);
 
         container.addChild(row);

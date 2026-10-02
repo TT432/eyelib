@@ -1,7 +1,7 @@
 package io.github.tt432.eyelib.client.gui.snowstorm.texture;
 //? if >=1.20.1 {
 
-import com.lowdragmc.lowdraglib2.configurator.ui.ColorConfigurator;
+import com.lowdragmc.lowdraglib2.gui.ui.elements.ColorSelector;
 import com.lowdragmc.lowdraglib2.gui.texture.ColorRectTexture;
 import com.lowdragmc.lowdraglib2.gui.texture.IGuiTexture;
 import com.lowdragmc.lowdraglib2.gui.texture.SpriteTexture;
@@ -50,8 +50,8 @@ import java.util.regex.Pattern;
  *   <li>viewport 滚动条（viewport_scrollbar/slideScrollBar）与 resize_line（slideEditorHeight）
  *       不在本切片范围，未移植；viewport_size 固定 256（JS data 初值）。</li>
  *   <li>触摸屏分支（onTouchStart/convertTouchEvent/pointerType touch 平移）无 MC 对应，剔除。</li>
- *   <li>取色器 overlay 用 LDLib2 {@link ColorConfigurator}（ARGB int ↔ hex8 经 TinyColor 往返），
- *       替代 vue-color Chrome 组件；document 级点击关闭 → 视口 MOUSE_DOWN 关闭（近似）。</li>
+ *   <li>取色器 overlay 内嵌 LDLib2 {@link ColorSelector} 完整面板（饱和度方块+hue/alpha 滑杆+
+ *       hex 输入），对应 vue-color Chrome 组件；document 级点击关闭 → 视口 MOUSE_DOWN 关闭（近似）。</li>
  *   <li>Ctrl+Z/Y 走视口键盘事件（LDLib2 键盘事件路由到焦点元素；JS 为 document 级 +
  *       .texture_input:hover 判定）：视口 MOUSE_DOWN 时 focus()，Ctrl+Z/Y 在焦点态生效。</li>
  *   <li>image_element.naturalWidth ≡ Texture.canvas 宽高（codec 保证同步，TextureBridge）。</li>
@@ -104,8 +104,10 @@ public final class TextureEditorView extends UIElement {
     // ---------------------------------------------------------------- 子元素
 
     private final Viewport viewport = new Viewport();
-    private final ColorRectTexture colorSwatch = new ColorRectTexture(0xFFFFFFFF);
+    private final io.github.tt432.eyelib.client.gui.snowstorm.kit.SsColorSwatch colorSwatch =
+            new io.github.tt432.eyelib.client.gui.snowstorm.kit.SsColorSwatch(0xFFFFFFFF);
     private final UIElement colorOverlay;
+    private ColorSelector colorSelector;
     private final TextElement dimsText = text("");
     private final TextElement cursorText = text("");
     private final TextElement zoomText = text("");
@@ -116,8 +118,10 @@ public final class TextureEditorView extends UIElement {
     private final Button prevFrameButton;
     private final Button nextFrameButton;
     private final List<ToolButton> toolButtons = new ArrayList<>();
-    // 条件可见性缓存（避免每帧 setDisplay 触发 layout dirty）
-    private boolean lastSaveVisible, lastReloadVisible, lastFrameBarVisible, lastOverlayVisible;
+    // 条件可见性缓存（避免每帧 setDisplay 触发 layout dirty）。初值 true 强制首次同步
+    // （实证 2026-10-01：false 初值与「应隐藏」状态相同 → 首次同步被跳过，按钮恒可见）
+    private boolean lastSaveVisible = true, lastFrameBarVisible = true;
+    private boolean lastReloadVisible, lastOverlayVisible;
 
     private TextureEditorView() {
         TextureBridge.install();
@@ -125,52 +129,59 @@ public final class TextureEditorView extends UIElement {
         layout(l -> l.widthPercent(100).flexDirection(FlexDirection.COLUMN).gapAll(2));
 
         // 工具栏（JS .toolbar：5 工具 + undo/redo + 颜色预览）
+        // 工具栏（JS .toolbar：高 34px、margin-top 6px；.tool 宽 40px padding 4px）
         UIElement toolbar = new UIElement()
-                .layout(l -> l.widthPercent(100).height(20).flexDirection(FlexDirection.ROW)
-                        .alignItems(AlignItems.CENTER).gapAll(1));
+                .layout(l -> l.widthPercent(100).height(34).flexDirection(FlexDirection.ROW)
+                        .alignItems(AlignItems.CENTER).gapAll(1).marginTop(6));
         addToolButton(toolbar, "select", "sel", "Select");
         addToolButton(toolbar, "brush", "br", "Brush");
         addToolButton(toolbar, "eraser", "er", "Eraser");
         addToolButton(toolbar, "fill_tool", "fl", "Paint Bucket");
         addToolButton(toolbar, "color_picker", "pk", "Color Picker");
-        undoButton = smallButton("undo", () -> Texture.undo());
-        redoButton = smallButton("redo", () -> Texture.redo());
+        undoButton = smallIconButton("undo", () -> Texture.undo());
+        redoButton = smallIconButton("redo", () -> Texture.redo());
         toolbar.addChildren(undoButton, redoButton);
-        // 颜色预览（JS .color_preview：点击切换取色器 overlay）
-        UIElement swatch = new UIElement()
-                .layout(l -> l.width(18).height(18).marginAll(1))
-                .style(s -> s.backgroundTexture(colorSwatch));
-        swatch.addEventListener(UIEvents.MOUSE_DOWN, event -> {
+        // 颜色预览（JS .color_preview：34×34、1px border、棋盘格底；点击切换取色器 overlay）
+        // 承载件 SsColorSwatch（实证：style/buttonStyle 背景在该深层滚动子树不渲染，自定义绘制可靠）
+        colorSwatch.addEventListener(UIEvents.MOUSE_DOWN, event -> {
             if (event.button == 0) {
                 color_picker_open = !color_picker_open;
                 event.stopPropagation();
             }
         });
-        toolbar.addChild(swatch);
+        toolbar.addChild(colorSwatch);
 
-        // 取色器 overlay（JS #color_picker_overlay，绝对定位右侧）
+        // 取色器 overlay（JS #color_picker_overlay：absolute right 0；vc-chrome 宽 310px）
         colorOverlay = new UIElement()
-                .layout(l -> l.positionType(TaffyPosition.ABSOLUTE).right(0).top(22).width(120));
+                .layout(l -> l.positionType(TaffyPosition.ABSOLUTE).right(0).top(40).width(310));
+        // JS v-show="color_picker_open"（初值 false）→ 初始隐藏（实证 2026-10-01：缓存初值
+        // 与状态同 false 导致首次同步被跳过，默认可见的 overlay 把 hue 条画在工具栏下方）
+        colorOverlay.setDisplay(false);
         colorOverlay.style(s -> s.backgroundTexture(new ColorRectTexture(SnowstormTheme.INTERFACE)));
-        colorOverlay.addChild(new ColorConfigurator("",
-                this::getPaintColorArgb, this::setPaintColorArgb, 0xFFFFFFFF, true)
-                .layout(l -> l.widthPercent(100)));
+        // 内嵌完整取色器（JS vc-chrome 内联面板；LDLib2 ColorConfigurator 仅是预览条+点击弹层，
+        // 内嵌会塌缩成单条滑杆，实证 2026-10-02，故直接用 ColorSelector）
+        colorSelector = new ColorSelector();
+        colorSelector.setColor(getPaintColorArgb());
+        colorSelector.registerValueListener(this::setPaintColorArgb);
+        colorOverlay.addChild(colorSelector.layout(l -> l.widthPercent(100)));
 
         // 信息栏（JS .texture_info_bar）
         UIElement infoBar = new UIElement()
-                .layout(l -> l.widthPercent(100).height(12).flexDirection(FlexDirection.ROW)
+                .layout(l -> l.widthPercent(100).height(22).flexDirection(FlexDirection.ROW)
                         .alignItems(AlignItems.CENTER).gapAll(2));
         dimsText.layout(l -> l.flex(1));
         cursorText.layout(l -> l.flex(1));
         zoomText.layout(l -> l.flex(1));
-        prevFrameButton = smallButton("<", () -> moveByFrame(-1));
-        nextFrameButton = smallButton(">", () -> moveByFrame(1));
+        // 帧切换/居中（JS ArrowBigLeft/Right、Maximize 图标 20px）
+        prevFrameButton = smallIconButton("arrow-big-left", () -> moveByFrame(-1));
+        nextFrameButton = smallIconButton("arrow-big-right", () -> moveByFrame(1));
         infoBar.addChildren(dimsText, cursorText, zoomText, prevFrameButton, nextFrameButton,
                 smallIconButton("maximize", this::maximizeViewport));
 
         // meta 工具栏（JS .meta.toolbar：reset / reload / new / save）
         UIElement metaBar = new UIElement()
-                .layout(l -> l.widthPercent(100).height(16).flexDirection(FlexDirection.ROW).gapAll(1));
+                .layout(l -> l.widthPercent(100).height(34).flexDirection(FlexDirection.ROW).gapAll(1)
+                        .alignItems(AlignItems.CENTER));
         metaBar.addChild(smallIconButton("x", this::onReset));
         reloadButton = smallIconButton("refresh-ccw", this::onReload);
         metaBar.addChild(reloadButton);
@@ -217,19 +228,20 @@ public final class TextureEditorView extends UIElement {
     /** 工具 id → lucide 图标名（TextureInput.vue 工具栏 as-is）。 */
     private static final java.util.Map<String, String> TOOL_ICONS = java.util.Map.of(
             "select", "mouse-pointer",
-            "brush", "paintbrush",
+            "brush", "brush",
             "eraser", "eraser",
             "fill_tool", "paint-bucket",
             "color_picker", "pipette");
 
     private void addToolButton(UIElement parent, String toolId, String label, String tooltip) {
+        // TextureInput.vue .tool：宽 40px padding 4px、图标 24px
         Button button = io.github.tt432.eyelib.client.gui.snowstorm.kit.SsIconButton.ghost(
-                TOOL_ICONS.getOrDefault(toolId, "help-circle"), 10, event -> {
+                TOOL_ICONS.getOrDefault(toolId, "help-circle"), 24, event -> {
                     // JS selectTool(tool)
                     this.tool = toolId;
                     updateToolSelection();
                 });
-        button.layout(l -> l.width(18).height(14));
+        button.layout(l -> l.width(40).heightPercent(100));
         toolButtons.add(new ToolButton(toolId, button));
         parent.addChild(button);
     }
@@ -258,14 +270,14 @@ public final class TextureEditorView extends UIElement {
         return button;
     }
 
-    /** 图标小按钮（kit SsIconButton ghost 形态 + 尺寸）。 */
+    /** 图标按钮（.tool 形态：图标 20px、padding 4px）。 */
     private Button smallIconButton(String lucideName, Runnable onClick) {
         Button button = io.github.tt432.eyelib.client.gui.snowstorm.kit.SsIconButton.ghost(
-                lucideName, 10, event -> onClick.run());
+                lucideName, 20, event -> onClick.run());
         button.buttonStyle(s -> s
-                .baseTexture(new ColorRectTexture(SnowstormTheme.BAR))
-                .hoverTexture(new ColorRectTexture(SnowstormTheme.TITLE)));
-        button.layout(l -> l.width(18).height(14));
+                .baseTexture(IGuiTexture.EMPTY)
+                .hoverTexture(new ColorRectTexture(SnowstormTheme.BAR)));
+        button.layout(l -> l.width(28).heightPercent(100));
         return button;
     }
 
@@ -297,6 +309,8 @@ public final class TextureEditorView extends UIElement {
         paint_color = String.format("#%02x%02x%02x%02x",
                 (argb >>> 16) & 0xFF, (argb >>> 8) & 0xFF, argb & 0xFF, (argb >>> 24) & 0xFF);
         colorSwatch.setColor(argb);
+        // 外部变更（如画布取色）回同步取色器；false=不再通知，避免与 registerValueListener 环回
+        if (colorSelector != null && colorSelector.getColor() != argb) colorSelector.setColor(argb, false);
     }
 
     // ---------------------------------------------------------------- meta 按钮（JS 方法 as-is）
@@ -323,15 +337,17 @@ public final class TextureEditorView extends UIElement {
     private void openNewTextureDialog() {
         Dialog dialog = new Dialog().setTitle("New Texture").setClickOutsideClose(true);
         TextField widthField = new TextField();
-        widthField.setNumbersOnlyInt(1, 4096);
+        io.github.tt432.eyelib.client.gui.snowstorm.kit.SsTextField.applyTextStyle(widthField, SnowstormTheme.NUMBER);
         widthField.setText(String.valueOf(new_texture_size[0]), false);
-        widthField.layout(l -> l.width(48).height(14));
+        widthField.layout(l -> l.width(48).height(30));
         TextField heightField = new TextField();
         heightField.setNumbersOnlyInt(1, 4096);
-        heightField.setText(String.valueOf(new_texture_size[1]), false);
-        heightField.layout(l -> l.width(48).height(14));
+        io.github.tt432.eyelib.client.gui.snowstorm.kit.SsTextField.applyTextStyle(heightField, SnowstormTheme.NUMBER);
+        heightField.layout(l -> l.width(48).height(30));
+        // .modal_dialog .form_bar：space-between、gap 8px
         UIElement form = new UIElement()
-                .layout(l -> l.widthPercent(100).flexDirection(FlexDirection.ROW).gapAll(2).paddingAll(2));
+                .layout(l -> l.widthPercent(100).flexDirection(FlexDirection.ROW).gapAll(8)
+                        .paddingAll(12).alignItems(AlignItems.CENTER));
         form.addChildren(text("W"), widthField, text("H"), heightField);
         dialog.addContent(form);
         // JS newTextureConfirm()：读 new_texture_size → Texture.createEmpty
@@ -844,8 +860,8 @@ public final class TextureEditorView extends UIElement {
         /** 共享填色纹理（drawTexture 立即绘制，帧内串行复用安全；26.1 无 vanilla GuiGraphics，
          *  实心矩形一律走 drawTexture(ColorRectTexture) 版本稳定 API，同 BadgeOverlay 先例）。 */
         private final ColorRectTexture fillTexture = new ColorRectTexture(0xFFFFFFFF);
-        private final ColorRectTexture checkerLight = new ColorRectTexture(0xFF6B6B6B);
-        private final ColorRectTexture checkerDark = new ColorRectTexture(0xFF454545);
+        private final ColorRectTexture checkerLight = new ColorRectTexture(SnowstormTheme.INTERFACE);
+        private final ColorRectTexture checkerDark = new ColorRectTexture(SnowstormTheme.BAR);
 
         private void fillRect(com.lowdragmc.lowdraglib2.gui.ui.rendering.GUIContext guiContext,
                               float x0, float y0, float x1, float y1, int color) {

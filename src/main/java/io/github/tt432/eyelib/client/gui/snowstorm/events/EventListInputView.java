@@ -62,19 +62,24 @@ public class EventListInputView extends UIElement {
         List<Object> values = values();
         for (Object value : values) {
             String id = String.valueOf(value);
+            // .event_list_event：chip 高 30、padding 4px 13px、radius 5、bar 底、阴影
             UIElement row = new UIElement();
-            row.layout(l -> l.widthPercent(100).height(14).flexDirection(FlexDirection.ROW));
+            row.layout(l -> l.widthPercent(100).height(30).flexDirection(FlexDirection.ROW)
+                    .marginAll(2).paddingHorizontal(13).paddingVertical(4)
+                    .alignItems(dev.vfyjxf.taffy.style.AlignItems.CENTER));
+            row.style(s -> s.backgroundTexture(new ColorRectTexture(SnowstormTheme.BAR)));
             TextElement label = new TextElement();
             label.setText(Component.literal(id));
             label.textStyle(s -> s.fontSize(9).textColor(SnowstormTheme.TEXT));
-            label.layout(l -> l.flex(1).heightPercent(100));
+            label.layout(l -> l.flex(1));
             row.addChild(label);
+            // X :size=18
             Button remove = io.github.tt432.eyelib.client.gui.snowstorm.kit.SsIconButton.ghost(
-                    "x", 8, e -> {
+                    "x", 18, e -> {
                         values.remove(value);
                         input.change(EventUiEvents.simple(), null);
                     });
-            remove.layout(l -> l.width(16).heightPercent(100));
+            remove.layout(l -> l.width(22).heightPercent(100));
             row.addChild(remove);
             addChild(row);
         }

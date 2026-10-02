@@ -67,14 +67,27 @@ public final class ExpressionBarView extends UIElement implements Input.Expressi
     private boolean suppressResponder;
 
     public ExpressionBarView() {
-        layout(layout -> layout.widthPercent(100));
+        // ExpressionBar.vue #expression_bar：padding 5px 8px、border-bottom 1px var(--color-border)
+        layout(layout -> layout.widthPercent(100)
+                .flexDirection(dev.vfyjxf.taffy.style.FlexDirection.COLUMN)
+                .paddingHorizontal(8).paddingTop(5));
         style(style -> style.backgroundTexture(new ColorRectTexture(SnowstormTheme.DARK)));
 
         textField = new TextField();
-        textField.layout(layout -> layout.widthPercent(100).height(14).marginAll(3));
+        textField.layout(layout -> layout.widthPercent(100).flex(1).marginBottom(4));
+        // prism-editor 无占位文案（JS data code: ''）；LDLib2 默认 placeholder「Empty」清空，
+        // 默认输入框底纹去除（#expression_bar 背景即 DARK，编辑器无自身底框）
+        io.github.tt432.eyelib.client.gui.snowstorm.kit.SsTextField.applyTextStyle(textField,
+                SnowstormTheme.TEXT);
+        textField.style(style -> style.backgroundTexture(com.lowdragmc.lowdraglib2.gui.texture.IGuiTexture.EMPTY));
         // ExpressionBar.vue: @input="updateInput($event, true)"
         textField.setTextResponder(this::onBarInput);
         addChild(textField);
+
+        // border-bottom 1px solid var(--color-border)
+        UIElement bottomBorder = new UIElement().layout(l -> l.widthPercent(100).height(1));
+        bottomBorder.style(s -> s.backgroundTexture(new ColorRectTexture(SnowstormTheme.BORDER)));
+        addChild(bottomBorder);
     }
 
     // ==================================================================

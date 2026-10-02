@@ -69,7 +69,14 @@ public class EventSubpartView extends UIElement {
 
     public EventSubpartView(EventSubpart subpart) {
         this.subpart = subpart;
-        layout(l -> l.widthPercent(100).flexDirection(FlexDirection.COLUMN));
+        // .event_subpart：border-left 5px var(--color-bar) + padding-left 12px + 上下 8px
+        layout(l -> l.widthPercent(100).flexDirection(FlexDirection.COLUMN)
+                .paddingLeft(12 + 5).paddingVertical(8));
+        UIElement leftBorder = new UIElement().layout(l -> l
+                .positionType(dev.vfyjxf.taffy.style.TaffyPosition.ABSOLUTE)
+                .left(0).top(0).bottom(0).width(5));
+        leftBorder.style(s -> s.backgroundTexture(new ColorRectTexture(SnowstormTheme.BAR)));
+        addChild(leftBorder);
         rebuild();
     }
 
@@ -186,7 +193,7 @@ public class EventSubpartView extends UIElement {
         // Identifier 行：文本框 + 文件按钮组（JS v-if 条件 as-is）
         UIElement identifierRow = new UIElement();
         identifierRow.layout(l -> l.widthPercent(100).flexDirection(FlexDirection.ROW).gapAll(2));
-        identifierRow.addChild(label("Identifier", 52));
+        identifierRow.addChild(label("Identifier", 95));
         TextField identifier = numberField(particle.effect, "space:name", text -> {
             particle.effect = text;
             subpart.modifyEvent(null, "text");
@@ -219,7 +226,7 @@ public class EventSubpartView extends UIElement {
         if (newParticleFormOpen) {
             UIElement form = new UIElement();
             form.layout(l -> l.widthPercent(100).flexDirection(FlexDirection.ROW).gapAll(2));
-            form.addChild(label("Identifier", 52));
+            form.addChild(label("Identifier", 95));
             TextField newId = numberField(particle.effect, "space:name", text -> {
             });
             newId.layout(l -> l.flex(1).heightPercent(100));
@@ -239,14 +246,14 @@ public class EventSubpartView extends UIElement {
         // Type 行（emitter_type_options 4 种下拉）
         UIElement typeRow = new UIElement();
         typeRow.layout(l -> l.widthPercent(100).flexDirection(FlexDirection.ROW).gapAll(2));
-        typeRow.addChild(label("Type", 52));
+        typeRow.addChild(label("Type", 95));
         typeRow.addChild(typeDropdown(particle));
         section.addChild(typeRow);
 
         // Expression 行（pre_effect_expression）
         UIElement expressionRow = new UIElement();
         expressionRow.layout(l -> l.widthPercent(100).flexDirection(FlexDirection.ROW).gapAll(2));
-        expressionRow.addChild(label("Expression", 52));
+        expressionRow.addChild(label("Expression", 95));
         TextField preExpression = numberField(particle.pre_effect_expression, "", text -> {
             particle.pre_effect_expression = text;
             subpart.modifyEvent(null, "text");
@@ -304,7 +311,7 @@ public class EventSubpartView extends UIElement {
         section.addChild(descriptorBar("Sound", subpart::disableSoundSection));
         UIElement row = new UIElement();
         row.layout(l -> l.widthPercent(100).flexDirection(FlexDirection.ROW).gapAll(2));
-        row.addChild(label("Sound Event", 52));
+        row.addChild(label("Sound Event", 95));
         TextField name = numberField(sound.event_name, "block.bamboo.hit", text -> {
             sound.event_name = text;
             subpart.modifyEvent(null, "text");
@@ -375,14 +382,15 @@ public class EventSubpartView extends UIElement {
     // 小部件工厂
     // ==================================================================
 
-    /** 节标题条（descriptor 标签 + 可选禁用 X）。 */
+    /** 节标题条（.section_bar：margin 8/4、无背景；.descriptor_label 灰字）。 */
     private UIElement descriptorBar(String title, @Nullable Runnable onDisable) {
         UIElement bar = new UIElement();
-        bar.layout(l -> l.widthPercent(100).height(14).flexDirection(FlexDirection.ROW));
-        bar.style(s -> s.backgroundTexture(new ColorRectTexture(SnowstormTheme.BAR)));
+        bar.layout(l -> l.widthPercent(100).height(24).flexDirection(FlexDirection.ROW)
+                .marginTop(8).marginBottom(4)
+                .alignItems(dev.vfyjxf.taffy.style.AlignItems.CENTER));
         TextElement label = new TextElement();
         label.setText(Component.literal(title));
-        label.textStyle(s -> s.fontSize(9).textColor(SnowstormTheme.TEXT_GRAYED));
+        label.textStyle(s -> s.fontSize(10).textColor(SnowstormTheme.TEXT_GRAYED));
         label.layout(l -> l.flex(1).heightPercent(100));
         bar.addChild(label);
         if (onDisable != null) {
@@ -395,11 +403,13 @@ public class EventSubpartView extends UIElement {
     private UIElement optionHeader(String grip, String labelText, @Nullable TextField extraField,
                                    Runnable onRemove, Object dragToken, int index) {
         UIElement header = new UIElement();
-        header.layout(l -> l.widthPercent(100).height(14).flexDirection(FlexDirection.ROW).gapAll(2));
+        // .header_bar：flex gap 8px；含 30px 高 input
+        header.layout(l -> l.widthPercent(100).height(30).flexDirection(FlexDirection.ROW).gapAll(8)
+                .alignItems(dev.vfyjxf.taffy.style.AlignItems.CENTER));
         Button gripButton = io.github.tt432.eyelib.client.gui.snowstorm.kit.SsIconButton.ghost(
-                grip, 10, e -> {
+                grip, 20, e -> {
                 });
-        gripButton.layout(l -> l.width(12).heightPercent(100));
+        gripButton.layout(l -> l.width(24).heightPercent(100));
         gripButton.addEventListener(UIEvents.MOUSE_DOWN, e -> {
             if (e.button != 0) return;
             dragKind = dragToken;
@@ -425,11 +435,12 @@ public class EventSubpartView extends UIElement {
         button.setText(Component.literal("+ " + title))
                 .textStyle(s -> s.fontSize(9).textColor(SnowstormTheme.TEXT_GRAYED))
                 .buttonStyle(s -> s
-                        .baseTexture(new ColorRectTexture(SnowstormTheme.DARK))
-                        .hoverTexture(new ColorRectTexture(SnowstormTheme.INTERFACE)))
+                        .baseTexture(new com.lowdragmc.lowdraglib2.gui.texture.ColorBorderTexture(-1, SnowstormTheme.BAR))
+                        .hoverTexture(new com.lowdragmc.lowdraglib2.gui.texture.GuiTextureGroup(
+                                new ColorRectTexture(SnowstormTheme.DARK),
+                                new com.lowdragmc.lowdraglib2.gui.texture.ColorBorderTexture(-1, SnowstormTheme.BAR))))
                 .setOnClick(e -> onClick.run());
-        button.layout(l -> l.widthPercent(100).height(14));
-        button.style(s -> s.tooltips(title));
+        button.layout(l -> l.widthPercent(100).height(26).marginVertical(2));
         return button;
     }
 
@@ -465,21 +476,25 @@ public class EventSubpartView extends UIElement {
         return button;
     }
 
+    /** .input_wrapper > label：右对齐、margin 3px 0；宽由调用方给（95px as-is）。 */
     private TextElement label(String text, int width) {
         TextElement label = new TextElement();
         label.setText(Component.literal(text));
-        label.textStyle(s -> s.fontSize(9).textColor(SnowstormTheme.TEXT));
-        label.layout(l -> l.width(width).heightPercent(100));
+        label.textStyle(s -> s.fontSize(9).textColor(SnowstormTheme.TEXT)
+                .textAlignHorizontal(com.lowdragmc.lowdraglib2.gui.ui.data.Horizontal.RIGHT));
+        label.layout(l -> l.width(width).heightPercent(100).marginVertical(3));
         return label;
     }
 
     private TextField numberField(String initial, @Nullable String placeholder,
                                   java.util.function.Consumer<String> responder) {
         TextField field = new TextField();
-        field.textFieldStyle(s -> {
-            s.fontSize(9);
-            if (placeholder != null) s.placeholder(Component.literal(placeholder));
-        });
+        io.github.tt432.eyelib.client.gui.snowstorm.kit.SsTextField.applyTextStyle(field,
+                io.github.tt432.eyelib.client.gui.snowstorm.SnowstormTheme.NUMBER);
+        if (placeholder != null) {
+            com.lowdragmc.lowdraglib2.gui.ui.Style.importantPipeline(field.getTextFieldStyle(),
+                    s -> s.placeholder(Component.literal(placeholder)));
+        }
         field.setText(initial, false);
         field.setTextResponder(responder);
         return field;

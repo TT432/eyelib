@@ -22,10 +22,11 @@ import io.github.tt432.eyelib.snowstorm.input.InputStructure;
 public class CurveAddButton extends UIElement {
 
     private static final IGuiTexture TEX_BORDER = new ColorRectTexture(0xFF34404A); // --color-bar
-    private static final IGuiTexture TEX_HOVER = new ColorRectTexture(0xFF232B32);  // --color-dark 近似
+    private static final IGuiTexture TEX_HOVER = new ColorRectTexture(0xFF20272D);  // --color-dark as-is
 
     public CurveAddButton() {
-        layout(l -> l.widthPercent(100).height(24));
+        // ListAddButton.vue：padding 2px + 图标 20px + 1px 边框 → 高 ≈26
+        layout(l -> l.widthPercent(100).height(26));
         addEventListener(UIEvents.MOUSE_DOWN, e -> {
             if (!isHover() || e.button != 0) return;
             java.util.Objects.requireNonNull(java.util.Objects.requireNonNull(

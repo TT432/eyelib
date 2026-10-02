@@ -50,7 +50,15 @@ public final class NumberInputView extends UIElement {
 
     static TextField field(Input input, int axis, @Nullable Object value) {
         TextField field = new TextField();
-        field.textFieldStyle(style -> style.fontSize(9));
+        // common.css input[type=number]：色 #b99cff；1px border var(--color-border)
+        io.github.tt432.eyelib.client.gui.snowstorm.kit.SsTextField.applyTextStyle(field,
+                io.github.tt432.eyelib.client.gui.snowstorm.SnowstormTheme.NUMBER);
+        field.style(style -> style.backgroundTexture(
+                com.lowdragmc.lowdraglib2.gui.texture.GuiTextureGroup.of(
+                        new com.lowdragmc.lowdraglib2.gui.texture.ColorRectTexture(
+                                io.github.tt432.eyelib.client.gui.snowstorm.SnowstormTheme.DARK),
+                        new com.lowdragmc.lowdraglib2.gui.texture.ColorBorderTexture(-1,
+                                io.github.tt432.eyelib.client.gui.snowstorm.SnowstormTheme.BORDER))));
         field.setText(value != null ? JsSemantics.toJsString(value) : "", false);
         field.setTextResponder(text -> {
             if (axis < 0) {

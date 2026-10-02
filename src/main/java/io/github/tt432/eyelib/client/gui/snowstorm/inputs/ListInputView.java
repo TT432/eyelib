@@ -6,6 +6,7 @@ import com.lowdragmc.lowdraglib2.gui.ui.elements.Button;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.TextField;
 import dev.vfyjxf.taffy.style.FlexDirection;
 import io.github.tt432.eyelib.client.gui.snowstorm.SnowstormTheme;
+import io.github.tt432.eyelib.client.gui.snowstorm.kit.SsMetrics;
 import io.github.tt432.eyelib.snowstorm.input.Input;
 import io.github.tt432.eyelib.wintersky.molang.JsSemantics;
 import net.minecraft.network.chat.Component;
@@ -45,42 +46,44 @@ public final class ListInputView extends UIElement {
 
     private void rebuild() {
         clearAllChildren();
-        // JS .list_add_tool（＋，U+FF0B）
+        // JS .list_add_tool：内联小钮（.tool 宽 35px padding 2px 0，unicode ＋ 18pt）
         Button add = new Button();
         add.setText(Component.literal("＋"))
-                .textStyle(style -> style.fontSize(9).textColor(SnowstormTheme.TEXT_GRAYED))
+                .textStyle(style -> style.fontSize(14).textColor(SnowstormTheme.TEXT_GRAYED))
                 .setOnClick(event -> {
                     values().add(""); // as-is quirk：push 不调 change()
                     rebuild();
                     InputViewFactory.notifyChanged();
                 });
-        add.layout(layout -> layout.widthPercent(100).height(10));
+        add.layout(layout -> layout.width(35).height(30).marginVertical(SsMetrics.ROW_MARGIN_V));
         addChild(add);
 
         List<Object> values = values();
         for (int i = 0; i < values.size(); i++) {
             final int index = i;
             final Object item = values.get(i);
+            // .input_list li：margin 2px 0、控件 30px
             UIElement row = new UIElement().layout(layout -> layout
                     .widthPercent(100)
-                    .height(InputViewFactory.ROW_HEIGHT)
+                    .height(SsMetrics.INPUT_HEIGHT)
+                    .marginVertical(SsMetrics.ROW_MARGIN_V)
                     .flexDirection(FlexDirection.ROW)
                     .gapAll(2));
             TextField field = input.type == io.github.tt432.eyelib.snowstorm.input.InputType.NUMBER
                     ? NumberInputView.field(input, index, item)
                     : MolangTextInputView.field(input, index, item);
             row.addChild(field);
-            // JS 删除工具（✕，U+2A09）：remove(item) + change
+            // JS 删除工具（✕，U+2A09；.input_list li .tool 宽 24px 高 30px）
             Button remove = new Button();
             remove.setText(Component.literal("✕"))
-                    .textStyle(style -> style.fontSize(8).textColor(SnowstormTheme.TEXT_GRAYED))
+                    .textStyle(style -> style.fontSize(12).textColor(SnowstormTheme.TEXT_GRAYED))
                     .setOnClick(event -> {
                         values().remove(item); // JS Array.prototype.remove（按值删首个）
                         input.change(InputUiEvents.simpleEvent());
                         rebuild();
                         InputViewFactory.notifyChanged();
                     });
-            remove.layout(layout -> layout.width(10).heightPercent(100));
+            remove.layout(layout -> layout.width(24).heightPercent(100));
             row.addChild(remove);
             addChild(row);
         }

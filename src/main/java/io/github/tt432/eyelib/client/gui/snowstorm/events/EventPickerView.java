@@ -47,11 +47,15 @@ public class EventPickerView extends UIElement {
         picker.blacklist = blacklist;
 
         layout(l -> l.flexDirection(FlexDirection.COLUMN));
-        // lucide 图标（replace=Zap / 追加=Plus，as-is）
+        // lucide 图标（replace=Zap / 追加=Plus，as-is）；.tool 宽 35px
         button = io.github.tt432.eyelib.client.gui.snowstorm.kit.SsIconButton.bar(
-                replace ? "zap" : "plus", 10, e -> toggleMenu());
-        button.layout(l -> l.width(22).height(14));
-        list.layout(l -> l.widthPercent(100).flexDirection(FlexDirection.COLUMN));
+                replace ? "zap" : "plus", 20, e -> toggleMenu());
+        button.layout(l -> l.width(35).height(30));
+        // .list：宽 200px、max-height 200px、dark 底、1px border、radius 2
+        list.layout(l -> l.width(200).maxHeight(200).flexDirection(FlexDirection.COLUMN));
+        list.style(s -> s.backgroundTexture(com.lowdragmc.lowdraglib2.gui.texture.GuiTextureGroup.of(
+                new ColorRectTexture(SnowstormTheme.DARK),
+                new com.lowdragmc.lowdraglib2.gui.texture.ColorBorderTexture(-1, SnowstormTheme.BORDER))));
         addChildren(button, list);
     }
 
@@ -76,13 +80,15 @@ public class EventPickerView extends UIElement {
         }
         for (String id : ids) {
             Button item = new Button();
-            item.setText(Component.literal("⚡ " + id))
-                    .textStyle(s -> s.fontSize(9).textColor(SnowstormTheme.TEXT))
+            // .list > li：高 32px、padding 4px 9px、hover interface 底
+            item.setText(Component.literal(id))
+                    .textStyle(s -> s.fontSize(9).textColor(SnowstormTheme.TEXT)
+                            .textAlignHorizontal(com.lowdragmc.lowdraglib2.gui.ui.data.Horizontal.LEFT))
                     .buttonStyle(s -> s
-                            .baseTexture(new ColorRectTexture(SnowstormTheme.DARK))
+                            .baseTexture(IGuiTexture.EMPTY)
                             .hoverTexture(new ColorRectTexture(SnowstormTheme.INTERFACE)))
                     .setOnClick(e -> selectEntry(id));
-            item.layout(l -> l.widthPercent(100).height(14));
+            item.layout(l -> l.widthPercent(100).height(32).paddingHorizontal(9).paddingVertical(4));
             list.addChild(item);
         }
     }
