@@ -312,3 +312,14 @@ client/gui/snowstorm/
   ".png"。② 外部 decode 只填充领域层 RasterCanvas，GPU 侧常驻 DynamicTexture 不更新
   （NativeImage 停 16×16 初值）——解码成功即 ensureImage 写像素 + upload。
   复验：vanilla 粒子图集 128×128 完整显示，UV 框定位正确。
+- 实机暴露并修复（2026-10-02 窗口/guiScale 变化级联损坏，用户报告贴图编辑器
+  错位/工具栏消失）：guiScale>1 时 LDLib2 ScrollerView 级联损坏——viewPort 0x0
+  坍塌、isCulled 错位（元素矩形与 scissorStack 空间不一致）、滚动偏移残留旧几何
+  （滚动条 value=0 而内容上移盖住固定 UI）。局部归位（重写重要级 top）不可穷尽
+  且有样式副作用，最终两道防线：① 编辑器存续期间锁定 guiScale=1（open() 保存
+  原值、onClose/removed 双路径恢复——setScreen 替换只走 removed() 不走 onClose()，
+  必须 removed() 兜底）；全部视觉指标本就按 scale 1 像素设计，与原版固定 px 密度
+  一致。② 窗口尺寸变化防抖 300ms 整树重开（open() 幂等，subject 经 pendingSubjectKey
+  恢复，项目数据在 EditorRuntime 不受影响）。排查陷阱：clientsmoke 会把窗口图标化
+  （GLFW 报 0×0），图标化下 glfwSetWindowSize 无效且渲染状态可疑——验证窗口操作前
+  先 glfwRestoreWindow 确认非图标化。

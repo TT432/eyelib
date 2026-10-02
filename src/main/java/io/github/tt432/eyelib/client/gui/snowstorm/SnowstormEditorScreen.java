@@ -51,6 +51,48 @@ public final class SnowstormEditorScreen extends ModularUIScreen {
         super(ui, Component.literal("Snowstorm"));
         this.stageView = stageView;
     }
+    /** 窗口/guiScale 变化时间戳（防抖重开用；-1 = 无待处理）。 */
+    private long lastResizeMs = -1;
+    private final long createdAtMs = System.currentTimeMillis();
+
+    /** 重开后待恢复的 subject（open() 构建 Sidebar 后消费一次）。 */
+    private static @org.jspecify.annotations.Nullable String pendingSubjectKey;
+    /** 编辑器打开前的用户 guiScale（-2 = 未保存/无需恢复；见 open() 锁定逻辑）。 */
+    private static int savedGuiScale = -2;
+
+    @Override
+    public void resize(Minecraft minecraft, int width, int height) {
+        super.resize(minecraft, width, height);
+        // 打开后 1s 内的 resize 是初始化序列的一部分，不触发重开
+        if (System.currentTimeMillis() - createdAtMs > 1000) {
+            lastResizeMs = System.currentTimeMillis();
+        }
+    }
+
+    @Override
+    public void tick() {
+        super.tick();
+        // 实证 2026-10-02：LDLib2 滚动容器内部几何（viewPort/viewContainer 尺寸与滚动偏移）
+        // 在窗口/guiScale 变化后残留旧值（滚动条 value=0 而内容上移盖住固定 UI、内容宽度
+        // 停滞在旧 sidebar 宽度致子元素被错误裁剪）——局部归位不可穷尽，防抖 300ms 后
+        // 整树重开（open() 幂等；项目数据在 EditorRuntime 不受影响；sidebarWidth 静态保留）
+        if (lastResizeMs > 0 && System.currentTimeMillis() - lastResizeMs > 300) {
+            lastResizeMs = -1;
+            String subjectKey = null;
+            java.util.Deque<com.lowdragmc.lowdraglib2.gui.ui.UIElement> stack = new java.util.ArrayDeque<>();
+            stack.push(modularUI.ui.rootElement);
+            while (!stack.isEmpty()) {
+                var el = stack.pop();
+                if (el instanceof io.github.tt432.eyelib.client.gui.snowstorm.SidebarView sv) {
+                    subjectKey = sv.selectedSubjectKey();
+                    break;
+                }
+                for (var c : el.getChildren()) stack.push((com.lowdragmc.lowdraglib2.gui.ui.UIElement) c);
+            }
+            pendingSubjectKey = subjectKey;
+            open();
+        }
+    }
 
     /** {@link SnowstormEditorGate#openEditor()} 的反射入口。 */
     public static void open() {
@@ -62,6 +104,18 @@ public final class SnowstormEditorScreen extends ModularUIScreen {
         io.github.tt432.eyelib.client.gui.snowstorm.texture.TextureBridge.install();
 
         Minecraft mc = Minecraft.getInstance();
+        // 实证 2026-10-02：LDLib2 在 guiScale>1 下滚动容器级联损坏（viewPort 0x0 坍塌、
+        // 剔除错位、滚动偏移残留旧几何）。编辑器为全屏应用且全部视觉指标按 scale 1
+        // 像素设计（与原版 snowstorm 固定 px 密度一致），编辑器存续期间锁定 guiScale 1，
+        // 关闭时恢复用户原设置。
+        if (savedGuiScale == -2) {
+            int current = mc.options.guiScale().get();
+            savedGuiScale = current != 1 ? current : -2;
+            if (current != 1) {
+                mc.options.guiScale().set(1);
+                mc.resizeDisplay();
+            }
+        }
         int guiWidth = io.github.tt432.eyelib.bridge.ui.UiPort.guiScaledWidth();
         // App.vue data 初始化：sidebar_width = 记忆值（clamp 100..w-200）或 getInitialSidebarWidth()
         if (sidebarWidth < 0) {
@@ -105,6 +159,11 @@ public final class SnowstormEditorScreen extends ModularUIScreen {
         };
         parts.sidebar().setOnOpenHelpPage(openHelpPage);
         parts.menuBar().setOnOpenHelpPage(openHelpPage);
+        // 防抖重开后的 subject 恢复（resize 重建整树，见 tick()）
+        if (pendingSubjectKey != null) {
+            parts.sidebar().selectSubject(pendingSubjectKey);
+            pendingSubjectKey = null;
+        }
 
         mc.setScreen(new SnowstormEditorScreen(new ModularUI(UI.of(root), mc.player), parts.stage()));
     }
@@ -313,10 +372,31 @@ public final class SnowstormEditorScreen extends ModularUIScreen {
 
     @Override
     public void onClose() {
+        cleanup();
+        super.onClose();
+    }
+
+    /**
+     * setScreen 替换（含 resize 防抖重开）只走 removed()，不走 onClose()——
+     * 两路径共用清理（幂等：dispose 可重入，guiScale 恢复由 savedGuiScale 哨兵防重）。
+     */
+    @Override
+    public void removed() {
+        cleanup();
+        super.removed();
+    }
+
+    private void cleanup() {
         // I4：发射器/舞台资源释放 + 子效果编辑栈回灌
         stageView.dispose();
         SubEffectEditorActions.onEditorScreenClosed();
-        super.onClose();
+        // 恢复用户原 guiScale（open() 锁定为 1 的配对恢复）
+        if (savedGuiScale != -2) {
+            int restore = savedGuiScale;
+            savedGuiScale = -2;
+            Minecraft.getInstance().options.guiScale().set(restore);
+            Minecraft.getInstance().resizeDisplay();
+        }
     }
 
     @Override
