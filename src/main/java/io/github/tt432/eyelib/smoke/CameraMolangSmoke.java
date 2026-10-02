@@ -67,22 +67,10 @@ public class CameraMolangSmoke {
             if (mode >= modes) return;
             try {
                 if (frame % 12 == 0) {
-                    if (mc.player == null) throw new AssertionError("缺少玩家");
-                    mc.options.setCameraType(mode == 0 ? CameraType.FIRST_PERSON : mode == 2
-                            ? CameraType.THIRD_PERSON_FRONT : CameraType.THIRD_PERSON_BACK);
-                    mc.player.setXRot(pitches[scenario % pitches.length]);
-                    mc.player.xRotO = mc.player.getXRot();
-                    if (mode == 3) {
-                        enableShoulderSurfing();
-                        setShoulderPitch(mc.player.getXRot());
-                    }
+                    configureScenario(mc, mode, pitches[scenario % pitches.length]);
                 }
                 if (frame % 12 == 6) {
-                    verify(mc, mode > 0);
-                    verifyScreenAligned(mc);
-                    if (scenario % pitches.length > 0 && Math.abs(mc.gameRenderer.getMainCamera().getXRot()) < 89) {
-                        throw new AssertionError("极限俯仰测试未移动实际镜头");
-                    }
+                    verifyScenario(mc, mode > 0, scenario % pitches.length > 0);
                     verified[0]++;
                     org.slf4j.LoggerFactory.getLogger(CameraMolangSmoke.class).info("Camera Molang scenario {} passed, pitch={}", scenario, mc.gameRenderer.getMainCamera().getXRot());
                 }
@@ -90,6 +78,26 @@ public class CameraMolangSmoke {
                 failure[0] = error;
             }
         };
+    }
+
+    private static void configureScenario(Minecraft mc, int mode, float pitch) throws ReflectiveOperationException {
+        if (mc.player == null) throw new AssertionError("缺少玩家");
+        mc.options.setCameraType(mode == 0 ? CameraType.FIRST_PERSON : mode == 2
+                ? CameraType.THIRD_PERSON_FRONT : CameraType.THIRD_PERSON_BACK);
+        mc.player.setXRot(pitch);
+        mc.player.xRotO = mc.player.getXRot();
+        if (mode == 3) {
+            enableShoulderSurfing();
+            setShoulderPitch(mc.player.getXRot());
+        }
+    }
+
+    private static void verifyScenario(Minecraft mc, boolean requireOffset, boolean extremePitch) {
+        verify(mc, requireOffset);
+        verifyScreenAligned(mc);
+        if (extremePitch && Math.abs(mc.gameRenderer.getMainCamera().getXRot()) < 89) {
+            throw new AssertionError("极限俯仰测试未移动实际镜头");
+        }
     }
 
     private static void setShoulderPitch(float pitch) throws ReflectiveOperationException {
@@ -148,7 +156,7 @@ public class CameraMolangSmoke {
     }
 
     @SuppressWarnings("PMD.CyclomaticComplexity")
-    private static void verify(Minecraft mc, boolean requireOffset) { // NOPMD — 组合多种相机模式的回归矩阵
+    private static void verify(Minecraft mc, boolean requireOffset) {
         if (mc.level == null || mc.getCameraEntity() == null) throw new AssertionError("缺少世界或相机宿主");
         Vec3 camera = mc.gameRenderer.getMainCamera().getPosition();
         if (requireOffset && camera.distanceTo(mc.getCameraEntity().getEyePosition(1)) < .25) {
@@ -165,27 +173,38 @@ public class CameraMolangSmoke {
         var body = new MolangValue("query.body_y_rotation");
         for (Vec3 offset : new Vec3[]{new Vec3(3, 2, 5), new Vec3(-4, -3, 2), new Vec3(1, 0, -4)}) {
             carrier.moveTo(camera.x - offset.x, camera.y - offset.y - carrier.getEyeHeight(), camera.z - offset.z, 0, 0);
-            for (float[] yaw : new float[][]{{0, 0}, {179, -179}, {-179, 179}, {35, 80}}) {
-                carrier.yBodyRotO = yaw[0]; carrier.yBodyRot = yaw[1];
-                for (float partial : new float[]{0, .25F, .5F, .75F, 1}) {
-                    scope.set("variable.partial_tick", partial);
-                    float renderedBody = Mth.rotLerp(partial, yaw[0], yaw[1]);
-                    if (Math.abs(Mth.wrapDegrees(body.eval(scope) - renderedBody)) > .001F) {
-                        throw new AssertionError("身体查询与渲染朝向不一致");
-                    }
-                    var runtime = new ModelRuntimeData();
-                    animation.tickAnimation(animation.createData(), Map.of(), scope, .5F, 1, runtime,
-                            new AnimationEffects(), () -> {});
-                    Vector3f rotation = runtime.getData(GlobalBoneIdHandler.get("billboard")).rotation;
-                    // 模型根变换含 Y 轴 180°，基岩模型正面为 -Z；必须与实际绘制空间一致。
-                    Vector3f normal = new Matrix4f().rotateY(-renderedBody * Mth.DEG_TO_RAD).rotateY(Mth.PI)
-                            .rotateZYX(rotation.z, rotation.y, rotation.x).transformDirection(new Vector3f(0, 0, -1));
-                    Vector3f expected = camera.subtract(carrier.getEyePosition(partial)).normalize().toVector3f();
-                    if (normal.dot(expected) < .9999F) {
-                        throw new AssertionError("动画平面未朝向实际相机: dot=" + normal.dot(expected)
-                                + " rotation=" + rotation + " expected=" + expected);
-                    }
-                }
+            verifyOffset(camera, carrier, scope, body, animation);
+        }
+    }
+
+    private static void verifyOffset(Vec3 camera, ArmorStand carrier, io.github.tt432.eyelib.molang.MolangScope scope,
+                                     MolangValue body, BrAnimationEntry animation) {
+        for (float[] yaw : new float[][]{{0, 0}, {179, -179}, {-179, 179}, {35, 80}}) {
+            carrier.yBodyRotO = yaw[0];
+            carrier.yBodyRot = yaw[1];
+            verifyYaw(camera, carrier, scope, body, animation, yaw);
+        }
+    }
+
+    private static void verifyYaw(Vec3 camera, ArmorStand carrier, io.github.tt432.eyelib.molang.MolangScope scope,
+                                  MolangValue body, BrAnimationEntry animation, float[] yaw) {
+        for (float partial : new float[]{0, .25F, .5F, .75F, 1}) {
+            scope.set("variable.partial_tick", partial);
+            float renderedBody = Mth.rotLerp(partial, yaw[0], yaw[1]);
+            if (Math.abs(Mth.wrapDegrees(body.eval(scope) - renderedBody)) > .001F) {
+                throw new AssertionError("身体查询与渲染朝向不一致");
+            }
+            var runtime = new ModelRuntimeData();
+            animation.tickAnimation(animation.createData(), Map.of(), scope, .5F, 1, runtime,
+                    new AnimationEffects(), () -> {});
+            Vector3f rotation = runtime.getData(GlobalBoneIdHandler.get("billboard")).rotation;
+            // 模型根变换含 Y 轴 180°，基岩模型正面为 -Z；必须与实际绘制空间一致。
+            Vector3f normal = new Matrix4f().rotateY(-renderedBody * Mth.DEG_TO_RAD).rotateY(Mth.PI)
+                    .rotateZYX(rotation.z, rotation.y, rotation.x).transformDirection(new Vector3f(0, 0, -1));
+            Vector3f expected = camera.subtract(carrier.getEyePosition(partial)).normalize().toVector3f();
+            if (normal.dot(expected) < .9999F) {
+                throw new AssertionError("动画平面未朝向实际相机: dot=" + normal.dot(expected)
+                        + " rotation=" + rotation + " expected=" + expected);
             }
         }
     }
