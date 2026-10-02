@@ -144,7 +144,30 @@ public final class TextureBridge {
         }
     }
 
+    /**
+     * JS TextureInput.vue {@code allow_upload} 分支的文件选择落地（web 原生 file input
+     * {@code <input type="file" accept=".png">}）：PNG 字节解码进画布并走 encode 同步
+     * （GPU 上传 + source=画布 id），等价 JS FileReader→dataURL→source→updateCanvasFromSource。
+     */
+    public static boolean loadPngIntoCanvas(byte[] pngBytes) {
+        ImportedImageData png;
+        try {
+            png = ImportedImageData.decodePng(pngBytes);
+        } catch (java.io.IOException e) {
+            LOGGER.warn("decode uploaded png failed", e);
+            return false;
+        }
+        if (png == null) return false;
+        RasterCanvas canvas = TextureClass.Texture.canvas;
+        canvas.resize(png.width(), png.height());
+        canvas.replacePixels(argbToAbgr(png));
+        TextureClass.Texture.canvasToDataURL();
+        TextureClass.Texture.internal_changes = true;
+        TextureClass.Texture.update();
+        return true;
+    }
     /** 画布 GPU 纹理的 CPU 常驻像素读回（DynamicTexture 像素常驻，NativeImageIO C6' 实证）。 */
+
     private static TextureSourceCodec.@Nullable DecodedImage readBackCanvas() {
         NativeImage image = canvasImage;
         if (image == null) return null;

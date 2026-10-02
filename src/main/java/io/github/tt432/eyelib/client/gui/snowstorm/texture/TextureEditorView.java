@@ -62,6 +62,8 @@ import java.util.regex.Pattern;
  */
 public final class TextureEditorView extends UIElement {
 
+    private static final org.slf4j.Logger LOGGER = org.slf4j.LoggerFactory.getLogger("snowstorm/TextureEditorView");
+
     // ---------------------------------------------------------------- JS data() as-is
 
     /** JS data 的 Texture（texture_edit.js 单例）。 */
@@ -115,13 +117,14 @@ public final class TextureEditorView extends UIElement {
     private final Button redoButton;
     private final Button saveButton;
     private final Button reloadButton;
+    private final Button uploadButton;
     private final Button prevFrameButton;
     private final Button nextFrameButton;
     private final List<ToolButton> toolButtons = new ArrayList<>();
     // 条件可见性缓存（避免每帧 setDisplay 触发 layout dirty）。初值 true 强制首次同步
     // （实证 2026-10-01：false 初值与「应隐藏」状态相同 → 首次同步被跳过，按钮恒可见）
     private boolean lastSaveVisible = true, lastFrameBarVisible = true;
-    private boolean lastReloadVisible, lastOverlayVisible;
+    private boolean lastReloadVisible = true, lastOverlayVisible, lastUploadVisible = true;
 
     private TextureEditorView() {
         TextureBridge.install();
@@ -178,11 +181,14 @@ public final class TextureEditorView extends UIElement {
         infoBar.addChildren(dimsText, cursorText, zoomText, prevFrameButton, nextFrameButton,
                 smallIconButton("maximize", this::maximizeViewport));
 
-        // meta 工具栏（JS .meta.toolbar：reset / reload / new / save）
+        // meta 工具栏（JS .meta.toolbar：reset / file input(allow_upload) / reload(!allow_upload) / new / save）
         UIElement metaBar = new UIElement()
                 .layout(l -> l.widthPercent(100).height(34).flexDirection(FlexDirection.ROW).gapAll(1)
                         .alignItems(AlignItems.CENTER));
         metaBar.addChild(smallIconButton("x", this::onReset));
+        // JS allow_upload 分支的原生 file input → PNG 文件对话框（web 应用等价物）
+        uploadButton = smallIconButton("upload", this::openUploadDialog);
+        metaBar.addChild(uploadButton);
         reloadButton = smallIconButton("refresh-ccw", this::onReload);
         metaBar.addChild(reloadButton);
         metaBar.addChild(smallIconButton("file-plus-2", this::openNewTextureDialog));
@@ -324,6 +330,33 @@ public final class TextureEditorView extends UIElement {
     private void onReload() {
         if (Texture.source.isEmpty()) return;
         Texture.reload();
+    }
+
+    /**
+     * JS allow_upload 分支的原生 file input（{@code <input type="file" accept=".png"
+     * v-on:change="input.change($event)">}）等价物：PNG 文件对话框 → 载入画布。
+     */
+    private void openUploadDialog() {
+        io.github.tt432.eyelib.client.gui.manager.io.FileDialogService
+                .openFile("Select Texture", null, "PNG 图片", "*.png")
+                .whenComplete((optional, throwable) -> {
+                    if (throwable != null) {
+                        LOGGER.warn("[snowstorm] texture upload dialog failed", throwable);
+                        return;
+                    }
+                    optional.ifPresent(path -> net.minecraft.client.Minecraft.getInstance().execute(() -> {
+                        try {
+                            if (TextureBridge.loadPngIntoCanvas(java.nio.file.Files.readAllBytes(path))) {
+                                // JS input.change → updatePreview：画布/UV/预览全部刷新
+                                io.github.tt432.eyelib.client.gui.snowstorm.inputs.InputViewFactory.notifyChanged();
+                            } else {
+                                LOGGER.warn("[snowstorm] texture upload decode failed: {}", path);
+                            }
+                        } catch (java.io.IOException e) {
+                            LOGGER.warn("[snowstorm] texture upload read failed: {}", path, e);
+                        }
+                    }));
+                });
     }
 
     /** JS saveTexture()：{@code if (!Texture.source) return; Texture.save();} */
@@ -830,6 +863,11 @@ public final class TextureEditorView extends UIElement {
             if (reloadVisible != lastReloadVisible) {
                 lastReloadVisible = reloadVisible;
                 reloadButton.setDisplay(reloadVisible ? TaffyDisplay.FLEX : TaffyDisplay.NONE);
+            }
+            // upload 与 reload 互斥（JS：file input v-if="input.allow_upload"）
+            if (allowUpload != lastUploadVisible) {
+                lastUploadVisible = allowUpload;
+                uploadButton.setDisplay(allowUpload ? TaffyDisplay.FLEX : TaffyDisplay.NONE);
             }
             // JS: 帧步进 v-if="UVDefinitionMode() == 'animated'"
             boolean frameBar = "animated".equals(uvDefinitionMode());

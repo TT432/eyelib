@@ -323,3 +323,10 @@ client/gui/snowstorm/
   恢复，项目数据在 EditorRuntime 不受影响）。排查陷阱：clientsmoke 会把窗口图标化
   （GLFW 报 0×0），图标化下 glfwSetWindowSize 无效且渲染状态可疑——验证窗口操作前
   先 glfwRestoreWindow 确认非图标化。
+- 功能补全（2026-10-02 贴图上传）：JS TextureInput.vue `allow_upload` 分支的原生
+  file input（web 应用等价物）此前未移植——meta 工具栏补 upload 钮（lucide upload
+  图标）→ tinyfd PNG 对话框 → `TextureBridge.loadPngIntoCanvas`（decodePng →
+  RasterCanvas → encode 同步 GPU + internal_changes + update），与 reload 钮互斥
+  （v-if 等价）。顺带修复预存 bug：`lastReloadVisible` 初值 false 与「应隐藏」同值
+  导致首次同步被跳过（line 121 注释自指的同一陷阱），reload 钮在 allow_upload=true
+  下恒可见——改初值 true 强制首次同步。
