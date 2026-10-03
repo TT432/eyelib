@@ -60,9 +60,16 @@ public final class SnowstormEditorScreen extends ModularUIScreen {
     /** 编辑器打开前的用户 guiScale（-2 = 未保存/无需恢复；见 open() 锁定逻辑）。 */
     private static int savedGuiScale = -2;
 
+    //? if !modern {
     @Override
     public void resize(Minecraft minecraft, int width, int height) {
         super.resize(minecraft, width, height);
+    //?} else {
+    // 26.1 起 Screen.resize 去掉 Minecraft 参数
+    @Override
+    public void resize(int width, int height) {
+        super.resize(width, height);
+    //?}
         // 打开后 1s 内的 resize 是初始化序列的一部分，不触发重开
         if (System.currentTimeMillis() - createdAtMs > 1000) {
             lastResizeMs = System.currentTimeMillis();
@@ -113,7 +120,12 @@ public final class SnowstormEditorScreen extends ModularUIScreen {
             savedGuiScale = current != 1 ? current : -2;
             if (current != 1) {
                 mc.options.guiScale().set(1);
+                //? if !modern {
                 mc.resizeDisplay();
+                //?} else {
+                // 26.1 起 resizeDisplay 更名 resizeGui
+                mc.resizeGui();
+                //?}
             }
         }
         int guiWidth = io.github.tt432.eyelib.bridge.ui.UiPort.guiScaledWidth();
@@ -395,7 +407,11 @@ public final class SnowstormEditorScreen extends ModularUIScreen {
             int restore = savedGuiScale;
             savedGuiScale = -2;
             Minecraft.getInstance().options.guiScale().set(restore);
+            //? if !modern {
             Minecraft.getInstance().resizeDisplay();
+            //?} else {
+            Minecraft.getInstance().resizeGui();
+            //?}
         }
     }
 
