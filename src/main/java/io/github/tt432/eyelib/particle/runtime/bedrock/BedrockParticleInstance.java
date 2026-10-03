@@ -171,7 +171,9 @@ public final class BedrockParticleInstance implements ParticleParticleComponent.
 
     @Override
     public Optional<String> blockAtPosition() {
-        return emitter.environment().blockAtPosition(position);
+        // position 为发射器本地坐标，查世界方块须加发射器位置
+        // （与 ParticleMotionCollision / 渲染光照采样的换算一致）
+        return emitter.environment().blockAtPosition(position.add(emitter.position(), new Vector3f()));
     }
 
     @Override

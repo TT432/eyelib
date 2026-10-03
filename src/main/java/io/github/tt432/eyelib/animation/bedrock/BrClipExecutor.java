@@ -2,7 +2,10 @@ package io.github.tt432.eyelib.animation.bedrock;
 
 import io.github.tt432.eyelib.animation.AnimationEffect;
 import io.github.tt432.eyelib.animation.AnimationEffects;
+import io.github.tt432.eyelib.animation.AnimationParticleSpawner;
 import io.github.tt432.eyelib.animation.ModelRuntimeData;
+import io.github.tt432.eyelib.animation.RuntimeParticlePlayData;
+import io.github.tt432.eyelib.importer.animation.bedrock.BrLoopType;
 import io.github.tt432.eyelib.util.math.EyeMath;
 import io.github.tt432.eyelib.util.math.MathHelper;
 import io.github.tt432.eyelib.molang.MolangScope;
@@ -34,6 +37,24 @@ final class BrClipExecutor {
         if (tickResult.loopRestarted()) {
             data.owner().resetEffects(entry.soundEffects(), entry.particleEffects(), entry.timeline());
             animationStartFeedback.run();
+        }
+
+        // ONCE 剪辑自然结束：销毁其 keyframe 产生的全部发射器并清空登记
+        // （Bedrock 语义——动画实例结束即回收其粒子效果；此前 looping 发射器永久残留，
+        // 顶层 animate 直挂条目无 onFinish 驱动，泄漏不可回收）。
+        // LOOP 不结束、HOLD_ON_LAST_FRAME 保持末帧，均不进入此分支；
+        // 循环重启重触发语义（resetEffects）不受影响。
+        if (entry.loop() == BrLoopType.ONCE && entry.animationLength() > 0
+                && animTimeUpdate > entry.animationLength()
+                && !data.owner().particles().isEmpty()) {
+            AnimationParticleSpawner spawner = scope.getHostContext()
+                    .get(HostRoles.ANIMATION_PARTICLE_SPAWNER).orElse(null);
+            if (spawner != null) {
+                for (RuntimeParticlePlayData particle : data.owner().particles()) {
+                    spawner.remove(particle.particleUUID());
+                }
+            }
+            data.owner().particles().clear();
         }
 
         float animTick = tickResult.animTick();
