@@ -958,9 +958,10 @@ public interface MolangBuiltInQuery {
         return livingFloat(scope, living -> -Mth.lerp(partialTicks(scope), living.xRotO, living.getXRot()));
     }
 
-    @MolangFunction(value = "body_y_rotation", description = "身体 pitch 偏移")
+    @MolangFunction(value = "body_y_rotation", description = "身体 yaw 旋转角度")
     public static float bodyXRotation(MolangScope scope) {
-        return livingFloat(scope, living -> Mth.lerp(partialTicks(scope), living.yBodyRotO, living.yBodyRot));
+        // 与实体渲染的身体旋转一致，跨 ±180° 时不能使用普通线性插值。
+        return livingFloat(scope, living -> Mth.rotLerp(partialTicks(scope), living.yBodyRotO, living.yBodyRot));
     }
 
     @MolangFunction(value = "baby", alias = "is_baby", description = "幼年体")

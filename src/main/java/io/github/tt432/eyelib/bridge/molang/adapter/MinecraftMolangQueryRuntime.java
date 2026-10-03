@@ -9,6 +9,26 @@ import net.minecraft.world.entity.Entity;
  * @author TT432
  */
 public final class MinecraftMolangQueryRuntime implements MolangQueryRuntime {
+    /** 读取真实镜头旋转，包含第三人称前视和越肩镜头与玩家朝向的解耦。 */
+    public static float renderCameraRotation(float axis, float partialTick) {
+        //? if <26.1 {
+        var camera = Minecraft.getInstance().gameRenderer.getMainCamera();
+        return axis == 0 ? camera.getXRot() : camera.getYRot();
+        //?} else {
+        var entity = Minecraft.getInstance().getCameraEntity();
+        return entity == null ? 0F : axis == 0 ? entity.getViewXRot(partialTick) : entity.getViewYRot(partialTick);
+        //?}
+    }
+
+    /** 本帧最终渲染摄像机的位置，包含第三人称及相机模组的偏移。 */
+    public static net.minecraft.world.phys.Vec3 renderCameraPosition() {
+        //? if <26.1 {
+        return Minecraft.getInstance().gameRenderer.getMainCamera().getPosition();
+        //?} else {
+        return Minecraft.getInstance().gameRenderer.getMainCamera().position();
+        //?}
+    }
+
     @Override
     public float actorCount() {
         if (Minecraft.getInstance().level == null) {

@@ -12,6 +12,7 @@
 | 架构决策（为什么这么设计） | [decisions/](decisions/) — ADR 编号索引 |
 | 系统架构总览（构建布局 + 模块分层） | [concepts/architecture.md](concepts/architecture.md) |
 | 行为规格（测试 oracle） | [specs/](specs/) |
+| 模型动画的摄像机朝向查询 | [specs/molang-render-camera.md](specs/molang-render-camera.md) |
 | Bedrock 差距分析 | [gap-analysis/](gap-analysis/) |
 | 六边形架构 Port 清单与提取进度 | [architecture/domain-module-map.md](architecture/domain-module-map.md) |
 | Molang 重构路线图 | [molang/ROADMAP.md](molang/ROADMAP.md) |
@@ -87,6 +88,7 @@
 | 0034 | Wintersky 基岩粒子运行时的 as-is Java 移植 | Accepted (2026-09-29，用户决策) |
 | 0035 | Wintersky 融入 eyelib 的集成架构决策（双运行时共存/渲染旁路/渲染帧驱动） | Accepted (2026-09-29) |
 | 0036 | Snowstorm 粒子编辑器游戏内完整复刻（用户决策 U1-U3：完整复刻/全屏 Screen/贴图编辑器 V1） | Accepted (2026-09-29，用户决策) |
+| 0037 | [贴图原色材质的世界渲染通道](decisions/0037-texture-color-pass.md) | Experimental (Forge 1.20.1) |
 
 ## 核心原则
 

@@ -3,6 +3,8 @@ package io.github.tt432.eyelib.bridge.client.render;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import io.github.tt432.eyelib.bridge.material.MaterialPort;
+import io.github.tt432.eyelib.bridge.material.adapter.TextureColorMaterial;
+import io.github.tt432.eyelib.bridge.client.render.adapter.TextureColorWorldPass;
 import io.github.tt432.eyelib.material.port.PortRenderPass;
 import io.github.tt432.eyelib.util.PortResourceLocation;
 //? if <26.1 {
@@ -22,6 +24,7 @@ import java.util.List;
  *
  * @author TT432
  */
+@SuppressWarnings("PMD.LawOfDemeter")
 final class ImmediateRenderSink implements RenderSink {
     private final MultiBufferSource bufferSource;
     /** 本实体已完成的蒙皮会话（flush 时绘制，见 DESIGN-P2 §2）。 */
@@ -35,6 +38,15 @@ final class ImmediateRenderSink implements RenderSink {
     public void submit(PortRenderPass renderPass, PortResourceLocation texture,
                        PoseStack pose, GeometryWriter writer) {
         RenderType renderType = MaterialPort.toRenderType(renderPass, texture);
+        //? if <1.20.6 {
+        if (TextureColorMaterial.contains(renderType)) {
+            if (io.github.tt432.eyelib.bridge.client.compat.oculus.OculusCompat.renderingShadowPass()) return;
+            if (TextureColorWorldPass.collecting()) {
+                writer.write(pose.last(), TextureColorWorldPass.buffer(renderType), null);
+                return;
+            }
+        }
+        //?}
         VertexConsumer consumer = bufferSource.getBuffer(renderType);
         // C1 GPU 蒙皮（P2）：会话非空时 writer 可跳过顶点写入（palette 采集），
         // 绘制由 flush 接管；routing RenderType 仅承担状态机与缓冲归类，共享缓冲保持为空。

@@ -33,14 +33,20 @@ public interface OculusCompat {
     Logger LOGGER = LoggerFactory.getLogger(OculusCompat.class);
 
     /** 光影激活判定；启动期一次性解析，运行期零反射开销。 */
-    BooleanSupplier SHADER_PACK_ACTIVE = resolve();
+    BooleanSupplier SHADER_PACK_ACTIVE = resolve("isShaderPackInUse");
+    BooleanSupplier SHADOW_PASS = resolve("isRenderingShadowPass");
 
     /** 光影包正在接管世界渲染时为 true：GPU 蒙皮必须回退经典 CPU 路径。 */
     static boolean shaderPackActive() {
         return SHADER_PACK_ACTIVE.getAsBoolean();
     }
 
-    private static BooleanSupplier resolve() {
+    /** 原色通道不参与阴影贴图，也不能把阴影相机矩阵留到主视角提交。 */
+    static boolean renderingShadowPass() {
+        return SHADOW_PASS.getAsBoolean();
+    }
+
+    private static BooleanSupplier resolve(String method) {
         LoadingModList modList = LoadingModList.get();
         boolean present = modList != null
                 && (modList.getModFileById("oculus") != null || modList.getModFileById("iris") != null);
@@ -51,7 +57,7 @@ public interface OculusCompat {
             Class<?> apiClass = Class.forName("net.irisshaders.iris.api.v0.IrisApi");
             Object api = apiClass.getMethod("getInstance").invoke(null);
             MethodHandle inUse = MethodHandles.publicLookup()
-                    .findVirtual(apiClass, "isShaderPackInUse", MethodType.methodType(boolean.class))
+                    .findVirtual(apiClass, method, MethodType.methodType(boolean.class))
                     .bindTo(api);
             return () -> {
                 try {
@@ -61,8 +67,8 @@ public interface OculusCompat {
                 }
             };
         } catch (Throwable t) {
-            LOGGER.warn("[compat] Oculus/Iris 已加载但 IrisApi 反射失败（{}），GPU 蒙皮将整体停用回退 CPU",
-                    t.toString());
+            LOGGER.warn("[compat] Oculus/Iris 已加载但 IrisApi.{} 解析失败（{}），该能力按激活处理",
+                    method, t.toString());
             return () -> true;
         }
     }

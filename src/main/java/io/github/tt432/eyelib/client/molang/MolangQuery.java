@@ -44,7 +44,7 @@ import static io.github.tt432.eyelib.molang.MolangValue.TRUE;
  */
 @MolangMapping(value = "query", pureFunction = false)
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
-@SuppressWarnings("unused")
+@SuppressWarnings({"unused", "PMD.LawOfDemeter"})
 public final class MolangQuery {
 
     private static final HostRole<Creeper> CREEPER = HostRole.of("Creeper", Creeper.class);
@@ -226,27 +226,27 @@ public final class MolangQuery {
         return MolangQueryRuntimeBridge.resolvePartialTick(scope);
     }
 
-    @MolangFunction(value = "camera_rotation", description = "相机旋转（0=x/pitch，1=y/yaw；JE 取相机实体视角旋转近似）")
+    @MolangFunction(value = "camera_rotation", description = "相机旋转（0=x/pitch，1=y/yaw）")
     public static float cameraRotation(MolangScope scope, float axis) {
         Entity cameraEntity = Minecraft.getInstance().getCameraEntity();
         if (cameraEntity == null) {
             return 0F;
         }
         float partialTick = frameAlpha(scope);
-        return axis == 0 ? cameraEntity.getViewXRot(partialTick) : cameraEntity.getViewYRot(partialTick);
+        return io.github.tt432.eyelib.bridge.molang.CameraQueryPort.rotation(axis, partialTick);
     }
 
     @MolangFunction(value = "rotation_to_camera", description = "实体对准相机所需旋转（0=x/pitch，1=y/yaw）")
     public static float rotationToCamera(MolangScope scope, float axis) {
         var mc = Minecraft.getInstance();
-        Entity cameraEntity = mc.getCameraEntity();
-        if (cameraEntity == null) {
+        if (mc.getCameraEntity() == null) {
             return 0F;
         }
+        // 相机宿主的眼睛不包含第三人称/越肩偏移；使用本帧实际渲染相机的位置。
+        Vec3 to = io.github.tt432.eyelib.bridge.molang.CameraQueryPort.position();
         return scope.getHostContext().get(ENTITY).map(entity -> {
             float partialTick = frameAlpha(scope);
             Vec3 from = entity.getEyePosition(partialTick);
-            Vec3 to = cameraEntity.getEyePosition(partialTick);
             double dx = to.x - from.x;
             double dy = to.y - from.y;
             double dz = to.z - from.z;
