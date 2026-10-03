@@ -321,6 +321,7 @@ lie_amount / structural_integrity / get_animation_frame / is_persona_or_premium_
 timer_flag_2 / timer_flag_3 / cooldown_time(_remaining)（JE 玩家冷却无槽位语义与总时长）/
 life_span（官方语义永生 0）/ ticks_since_last_kinetic_weapon_hit（官方语义 -1）。
 **近似（注明）**：is_shaking（完全冰冻）、is_jump_goal_jumping（=is_jumping）、
-body_x_rotation（实体 pitch）、is_on_screen（视距内近似，无视锥）、camera_rotation /
-rotation_to_camera（相机实体视角/眼位）、walk_distance（潜行不剔除）、
+body_x_rotation（实体 pitch）、is_on_screen（视距内近似，无视锥）、walk_distance（潜行不剔除）、
 surface_particle_*（贴图平均色 × 群系着色 / 图集原点 / 贴图尺寸）。
+camera_rotation / rotation_to_camera 在 1.20.1 与 1.21.1 已读取本帧实际渲染摄像机
+（见 [molang-render-camera.md](molang-render-camera.md)），仅 26.1.2 仍为宿主视角近似。

@@ -3,8 +3,10 @@ package io.github.tt432.eyelib.bridge.client.render;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import io.github.tt432.eyelib.bridge.material.MaterialPort;
+//? if <1.20.6 {
 import io.github.tt432.eyelib.bridge.material.adapter.TextureColorMaterial;
 import io.github.tt432.eyelib.bridge.client.render.adapter.TextureColorWorldPass;
+//?}
 import io.github.tt432.eyelib.material.port.PortRenderPass;
 import io.github.tt432.eyelib.util.PortResourceLocation;
 //? if <26.1 {

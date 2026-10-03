@@ -98,6 +98,11 @@ public final class TextureColorWorldPass {
         }
     }
 
+    /**
+     * 隐式前提：世界渲染期间 RenderSystem 的 modelView（相机矩阵）与 projection 恒定，
+     * 因此按材质只捕获首个 batch 创建时的矩阵即对所有写入有效；顶点已在写入时
+     * 用实体 PoseStack 烘焙到相机偏移世界空间。
+     */
     private static final class Batch {
         final BufferBuilder buffer = new BufferBuilder(256);
         final Matrix4f projection = new Matrix4f(RenderSystem.getProjectionMatrix());

@@ -100,7 +100,8 @@ public final class ParticleUnlitShaders {
     }
 
     //? if <1.20.6 {
-    public static @Nullable ShaderInstance textureColorShader(Transparency transparency) {
+    /** 原色 shader；注册失败回退 vanilla emissive（不保证原色，注册期已记录 error），永不返回 null。 */
+    public static ShaderInstance textureColorShader(Transparency transparency) {
         ShaderInstance shader = TEXTURE_COLOR.get(transparency);
         return shader != null ? shader : net.minecraft.client.renderer.GameRenderer.getRendertypeEntityTranslucentEmissiveShader();
     }

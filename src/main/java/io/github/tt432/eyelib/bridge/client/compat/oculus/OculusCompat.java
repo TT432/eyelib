@@ -32,9 +32,10 @@ import net.neoforged.fml.loading.LoadingModList;
 public interface OculusCompat {
     Logger LOGGER = LoggerFactory.getLogger(OculusCompat.class);
 
-    /** 光影激活判定；启动期一次性解析，运行期零反射开销。 */
-    BooleanSupplier SHADER_PACK_ACTIVE = resolve("isShaderPackInUse");
-    BooleanSupplier SHADOW_PASS = resolve("isRenderingShadowPass");
+    /** 光影激活判定；启动期一次性解析，运行期零反射开销。失败按激活处理（保守回退 CPU 路径）。 */
+    BooleanSupplier SHADER_PACK_ACTIVE = resolve("isShaderPackInUse", true);
+    /** 失败按非阴影处理：否则检测不可用时原色材质会在所有路径（含 GUI 直绘）静默消失。 */
+    BooleanSupplier SHADOW_PASS = resolve("isRenderingShadowPass", false);
 
     /** 光影包正在接管世界渲染时为 true：GPU 蒙皮必须回退经典 CPU 路径。 */
     static boolean shaderPackActive() {
@@ -46,7 +47,7 @@ public interface OculusCompat {
         return SHADOW_PASS.getAsBoolean();
     }
 
-    private static BooleanSupplier resolve(String method) {
+    private static BooleanSupplier resolve(String method, boolean failureValue) {
         LoadingModList modList = LoadingModList.get();
         boolean present = modList != null
                 && (modList.getModFileById("oculus") != null || modList.getModFileById("iris") != null);
@@ -63,13 +64,13 @@ public interface OculusCompat {
                 try {
                     return (boolean) inUse.invokeExact();
                 } catch (Throwable t) {
-                    return true; // API 调用失败按激活处理（保守方向）
+                    return failureValue;
                 }
             };
         } catch (Throwable t) {
-            LOGGER.warn("[compat] Oculus/Iris 已加载但 IrisApi.{} 解析失败（{}），该能力按激活处理",
-                    method, t.toString());
-            return () -> true;
+            LOGGER.warn("[compat] Oculus/Iris 已加载但 IrisApi.{} 解析失败（{}），该能力按 {} 处理",
+                    method, t.toString(), failureValue);
+            return () -> failureValue;
         }
     }
 }

@@ -46,4 +46,4 @@ Forge 1.20.1 / 47.1.3 + Shoulder Surfing 4.21.0 的实际开发客户端中，`C
 - 通过真实 Molang 注册、JSON 动画解析与 Bedrock 动画采样得到骨骼旋转；组合实体身体旋转、模型根 Y 轴 180° 和骨骼旋转后，平面法线与实际相机方向点积须大于 0.9999。
 - 编译、NullAway 与 JAR 构建通过；1710 项单测中 1705 通过、1 跳过、4 项因上游已有模型 fixture 缺失失败，没有新增单测失败。
 
-本功能客户端检查通过，随后完整 clientsmoke 在既有 Spider 渲染检查失败，不能宣称整套 smoke 通过。YesSteveCamera 与其他 Minecraft 版本尚未实测。当前修复保存在本地独立分支，等待使用方的实际特效包测试后再决定上游 PR。
+本功能客户端检查通过，随后完整 clientsmoke 在既有 Spider 渲染检查失败，不能宣称整套 smoke 通过。本修复已随 PR #26 并入上游（合并时修复了 smoke 匿名类在本工具链下的编译失败）；YesSteveCamera 与其他 Minecraft 版本尚未实测。

@@ -1,6 +1,8 @@
 package io.github.tt432.eyelib.bridge.material;
 import io.github.tt432.eyelib.bridge.material.adapter.BrRenderTypeFactory;
+//? if <1.20.6 {
 import io.github.tt432.eyelib.bridge.material.adapter.TextureColorMaterial;
+//?}
 
 import io.github.tt432.eyelib.material.gl.GLStates;
 import io.github.tt432.eyelib.material.material.BrMaterialEntry;

@@ -109,12 +109,7 @@ public class CameraMolangSmoke {
     private static void verifyScreenAligned(Minecraft mc) {
         if (mc.level == null) throw new AssertionError("缺少世界");
         // VFX 载体的眼高为 0.009；不能只用普通盔甲架测试相机靠近脚底的情况。
-        var carrier = new ArmorStand(mc.level, 0, 0, 0) {
-            @Override
-            protected float getStandingEyeHeight(net.minecraft.world.entity.Pose pose, net.minecraft.world.entity.EntityDimensions dimensions) {
-                return .009F;
-            }
-        };
+        var carrier = new LowEyeHeightArmorStand(mc.level);
         var data = RenderData.getComponent(carrier);
         data.ensureOwner(carrier);
         var scope = data.requireScope();
@@ -206,6 +201,22 @@ public class CameraMolangSmoke {
                 throw new AssertionError("动画平面未朝向实际相机: dot=" + normal.dot(expected)
                         + " rotation=" + rotation + " expected=" + expected);
             }
+        }
+    }
+
+    /**
+     * 眼高 0.009 的 VFX 载体。必须用命名类：MDG 重编译产物中
+     * {@code ArmorStand(Level, double, double, double)} 的 LVT 参数全名为 {@code o}，
+     * 匿名子类会让 javac 合成构造器参数同名冲突（"已在构造器中定义了变量 o"）。
+     */
+    private static final class LowEyeHeightArmorStand extends ArmorStand {
+        LowEyeHeightArmorStand(net.minecraft.world.level.Level level) {
+            super(level, 0, 0, 0);
+        }
+
+        @Override
+        protected float getStandingEyeHeight(net.minecraft.world.entity.Pose pose, net.minecraft.world.entity.EntityDimensions dimensions) {
+            return .009F;
         }
     }
 }
