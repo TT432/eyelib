@@ -36,12 +36,13 @@ public record ImportedModelData(
 ) {
     /**
      * 动画应用时是否需要对剪辑做基岩版 geo 空间补偿翻转（rotation ×(-1,-1,1)，position ×(-1,1,1)）。
-     * 该补偿针对的是【动画剪辑的存储空间】：本库只加载基岩版 .animation.json，其数值在
-     * Blockbench 导出边界经过 X 镜像（geo 空间），而 geo/bbmodel 两条导入路径产出的模型
-     * 都在显示空间，因此播放基岩剪辑一律需要 true——与模型来自哪条导入路径无关。
+     * 该补偿针对的是【动画剪辑的存储空间】：本库注册表内所有剪辑统一为基岩剪辑空间——
+     * 基岩 .animation.json 的数值在 Blockbench 导出边界经过 X 镜像；bbmodel 内嵌动画经
+     * {@link io.github.tt432.eyelib.importer.model.bbmodel.BbModelAnimations} 在转换期做了同样的取反。
+     * 而 geo/bbmodel 两条导入路径产出的模型都在显示空间，因此播放注册表内剪辑一律需要 true——
+     * 与模型来自哪条导入路径无关。
      * （960a4b81 曾按"bbmodel 恒等导入故不需翻转"传 false，实测非对称动画整体反向；
      * 该结论当时的验证因 4de3331d 修复前合并路径丢失标记、实际仍按 true 运行而误判通过。）
-     * false 仅为未来恒等空间来源的动画（如 bbmodel 内嵌动画）保留。
      * 默认 true。
      */
     public ImportedModelData {

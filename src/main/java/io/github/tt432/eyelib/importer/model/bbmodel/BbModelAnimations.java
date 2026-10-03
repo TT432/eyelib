@@ -15,12 +15,16 @@ import java.util.Map;
 import java.util.TreeMap;
 
 /**
- * bbmodel 内嵌动画 → bedrock 动画 schema 结构转换。
- * 坐标约定：bbmodel 动画值（UI 空间）原样透传，不做任何取反——Blockbench 显示姿态
- * 本身就是对 UI 值做 position (-x,y,z)、rotation (-x,-y,z)（实测 mesh 矩阵验证），
- * 与 {@code BrClipExecutor} 的 geo 空间补偿翻转（flipAnimation）正好同构，
- * 渲染期补偿一次即得编辑器姿态；转换期再取反会双重翻转导致姿态镜像。
- * molang 表达式原样透传。
+ * bbmodel 内嵌动画 → bedrock 动画 schema 转换。
+ * 坐标约定：bbmodel 存储的是 Blockbench UI/显示空间的值——Blockbench 基岩动画导出器
+ * （blockbench 源码 js/formats/bedrock/bedrock_animation.js {@code getKeyframeDataPoints}）
+ * 在导出 .animation.json 时对 position.x 与 rotation.x/y 无条件 invertMolang，几何导出同样
+ * 镜像 X。因此 bbmodel 内嵌值与"显示空间"同构，而本库注册表内所有剪辑统一为基岩剪辑空间
+ * （渲染期由模型 flipAnimation=true 补偿一次得到编辑器姿态，与基岩 .animation.json 一致）。
+ * 故转换期必须取反：position 取反 x、rotation 取反 x/y、scale 不变；数字字符串同数值取反；
+ * molang 表达式包裹 {@code -(...)} 取反（eyelib molang 支持一元负号）。
+ * （9754bbea 的"UI 值透传 + 渲染期补偿一次即编辑器姿态"结论已被废弃：其前提
+ * "Blockbench 显示姿态 = flip(UI 值)"与 Blockbench 导出源码矛盾，实机表现为姿态镜像。）
  *
  * @author TT432
  */
@@ -107,15 +111,18 @@ public final class BbModelAnimations {
     }
 
     private static MolangValue3 convertPoint(BbModelAnimation.DataPoint point, String channel) {
-        return new MolangValue3(axis(point.x()), axis(point.y()), axis(point.z()));
+        boolean negateX = channel.equals("position") || channel.equals("rotation");
+        boolean negateY = channel.equals("rotation");
+        return new MolangValue3(axis(point.x(), negateX), axis(point.y(), negateY), axis(point.z(), false));
     }
 
-    /** 数值（含数字字符串）取常量；其余按 molang 表达式编译透传。 */
-    private static MolangValue axis(String raw) {
+    /** 数值（含数字字符串）取反后取常量；molang 表达式在取反通道包裹 {@code -(...)}，其余透传。 */
+    private static MolangValue axis(String raw, boolean negate) {
         try {
-            return MolangValue.getConstant(Float.parseFloat(raw));
+            float value = Float.parseFloat(raw);
+            return MolangValue.getConstant(negate ? -value : value);
         } catch (NumberFormatException ignored) {
-            return new MolangValue(raw);
+            return new MolangValue(negate && !raw.isEmpty() ? "-(" + raw + ")" : raw);
         }
     }
 }

@@ -20,7 +20,8 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
- * 加载 bbmodels 目录下 .bbmodel 文件的内嵌动画，做结构转换后注册（坐标取反由渲染期 flipAnimation 补偿完成）
+ * 加载 bbmodels 目录下 .bbmodel 文件的内嵌动画，转换坐标约定（显示空间→基岩剪辑空间，
+ * 见 {@link BbModelAnimations}）后注册
  * （动画 id = 资源命名空间 + "." + 动画名）。以低优先级暂存：同名 bedrock
  * 动画 json 覆盖内嵌版本，便于对个别动画手调覆盖。
  *
