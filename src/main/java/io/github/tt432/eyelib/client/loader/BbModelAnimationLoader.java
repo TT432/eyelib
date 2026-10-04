@@ -46,9 +46,10 @@ public class BbModelAnimationLoader extends SimpleJsonWithSuffixResourceReloadLi
             }
             String namespace = location.substring(0, location.indexOf(':'));
             Map<String, BrAnimationEntrySchema> entries = new LinkedHashMap<>();
+            Map<String, org.joml.Vector3f> bindRotations = BbModelAnimations.bindRotations(model);
             model.animations().forEach(animation -> {
                 try {
-                    entries.put(namespace + "." + animation.name(), BbModelAnimations.toEntrySchema(animation));
+                    entries.put(namespace + "." + animation.name(), BbModelAnimations.toEntrySchema(animation, bindRotations));
                 } catch (Exception e) {
                     LOGGER.error("can't convert bbmodel animation {} in {}", animation.name(), location, e);
                 }

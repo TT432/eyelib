@@ -8,7 +8,10 @@ import io.github.tt432.eyelib.importer.animation.bedrock.BrEffectsKeyFrame;
 import io.github.tt432.eyelib.importer.animation.bedrock.BrLoopType;
 import io.github.tt432.eyelib.molang.MolangValue;
 import io.github.tt432.eyelib.molang.MolangValue3;
+import org.joml.Vector3f;
+import org.jspecify.annotations.Nullable;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -25,6 +28,16 @@ import java.util.TreeMap;
  * molang 表达式包裹 {@code -(...)} 取反（eyelib molang 支持一元负号）。
  * （9754bbea 的"UI 值透传 + 渲染期补偿一次即编辑器姿态"结论已被废弃：其前提
  * "Blockbench 显示姿态 = flip(UI 值)"与 Blockbench 导出源码矛盾，实机表现为姿态镜像。）
+ * <p>
+ * 旋转关键帧的绝对/相对语义：Blockbench/基岩中旋转关键帧是<strong>绝对值</strong>
+ * （替换骨骼 rest 旋转），而运行时应用为 bind + Σ剪辑贡献（见
+ * {@code ModelRuntimeData#rotation(Model.Bone)}）。几何导入保留组的 rest 旋转
+ * （{@code ImportedModelData} 不镜像、仅度转弧度），若直接透传绝对关键帧，
+ * rest 非零的骨骼会被双重旋转（实测掠夺者弩弓 bone24/28 rest ±71°Y → 弩指向偏约 90°）。
+ * 故转换期把绝对关键帧减去同文件内骨骼 rest 旋转，化为 bind 相对偏移：
+ * 最终 = bind + (keyframe − bind) = keyframe，多剪辑并发 = bind + Σ(kf_i − bind)，
+ * 与基岩并发叠加语义一致。position bind 恒零向量、scale bind 恒 1（见
+ * {@code ImportedModelBuilder#buildBone}），无需同样处理。
  *
  * @author TT432
  */
@@ -38,14 +51,52 @@ public final class BbModelAnimations {
      * 转换模型内嵌的全部动画，动画 id 为 {@code <namespace>.<动画名>}。
      */
     public static BrAnimationSet toAnimationSet(BBModel model, String namespace) {
+        Map<String, Vector3f> bindRotations = bindRotations(model);
         Map<String, BrAnimationEntrySchema> animations = new LinkedHashMap<>();
         for (BbModelAnimation animation : model.animations()) {
-            animations.put(namespace + "." + animation.name(), toEntrySchema(animation));
+            animations.put(namespace + "." + animation.name(), toEntrySchema(animation, bindRotations));
         }
         return new BrAnimationSet(animations);
     }
 
-    public static BrAnimationEntrySchema toEntrySchema(BbModelAnimation animation) {
+    /**
+     * 收集模型全部骨骼的 rest 旋转（显示空间，度），键为骨骼名。
+     * 与 {@code ImportedModelData#processOutlinerEntry} 相同的组解析顺序
+     * （顶层 groups 表按 uuid 优先，其次 outliner 内联 group）。
+     */
+    public static Map<String, Vector3f> bindRotations(BBModel model) {
+        Map<String, Group> groupMap = new HashMap<>();
+        for (Group group : model.groups()) {
+            groupMap.put(group.uuid(), group);
+        }
+        Map<String, Vector3f> result = new HashMap<>();
+        for (Outliner.CubeOrOutliner entry : model.outliner()) {
+            collectBindRotations(entry.outliner(), groupMap, result);
+        }
+        return result;
+    }
+
+    private static void collectBindRotations(@Nullable Outliner outliner, Map<String, Group> groupMap,
+                                             Map<String, Vector3f> result) {
+        if (outliner == null) {
+            return;
+        }
+        Group group = groupMap.get(outliner.uuid());
+        if (group == null && outliner.group().isPresent()) {
+            group = outliner.group().get();
+        }
+        if (group != null && group.rotation() != null) {
+            Vector3f rotation = group.rotation();
+            if (rotation.x() != 0 || rotation.y() != 0 || rotation.z() != 0) {
+                result.put(group.name(), rotation);
+            }
+        }
+        for (Outliner child : outliner.children()) {
+            collectBindRotations(child, groupMap, result);
+        }
+    }
+
+    public static BrAnimationEntrySchema toEntrySchema(BbModelAnimation animation, Map<String, Vector3f> bindRotations) {
         Map<String, BrBoneAnimationSchema> bones = new LinkedHashMap<>();
         for (BbModelAnimation.Animator animator : animation.animators().values()) {
             TreeMap<Float, BrBoneKeyFrameSchema> position = new TreeMap<>();
@@ -68,7 +119,8 @@ public final class BbModelAnimations {
                         ? BrBoneKeyFrameSchema.LerpMode.CATMULLROM
                         : BrBoneKeyFrameSchema.LerpMode.LINEAR;
                 channel.put(keyframe.time(), new BrBoneKeyFrameSchema(
-                        List.of(convertPoint(keyframe.dataPoints().get(0), keyframe.channel())), lerpMode));
+                        List.of(convertPoint(keyframe.dataPoints().get(0), keyframe.channel(),
+                                bindRotations.get(animator.name()))), lerpMode));
             }
             BrBoneAnimationSchema existing = bones.get(animator.name());
             if (existing != null) {
@@ -110,19 +162,26 @@ public final class BbModelAnimations {
         return new TreeMap<>(Comparator.comparingDouble(Float::doubleValue));
     }
 
-    private static MolangValue3 convertPoint(BbModelAnimation.DataPoint point, String channel) {
+    private static MolangValue3 convertPoint(BbModelAnimation.DataPoint point, String channel,
+                                             @Nullable Vector3f bindRotation) {
         boolean negateX = channel.equals("position") || channel.equals("rotation");
         boolean negateY = channel.equals("rotation");
-        return new MolangValue3(axis(point.x(), negateX), axis(point.y(), negateY), axis(point.z(), false));
+        boolean isRotation = channel.equals("rotation");
+        // 仅 rotation 通道化为 bind 相对偏移（见类注释）；position bind 恒零、scale bind 恒 1
+        float subX = isRotation && bindRotation != null ? bindRotation.x() : 0;
+        float subY = isRotation && bindRotation != null ? bindRotation.y() : 0;
+        float subZ = isRotation && bindRotation != null ? bindRotation.z() : 0;
+        return new MolangValue3(axis(point.x(), negateX, subX), axis(point.y(), negateY, subY), axis(point.z(), false, subZ));
     }
 
-    /** 数值（含数字字符串）取反后取常量；molang 表达式在取反通道包裹 {@code -(...)}，其余透传。 */
-    private static MolangValue axis(String raw, boolean negate) {
+    /** 数值（含数字字符串）先减 bind 偏移、取反通道再取反后取常量；molang 表达式先包 {@code (raw) - (sub)}，取反通道再包 {@code -(...)}，其余透传。 */
+    private static MolangValue axis(String raw, boolean negate, float subtract) {
         try {
-            float value = Float.parseFloat(raw);
+            float value = Float.parseFloat(raw) - subtract;
             return MolangValue.getConstant(negate ? -value : value);
         } catch (NumberFormatException ignored) {
-            return new MolangValue(negate && !raw.isEmpty() ? "-(" + raw + ")" : raw);
+            String base = subtract != 0 && !raw.isEmpty() ? "(" + raw + ") - (" + subtract + ")" : raw;
+            return new MolangValue(negate && !base.isEmpty() ? "-(" + base + ")" : base);
         }
     }
 }

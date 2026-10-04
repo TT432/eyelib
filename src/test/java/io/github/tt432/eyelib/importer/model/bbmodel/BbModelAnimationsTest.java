@@ -18,6 +18,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 /** @author TT432 */
 class BbModelAnimationsTest {
     private static BBModel parseModel(String animationsJson) {
+        return parseModel("[]", animationsJson);
+    }
+
+    private static BBModel parseModel(String outlinerJson, String animationsJson) {
         String json = """
                 {
                   "meta": {"format_version": "4.5", "model_format": "bedrock", "box_uv": false},
@@ -26,11 +30,11 @@ class BbModelAnimationsTest {
                   "visible_box": [1, 1, 1],
                   "resolution": {"width": 16, "height": 16},
                   "elements": [],
-                  "outliner": [],
+                  "outliner": %s,
                   "textures": [],
                   "animations": %s
                 }
-                """.formatted(animationsJson);
+                """.formatted(outlinerJson, animationsJson);
         return TestCodecUtil.unwrap(BBModel.CODEC.parse(JsonOps.INSTANCE, JsonParser.parseString(json)));
     }
 
@@ -129,5 +133,69 @@ class BbModelAnimationsTest {
         assertEquals(BrLoopType.HOLD_ON_LAST_FRAME, set.animations().get("test.b").loop());
         // 非 position/rotation/scale 通道不产生骨骼条目
         assertTrue(set.animations().get("test.c").bones().isEmpty());
+    }
+
+    @Test
+    void subtractsBindRotationFromAbsoluteRotationKeyframes() {
+        BBModel model = parseModel("""
+                [
+                  {
+                    "uuid": "g1", "name": "arm", "origin": [0, 0, 0], "rotation": [10, 20, 30],
+                    "isOpen": true, "export": true, "locked": false, "visibility": true,
+                    "mirror_uv": false, "color": 0, "autouv": 0, "children": []
+                  },
+                  {
+                    "uuid": "g2", "name": "plain", "origin": [0, 0, 0],
+                    "isOpen": true, "export": true, "locked": false, "visibility": true,
+                    "mirror_uv": false, "color": 0, "autouv": 0, "children": []
+                  }
+                ]
+                """, """
+                [
+                  {
+                    "name": "据枪",
+                    "loop": "loop",
+                    "animators": {
+                      "uuid-a": {
+                        "name": "arm",
+                        "type": "bone",
+                        "keyframes": [
+                          {"channel": "rotation", "time": 0.0, "data_points": [{"x": 40.0, "y": 50.0, "z": 60.0}]},
+                          {"channel": "rotation", "time": 0.5, "data_points": [{"x": "query.a", "y": 0.0, "z": 0.0}]},
+                          {"channel": "position", "time": 0.0, "data_points": [{"x": 1.0, "y": 2.0, "z": 3.0}]}
+                        ]
+                      },
+                      "uuid-b": {
+                        "name": "plain",
+                        "type": "bone",
+                        "keyframes": [
+                          {"channel": "rotation", "time": 0.0, "data_points": [{"x": 1.0, "y": 2.0, "z": 3.0}]}
+                        ]
+                      }
+                    }
+                  }
+                ]
+                """);
+
+        BrAnimationEntrySchema entry = BbModelAnimations.toAnimationSet(model, "test").animations().get("test.据枪");
+
+        BrBoneAnimationSchema arm = entry.bones().get("arm");
+        // 绝对关键帧先减 bind 旋转再按约定取反：-(40-10)=-30、-(50-20)=-30、60-30=30
+        // （运行时 bind + (kf − bind) = kf，与 Blockbench 绝对语义一致）
+        assertEquals(-30.0F, constantValue(arm, "rotation", 0F, 0));
+        assertEquals(-30.0F, constantValue(arm, "rotation", 0F, 1));
+        assertEquals(30.0F, constantValue(arm, "rotation", 0F, 2));
+        // position 通道不做 bind 减法（bind 位置恒零向量）
+        assertEquals(-1.0F, constantValue(arm, "position", 0F, 0));
+        assertEquals(2.0F, constantValue(arm, "position", 0F, 1));
+        assertEquals(3.0F, constantValue(arm, "position", 0F, 2));
+        // molang 表达式先包 (raw) - (bind) 再在取反通道包 -(…)
+        assertEquals("-((query.a) - (10.0))", arm.rotation().get(0.5F).dataPoints().get(0).x().toString());
+
+        // 无 rest 旋转的骨骼行为不变：x/y 取反、z 透传
+        BrBoneAnimationSchema plain = entry.bones().get("plain");
+        assertEquals(-1.0F, constantValue(plain, "rotation", 0F, 0));
+        assertEquals(-2.0F, constantValue(plain, "rotation", 0F, 1));
+        assertEquals(3.0F, constantValue(plain, "rotation", 0F, 2));
     }
 }
