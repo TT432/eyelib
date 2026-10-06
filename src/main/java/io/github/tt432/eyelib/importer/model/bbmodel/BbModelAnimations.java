@@ -16,15 +16,15 @@ import java.util.TreeMap;
 
 /**
  * bbmodel 内嵌动画 → bedrock 动画 schema 转换。
- * 坐标约定：bbmodel 存储的是 Blockbench UI/显示空间的值——Blockbench 基岩动画导出器
- * （blockbench 源码 js/formats/bedrock/bedrock_animation.js {@code getKeyframeDataPoints}）
- * 在导出 .animation.json 时对 position.x 与 rotation.x/y 无条件 invertMolang，几何导出同样
- * 镜像 X。因此 bbmodel 内嵌值与"显示空间"同构，而本库注册表内所有剪辑统一为基岩剪辑空间
- * （渲染期由模型 flipAnimation=true 补偿一次得到编辑器姿态，与基岩 .animation.json 一致）。
- * 故转换期必须取反：position 取反 x、rotation 取反 x/y、scale 不变；数字字符串同数值取反；
- * molang 表达式包裹 {@code -(...)} 取反（eyelib molang 支持一元负号）。
- * （9754bbea 的"UI 值透传 + 渲染期补偿一次即编辑器姿态"结论已被废弃：其前提
- * "Blockbench 显示姿态 = flip(UI 值)"与 Blockbench 导出源码矛盾，实机表现为姿态镜像。）
+ * 坐标约定（2026-10-06 以 web.blockbench.net 实测校准）：bbmodel 内嵌动画值与 bedrock
+ * .animation.json 同为剪辑空间——Blockbench 显示 bedrock 动画时旋转取反 x/y、位置取反 x
+ * （实测：待机躯体 UpBody 显示 (-11.17,-48.92,2.56)° = flip_xy(文件值)；bone24 显示
+ * (14.53,16.13,17.24)° = rest(37.4,71,39.1) + flip(关键帧)，即关键帧叠加在 rest 上而非替换）。
+ * 本库注册表统一剪辑空间，渲染期由模型 flipAnimation=true 翻转一次即得 Blockbench 显示姿态，
+ * 故转换期必须原样透传：不取反、不做 bind 相对化。
+ * 历史教训：转换期取反曾与渲染期翻转构成双翻转（净恒等，实机姿态镜像）；0a5eb246 的
+ * bind 相对化亦被实测定伪。验证管线：Blockbench web 抽 mesh.matrixWorld 与游戏渲染顶点
+ * 逐 cube 对比（修复后 0.00006/294 cube）。
  *
  * @author TT432
  */
@@ -111,18 +111,16 @@ public final class BbModelAnimations {
     }
 
     private static MolangValue3 convertPoint(BbModelAnimation.DataPoint point, String channel) {
-        boolean negateX = channel.equals("position") || channel.equals("rotation");
-        boolean negateY = channel.equals("rotation");
-        return new MolangValue3(axis(point.x(), negateX), axis(point.y(), negateY), axis(point.z(), false));
+        // 剪辑空间原样透传（见类注释）；数值字符串规范化为常量，molang 表达式不动。
+        return new MolangValue3(axis(point.x()), axis(point.y()), axis(point.z()));
     }
 
-    /** 数值（含数字字符串）取反后取常量；molang 表达式在取反通道包裹 {@code -(...)}，其余透传。 */
-    private static MolangValue axis(String raw, boolean negate) {
+    /** 数值（含数字字符串）取常量；molang 表达式透传。 */
+    private static MolangValue axis(String raw) {
         try {
-            float value = Float.parseFloat(raw);
-            return MolangValue.getConstant(negate ? -value : value);
+            return MolangValue.getConstant(Float.parseFloat(raw));
         } catch (NumberFormatException ignored) {
-            return new MolangValue(negate && !raw.isEmpty() ? "-(" + raw + ")" : raw);
+            return new MolangValue(raw);
         }
     }
 }
