@@ -24,7 +24,7 @@ Eyelib Forge 模组开发总索引——项目概览、Skill 导航、跨域约�
   - SKILL 只放操作流程（ADR-0011）；架构概念、陷阱、规格、ADR 以 `docs/` 为权威源
 - When 跨域约束:
   - NEVER 禁止猜测：不知道就说不知道，不要编造因果链
-  - NEVER 禁止 `git add -A`（会污染 `3rdparty/rd_src` 子模块）
+  - NEVER 禁止 `git add -A`（会误提交子模块指针变更；当前子模块为 `clientsmoke` 与 `third_party/LDLib2`，2026-10-07 实证）
   - NEVER 子代理报告不可信：delegate_task 返回的 self-report 不能作为验证证据
   - 发现测试失败先查是否预存：`git stash` 切回原始代码复现
   - PREFER 系统性思维压倒逐实体验证：多实体共享 bug 优先找系统级根因
