@@ -14,7 +14,8 @@ jobs:
       matrix:
         include:
           - node: '1.20.1'
-            java: '17'
+            # daemon 须 >=21（stonecutter 0.9.6 要求）；17 由 foojay toolchain 自动供给
+            java: '21'
           - node: '1.21.1'
             java: '21'
           - node: '26.1.2'
