@@ -44,11 +44,11 @@ Write and run ClientSmoke tests that verify visual behavior in a real Minecraft 
 5. Sync the Gradle project if dependencies changed
 6. Build the project
 7. Run the smoke tests
-8. Check run/clientsmoke/clientsmoke-reports/ for results
+8. Check `<gameDirectory>/clientsmoke-reports/` for results：mcmcp 流程（普通 client run）为 `run/clientsmoke-reports/`，Gradle clientSmoke run config（gameDirectory=run/clientsmoke）为 `run/clientsmoke/clientsmoke-reports/`
 
 ## Output
 - Type: clientsmoke-report
-- screenshots (required) — written to run/clientsmoke/clientsmoke-reports/screenshots/
+- screenshots (required) — written to `<gameDirectory>/clientsmoke-reports/screenshots/`（路径规则见 Workflow 第 8 步）
 - json-report (required) — report-{timestamp}.json
 - junit-xml (required) — junit-{timestamp}.xml
 - Stop when: mc.stop() then 60-tick grace, then Runtime.halt(0) on all-pass, halt(1) on failure
@@ -87,5 +87,5 @@ INIT → CONFIG_LOAD → SCAN → WORLD_CREATE → WORLD_WAIT → STABILIZE
   → TEST_EXEC (foreach test by priority) → HUD_HIDE → SCREENSHOT
   → REPORT → EXIT
 ```
-Screenshots: written to `run/clientsmoke/clientsmoke-reports/screenshots/`
+Screenshots: written to `<gameDirectory>/clientsmoke-reports/screenshots/`（mcmcp 流程 `run/clientsmoke-reports/`，Gradle clientSmoke run config `run/clientsmoke/clientsmoke-reports/`）
 Reports: JSON (`report-{timestamp}.json`) + JUnit XML (`junit-{timestamp}.xml`)

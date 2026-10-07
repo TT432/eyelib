@@ -109,6 +109,17 @@
           "B1ea7fab6c1ca545c"
         ],
         "locked": false
+      },
+      {
+        "id": "C9",
+        "scope": "root/eyelib-gpu-调试-renderdoc/已知可用路径",
+        "modality": "must_not",
+        "predicate": "26.1.2 上 eyelib 接管实体渲染时用 Screenshot.grab 做视觉验证——grab 后 ≤15s 进程以 0xC0000374 STATUS_HEAP_CORRUPTION 无声退出（蒙皮 ON/OFF、C1 前基线 d3f11518 均复现，预存问题）；替代路径只有 RenderDoc 截帧（2026-08-27 实证）",
+        "guard": "26.1.2 上 eyelib 接管实体渲染时需要视觉验证",
+        "spans": [
+          "Bdfcf6ccd9873d6cf"
+        ],
+        "locked": false
       }
     ],
     "workflow": [
@@ -301,7 +312,8 @@
       }
     ],
     "output": {
-      "fields": []
+      "fields": [],
+      "termination": []
     },
     "evidence": [
       {
@@ -523,10 +535,11 @@
     "B36eecaede42e7527": "⚠️ **WSL 下 GLES 3.x 抓帧无法回放**。唯一可行路径：Windows 侧 Python replay。",
     "B94421e5f9fa7d621": "RenderDocCapturer API",
     "B012a25654542b53f": "`io.github.tt432.clientsmoke.debug.RenderDocCapturer`（clientsmoke mod 内，经 /eval 调用）：",
-    "B44cffbb21e218108": "```java\nRenderDocCapturer.isAvailable()          // boolean\nRenderDocCapturer.setCaptureFilePathTemplate(\"E:\\\\...\\\\run\\\\frame\")\nRenderDocCapturer.startCapture()         // void\nRenderDocCapturer.endCapture()           // boolean\n```"
+    "B44cffbb21e218108": "```java\nRenderDocCapturer.isAvailable()          // boolean\nRenderDocCapturer.setCaptureFilePathTemplate(\"E:\\\\...\\\\run\\\\frame\")\nRenderDocCapturer.startCapture()         // void\nRenderDocCapturer.endCapture()           // boolean\n```",
+    "Bdfcf6ccd9873d6cf": "- [when 26.1.2 上 eyelib 接管实体渲染时需要视觉验证] 禁止用 Screenshot.grab：执行后 ≤15s 进程以 exit code -1073740940（0xC0000374 STATUS_HEAP_CORRUPTION）无声退出，无 hs_err、无 crash report。复现矩阵（2026-08-27）：蒙皮 ON/OFF + 实体 + 截图均死，C1 前基线 d3f11518 同样死（预存问题）；和平无实体 + 截图存活；实体不截图存活。截图文件本身能正常写出。疑似 copyTextureToBuffer 回调的 mapBuffer+逐像素拷贝与 eyelib 每帧 BufferBuilder/endBatch 活动叠加。26.1.2 实体渲染视觉回归的替代路径只有 RenderDoc 截帧。"
   },
   "stats": {
-    "patches": 1,
+    "patches": 2,
     "repacks": 0,
     "lastRepackAt": "2026-08-13T08:55:00.384Z",
     "totalSavedTokens": 0
@@ -537,9 +550,15 @@
       "operation": "COMPRESS",
       "summary": "one-shot: 33 blocks → 4704 chars rendered",
       "savingTokens": 0
+    },
+    {
+      "ts": "2026-10-07T03:02:32.953Z",
+      "operation": "EXTEND",
+      "summary": "EXTEND: +1 rules, +0 workflow, +0 tools, +0 fields",
+      "savingTokens": 0
     }
   ],
   "createdAt": "2026-08-13T08:55:00.384Z",
-  "updatedAt": "2026-08-13T08:55:00.437Z",
+  "updatedAt": "2026-10-07T03:02:32.954Z",
   "frontMatterRaw": "---\nname: eyelib-renderdoc\ndescription: Eyelib GPU 调试——RenderDoc 截帧、headless 回放、Windows Python replay、renderdoc-mcp。Use when capturing or analyzing RenderDoc frames.\nlicense: MIT\ncompatibility: opencode\nmetadata:\n  author: https://github.com/TT432\n  version: \"1.0.0\"\n  tags: eyelib, renderdoc, gpu, debugging\n  related-skills: eyelib, eyelib-debug\n---"
 }

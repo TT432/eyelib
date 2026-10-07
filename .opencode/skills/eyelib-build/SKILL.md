@@ -37,6 +37,8 @@ Eyelib 项目的 Gradle（Stonecutter 多版本）+ mcmcp omp 拓展构建、测
   - NEVER 禁止 --no-build-cache：会强制 MC Forge artifacts 全量重建；需要清缓存时只清相关模块的 build/。
   - 结构/代码改动完成后必须 mcmcp_build 且 exit code = 0 才算完成。
   - runtime-sensitive 改动先编译，再用 dev client（eyelib-debug）做 smoke check。
+- When Common Pitfalls:
+  - [when 匿名子类扩展 MC 类编译失败（已在构造器中定义了变量 o）] 扩展 MC 类需要匿名子类时改用命名（静态嵌套）类——MDG 反编译重编译产物保留混淆 LVT（如 ArmorStand 构造器四参数全名 o），javac 为匿名类合成构造器参数时按超类构造器 LVT 命名致同名冲突，:1.20.1:compileJava 确定性失败；命名类显式构造器参数按源码命名不触发该合成（2026-10-03 实证）
 - When 本地 jar 依赖：MDG remap 配置不收 files()，mavenLocal 同名替换不生效:
   - NEVER 给 modLdlibCompile/modLocalRuntime 这类 MDG createRemappingConfiguration 生成的配置加本地 jar 时不要用 files(...) 记法——直接报「Cannot convert the provided notation ... DependencyConstraint」，该链只接受字符串/map 坐标。
   - 本地 jar 正确路径：手动装进 ~/.m2/repository/<group>/<name>/<version>/（jar + 最小 pom），用坐标引用；注意 exclusiveContent 组过滤，别用被占用的 group。
@@ -51,6 +53,7 @@ Eyelib 项目的 Gradle（Stonecutter 多版本）+ mcmcp omp 拓展构建、测
 - When mcmcp_build 报错被截断拿不到编译错误:
   - mcmcp_build 失败时只返回状态且错误行被截断到 20 行、按字符串匹配 error: 过滤，中文/非标准输出会漏掉；完整 Gradle 输出每次 build 落盘覆盖到 build/_mcp_gradle_out.txt（stdout：任务日志+编译错误）、build/_mcp_gradle_err.txt（stderr：JVM warning+错误回显）、build/_mcp_gradle.log（mcmcp 拓展运行日志）；build 失败时直接 read 这些文件拿完整错误（mcmcp 拓展 runGradle 写盘实现细节）。
   - 若用 bash 跑 gradlew，输出直接在终端，不会落盘到 _mcp_gradle_*.txt 文件——两者执行链路不同。
+  - [when mcmcp_build 在 createMinecraftArtifacts 反复失败] mcmcp_build 在 createMinecraftArtifacts 反复失败（~7s 后 FAILED 无明确原因）而手动 gradlew 同等任务全绿时，规避为 bash 手动跑 gradlew :1.20.1:compileJava :1.20.1:prepareClientRun :1.20.1:createClientLaunchScript（疑似 mcmcp 环境差异，2026-10-01 实证）
 - When Stonecutter `//?` 注释语法踩坑:
   - //? 块条件的闭合标记必须 //?}（如 //? if <1.20.6 { ... //?} else { ... //?}），不能用 //}。
   - //? 行条件不支持 else（//? if <1.20.6 后换行再 //?} else 是错误语法），需要 else 时必须用块条件。

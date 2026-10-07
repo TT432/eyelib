@@ -134,6 +134,27 @@
           "Bfd6e79309a55feaa"
         ],
         "locked": false
+      },
+      {
+        "id": "C2",
+        "scope": "root/eyelib-clientsmoke-测试/运行",
+        "modality": "must",
+        "predicate": "报告输出目录恒为 <gameDirectory>/clientsmoke-reports/；mcmcp_clientsmoke/手工注入 clientRunVmArgs 走普通 client run（gameDirectory=run/）→ versions/<version>/run/clientsmoke-reports/（无中间 clientsmoke 目录，2026-08-22 实证）；Gradle clientSmoke run config（gameDirectory=run/clientsmoke）→ versions/<version>/run/clientsmoke/clientsmoke-reports/",
+        "spans": [
+          "B68348a2236979844"
+        ],
+        "locked": false
+      },
+      {
+        "id": "C3",
+        "scope": "root/eyelib-clientsmoke-测试/常见陷阱",
+        "modality": "must",
+        "predicate": "mcmcp_clientsmoke 因网络中断失败时手工绕过：mcmcp_build 成功后往 versions/1.20.1/build/moddev/clientRunVmArgs.txt 末尾追加 -Dclientsmoke.enabled=true 与 -Dclientsmoke.autoExit=true（文件末尾无换行先补 \\r\\n），再 mcmcp_launch，等 ~60s 读 run/clientsmoke-reports/ 最新 report-*.json",
+        "guard": "mcmcp_clientsmoke 因网络中断失败（forge maven TLS 握手失败、dynamic version typetools 缓存过期重解析）",
+        "spans": [
+          "B199c1c0466cecada"
+        ],
+        "locked": false
       }
     ],
     "workflow": [
@@ -162,6 +183,15 @@
         "spans": [
           "Bd483270e41adb7c0"
         ]
+      },
+      {
+        "id": "W3",
+        "scope": "root/eyelib-clientsmoke-测试/运行",
+        "kind": "fallback",
+        "action": "mcmcp_clientsmoke 网络中断时：mcmcp_build → 追加 clientsmoke JVM 参数到 clientRunVmArgs.txt → mcmcp_launch → 等 ~60s 读 run/clientsmoke-reports/ 最新 report-*.json",
+        "spans": [
+          "B199c1c0466cecada"
+        ]
       }
     ],
     "tools": [
@@ -188,34 +218,32 @@
         {
           "name": "report-YYYYMMDD-HHmmss.json",
           "required": true,
-          "validation": "位于 versions/<version>/run/clientsmoke/clientsmoke-reports/",
+          "validation": "位于 <gameDirectory>/clientsmoke-reports/：mcmcp 流程为 versions/<version>/run/clientsmoke-reports/；Gradle clientSmoke run config 为 versions/<version>/run/clientsmoke/clientsmoke-reports/",
           "spans": [
-            "Bef26ad6c6879ad8e"
+            "Bcfa3a4b3dd3fca6d"
           ]
         },
         {
           "name": "junit-YYYYMMDD-HHmmss.xml",
           "required": true,
-          "validation": "位于 versions/<version>/run/clientsmoke/clientsmoke-reports/",
+          "validation": "位于 <gameDirectory>/clientsmoke-reports/（路径规则同 report json）",
           "spans": [
-            "B77976a538b9fc399"
+            "Bcfa3a4b3dd3fca6d"
           ]
         },
         {
           "name": "screenshots/（每测试一张截图）",
           "required": true,
-          "validation": "位于 versions/<version>/run/clientsmoke/clientsmoke-reports/screenshots/",
+          "validation": "位于 <gameDirectory>/clientsmoke-reports/screenshots/（路径规则同 report json）",
           "spans": [
-            "Ba5c718d106a3c2af"
+            "Bcfa3a4b3dd3fca6d"
           ]
         }
       ],
       "termination": [
         "状态机推进到 REPORT 阶段后报告已写出"
       ],
-      "spans": [
-        "B641daefc5bcad032"
-      ]
+      "spans": []
     },
     "evidence": [
       {
@@ -251,18 +279,6 @@
       {
         "source_block": "Bd483270e41adb7c0",
         "reason": "UNIQUE_EVIDENCE"
-      },
-      {
-        "source_block": "Bef26ad6c6879ad8e",
-        "reason": "USER_LOCKED"
-      },
-      {
-        "source_block": "B77976a538b9fc399",
-        "reason": "USER_LOCKED"
-      },
-      {
-        "source_block": "Ba5c718d106a3c2af",
-        "reason": "USER_LOCKED"
       }
     ]
   },
@@ -358,17 +374,17 @@
     "Ba5906a3f8d006fb5": "运行",
     "Bd483270e41adb7c0": "```python\nmcmcp_clientsmoke(timeout=180)  # 重建 + 注入 JVM 参数 + 启动 + 解析报告（一键）\n# ⚠️ 不要调用 mcmcp_enter_world！clientsmoke 自己创建 ClientSmokeTest 世界\n# 等待 ~30s → 状态机 INIT → CONFIG_LOAD → SCAN → WORLD_CREATE → STABILIZE → TEST_EXEC → REPORT\n```",
     "B641daefc5bcad032": "输出（gameDir = `versions/<version>/run/clientsmoke`，由 build.gradle clientSmoke run config 决定）：",
-    "Bef26ad6c6879ad8e": "`versions/<version>/run/clientsmoke/clientsmoke-reports/report-YYYYMMDD-HHmmss.json`",
-    "B77976a538b9fc399": "`versions/<version>/run/clientsmoke/clientsmoke-reports/junit-YYYYMMDD-HHmmss.xml`",
-    "Ba5c718d106a3c2af": "`versions/<version>/run/clientsmoke/clientsmoke-reports/screenshots/` — 每测试一张截图",
     "B0a64f0693ab5d91f": "常见陷阱",
     "Bc1b6d75384689d91": "**MaterialManager key 用 `name:base` 格式**：`.mcpack` 中的 key 是 `entity_nocull:entity` 不是 `entity_nocull`",
     "Bd7ad489ae10c52dc": "**不能和 `mcmcp_enter_world` 同时使用**：clientsmoke 自己创建世界，手动 enter_world 会冲突",
     "B4c2d9d3abc94f6d8": "**`ResourceLocation` 用 `new ResourceLocation(ns, path)`**：MC 1.20.1 没有 `fromNamespaceAndPath`",
-    "Bfd6e79309a55feaa": "- [when 实体捕获测试挂 renderCount] c0e8575f 起 .mcpack 注册为 vanilla 可选资源包、默认未选中；clientsmoke 全新 run 目录无 options.txt → a&s 不加载 → ClientEntityManager 空 → *CaptureSmoke 挂 \"was not rendered by the Eyelib pipeline (renderCount did not increase)\"。修复：BedrockAddonPackFinder 在 clientsmoke.enabled=true 时把包注册为 required（2026-08-19 实证，勿回退）；诊断先看日志有无 \"Loading Bedrock addon from resourcepacks/\" 行。"
+    "Bfd6e79309a55feaa": "- [when 实体捕获测试挂 renderCount] c0e8575f 起 .mcpack 注册为 vanilla 可选资源包、默认未选中；clientsmoke 全新 run 目录无 options.txt → a&s 不加载 → ClientEntityManager 空 → *CaptureSmoke 挂 \"was not rendered by the Eyelib pipeline (renderCount did not increase)\"。修复：BedrockAddonPackFinder 在 clientsmoke.enabled=true 时把包注册为 required（2026-08-19 实证，勿回退）；诊断先看日志有无 \"Loading Bedrock addon from resourcepacks/\" 行。",
+    "B68348a2236979844": "- 报告输出目录恒为 `<gameDirectory>/clientsmoke-reports/`，gameDirectory 随启动路径不同：mcmcp_clientsmoke 与手工注入 clientRunVmArgs 走普通 client run（gameDirectory=run/），报告在 `versions/<version>/run/clientsmoke-reports/`（无中间 clientsmoke 目录，2026-08-22 实证）；Gradle clientSmoke run config（build.gradle gameDirectory=run/clientsmoke）时才在 `versions/<version>/run/clientsmoke/clientsmoke-reports/`。",
+    "B199c1c0466cecada": "- [when mcmcp_clientsmoke 因网络中断失败] mcmcp_clientsmoke 依赖 Gradle createMinecraftArtifacts；forge maven TLS 握手失败、dynamic version（typetools）缓存过期触发重新解析等网络中断时必挂。绕过流程：1) mcmcp_build 成功；2) 手工往 versions/1.20.1/build/moddev/clientRunVmArgs.txt 末尾追加 `-Dclientsmoke.enabled=true` 与 `-Dclientsmoke.autoExit=true`（文件末尾无换行，追加前先补 \\r\\n）；3) mcmcp_launch；4) 等 ~60s 读 run/clientsmoke-reports/ 最新 report-*.json。",
+    "Bcfa3a4b3dd3fca6d": "- report-YYYYMMDD-HHmmss.json、junit-YYYYMMDD-HHmmss.xml、screenshots/ 位于 `<gameDirectory>/clientsmoke-reports/`：mcmcp 流程（普通 client run，gameDirectory=run/）为 `versions/<version>/run/clientsmoke-reports/`；Gradle clientSmoke run config（gameDirectory=run/clientsmoke）为 `versions/<version>/run/clientsmoke/clientsmoke-reports/`。"
   },
   "stats": {
-    "patches": 3,
+    "patches": 6,
     "repacks": 0,
     "lastRepackAt": "2026-08-13T08:53:51.157Z",
     "totalSavedTokens": 0
@@ -391,9 +407,21 @@
       "operation": "EXTEND",
       "summary": "EXTEND: +1 rules, +0 workflow, +0 tools, +0 fields",
       "savingTokens": 0
+    },
+    {
+      "ts": "2026-10-07T03:00:15.351Z",
+      "operation": "EXTEND",
+      "summary": "EXTEND: +2 rules, +1 workflow, +0 tools, +0 fields",
+      "savingTokens": 0
+    },
+    {
+      "ts": "2026-10-07T03:06:19.870Z",
+      "operation": "REFINE",
+      "summary": "REFINE: +0 rules, +0 workflow, +0 tools, +3 fields",
+      "savingTokens": 0
     }
   ],
   "createdAt": "2026-08-13T08:53:51.157Z",
-  "updatedAt": "2026-08-19T06:32:26.194Z",
+  "updatedAt": "2026-10-07T03:08:37.748Z",
   "frontMatterRaw": "---\nname: eyelib-clientsmoke\ndescription: Eyelib Clientsmoke 客户端烟雾测试——@ClientSmoke 注解、三层架构、运行、报告。Use when writing or running clientsmoke tests.\nlicense: MIT\ncompatibility: opencode\nmetadata:\n  author: https://github.com/TT432\n  version: \"1.0.0\"\n  tags: eyelib, testing, clientsmoke, mc\n  related-skills: eyelib, eyelib-build, eyelib-debug\n---"
 }
