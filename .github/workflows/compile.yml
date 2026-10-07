@@ -1,0 +1,46 @@
+name: compile
+
+on:
+  pull_request:
+  push:
+    branches: [master]
+
+jobs:
+  compile:
+    name: compile ${{ matrix.node }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - node: '1.20.1'
+            # daemon 须 >=21（stonecutter 0.9.6 要求）；17 由 foojay toolchain 自动供给
+            java: '21'
+          - node: '1.21.1'
+            java: '21'
+          - node: '26.1.2'
+            java: '25'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.java }}
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      # :1.20.1:compileJava 的 compileOnly 依赖 com.github.tt432:ldlib2-forge-1.20.1（fork，仅 mavenLocal 手动安装）
+      - name: Install LDLib2 fork to mavenLocal
+        if: matrix.node == '1.20.1'
+        run: ./gradlew publishToMavenLocal --no-daemon
+        working-directory: third_party/LDLib2
+
+      # 所有节点 compileOnly 依赖 io.github.tt432:clientsmoke:<version>（mavenLocal）
+      - name: Publish clientsmoke ${{ matrix.node }} to mavenLocal
+        run: bash gradlew -p clientsmoke :${{ matrix.node }}:publishToMavenLocal --no-daemon
+
+      - name: Compile ${{ matrix.node }}
+        run: bash gradlew :${{ matrix.node }}:compileJava --no-daemon
