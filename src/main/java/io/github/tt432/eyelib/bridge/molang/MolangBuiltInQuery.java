@@ -849,7 +849,12 @@ public interface MolangBuiltInQuery {
     public static float headXRotation(MolangScope scope, float head) {
         //? if <26.1 {
         return portFloat(scope, "head_x_rotation")
-                .orElse(scope.getHostContext().get(WITHER_BOSS).map(w -> w.getHeadXRot((int) head)).orElse(0F));
+                .orElseGet(() -> livingFloat(scope, living ->
+                        living instanceof WitherBoss wither
+                                // 多头生物按索引取对应头
+                                ? wither.getHeadXRot((int) head)
+                                // Bedrock 语义：单头实体返回头部俯仰角（与 head_y_rotation 的通例分支对齐）
+                                : Mth.rotLerp(partialTicks(scope), living.xRotO, living.getXRot())));
         //?} else {
         return 0F;
         //?}
