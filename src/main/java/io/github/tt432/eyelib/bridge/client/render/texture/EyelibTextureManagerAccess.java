@@ -19,4 +19,15 @@ public interface EyelibTextureManagerAccess {
      * @param pathFilter 作用于 ResourceLocation/Identifier 的 path 段（无命名空间）
      */
     void eyelib$evictTextures(Predicate<String> pathFilter);
+
+    /**
+     * byPath 是否已持有指定纹理（含 eyelib 上传的派生纹理）。
+     * 用于派生纹理（clamped/ 等）的存在性检查：实体首帧 variant 未同步时
+     * 贴图解析结果随后变化，但 needReload 已为 false，若无此检查，
+     * 新键的派生纹理永不入队 → MissingTexture 永久紫黑。
+     * 须在主线程调用（byPath 非线程安全）。
+     *
+     * @param namespacedPath 形如 "namespace:path" 的完整纹理路径
+     */
+    boolean eyelib$hasTexture(String namespacedPath);
 }

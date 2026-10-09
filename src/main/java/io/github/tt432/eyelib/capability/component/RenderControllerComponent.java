@@ -177,6 +177,15 @@ public class RenderControllerComponent {
             textureStateVersion = TEXTURE_STATE_VERSION.get();
         }
 
+        /**
+         * clamped 上传动作执行失败（基图未就绪、download 返回 null）时重新武装：
+         * 抵消 setupModel 先行的 {@link #markTextureUploaded()}，使下一帧 setupModel
+         * 重新判定 needsTextureReload 并入队上传动作，直到基图就绪后成功上传为止。
+         */
+        public void markTextureStale() {
+            textureStateVersion = TEXTURE_STATE_VERSION.get() - 1;
+        }
+
         private void checkModelVersion(int modelVersion) {
             if (modelVersion != cachedModelVersion) {
                 boneMatchCache.clear();
