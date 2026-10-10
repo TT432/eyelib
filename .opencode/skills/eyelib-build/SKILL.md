@@ -39,6 +39,8 @@ Eyelib 项目的 Gradle（Stonecutter 多版本）+ mcmcp omp 拓展构建、测
   - runtime-sensitive 改动先编译，再用 dev client（eyelib-debug）做 smoke check。
 - When Common Pitfalls:
   - [when 匿名子类扩展 MC 类编译失败（已在构造器中定义了变量 o）] 扩展 MC 类需要匿名子类时改用命名（静态嵌套）类——MDG 反编译重编译产物保留混淆 LVT（如 ArmorStand 构造器四参数全名 o），javac 为匿名类合成构造器参数时按超类构造器 LVT 命名致同名冲突，:1.20.1:compileJava 确定性失败；命名类显式构造器参数按源码命名不触发该合成（2026-10-03 实证）
+  - [when mcmcp_build 失败且 dev 客户端正在运行] dev 客户端运行中时 mcmcp_build 会在 :1.20.1:createMinecraftArtifacts exit 1（运行中客户端持有产物锁文件），表现为构建失败而非明确报错；必须先 mcmcp_close 再构建（2026-10-09 实证）
+  - [when git stash pop 之后] git stash 验证预存测试时跑 gradle 会用干净树重刷 stonecutter 生成源与 class，stash pop 后必须重新 mcmcp_build，否则后续构建产物不反映工作区改动（2026-10-09 实证）
 - When 本地 jar 依赖：MDG remap 配置不收 files()，mavenLocal 同名替换不生效:
   - NEVER 给 modLdlibCompile/modLocalRuntime 这类 MDG createRemappingConfiguration 生成的配置加本地 jar 时不要用 files(...) 记法——直接报「Cannot convert the provided notation ... DependencyConstraint」，该链只接受字符串/map 坐标。
   - 本地 jar 正确路径：手动装进 ~/.m2/repository/<group>/<name>/<version>/（jar + 最小 pom），用坐标引用；注意 exclusiveContent 组过滤，别用被占用的 group。

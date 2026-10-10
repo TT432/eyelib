@@ -1,0 +1,37 @@
+{
+  "buttons": [
+    {
+      "name": "构建全部版本",
+      "command": "gradlew.bat assemble"
+    },
+    {
+      "name": "构建 1.20.1 Forge jar",
+      "command": "gradlew.bat :1.20.1:assemble"
+    },
+    {
+      "name": "构建 1.21.1 NeoForge jar",
+      "command": "gradlew.bat :1.21.1:assemble"
+    },
+    {
+      "name": "构建 26.1.2 NeoForge jar",
+      "command": "gradlew.bat :26.1.2:assemble"
+    },
+    {
+      "name": "构建并发布 clientsmoke",
+      "command": "gradlew.bat -p clientsmoke :1.20.1:publishToMavenLocal :1.21.1:publishToMavenLocal :26.1.2:publishToMavenLocal"
+    },
+    {
+      "name": "清理旧版本 jar",
+      "command": "powershell -NoProfile -Command \"$v=(Select-String -Path gradle.properties -Pattern '^mod_version=(\\S+)').Matches.Groups[1].Value; $cv=(Select-String -Path clientsmoke/gradle.properties -Pattern '^mod_version=(\\S+)').Matches.Groups[1].Value; $t=Get-ChildItem versions,clientsmoke/versions -Recurse -Filter *.jar* | Where-Object { $_.DirectoryName -match 'build\\\\libs$' -and $_.Name -notmatch [regex]::Escape($v) -and $_.Name -notmatch [regex]::Escape($cv) }; $t | Remove-Item -Force; Write-Host ('deleted ' + $t.Count + ' old jars, kept ' + $v + ' / ' + $cv)\""
+    }
+  ],
+  "artifacts": [
+    "versions/1.20.1/build/libs",
+    "versions/1.21.1/build/libs",
+    "versions/26.1.2/build/libs",
+    "clientsmoke/versions/1.20.1/build/libs",
+    "clientsmoke/versions/1.21.1/build/libs",
+    "clientsmoke/versions/26.1.2/build/libs",
+    "run/clientsmoke-reports"
+  ]
+}
