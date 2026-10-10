@@ -282,9 +282,9 @@
         "id": "run-check",
         "scope": "root/running-smoke-tests",
         "kind": "action",
-        "action": "Check run/clientsmoke/clientsmoke-reports/ for results",
+        "action": "Check <gameDirectory>/clientsmoke-reports/ for results：mcmcp 流程（普通 client run）为 run/clientsmoke-reports/，Gradle clientSmoke run config（gameDirectory=run/clientsmoke）为 run/clientsmoke/clientsmoke-reports/",
         "spans": [
-          "B6f925318d0c249fa"
+          "Bb8e4073b65baf8e1"
         ]
       }
     ],
@@ -307,11 +307,12 @@
       }
     ],
     "output": {
+      "type": "clientsmoke-report",
       "fields": [
         {
           "name": "screenshots",
           "required": true,
-          "validation": "written to run/clientsmoke/clientsmoke-reports/screenshots/",
+          "validation": "written to <gameDirectory>/clientsmoke-reports/screenshots/（mcmcp 流程 run/clientsmoke-reports/，Gradle clientSmoke run config run/clientsmoke/clientsmoke-reports/）",
           "spans": [
             "Bf5b54b58f38999a2"
           ]
@@ -333,7 +334,6 @@
           ]
         }
       ],
-      "type": "clientsmoke-report",
       "termination": [
         "mc.stop() then 60-tick grace, then Runtime.halt(0) on all-pass, halt(1) on failure"
       ],
@@ -360,10 +360,6 @@
       {
         "source_block": "B544e96fc7b89dc92",
         "reason": "UNIQUE_EVIDENCE"
-      },
-      {
-        "source_block": "Bf5b54b58f38999a2",
-        "reason": "USER_LOCKED"
       },
       {
         "source_block": "Bb44cee6549990873",
@@ -487,7 +483,6 @@
     "B4eb13a6aae69bc8c": "The framework runs as a tick-driven state machine on `ClientTickEvent`:",
     "B544e96fc7b89dc92": "```\nINIT → CONFIG_LOAD → SCAN → WORLD_CREATE → WORLD_WAIT → STABILIZE\n  → TEST_EXEC (foreach test by priority) → HUD_HIDE → SCREENSHOT\n  → REPORT → EXIT\n```",
     "B4e4cfb2b4fd75f3d": "World: deterministic creative superflat (`ClientSmokeTest`, seed `12345L`)",
-    "Bf5b54b58f38999a2": "Screenshots: written to `run/clientsmoke/clientsmoke-reports/screenshots/`",
     "Bb44cee6549990873": "Reports: JSON (`report-{timestamp}.json`) + JUnit XML (`junit-{timestamp}.xml`)",
     "B38ac96b4fceadcae": "Exit: `mc.stop()` → 60-tick grace → `Runtime.halt(0)` on all-pass, `halt(1)` on failure",
     "Ba89093e3e3d4ba29": "Adding a Smoke Test",
@@ -508,10 +503,11 @@
     "B24c7fc18c25e3bee": "- Full-lifecycle: does the mod work from load through world join to render?",
     "B99b5164dcc8555eb": "- GL state: are shaders compiling and applying correctly?",
     "B11abb4e3f57486f1": "- Integration: does component A correctly feed into component B during a real tick?",
-    "Ba967676da41506b3": "Not for: structural invariants (use unit tests), quick runtime checks (use progressive exploration)."
+    "Ba967676da41506b3": "Not for: structural invariants (use unit tests), quick runtime checks (use progressive exploration).",
+    "Bb8e4073b65baf8e1": "- Check `<gameDirectory>/clientsmoke-reports/` for results：mcmcp 流程（普通 client run）为 `run/clientsmoke-reports/`，Gradle clientSmoke run config（gameDirectory=run/clientsmoke）为 `run/clientsmoke/clientsmoke-reports/`。"
   },
   "stats": {
-    "patches": 2,
+    "patches": 4,
     "repacks": 0,
     "lastRepackAt": "2026-08-13T08:53:49.078Z",
     "totalSavedTokens": 0
@@ -528,9 +524,15 @@
       "operation": "AUDIT",
       "summary": "restored 3 missing spans as locked residual",
       "savingTokens": 0
+    },
+    {
+      "ts": "2026-10-07T03:10:18.717Z",
+      "operation": "REFINE",
+      "summary": "REFINE: +0 rules, +1 workflow, +0 tools, +0 fields",
+      "savingTokens": 0
     }
   ],
   "createdAt": "2026-08-13T08:53:49.078Z",
-  "updatedAt": "2026-08-13T09:01:48.399Z",
+  "updatedAt": "2026-10-07T03:11:07.600Z",
   "frontMatterRaw": "---\nname: smoke-test\ndescription: Write and run ClientSmoke tests that verify visual behavior in a real Minecraft client. Use for render output, GL state, texture correctness, and full-lifecycle integration checks.\nlicense: MIT\ncompatibility: opencode\nmetadata:\n  author: https://github.com/TT432\n  version: \"1.0.0\"\n---"
 }

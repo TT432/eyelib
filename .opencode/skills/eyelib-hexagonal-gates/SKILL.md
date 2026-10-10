@@ -32,6 +32,9 @@ metadata:
   - [when 仅最终集成/大接线后] G3 只在所有 domain 提取完成、最终集成（大接线后）时跑一次，日常批次不跑
 - When 编译验证:
   - 编译验证判定：exit code 0 且无 import net.minecraft 错误
+- When ArchUnit 规则:
+  - 过渡债台账：1623af11 引入的 BrBlockUnbakedGeometry.BakeVisitor 反向依赖 application 层 ModelVisitor/RenderParams 已 refreeze（build/archunit_store/*/deb3fb09-8ea2-45cf-9b41-8d2535ce9ec5）；阶段 2 抽 Port 时回收：BakeVisitor 改实现 bridge 侧 Visitor Port 后删除该 freeze store 对应条目
+  - [when ArchUnit freeze 基线丢失（clean/换机）] NEVER 把 ArchUnit freeze 基线丢失后的全绿当作债务已回收——freeze store 在 build/ 下未被 git 跟踪，clean/换机后基线丢失，须对照过渡债台账重建基线并逐条复核债务
 
 ## Workflow
 1. G1 编译验证：通过 mcmcp_build 或 bash 跑 gradlew compileJava（ADR-0014 后单 project，无 :eyelib-material: 子项目前缀）

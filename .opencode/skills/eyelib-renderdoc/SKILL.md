@@ -19,6 +19,8 @@ Eyelib GPU 调试——RenderDoc 截帧、headless 回放、Windows Python repla
 - Do NOT use when: 普通客户端调试启动（非截帧）走 mcmcp_launch，不属于本技能
 
 ## Rules
+- When 已知可用路径:
+  - [when 26.1.2 上 eyelib 接管实体渲染时需要视觉验证] NEVER 26.1.2 上 eyelib 接管实体渲染时用 Screenshot.grab 做视觉验证——grab 后 ≤15s 进程以 0xC0000374 STATUS_HEAP_CORRUPTION 无声退出（蒙皮 ON/OFF、C1 前基线 d3f11518 均复现，预存问题）；替代路径只有 RenderDoc 截帧（2026-08-27 实证）
 - When capture 模式启动:
   - [when 使用 renderdoccmd capture 模式启动客户端时] capture 启动前 runClient.cmd 必须先由 createClientLaunchScript 生成（经 mcmcp_build）
   - [when 截帧同时需要 AIDebugServer 调试端口时] capture 前向 versions/<node>/build/moddev/clientRunVmArgs.txt 追加 -Dai_debug_port=<port>，因为 AIDebugServer 默认不开启

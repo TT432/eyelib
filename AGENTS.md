@@ -36,6 +36,8 @@
   `:1.20.1:generateModulesMd`(bash `gradlew :1.20.1:generateModulesMd`)。永远不要手动编辑 MODULES.md。
 - 如果新增或删除了模块（`eyelib/` 下新的顶层包），必须提供其 `package-info.java` —— `:generateModulesMd`
   在缺少文件时会失败。在同一个变更中更新所有受影响的文档。
+- **工具结果渲染为 `...`（截断/省略）时禁止当作成功处理**（2026-08-28 事故：压缩摘要写入从未落地的虚构工作记录）：必须重读/重跑确认；编辑前以 verbatim read 为准；压缩摘要写入前必须核对 git log/文件存在性等客观证据。
+- **收尾总结必须明确「已实现 / 仅设计未实现」边界**（用户纠正 2026-09-29）：「设计如何融入」类任务交付时显式向用户确认是否继续实施分期计划，不得停在纯设计文档；对用户不可观察的交付物必须主动提出下一步实现。
 
 ## 注释规则
 
@@ -103,6 +105,7 @@ import org.jspecify.annotations.NullMarked;
 - **纯文档变更：** 提交前验证每个引用的文件路径都能解析。
 - **结构/代码变更：** 通过 `mcmcp_build` 构建，要求退出码 :0: 才能声称完成。
 - **运行时敏感变更：** 先编译，然后用现有的开发客户端流程进行冒烟检查。
+- **新增文档前必须对照 `docs/README.md` 的 Diátaxis 结构选路径**（2026-09-27 事故：文档写入 docs/adr、docs/qa、visual/ 等非约定路径后丢失）：ADR → `docs/decisions/NNNN-title.md` 并更新 README ADR 索引；行为规格 → `docs/specs/*-spec.md`；How-to → `.opencode/skills/`；不新建独立 qa/、visual/ 目录，验证记录并入 ADR/spec 的验证节。
 
 ## 文档同步规则
 
@@ -141,6 +144,7 @@ import org.jspecify.annotations.NullMarked;
     - 切 active version 后必须在 IDEA 里 Gradle sync(reimport),否则 source set 显示错位。
 - **游戏重启**: 通过 debug HTTP `/eval` → `minecraft.stop()` 关闭运行中的客户端,切勿从 shell `kill` java 进程。
 - **游戏启动**: `mcmcp_launch`（读取项目根 `.mcmcp`，经 `AI_DEBUG_PORT` 环境变量向客户端传调试端口，默认 25999）。启动前检查该端口是否空闲；若被占用，先 `mcmcp_close` 关闭旧实例。调试 HTTP 服务器由 clientsmoke mod 内的 AIDebugServer 提供，仅在配置 `ai_debug_port` 时开启。
+- **自动化禁止抢前台**（用户禁令 2026-09-26）：任何桌面自动化不得 SetCursorPos/mouse_event 移动用户真实鼠标、不得抢前台焦点。允许的非侵入路径：PostMessage/WM_* 消息投递、UIA InvokePattern、直接运行程序生成的命令行（如 PCL 的 LatestLaunch.bat）。游戏窗口弹出属用户请求行为的固有结果，但自动化过程不得额外抢占。
 
 ## 构建与测试验证
 
@@ -175,7 +179,7 @@ import org.jspecify.annotations.NullMarked;
    重生成，**禁止手编**，产物需随改动一起提交。
 5. **文档同步**: 见上文"文档同步规则"，grep 全仓库验证无旧路径残留、所有引用路径可解析。
 6. **clientsmoke**: `mcmcp_clientsmoke`。验证 MC 客户端加载后的接线行为(Bridge/接线层)，报告输出到
-   `versions/<version>/run/clientsmoke/clientsmoke-reports/`（gameDirectory 由 build.gradle clientSmoke run config 决定）。写法见 `eyelib-clientsmoke` SKILL。
+   `<gameDirectory>/clientsmoke-reports/`——mcmcp 流程走普通 client run，即 `versions/<version>/run/clientsmoke-reports/`（无中间 clientsmoke 目录）；Gradle clientSmoke run config（gameDirectory=run/clientsmoke）时才是 `run/clientsmoke/clientsmoke-reports/`。写法见 `eyelib-clientsmoke` SKILL。
 
 ### 提交前 Checklist（代码/结构/运行时变更）
 

@@ -19,6 +19,7 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+import io.github.tt432.eyelib.bridge.material.ResourceLocationBridge;
 
 import java.util.Map;
 
@@ -56,6 +57,11 @@ public abstract class TextureManagerMixin implements EyelibTextureManagerAccess 
 
     @Shadow
     public abstract void register(ResourceLocation path, AbstractTexture texture);
+
+    @Override
+    public boolean eyelib$hasTexture(String namespacedPath) {
+        return byPath.containsKey(ResourceLocationBridge.parseMc(namespacedPath));
+    }
 
     @Inject(
             method = "getTexture(Lnet/minecraft/resources/ResourceLocation;)Lnet/minecraft/client/renderer/texture/AbstractTexture;",
@@ -98,6 +104,11 @@ public abstract class TextureManagerMixin implements EyelibTextureManagerAccess 
 
     @Shadow
     public abstract void register(Identifier path, AbstractTexture texture);
+
+    @Override
+    public boolean eyelib$hasTexture(String namespacedPath) {
+        return byPath.containsKey(ResourceLocationBridge.parseMc(namespacedPath));
+    }
 
     @Inject(
             method = "getTexture(Lnet/minecraft/resources/Identifier;)Lnet/minecraft/client/renderer/texture/AbstractTexture;",

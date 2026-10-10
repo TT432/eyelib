@@ -122,6 +122,27 @@
           "Bf85f1c59ded0fc83"
         ],
         "locked": false
+      },
+      {
+        "id": "C1",
+        "scope": "root/eyelib-六边形架构验收闸门/g1-编译隔离/archunit-规则",
+        "modality": "must",
+        "predicate": "过渡债台账：1623af11 引入的 BrBlockUnbakedGeometry.BakeVisitor 反向依赖 application 层 ModelVisitor/RenderParams 已 refreeze（build/archunit_store/*/deb3fb09-8ea2-45cf-9b41-8d2535ce9ec5）；阶段 2 抽 Port 时回收：BakeVisitor 改实现 bridge 侧 Visitor Port 后删除该 freeze store 对应条目",
+        "spans": [
+          "Bf6661abe88ab4d04"
+        ],
+        "locked": false
+      },
+      {
+        "id": "C2",
+        "scope": "root/eyelib-六边形架构验收闸门/g1-编译隔离/archunit-规则",
+        "modality": "must_not",
+        "predicate": "把 ArchUnit freeze 基线丢失后的全绿当作债务已回收——freeze store 在 build/ 下未被 git 跟踪，clean/换机后基线丢失，须对照过渡债台账重建基线并逐条复核债务",
+        "guard": "ArchUnit freeze 基线丢失（clean/换机）",
+        "spans": [
+          "B50adbfaddfa2ca27"
+        ],
+        "locked": false
       }
     ],
     "workflow": [
@@ -273,8 +294,8 @@
       }
     ],
     "output": {
-      "fields": [],
       "type": "gate-verdict",
+      "fields": [],
       "termination": [
         "G1→G2→G3 全部通过（G3 仅最终集成时）即批次验收完成"
       ],
@@ -512,10 +533,12 @@
     "B3811bda5f04c7e7b": "**@Mod bootstrap 类触发误报** — 在 ArchUnit 规则中用 `DescribedPredicate` 排除",
     "B50923e845767396e": "**构建入口** — 通过 `mcmcp_build` / `mcmcp_test` 或 bash 跑 `gradlew`",
     "Bb12d15584f034b62": "**Spec-based 测试 oracle 来自当前实现** — 这不是测试，是 pin 了 bug。oracle 必须来自规范",
-    "Be4be445f76592679": "**G3 在每批次都跑** — G3 只在最终集成时跑一次，日常不跑"
+    "Be4be445f76592679": "**G3 在每批次都跑** — G3 只在最终集成时跑一次，日常不跑",
+    "Bf6661abe88ab4d04": "- 过渡债台账：1623af11（bedrock 方块几何 loader 恢复）引入 BrBlockUnbakedGeometry.BakeVisitor 反向依赖 application 层 ModelVisitor/RenderParams，aclMustNotDependOnApplication 已按过渡债流程 refreeze（基线条目在 build/archunit_store/*/deb3fb09-8ea2-45cf-9b41-8d2535ce9ec5）。回收方式（阶段 2 抽 Port 时执行）：BakeVisitor 改实现 bridge 侧 Visitor Port 后，删除该 freeze store 中对应条目（2026-08-26 记录）。",
+    "B50adbfaddfa2ca27": "- [when ArchUnit freeze 基线丢失] freeze store 在 build/ 下未被 git 跟踪，clean/换机后基线丢失；基线丢失不等于债务清零——须对照过渡债台账重建基线并复核每条债务是否仍存在，禁止把 freeze 重置后的全绿当作债务已回收。"
   },
   "stats": {
-    "patches": 2,
+    "patches": 3,
     "repacks": 0,
     "lastRepackAt": "2026-08-13T08:53:47.488Z",
     "totalSavedTokens": 0
@@ -532,9 +555,15 @@
       "operation": "AUDIT",
       "summary": "restored 1 missing spans as locked residual",
       "savingTokens": 0
+    },
+    {
+      "ts": "2026-10-07T03:02:32.970Z",
+      "operation": "EXTEND",
+      "summary": "EXTEND: +2 rules, +0 workflow, +0 tools, +0 fields",
+      "savingTokens": 0
     }
   ],
   "createdAt": "2026-08-13T08:53:47.488Z",
-  "updatedAt": "2026-08-13T08:56:38.175Z",
+  "updatedAt": "2026-10-07T03:02:32.971Z",
   "frontMatterRaw": "---\nname: eyelib-hexagonal-gates\ndescription: Verify a hexagonal architecture refactoring batch — run ArchUnit isolation, spec-based tests, and RenderDoc integration checks per the G1→G2→G3 gate pipeline.\nlicense: MIT\ncompatibility: opencode\nmetadata:\n  author: https://github.com/TT432\n  version: \"1.0.0\"\n  tags: eyelib, hexagonal, architecture, gates, acceptance\n  related-skills: eyelib-domain-extraction, eyelib-build, eyelib-debug, eyelib-renderdoc\n---"
 }

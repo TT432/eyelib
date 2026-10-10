@@ -317,6 +317,50 @@
           "Baf3658cb2bb6a81d"
         ],
         "locked": false
+      },
+      {
+        "id": "C1",
+        "scope": "root/eyelib-构建与测试/common-pitfalls/mcmcp-build-报错被截断拿不到编译错误",
+        "modality": "must",
+        "predicate": "mcmcp_build 在 createMinecraftArtifacts 反复失败（~7s 后 FAILED 无明确原因）而手动 gradlew 同等任务全绿时，规避为 bash 手动跑 gradlew :1.20.1:compileJava :1.20.1:prepareClientRun :1.20.1:createClientLaunchScript（疑似 mcmcp 环境差异，2026-10-01 实证）",
+        "guard": "mcmcp_build 在 createMinecraftArtifacts 反复失败",
+        "spans": [
+          "B2ba2454f700e39a9"
+        ],
+        "locked": false
+      },
+      {
+        "id": "C2",
+        "scope": "root/eyelib-构建与测试/common-pitfalls",
+        "modality": "must",
+        "predicate": "扩展 MC 类需要匿名子类时改用命名（静态嵌套）类——MDG 反编译重编译产物保留混淆 LVT（如 ArmorStand 构造器四参数全名 o），javac 为匿名类合成构造器参数时按超类构造器 LVT 命名致同名冲突，:1.20.1:compileJava 确定性失败；命名类显式构造器参数按源码命名不触发该合成（2026-10-03 实证）",
+        "guard": "匿名子类扩展 MC 类编译失败（已在构造器中定义了变量 o）",
+        "spans": [
+          "Bc5689d118bb4c7cb"
+        ],
+        "locked": false
+      },
+      {
+        "id": "C3",
+        "scope": "root/eyelib-构建与测试/common-pitfalls",
+        "modality": "must",
+        "predicate": "dev 客户端运行中时 mcmcp_build 会在 :1.20.1:createMinecraftArtifacts exit 1（运行中客户端持有产物锁文件），表现为构建失败而非明确报错；必须先 mcmcp_close 再构建（2026-10-09 实证）",
+        "guard": "mcmcp_build 失败且 dev 客户端正在运行",
+        "spans": [
+          "B8008a943ce8b99e1"
+        ],
+        "locked": false
+      },
+      {
+        "id": "C4",
+        "scope": "root/eyelib-构建与测试/common-pitfalls",
+        "modality": "must",
+        "predicate": "git stash 验证预存测试时跑 gradle 会用干净树重刷 stonecutter 生成源与 class，stash pop 后必须重新 mcmcp_build，否则后续构建产物不反映工作区改动（2026-10-09 实证）",
+        "guard": "git stash pop 之后",
+        "spans": [
+          "B13c028f95f597f77"
+        ],
+        "locked": false
       }
     ],
     "workflow": [
@@ -726,10 +770,16 @@
     "B77d89d4088e261e6": "`files(...)` 记法直接报「Cannot convert the provided notation ... DependencyConstraint」——该链只接受字符串/map 坐标。",
     "Bf4483c8ea44cdae4": "正确路径：把 jar 手动装进 `~/.m2/repository/<group>/<name>/<version>/`（jar + 最小 pom），用坐标引用（注意 exclusiveContent 组过滤，别用被占用的 group）。",
     "Bce3c4f6c3ece5436": "**同名同版本替换 mavenLocal 里的 jar 内容不会生效**：Gradle transform 缓存（`caches/<ver>/transforms/<hash>/`）按输入哈希命中，`--refresh-dependencies` 也不重算（2026-08-06 实证，clientRunClasspath 仍指旧变换产物）。必须**换版本号**（如 `-patched1`）再改依赖坐标。",
-    "Baf3658cb2bb6a81d": "改完坐标后 `:​<node>:createClientLaunchScript` 可能 UP-TO-DATE 不重生成，确认 `versions/<node>/build/moddev/clientRunClasspath.txt` 里的 jar 路径已更新，必要时 `--rerun-tasks`。"
+    "Baf3658cb2bb6a81d": "改完坐标后 `:​<node>:createClientLaunchScript` 可能 UP-TO-DATE 不重生成，确认 `versions/<node>/build/moddev/clientRunClasspath.txt` 里的 jar 路径已更新，必要时 `--rerun-tasks`。",
+    "B2ba2454f700e39a9": "- [when mcmcp_build 在 createMinecraftArtifacts 反复失败] mcmcp_build 在 createMinecraftArtifacts 反复失败（Total runtime ~7s 后 FAILED 无明确原因），但手动 gradlew 跑同等任务全绿——疑似 mcmcp 环境差异（daemon/JVM 参数）。规避：bash 手动跑 `gradlew :1.20.1:compileJava :1.20.1:prepareClientRun :1.20.1:createClientLaunchScript`（2026-10-01 实证）。",
+    "Bc5689d118bb4c7cb": "- [when 匿名子类扩展 MC 类编译失败] MDG 产物 LVT 坑：versions/1.20.1/build/moddev/artifacts/forge-1.20.1-47.1.3.jar 中 ArmorStand(Level,double,double,double) 的 LocalVariableTable 四个参数全名为 o（MDG 反编译重编译产物保留混淆 LVT），javac 为匿名类合成构造器参数时按超类构造器 LVT 命名→同名冲突，报「已在构造器 <匿名...>中定义了变量 o」，:1.20.1:compileJava 确定性失败。规避：扩展 MC 类需要匿名子类时改用命名（静态嵌套）类——显式构造器参数按源码命名，不触发该合成（2026-10-03 实证，PR #26 审查；已在 CameraMolangSmoke.LowEyeHeightArmorStand javadoc 就地记录）。",
+    "Bca717792252db4e0": "## 补丁：dev 客户端运行时构建失败",
+    "B8008a943ce8b99e1": "- dev 客户端运行中时 mcmcp_build 会在 :1.20.1:createMinecraftArtifacts exit 1（运行中客户端持有产物锁文件），表现为构建失败而非明确报错；必须先 mcmcp_close 再构建（2026-10-09 实证）。",
+    "Be53fd17fddb8d425": "## 补丁：git stash 验证后需重新构建",
+    "B13c028f95f597f77": "- git stash 验证预存测试时跑 gradle 会用干净树重刷 stonecutter 生成源与 class，stash pop 后必须重新 mcmcp_build，否则后续构建产物不反映工作区改动（2026-10-09 实证）。"
   },
   "stats": {
-    "patches": 2,
+    "patches": 4,
     "repacks": 0,
     "lastRepackAt": "2026-08-13T08:58:32.140Z",
     "totalSavedTokens": 0
@@ -746,9 +796,21 @@
       "operation": "AUDIT",
       "summary": "restored 1 missing spans as locked residual",
       "savingTokens": 0
+    },
+    {
+      "ts": "2026-10-07T03:01:16.854Z",
+      "operation": "EXTEND",
+      "summary": "EXTEND: +2 rules, +0 workflow, +0 tools, +0 fields",
+      "savingTokens": 0
+    },
+    {
+      "ts": "2026-10-10T02:21:31.887Z",
+      "operation": "EXTEND",
+      "summary": "EXTEND: +2 added, ~0 refined, -0 removed",
+      "savingTokens": 0
     }
   ],
   "createdAt": "2026-08-13T08:58:32.140Z",
-  "updatedAt": "2026-08-13T09:08:19.245Z",
+  "updatedAt": "2026-10-10T02:21:31.888Z",
   "frontMatterRaw": "---\nname: eyelib-build\ndescription: Eyelib 构建、测试、环境——Gradle(Stonecutter 多版本) + mcmcp omp 拓展全流程。Use when building, testing, or troubleshooting Gradle builds for the eyelib project.\nlicense: MIT\ncompatibility: opencode\nmetadata:\n  author: https://github.com/TT432\n  version: \"2.0.0\"\n  tags: eyelib, build, gradle, java, stonecutter\n  related-skills: eyelib, eyelib-debug\n---"
 }

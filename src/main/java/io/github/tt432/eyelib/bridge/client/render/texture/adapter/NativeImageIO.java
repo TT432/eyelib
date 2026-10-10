@@ -9,6 +9,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.AbstractTexture;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 //? if <26.1 {
+import net.minecraft.client.renderer.texture.MissingTextureAtlasSprite;
 import net.minecraft.resources.ResourceLocation;
 //?} else {
 import net.minecraft.resources.Identifier;
@@ -99,6 +100,15 @@ public class NativeImageIO {
                 return imageFunction.apply(pixels);
             }
         }
+        //? if <26.1 {
+        // 缺失纹理（16x16 紫黑棋盘）不是有效像素源：若在此继续走 GPU 读回，调用方
+        // （clamped/_color_mask 派生、导出）会把"基图暂时未就绪"固化为永久紫黑内容。
+        // 返回 null 由调用方走重试/回退路径。
+        if (Minecraft.getInstance().getTextureManager().getTexture(texture)
+                == MissingTextureAtlasSprite.getTexture()) {
+            return null;
+        }
+        //?}
         //? if <26.1 {
         Minecraft.getInstance().getTextureManager().getTexture(texture).bind();
 

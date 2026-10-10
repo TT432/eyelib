@@ -6,6 +6,7 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.eyelib.capability.component.ModelComponent;
 import io.github.tt432.eyelib.capability.component.RenderControllerComponent;
 import io.github.tt432.eyelib.client.manager.MaterialManager;
+import io.github.tt432.eyelib.bridge.client.render.texture.EyelibTextureManagerAccess;
 import io.github.tt432.eyelib.bridge.client.render.texture.NativeImagePort;
 import io.github.tt432.eyelib.bridge.client.render.texture.TexturePresencePort;
 import io.github.tt432.eyelib.util.entitydata.ModelComponentInfo;
@@ -227,7 +228,7 @@ public record RenderControllerEntry(
         int groupIndex = 0;
         for (var groupEntry : materialBoneGroups.entrySet()) {
             List<PortResourceLocation> layers = toRenderLocations(texturePathsByGroup.get(groupIndex++),
-                    groupEntry.getKey(), needReloadTexture, syncedActions);
+                    groupEntry.getKey(), needReloadTexture, syncedActions, renderControllerSlot);
             // BE 语义：多图层纹理需要 multitexture/masked 材质（多采样器）；
             // 单采样材质只渲染第 0 层（bedrock-wiki 分层教程：需 villager_v2_masked 类材质）
             if (!isMultitextureMaterial(groupEntry.getKey()) && layers.size() > 1) {
@@ -482,7 +483,8 @@ public record RenderControllerEntry(
      * 而 MC entityTranslucent 着色器在 alpha<0.1 时 discard（A&S 蜘蛛红眼 alpha 仅 1-10 会整体消失）。
      */
     private List<PortResourceLocation> toRenderLocations(List<String> layerPaths, String materialName,
-                                                         boolean needReload, List<Runnable> syncedActions) {
+                                                         boolean needReload, List<Runnable> syncedActions,
+                                                         RenderControllerComponent.Slot renderControllerSlot) {
         if (layerPaths.isEmpty()) {
             return List.of(TexturePresencePort.missingLocation());
         }
@@ -490,7 +492,7 @@ public record RenderControllerEntry(
         if (!usesColorMask(materialName) && (isAlphatestMaterial(materialName) || isEmissiveMaterial(materialName))) {
             List<PortResourceLocation> clamped = new ArrayList<>(textureLayers.size());
             for (PortResourceLocation layer : textureLayers) {
-                clamped.add(clampedTexture(layer, syncedActions, needReload));
+                clamped.add(clampedTexture(layer, syncedActions, needReload, renderControllerSlot));
             }
             return clamped;
         }
@@ -503,17 +505,27 @@ public record RenderControllerEntry(
      * alphatest 材质使用此副本以避免低 alpha 像素被 MC cutout shader 丢弃。
      */
     private static PortResourceLocation clampedTexture(PortResourceLocation original,
-                                                       List<Runnable> syncedActions, boolean needReload) {
+                                                       List<Runnable> syncedActions, boolean needReload,
+                                                       RenderControllerComponent.Slot renderControllerSlot) {
         PortResourceLocation clamped = PortResourceLocation.of(original.namespace(), "clamped/" + original.path());
-        if (needReload) {
-            syncedActions.add(() -> {
-                NativeImage img = NativeImagePort.download(original, NativeImagePort::copyImage);
-                if (img != null) {
-                    NativeImagePort.clampAlphaToBinary(img);
-                    NativeImagePort.upload(clamped, img);
-                }
-            });
-        }
+        // 存在性检查必须放进渲染线程：setupModel 可能在并行阶段线程执行，
+        // 且实体首帧 variant 未同步时贴图键随后变化、needReload 已为 false，
+        // 不入队检查则新键的 clamped 派生纹理永不生成 → MissingTexture 永久紫黑。
+        syncedActions.add(() -> {
+            if (!needReload && ((EyelibTextureManagerAccess) net.minecraft.client.Minecraft.getInstance()
+                    .getTextureManager()).eyelib$hasTexture(clamped.toString())) {
+                return;
+            }
+            NativeImage img = NativeImagePort.download(original, NativeImagePort::copyImage);
+            if (img != null) {
+                NativeImagePort.clampAlphaToBinary(img);
+                NativeImagePort.upload(clamped, img);
+            } else {
+                // 基图未就绪（download 对缺失纹理返回 null）：不得把缺失纹理（16x16 紫黑棋盘）
+                // 固化为 clamped 内容；重新武装 slot 使下一帧重试，直到基图就绪。
+                renderControllerSlot.markTextureStale();
+            }
+        });
         return clamped;
     }
 
