@@ -204,7 +204,7 @@ public class Matrix4 {
         double n31 = te[2], n32 = te[6], n33 = te[10], n34 = te[14];
         double n41 = te[3], n42 = te[7], n43 = te[11], n44 = te[15];
 
-        //TODO: make this more efficient
+        // TODO:（as-is 注释）make this more efficient
         //( based on http://www.euclideanspace.com/maths/algebra/matrix/functions/inverse/fourD/index.htm )
 
         return (

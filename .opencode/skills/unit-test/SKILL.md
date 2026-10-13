@@ -57,16 +57,6 @@ void parsesAnimationFromCodec() {
 }
 ```
 ```java
-@Test
-void spawnServiceDoesNotImportRootParticleTypes() throws IOException {
-    String source = Files.readString(Path.of(
-        "src/main/java/io/github/tt432/eyelib/client/particle/ParticleSpawnService.java"
-    ));
-    assertTrue(source.contains("import io.github.tt432.eyelib.particle.api.ParticleSpawnRequest;"));
-    assertFalse(source.contains("import io.github.tt432.eyelib.client.particle.bedrock.BrParticle;"));
-}
-```
-```java
 @TempDir
 Path tempDir;
 

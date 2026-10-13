@@ -4,7 +4,6 @@
 
 - This file is the single current-state roadmap for `molang` package refactor work.
 - Use the design drafts in `docs/molang/design/` for rationale and vocabulary.
-- Use the phase plans in `docs/molang/refactor-plan/` for detailed execution gates.
 - Use this roadmap to decide what is done, what is active now, what is blocked, and what must be updated when Molang work changes direction.
 
 ## Roadmap Update Rule
@@ -12,7 +11,7 @@
 Update this file in the same change whenever Molang work does any of the following:
 
 1. Adds, removes, renames, or re-scopes a Molang phase, milestone, gate, or verification command.
-2. Promotes a design draft or refactor-plan item into implemented code/tests.
+2. Promotes a design draft into implemented code/tests.
 3. Moves a roadmap item between `Current`, `Next`, `Blocked`, `Deferred`, or `Done`.
 4. Changes ownership between `molang/` (engine domain), `bridge/molang/` (MC adapter), or `molang/platform/` (currently leaked MC bindings — target: migrate to `bridge/molang/`).
 5. Adds a new corpus layer, diagnostics mode behavior, binder family, host/query bridge, execution path, policy-pack behavior, cache behavior, or cutover mechanism.
@@ -24,17 +23,16 @@ If a Molang code change does not update this roadmap, it must be because the cha
 When documents disagree, resolve them in this order:
 
 1. `docs/molang/ROADMAP.md` for current progress and next actions.
-2. `docs/molang/refactor-plan/README.md` and phase files for gates and phase-level acceptance criteria.
-3. `docs/molang/design/README.md` and design drafts for rationale and candidate architecture.
-4. `docs/decisions/`, `MODULES.md`, and package READMEs for navigation and ownership summaries.
+2. `docs/molang/design/README.md` and design drafts for rationale and candidate architecture.
+3. `docs/decisions/`, `MODULES.md`, and package READMEs for navigation and ownership summaries.
 
-Design drafts are not implementation commitments until this roadmap or the refactor plan promotes them.
+Design drafts are not implementation commitments until this roadmap promotes them.
 
 ## Stable Boundaries
 
 - Engine-owned code lives under `src/main/java/io/github/tt432/eyelib/molang/`.
 - Handwritten parser is the sole frontend; all parser artifacts live under handwritten packages.
-- `src/main/java/io/github/tt432/eyelib/bridge/molang/MolangQuery.java` holds root-coupled query functions (animation controller, variant) — ported from the old `molang/mapping/` location per ADR-0014 + ADR-0010 Port design.
+- `src/main/java/io/github/tt432/eyelib/client/molang/MolangQuery.java` holds root-coupled query functions (animation controller, variant) — ported from the old `molang/mapping/` location per ADR-0014 + ADR-0010 Port design.
 - `src/main/java/io/github/tt432/eyelib/molang/platform/**` owns Minecraft/Forge platform bindings and lifecycle hooks.
 
 ## Current Implementation Snapshot
@@ -77,7 +75,6 @@ Evidence from the current tree:
 
 - Preserve stable corpus case IDs, lint errors, result classes, effective diagnostics mode, and effective policy-pack reporting.
 - Keep phase1 corpus resources valid and runnable through `eyelib_debug_test`. Starter corpus: 33 rows (≥30 KR ✅), covering unary, comparison, for_each, return, member dot-chain, grouping, strings, array-literal reject, and binary-conditional.
-- Do not promote corpus rows to cutover evidence unless they reference the V1 compatibility matrix in `docs/molang/refactor-plan/README.md`.
 
 ### M2 - Widen parser/AST only with corpus-backed slices
 
@@ -93,13 +90,13 @@ Evidence from the current tree:
 
 ### M4 - Resolve Phase 4 host/query gates before implementation
 
-Before host/query bridge implementation starts, keep this roadmap and `refactor-plan/06-host-context-alignment.md` aligned with the recorded Phase 4 decisions and required pre-implementation test surfaces:
+Before host/query bridge implementation starts, keep this roadmap aligned with the recorded Phase 4 decisions and required pre-implementation test surfaces:
 
 - Bounded callable parameter-role inference, with explicit metadata required for injected and special engine arguments.
 - One unified host publication registry with internal adapter categories, not separate service-specific registries.
 - A narrow bind-to-link pass between binder and specialization that resolves symbolic names to stable candidate-set refs and registry version refs.
 - Required test surfaces: host publication determinism and conflict handling, callable discovery role coverage, query variant selection matrix, bind-link contract, and transitional parity subset.
-- Contract test evidence landed for host publication determinism and equal-tie conflict failure in `src/test/java/io/github/tt432/eyelib/molang/mapping/MolangHostPublicationDeterminismConflictTest.java`, callable discovery role coverage in `src/test/java/io/github/tt432/eyelib/molang/mapping/MolangCallableDiscoveryRoleContractTest.java`, query variant selection matrix coverage in `src/test/java/io/github/tt432/eyelib/molang/mapping/MolangQueryVariantSelectionMatrixContractTest.java`, callable variant ambiguity in `src/test/java/io/github/tt432/eyelib/molang/mapping/MolangCallableVariantSelectionAmbiguityContractTest.java`, and callable publication signature roles in `src/test/java/io/github/tt432/eyelib/molang/mapping/MolangCallablePublicationSignatureRoleTest.java`. Bind-link contract tests (`MolangQueryBindLinkContractTest`, `MolangCallableBindLinkContractTest`) and animation-clock transitional parity test (`MolangAnimationClockTransitionalParityContractTest`) are NOT YET IMPLEMENTED (⬜). Root runtime parity assertions in `src/test/java/io/github/tt432/eyelib/mc/impl/molang/mapping/MolangQueryAnimationClockRuntimeParityTest.java` and codec default-expression coverage in `src/test/java/io/github/tt432/eyelib/client/animation/bedrock/BrAnimationCodecTest.java` exist for animation-clock parity.
+- Contract test evidence landed for host publication determinism and equal-tie conflict failure in `src/test/java/io/github/tt432/eyelib/molang/mapping/MolangHostPublicationDeterminismConflictTest.java`, callable discovery role coverage in `src/test/java/io/github/tt432/eyelib/molang/mapping/MolangCallableDiscoveryRoleContractTest.java`, query variant selection matrix coverage in `src/test/java/io/github/tt432/eyelib/molang/mapping/MolangQueryVariantSelectionMatrixContractTest.java`, callable variant ambiguity in `src/test/java/io/github/tt432/eyelib/molang/mapping/MolangCallableVariantSelectionAmbiguityContractTest.java`, and callable publication signature roles in `src/test/java/io/github/tt432/eyelib/molang/mapping/MolangCallablePublicationSignatureRoleTest.java`. Bind-link contract tests (`MolangQueryBindLinkContractTest`, `MolangCallableBindLinkContractTest`) and animation-clock transitional parity test (`MolangAnimationClockTransitionalParityContractTest`) are NOT YET IMPLEMENTED (⬜). Root runtime parity assertions in `src/test/java/io/github/tt432/eyelib/molang/mapping/MolangQueryAnimationClockRuntimeParityTest.java` and codec default-expression coverage in `src/test/java/io/github/tt432/eyelib/animation/bedrock/BrAnimationCodecTest.java` exist for animation-clock parity.
 
 ### M5 - Define execution ownership before runtime replacement
 
@@ -122,18 +119,6 @@ Before host/query bridge implementation starts, keep this roadmap and `refactor-
 - Completed contract evidence: `src/test/java/io/github/tt432/eyelib/molang/mapping/MolangCallableDiscoveryRoleContractTest.java` verifies explicit special-role metadata publication, bounded first non-special receiver inference, and loud deterministic failure for ambiguous receiver inference.
 - Completed contract evidence: `src/test/java/io/github/tt432/eyelib/molang/mapping/MolangQueryVariantSelectionMatrixContractTest.java` verifies query selection ordering (name, visible arity, visible compatibility, required host roles, specificity, priority), explicit lowest-specificity default-variant behavior, and loud failure for equal-specificity/equal-priority ambiguity.
 - Completed contract evidence: `src/test/java/io/github/tt432/eyelib/molang/mapping/MolangCallableVariantSelectionAmbiguityContractTest.java` verifies variant-selection ambiguity handling, and `src/test/java/io/github/tt432/eyelib/molang/mapping/MolangCallablePublicationSignatureRoleTest.java` verifies callable publication signature role stability. Animation-clock transitional parity test (`MolangAnimationClockTransitionalParityContractTest`) is COMPLETED (✅), verifying HostRole put ↔ Class<?> get bridge interop. Bind-link contract tests (`MolangQueryBindLinkContractTest`, `MolangCallableBindLinkContractTest`) are NOT YET IMPLEMENTED (⬜).
-
-## Refactor Plan Execution Record (2026-05-03)
-
-Evidence from refactor-plan execution:
-
-- **P1 — Operator completeness** (✅): `<`, `<=`, `>=` operators added to handwritten tokenizer (`TokenKind.LESS`, `LESS_EQUAL`, `GREATER_EQUAL`) and parser (`parseComparison()` now matches all 6 comparison operators). Six `@ParameterizedTest`/`@CsvSource` cases in `HandwrittenMolangAstParserFrontendTest.parsesAllSixComparisonOperatorsIntoBinaryExpr()`.
-- **P2 — Frontend consolidation** (✅): `MolangCompilerImpl.java` line 26 now uses `MolangParserFrontends.active()` unified entry point instead of direct `HandwrittenMolangAstParserFrontend.INSTANCE`. Arrow access bytecode was a stub annotated `TODO(Phase 4)`; **P7 已实现宿主切换语义**（见下）。
-- **P7 — Arrow access host-context switching** (✅): `MolangBytecodeEmitter` 对 `BoundArrowAccessExpr` 发射 pushArrowHost → 右式求值 → popArrowHost（恢复 token 存局部变量）；`MolangRuntimeSupport` 提供 push/pop 与安装器注册表；`molang/port/ArrowHostInstaller` 定义安装器 Port，`bridge/molang/adapter/EntityPortAdapter.installArrowHostBridge()` 在 mod 初始化时注册（把 `MolangEntityRef` 包装的 PortEntity 翻译为 MC Entity 注入宿主上下文）。契约测试：`src/test/java/io/github/tt432/eyelib/molang/compiler/MolangArrowAccessTest.java`（安装器委托、同作用域求值、无安装器降级、嵌套箭头 LIFO 恢复）。
-- **P3 — Test expansion** (✅): New `src/test/java/io/github/tt432/eyelib/molang/compiler/MolangFullPipelineTest.java` (7 families: binary arithmetic, comparison, logical, null coalesce, strings, this, return-in-block). New `src/test/java/io/github/tt432/eyelib/molang/compiler/frontend/MolangParserFrontendDivergenceTest.java` (20+ parameterized divergence cases). Total: ~40 new test cases.
-- **P4 — Documentation fix** (✅): ROADMAP file paths corrected (3 compiler files now at `compiler/` subpackage). Three missing contract test references replaced with actual file names. `compiler/diagnostic/` dead reference removed from `docs/index/molang.md` and `README.md`. MolangOwnerSet migration status accurately documented.
-- **P5 — Deferred semantics diagnostics** (✅): `MolangBinder.addDeferredNote()` now emits `BIND_DEFERRED_UNSUPPORTED` WARNING in ALL modes (NORMAL/STRICT/DEBUG). Previously only STRICT mode warned. Corresponding `MolangBinderTest` assertions updated.
-- **P6 — HostRole<T> implementation** (✅): New `mapping/api/HostRole.java` (type-safe key pattern per Effective Java Item 33). `HostContext` interface extended with `get/put/remove(HostRole<T>)`. Existing `Class<T>` API deprecated. `MolangScope` inline `HostContext` implementation updated with `Map<HostRole<?>, Object> hostRoleStore`.
 
 ## OKR — Key Results Per Phase
 

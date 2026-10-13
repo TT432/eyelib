@@ -27,11 +27,11 @@
 - `src/main/java/io/github/tt432/eyelib/client/`: client rendering, GUI, loaders, managers, tooling (version-agnostic application layer; Forge API/Hooks moved to `bridge/client/` per ADR-0016).
 - `src/main/java/io/github/tt432/eyelib/capability/`: attachment runtime data containers (application layer); capability registration & runtime hooks moved to `bridge/capability/` per ADR-0016.
 - `src/main/java/io/github/tt432/eyelib/common/`: shared behavior/runtime logic and deterministic update helpers (version-agnostic); server commands & Forge-integrated debug moved to `bridge/common/` per ADR-0016.
-- `src/main/java/io/github/tt432/eyelib/molang/mapping/`: root-coupled `MolangQuery`.
+- `src/main/java/io/github/tt432/eyelib/client/molang/`: root-coupled `MolangQuery`.
 - `clientsmoke/`: external client smoke framework (composite build).
 
 ## Existing Patterns To Preserve
-- Manager pattern around `src/main/java/io/github/tt432/eyelib/client/manager/Manager.java`.
+- Manager pattern in `src/main/java/io/github/tt432/eyelib/client/manager/`.
 - Loader pattern in `src/main/java/io/github/tt432/eyelib/client/loader/`.
 - Visitor pattern in `src/main/java/io/github/tt432/eyelib/client/render/visitor/`.
 - Codec-heavy serialization approach across model, animation, particle, and Molang-related types.

@@ -12,7 +12,6 @@ import io.github.tt432.eyelib.ui.UIScreen;
 import io.github.tt432.eyelib.ui.UIScreenContext;
 import io.github.tt432.eyelib.ui.UIScrollPanel;
 import io.github.tt432.eyelib.util.PortResourceLocation;
-import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -35,7 +34,6 @@ import java.util.function.IntConsumer;
  *
  * @author TT432
  */
-@NullMarked
 public final class UiPreviewScreen implements UIScreen {
     private static final int PAD = 8;
     private static final int TITLE_H = 16;

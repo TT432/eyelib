@@ -17,16 +17,16 @@ Coordinate eyelib `molang` package refactor slices through subagent design, impl
 
 ## Rules
 - PREFER Each subagent task should include affected paths, pass/fail acceptance criteria, must-not-touch paths, verification commands, and documentation impact.
-- Read `docs/molang/ROADMAP.md`, `docs/molang/refactor-plan/README.md`, the relevant phase plan, and `MODULES.md` before assigning a slice.
 - Split work into design, implementation, and review subtasks; use separate fresh subagents.
 - NEVER Revive the ANTLR path when refactoring (ANTLR generated code was fully removed on 2026-06-09, ADR-0004 Superseded; the handwritten recursive-descent parser under `src/main/java/io/github/tt432/eyelib/molang/compiler/` is the only frontend).
 - [when when semantics change / for phase 1-4 slices] Require tests before implementation when semantics change, and require `mcmcp_test` for phase 1-4 slices.
 - [when when phase status, gates, evidence, ownership, or verification posture changes] Update `docs/molang/ROADMAP.md` in the same slice.
 - [when when module responsibilities change] Edit the corresponding `package-info.java` (e.g. `src/main/java/io/github/tt432/eyelib/molang/package-info.java`), then run `:generateModulesMd` to regenerate `MODULES.md`.
 - NEVER Hand-edit `MODULES.md` (AGENTS.md Editing Rules).
+- Read `docs/molang/ROADMAP.md`, the relevant design draft in `docs/molang/design/`, and `MODULES.md` before assigning a slice (refactor-plan 目录已于 2026-10-13 删除).
 
 ## Workflow
-1. Read roadmap, refactor-plan README, relevant phase plan, and MODULES.md before assigning a slice
+1. Read roadmap, relevant design draft, and MODULES.md before assigning a slice
 2. Split work into design, implementation, and review subtasks assigned to separate fresh subagents
 3. Require tests before implementation when semantics change; require mcmcp_test for phase 1-4 slices
 4. Update ROADMAP.md in the same slice on posture changes; on module responsibility changes edit package-info.java and run :generateModulesMd to regenerate MODULES.md

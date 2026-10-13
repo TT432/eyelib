@@ -438,7 +438,7 @@ public class Particle {
                 this.setFrame(0);
             }
 
-            //Color (ToDo)
+            // TODO:（as-is 注释）Color
             if ("expression".equals(this.emitter.config.particle_color_mode)) {
                 Object cObj = this.emitter.calculate(this.emitter.config.particle_color_expression, params, "array");
                 if (cObj instanceof List<?> c) {
