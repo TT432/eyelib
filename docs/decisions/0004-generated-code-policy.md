@@ -29,4 +29,4 @@ This policy applied when ANTLR-generated parser artifacts existed under `eyelib-
 
 ## Remaining References
 
-- Root `src/main/java/io/github/tt432/eyelib/molang/mapping/MolangQuery.java` is the only file in the root `molang/` path — it holds root-coupled query functions that cannot move to `eyelib-molang`.
+- Root `src/main/java/io/github/tt432/eyelib/client/molang/MolangQuery.java` (moved from `molang/mapping/`) holds root-coupled query functions that cannot move to `eyelib-molang`.

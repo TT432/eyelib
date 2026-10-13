@@ -257,4 +257,4 @@ void slimeEntityCreatesCorrectModelComponents() {
 
 - ADR-0010: 六边形架构 — 本 ADR 的 Layer 3 正是 ADR-0010 "行为离线验证" 的缺失部分
 - ADR-0011: 文档设计基线 — 本测试策略文档按 Diátaxis 归入 `docs/decisions/`
-- `docs/architecture/acceptance-gates.md` — G2 (spec-test) 需更新：纳入 Bridge Contract Test 到 Gate
+- `.opencode/skills/eyelib-hexagonal-gates/SKILL.md` — G2 (spec-test) 需更新：纳入 Bridge Contract Test 到 Gate

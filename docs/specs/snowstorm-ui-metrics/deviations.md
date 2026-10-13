@@ -206,5 +206,4 @@
 - **保留偏离（LDLib2 无等价）**：#12 Prism 语法高亮/补全（文档化）；#34/#61/#42 vc-chrome 取色器（用 LDLib2
   ColorConfigurator，宽已对齐 310）；#57 resize_line；#66 横滚→换行；#7 Share 按钮；dashed 边框→实线近似；
   backdrop blur→半透明近似；菜单 hover 展开→点击展开。
-- **验证**：`:1.20.1:compileJava` BUILD SUCCESSFUL；实机截图 `build/_shots/p3_final4.png`（主界面）、
-  `p3_help2.png`（HelpPanel）；`:1.20.1:test` BUILD/TEST SUCCESSFUL。
+- **验证**：`:1.20.1:compileJava` BUILD SUCCESSFUL；实机截图验证（主界面、HelpPanel，截图为临时产物未保留）；`:1.20.1:test` BUILD/TEST SUCCESSFUL。
