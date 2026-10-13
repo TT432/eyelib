@@ -67,6 +67,7 @@ import org.jspecify.annotations.NullMarked;
 ```
 
 - **关键**：`import` 必须在 `package` 声明之后（javac 强制要求），Javadoc 必须在最顶部。
+- **豁免**：`src/test/` 下的测试包不要求 `package-info.java`（用户决策 2026-10-13）——NullAway 不覆盖 test sourceSet，测试包无对外 API 定位需要说明。
 
 - 不再单独维护包级 README.md。包的知识分层如下：
     - **公共 API 的 Javadoc** → 类/方法签名自带

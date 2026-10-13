@@ -245,13 +245,15 @@ void slimeEntityCreatesCorrectModelComponents() {
 
 ## Verification
 
-- [x] Layer 2 管道测试：`BrRenderStateSpecTest` 10 tests — `:eyelib-material:test` ✅
+> 注：本文写于 2026-06-09，文中的 `:eyelib-material:test` 等子项目任务名与 `eyelib-material/src/test/` 路径属于 flat-merge（ADR-0014，2026-06-16）之前的结构；当前为单 Gradle project，测试统一经 `mcmcp_test`（`:1.20.1:test`）运行，测试源码在 `src/test/java/io/github/tt432/eyelib/` 下按包组织。
+
+- [x] Layer 2 管道测试：`BrRenderStateSpecTest` 10 tests（现位于 `src/test/java/io/github/tt432/eyelib/material/render/BrRenderStateSpecTest.java`）
 - [x] 已确认 Bridge 适配器（RenderPassAdapter/ResourceLocationBridge/EntityPortAdapter）不能在 plain JUnit 中测试
 - [x] 已删除 Bridge 模块中无法运行的测试文件
 - [ ] Layer 3 预备：提取 `PortClientEntityStore` / `PortRenderControllerStore` / `PortModelStore` 接口
 - [ ] Layer 3 第一批：`EntityRenderSystem.setupClientEntity` 接线测试（slime, vex, warden）
 - [ ] ArchUnit 验证：Fake 实现在 domain 模块的 test scope 中，不 import MC
-- [ ] Gradle `:eyelib-material:test` + `:eyelib-molang:test` + `:eyelib-bridge:test` 全绿
+- [ ] `mcmcp_test` 全绿（flat-merge 后单 project，无 `:eyelib-*` 子项目任务）
 
 ## Related
 

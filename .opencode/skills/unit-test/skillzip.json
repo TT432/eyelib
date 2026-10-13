@@ -262,10 +262,6 @@
         "reason": "UNIQUE_EVIDENCE"
       },
       {
-        "source_block": "B45e9aab1a057f473",
-        "reason": "UNIQUE_EVIDENCE"
-      },
-      {
         "source_block": "B7b5b11497c7764bb",
         "reason": "UNIQUE_EVIDENCE"
       }
@@ -409,7 +405,7 @@
     "B5123b6a14e3a85fb": "Run the relevant test via `mcmcp_test`"
   },
   "stats": {
-    "patches": 1,
+    "patches": 2,
     "repacks": 0,
     "lastRepackAt": "2026-08-13T08:53:07.064Z",
     "totalSavedTokens": 0
@@ -420,9 +416,15 @@
       "operation": "COMPRESS",
       "summary": "one-shot: 28 blocks → 3173 chars rendered",
       "savingTokens": 0
+    },
+    {
+      "ts": "2026-10-13T00:11:14.420Z",
+      "operation": "RESYNC",
+      "summary": "re-rendered from sidecar to fix drift (3525 → 3087 chars)",
+      "savingTokens": 0
     }
   ],
   "createdAt": "2026-08-13T08:53:07.064Z",
-  "updatedAt": "2026-08-13T08:53:07.075Z",
+  "updatedAt": "2026-10-13T00:11:14.420Z",
   "frontMatterRaw": "---\nname: unit-test\ndescription: Write and run JUnit 5 unit tests. Use for structural invariants, boundary enforcement, codec round-trips, and null safety checks that do NOT require a running Minecraft client.\nlicense: MIT\ncompatibility: opencode\nmetadata:\n  author: https://github.com/TT432\n  version: \"1.0.0\"\n---"
 }

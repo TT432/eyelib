@@ -18,16 +18,6 @@
     },
     "rules": [
       {
-        "id": "C1",
-        "scope": "root/protocol",
-        "modality": "must",
-        "predicate": "Read `docs/molang/ROADMAP.md`, `docs/molang/refactor-plan/README.md`, the relevant phase plan, and `MODULES.md` before assigning a slice.",
-        "spans": [
-          "B416407ad369cce3f"
-        ],
-        "locked": false
-      },
-      {
         "id": "C2",
         "scope": "root/protocol",
         "modality": "must",
@@ -100,6 +90,16 @@
           "B9c839aa153d7858f"
         ],
         "locked": false
+      },
+      {
+        "id": "C9",
+        "scope": "root/protocol",
+        "modality": "must",
+        "predicate": "Read `docs/molang/ROADMAP.md`, the relevant design draft in `docs/molang/design/`, and `MODULES.md` before assigning a slice (refactor-plan 目录已于 2026-10-13 删除).",
+        "spans": [
+          "B524f5ac00f7820c6"
+        ],
+        "locked": false
       }
     ],
     "workflow": [
@@ -107,9 +107,12 @@
         "id": "W1",
         "scope": "root/protocol",
         "kind": "action",
-        "action": "Read roadmap, refactor-plan README, relevant phase plan, and MODULES.md before assigning a slice",
+        "action": "Read roadmap, relevant design draft, and MODULES.md before assigning a slice",
+        "next": [
+          "W2"
+        ],
         "spans": [
-          "B416407ad369cce3f"
+          "B6287924e18d623ec"
         ]
       },
       {
@@ -117,8 +120,11 @@
         "scope": "root/protocol",
         "kind": "action",
         "action": "Split work into design, implementation, and review subtasks assigned to separate fresh subagents",
+        "next": [
+          "W3"
+        ],
         "spans": [
-          "B7a69ebb7b89ff945"
+          "Ba3348ba7ad2668a1"
         ]
       },
       {
@@ -126,9 +132,11 @@
         "scope": "root/protocol",
         "kind": "action",
         "action": "Require tests before implementation when semantics change; require mcmcp_test for phase 1-4 slices",
-        "tool": "mcmcp_test",
+        "next": [
+          "W4"
+        ],
         "spans": [
-          "B2a4806ca74f89c34"
+          "B08be57981cb919ce"
         ]
       },
       {
@@ -136,10 +144,11 @@
         "scope": "root/protocol",
         "kind": "action",
         "action": "Update ROADMAP.md in the same slice on posture changes; on module responsibility changes edit package-info.java and run :generateModulesMd to regenerate MODULES.md",
-        "tool": ":generateModulesMd",
+        "next": [
+          "W5"
+        ],
         "spans": [
-          "Bbede265d9126eb83",
-          "B925b4d1bd3f92c75"
+          "Be289746709728d65"
         ]
       },
       {
@@ -148,7 +157,7 @@
         "kind": "action",
         "action": "Shape each subagent handoff with affected paths, acceptance criteria, must-not-touch paths, verification commands, and documentation impact",
         "spans": [
-          "B9c839aa153d7858f"
+          "Bbc56faba235c0994"
         ]
       }
     ],
@@ -236,10 +245,18 @@
     "Bbede265d9126eb83": "Update `docs/molang/ROADMAP.md` in the same slice when phase status, gates, evidence, ownership, or verification posture changes.",
     "B925b4d1bd3f92c75": "模块职责变化时改对应 `package-info.java`(在 `src/main/java/io/github/tt432/eyelib/molang/package-info.java` 等),然后跑 `:generateModulesMd` 重生成 `MODULES.md`。**禁止手编 MODULES.md**(AGENTS.md Editing Rules)。",
     "B6e303151021ed5ef": "Handoff shape",
-    "B9c839aa153d7858f": "Each subagent task should include affected paths, pass/fail acceptance criteria, must-not-touch paths, verification commands, and documentation impact."
+    "B9c839aa153d7858f": "Each subagent task should include affected paths, pass/fail acceptance criteria, must-not-touch paths, verification commands, and documentation impact.",
+    "B8d84198a31acaf14": "## Protocol",
+    "B524f5ac00f7820c6": "- Read `docs/molang/ROADMAP.md`, the relevant design draft in `docs/molang/design/`, and `MODULES.md` before assigning a slice. (refactor-plan 目录已于 2026-10-13 整体删除，历史执行记录见 git 历史)",
+    "B9b5f8cd2ab5d6574": "## Workflow",
+    "B6287924e18d623ec": "1. Read roadmap, relevant design draft, and MODULES.md before assigning a slice",
+    "Ba3348ba7ad2668a1": "2. Split work into design, implementation, and review subtasks assigned to separate fresh subagents",
+    "B08be57981cb919ce": "3. Require tests before implementation when semantics change; require mcmcp_test for phase 1-4 slices",
+    "Be289746709728d65": "4. Update ROADMAP.md in the same slice on posture changes; on module responsibility changes edit package-info.java and run :generateModulesMd to regenerate MODULES.md",
+    "Bbc56faba235c0994": "5. Shape each subagent handoff with affected paths, acceptance criteria, must-not-touch paths, verification commands, and documentation impact"
   },
   "stats": {
-    "patches": 1,
+    "patches": 8,
     "repacks": 0,
     "lastRepackAt": "2026-08-13T08:52:47.058Z",
     "totalSavedTokens": 0
@@ -250,9 +267,51 @@
       "operation": "COMPRESS",
       "summary": "one-shot: 11 blocks → 2494 chars rendered",
       "savingTokens": 0
+    },
+    {
+      "ts": "2026-10-13T00:07:42.977Z",
+      "operation": "REFINE",
+      "summary": "REFINE: +2 added, ~0 refined, -0 removed",
+      "savingTokens": 0
+    },
+    {
+      "ts": "2026-10-13T00:07:52.680Z",
+      "operation": "DELETE",
+      "summary": "DELETE: +0 added, ~0 refined, -2 removed",
+      "savingTokens": 0
+    },
+    {
+      "ts": "2026-10-13T00:08:10.570Z",
+      "operation": "DELETE",
+      "summary": "DELETE: +0 added, ~0 refined, -1 removed",
+      "savingTokens": 0
+    },
+    {
+      "ts": "2026-10-13T00:08:39.777Z",
+      "operation": "REFINE",
+      "summary": "REFINE: +3 added, ~2 refined, -0 removed",
+      "savingTokens": 0
+    },
+    {
+      "ts": "2026-10-13T00:08:52.515Z",
+      "operation": "DELETE",
+      "summary": "DELETE: +0 added, ~0 refined, -2 removed",
+      "savingTokens": 0
+    },
+    {
+      "ts": "2026-10-13T00:09:05.219Z",
+      "operation": "DELETE",
+      "summary": "DELETE: +0 added, ~0 refined, -5 removed",
+      "savingTokens": 0
+    },
+    {
+      "ts": "2026-10-13T00:09:27.112Z",
+      "operation": "REFINE",
+      "summary": "REFINE: +5 added, ~0 refined, -0 removed",
+      "savingTokens": 0
     }
   ],
   "createdAt": "2026-08-13T08:52:47.058Z",
-  "updatedAt": "2026-08-13T08:52:47.066Z",
+  "updatedAt": "2026-10-13T00:09:27.113Z",
   "frontMatterRaw": "---\nname: molang-refactor-supervisor\ndescription: Coordinate eyelib `molang` package refactor slices through subagent design, implementation, review, roadmap alignment, and Gradle verification without directly editing business logic.\nlicense: MIT\ncompatibility: opencode\nmetadata:\n  author: https://github.com/TT432\n  version: \"1.0.0\"\n---"
 }
