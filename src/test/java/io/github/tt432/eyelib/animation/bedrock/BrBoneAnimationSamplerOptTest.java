@@ -142,6 +142,73 @@ class BrBoneAnimationSamplerOptTest {
     }
 
     // ---------------------------------------------------------------------
+    // loop 环回（Blockbench interpolate() 对齐）：≥3 帧时首尾段用环回邻点，
+    // 接缝两侧切线连续；loopWrap=false 或帧数不足保持线性回退
+    // ---------------------------------------------------------------------
+
+    @Test
+    void loopWrapUsesCyclicNeighborsAtSeam() {
+        float[] keys = {0F, 0.5F, 1F, 1.5F, 2F};
+        float[] values = {3F, -7F, -3F, 7F, 3F};
+        ImmutableFloatTreeMap<BrBoneKeyFrameDefinition> frames =
+                frames(keys, BrBoneKeyFrame.LerpMode.CATMULLROM, i -> vector(values[i], 0F, 0F));
+
+        // 首段：before_plus 环回取倒数第二帧（t=1.5）
+        Vector3f first = BrBoneAnimationSampler.lerp(new MolangScope(), frames, 0.25F, 0F, 0F, 0F, true);
+        Vector3f firstExpected = BrBoneKeyFrame.catmullromLerp(new MolangScope(),
+                frames.valueAt(3), frames.valueAt(0), frames.valueAt(1), frames.valueAt(2), 0.5F, 0F, 0F, 0F);
+        assertVectorEquals(firstExpected, first, "first segment wrap");
+
+        // 末段：after_plus 环回取第二帧（t=0.5）
+        Vector3f last = BrBoneAnimationSampler.lerp(new MolangScope(), frames, 1.75F, 0F, 0F, 0F, true);
+        Vector3f lastExpected = BrBoneKeyFrame.catmullromLerp(new MolangScope(),
+                frames.valueAt(2), frames.valueAt(3), frames.valueAt(4), frames.valueAt(1), 0.5F, 0F, 0F, 0F);
+        assertVectorEquals(lastExpected, last, "last segment wrap");
+    }
+
+    @Test
+    void loopWrapMakesSeamTangentContinuous() {
+        float[] keys = {0F, 0.5F, 1F, 1.5F, 2F};
+        float[] values = {3F, -7F, -3F, 7F, 3F};
+        ImmutableFloatTreeMap<BrBoneKeyFrameDefinition> frames =
+                frames(keys, BrBoneKeyFrame.LerpMode.CATMULLROM, i -> vector(values[i], 0F, 0F));
+
+        float v0 = BrBoneAnimationSampler.lerp(new MolangScope(), frames, 0F, 0F, 0F, 0F, true).x;
+        float vEpsStart = BrBoneAnimationSampler.lerp(new MolangScope(), frames, 0.0001F, 0F, 0F, 0F, true).x;
+        float vEnd = BrBoneAnimationSampler.lerp(new MolangScope(), frames, 2F, 0F, 0F, 0F, true).x;
+        float vEpsEnd = BrBoneAnimationSampler.lerp(new MolangScope(), frames, 1.9999F, 0F, 0F, 0F, true).x;
+
+        float startTangent = (vEpsStart - v0) / 0.0001F;
+        float endTangent = (vEnd - vEpsEnd) / 0.0001F;
+        assertEquals(startTangent, endTangent, 0.01F, "seam tangents must match (both -14/s)");
+        assertEquals(-14F, startTangent, 0.01F, "wrapped tangent value");
+    }
+
+    @Test
+    void loopWrapDisabledKeepsLinearFallback() {
+        float[] keys = {0F, 0.5F, 1F, 1.5F, 2F};
+        ImmutableFloatTreeMap<BrBoneKeyFrameDefinition> frames =
+                frames(keys, BrBoneKeyFrame.LerpMode.CATMULLROM, i -> vector(3F - i, 0F, 0F));
+
+        Vector3f actual = BrBoneAnimationSampler.lerp(new MolangScope(), frames, 0.25F, 0F, 0F, 0F, false);
+        Vector3f expected = BrBoneKeyFrame.linearLerp(new MolangScope(),
+                frames.valueAt(0), frames.valueAt(1), 0.5F, 0F, 0F, 0F);
+        assertVectorEquals(expected, actual, "non-loop first segment stays linear fallback");
+    }
+
+    @Test
+    void loopWrapIgnoredWithTwoFrames() {
+        float[] keys = {0F, 1F};
+        ImmutableFloatTreeMap<BrBoneKeyFrameDefinition> frames =
+                frames(keys, BrBoneKeyFrame.LerpMode.CATMULLROM, i -> vector(i * 5F, 0F, 0F));
+
+        Vector3f actual = BrBoneAnimationSampler.lerp(new MolangScope(), frames, 0.5F, 0F, 0F, 0F, true);
+        Vector3f expected = BrBoneKeyFrame.linearLerp(new MolangScope(),
+                frames.valueAt(0), frames.valueAt(1), 0.5F, 0F, 0F, 0F);
+        assertVectorEquals(expected, actual, "2-frame channel cannot wrap");
+    }
+
+    // ---------------------------------------------------------------------
     // 参考实现：复刻旧路径（逐次查找 + BrBoneKeyFrame 逐轴求值），作为优化路径的 oracle
     // ---------------------------------------------------------------------
 
