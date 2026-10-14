@@ -184,29 +184,54 @@ public final class BrBoneAnimation {
 
     @Nullable
     public Vector3f lerpRotation(MolangScope scope, float currentTick, float thisX, float thisY, float thisZ) {
-        return sampleChannel(rotationChannel, scope, currentTick, thisX, thisY, thisZ);
+        return lerpRotation(scope, currentTick, thisX, thisY, thisZ, false);
+    }
+
+    @Nullable
+    public Vector3f lerpRotation(MolangScope scope, float currentTick, float thisX, float thisY, float thisZ,
+                                 boolean loopWrap) {
+        return sampleChannel(rotationChannel, scope, currentTick, thisX, thisY, thisZ, loopWrap);
     }
 
     @Nullable
     public Vector3f lerpPosition(MolangScope scope, float currentTick, float thisX, float thisY, float thisZ) {
-        return sampleChannel(positionChannel, scope, currentTick, thisX, thisY, thisZ);
+        return lerpPosition(scope, currentTick, thisX, thisY, thisZ, false);
+    }
+
+    @Nullable
+    public Vector3f lerpPosition(MolangScope scope, float currentTick, float thisX, float thisY, float thisZ,
+                                 boolean loopWrap) {
+        return sampleChannel(positionChannel, scope, currentTick, thisX, thisY, thisZ, loopWrap);
     }
 
     @Nullable
     public Vector3f lerpScale(MolangScope scope, float currentTick, float thisX, float thisY, float thisZ) {
-        return sampleChannel(scaleChannel, scope, currentTick, thisX, thisY, thisZ);
+        return lerpScale(scope, currentTick, thisX, thisY, thisZ, false);
     }
+
+    @Nullable
+    public Vector3f lerpScale(MolangScope scope, float currentTick, float thisX, float thisY, float thisZ,
+                              boolean loopWrap) {
+        return sampleChannel(scaleChannel, scope, currentTick, thisX, thisY, thisZ, loopWrap);
+    }
+
     /** 经预解析通道直接采样；通道缺失/为空（恒 null 结果）时直接返回 null，跳过空通道分配与查找。 */
     private static @Nullable Vector3f sampleChannel(@Nullable BrAnimationChannel<BrBoneKeyFrameDefinition> channel,
                                                     MolangScope scope, float currentTick,
-                                                    float thisX, float thisY, float thisZ) {
-        return channel == null ? null : BrBoneAnimationSampler.sample(channel, scope, currentTick, thisX, thisY, thisZ);
+                                                    float thisX, float thisY, float thisZ, boolean loopWrap) {
+        return channel == null ? null : BrBoneAnimationSampler.sample(channel, scope, currentTick, thisX, thisY, thisZ, loopWrap);
     }
 
     @Nullable
     public Vector3f sample(String channelName, MolangScope scope, float currentTick,
                            float thisX, float thisY, float thisZ) {
-        return BrBoneAnimationSampler.sample(compiledDefinition, channelName, scope, currentTick, thisX, thisY, thisZ);
+        return sample(channelName, scope, currentTick, thisX, thisY, thisZ, false);
+    }
+
+    @Nullable
+    public Vector3f sample(String channelName, MolangScope scope, float currentTick,
+                           float thisX, float thisY, float thisZ, boolean loopWrap) {
+        return BrBoneAnimationSampler.sample(compiledDefinition, channelName, scope, currentTick, thisX, thisY, thisZ, loopWrap);
     }
 
     /**

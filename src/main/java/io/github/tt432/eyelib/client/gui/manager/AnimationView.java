@@ -57,8 +57,14 @@ public final class AnimationView implements UIScreen {
     @Override
     public void onInit(UIScreenContext ctx) {
         this.ctx = ctx;
-        selectedAnimationName = null;
-        selectedBoneName = null;
+
+        // 窗口缩放会触发 Screen.resize → init → onInit 重跑，先保存选中状态，控件重建后再恢复
+        String prevAnimation = selectedAnimationName;
+        String prevBone = selectedBoneName;
+        String prevChannel = channelGroup != null ? channelGroup.selectedTabName() : null;
+        String prevAxis = axisGroup != null ? axisGroup.selectedTabName() : null;
+        double prevAnimationScroll = animationListPanel != null ? animationListPanel.getScrollDistance() : 0;
+        double prevBoneScroll = boneListPanel != null ? boneListPanel.getScrollDistance() : 0;
 
         int buttonHeight = 20;
         int initPosY = 30;
@@ -124,6 +130,24 @@ public final class AnimationView implements UIScreen {
 
         animationListPanel.refresh();
         boneListPanel.refresh();
+
+        // 恢复缩放前的选中与滚动位置；动画已被卸载时降级为未选中
+        if (prevAnimation != null && animationListPanel.select(prevAnimation)) {
+            animationListPanel.setScrollDistance(prevAnimationScroll);
+            if (prevBone == null || !boneListPanel.select(prevBone)) {
+                selectedBoneName = null;
+            }
+            boneListPanel.setScrollDistance(prevBoneScroll);
+        } else {
+            selectedAnimationName = null;
+            selectedBoneName = null;
+        }
+        if (prevChannel != null) {
+            channelGroup.select(prevChannel);
+        }
+        if (prevAxis != null) {
+            axisGroup.select(prevAxis);
+        }
     }
 
     @Override
@@ -192,6 +216,18 @@ public final class AnimationView implements UIScreen {
             entries = source.get().toList();
             selectedIndex = -1;
             setScrollDistance(scrollDistance);
+        }
+
+        /**
+         * 按条目名恢复选中；条目不存在时保持未选中并返回 false。
+         */
+        boolean select(String name) {
+            int index = entries.indexOf(name);
+            if (index >= 0) {
+                selectedIndex = index;
+                return true;
+            }
+            return false;
         }
 
         @Override
@@ -284,6 +320,16 @@ public final class AnimationView implements UIScreen {
                 return "";
             }
             return tabs.get(selectedTab);
+        }
+
+        /**
+         * 按页签名恢复选中；页签不存在时保持现状。
+         */
+        void select(String name) {
+            int index = tabs.indexOf(name);
+            if (index >= 0) {
+                selectedTab = index;
+            }
         }
 
         @Override

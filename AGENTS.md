@@ -146,6 +146,12 @@ import org.jspecify.annotations.NullMarked;
 - **游戏重启**: 通过 debug HTTP `/eval` → `minecraft.stop()` 关闭运行中的客户端,切勿从 shell `kill` java 进程。
 - **游戏启动**: `mcmcp_launch`（读取项目根 `.mcmcp`，经 `AI_DEBUG_PORT` 环境变量向客户端传调试端口，默认 25999）。启动前检查该端口是否空闲；若被占用，先 `mcmcp_close` 关闭旧实例。调试 HTTP 服务器由 clientsmoke mod 内的 AIDebugServer 提供，仅在配置 `ai_debug_port` 时开启。
 - **自动化禁止抢前台**（用户禁令 2026-09-26）：任何桌面自动化不得 SetCursorPos/mouse_event 移动用户真实鼠标、不得抢前台焦点。允许的非侵入路径：PostMessage/WM_* 消息投递、UIA InvokePattern、直接运行程序生成的命令行（如 PCL 的 LatestLaunch.bat）。游戏窗口弹出属用户请求行为的固有结果，但自动化过程不得额外抢占。
+- **远端提交标准流程**（2026-10-13 实证）：`master` 受 GitHub 保护规则，要求 3 个必需状态检查（Codacy Static Code Analysis + compile 1.20.1 / 1.21.1 / 26.1.2），**禁止直推**；仓库未开启 GitHub auto-merge（`enablePullRequestAutoMerge` 拒绝）。标准流程：
+    1. 本地在 `master` 完成提交后 `git checkout -b <type>/<topic>` 建分支（避免直推被拒后返工）
+    2. `git push -u origin <branch>` → `gh pr create --base master`
+    3. `gh pr checks <N> --watch --interval 30` 等待检查（全绿继续；有失败停下报告，不合并）
+    4. `gh pr merge <N> --merge`（merge commit，仓库默认方式，保留任务提交边界；不用 squash）
+    5. 清理：`git checkout master && git pull && git branch -d <branch> && git push origin --delete <branch>`
 
 ## 构建与测试验证
 

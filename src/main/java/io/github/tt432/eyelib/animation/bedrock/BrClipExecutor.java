@@ -59,6 +59,9 @@ final class BrClipExecutor {
 
         float animTick = tickResult.animTick();
 
+        // catmullrom 接缝环回（Blockbench interpolate() 对齐）：仅 loop 剪辑开启
+        boolean loopWrap = entry.loop() == BrLoopType.LOOP;
+
         for (int i = 0; i < data.owner().effects().size(); i++) {
             AnimationEffect.Runtime<?> runtime = data.owner().effects().get(i);
             AnimationEffect.Runtime.processEffect(runtime, animTick, scope);
@@ -92,7 +95,7 @@ final class BrClipExecutor {
                 float thisRx = -(renderInfoEntry.rotation.x + bindRx) * EyeMath.RADIANS_TO_DEGREES;
                 float thisRy = -(renderInfoEntry.rotation.y + bindRy) * EyeMath.RADIANS_TO_DEGREES;
                 float thisRz = (renderInfoEntry.rotation.z + bindRz) * EyeMath.RADIANS_TO_DEGREES;
-                Vector3f rotation = boneAnim.lerpRotation(scope, animTick, thisRx, thisRy, thisRz);
+                Vector3f rotation = boneAnim.lerpRotation(scope, animTick, thisRx, thisRy, thisRz, loopWrap);
                 if (rotation != null) {
                     rotation.mul(finalMultiplier).mul(EyeMath.DEGREES_TO_RADIANS);
                     // 基岩版 .animation.json 剪辑存储在 geo 空间（导出边界 X 镜像），
@@ -111,7 +114,7 @@ final class BrClipExecutor {
                 float thisPx = -(renderInfoEntry.position.x + bindPx) * 16;
                 float thisPy = (renderInfoEntry.position.y + bindPy) * 16;
                 float thisPz = (renderInfoEntry.position.z + bindPz) * 16;
-                Vector3f pos = boneAnim.lerpPosition(scope, animTick, thisPx, thisPy, thisPz);
+                Vector3f pos = boneAnim.lerpPosition(scope, animTick, thisPx, thisPy, thisPz, loopWrap);
                 if (pos != null) {
                     pos.mul(finalMultiplier).div(16);
                     if (infos.flipAnimation) {
@@ -128,7 +131,7 @@ final class BrClipExecutor {
                 float thisSx = renderInfoEntry.scale.x * bindSx;
                 float thisSy = renderInfoEntry.scale.y * bindSy;
                 float thisSz = renderInfoEntry.scale.z * bindSz;
-                Vector3f scale = boneAnim.lerpScale(scope, animTick, thisSx, thisSy, thisSz);
+                Vector3f scale = boneAnim.lerpScale(scope, animTick, thisSx, thisSy, thisSz, loopWrap);
                 if (scale != null) {
                     scale.sub(1, 1, 1).mul(finalMultiplier).add(1, 1, 1);
                     renderInfoEntry.scale.mul(scale);

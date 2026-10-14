@@ -90,18 +90,17 @@ class BbModelAnimationsTest {
         assertEquals("query.anim_time + query.delta_time", entry.animTimeUpdate().toString());
 
         BrBoneAnimationSchema arm = entry.bones().get("arm");
-        // position：仅 x 取反（显示空间→基岩剪辑空间，与 Blockbench 基岩导出同约定）
-        assertEquals(-1.0F, constantValue(arm, "position", 0F, 0));
+        // 转换期原样透传剪辑空间值（不取反），渲染期由 flipAnimation 统一翻转
+        assertEquals(1.0F, constantValue(arm, "position", 0F, 0));
         assertEquals(2.0F, constantValue(arm, "position", 0F, 1));
         assertEquals(3.0F, constantValue(arm, "position", 0F, 2));
-        // rotation：x/y 取反
-        assertEquals(-10.0F, constantValue(arm, "rotation", 0F, 0));
-        assertEquals(-20.0F, constantValue(arm, "rotation", 0F, 1));
+        assertEquals(10.0F, constantValue(arm, "rotation", 0F, 0));
+        assertEquals(20.0F, constantValue(arm, "rotation", 0F, 1));
         assertEquals(30.0F, constantValue(arm, "rotation", 0F, 2));
         // scale：不取反
         assertEquals(4.0F, constantValue(arm, "scale", 0F, 0));
-        // molang 表达式在取反通道包裹 -(…)
-        assertEquals("-(query.move)", arm.position().get(0.5F).dataPoints().get(0).x().toString());
+        // molang 表达式原样透传
+        assertEquals("query.move", arm.position().get(0.5F).dataPoints().get(0).x().toString());
     }
 
     @Test

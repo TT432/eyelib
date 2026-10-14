@@ -26,13 +26,27 @@ public final class BrBoneAnimationSampler {
     @Nullable
     public static Vector3f sample(BrBoneAnimationDefinition definition, String channelName, MolangScope scope, float currentTick,
                                   float thisX, float thisY, float thisZ) {
-        return lerp(scope, definition.channel(channelName).keyFrames(), currentTick, thisX, thisY, thisZ);
+        return sample(definition, channelName, scope, currentTick, thisX, thisY, thisZ, false);
     }
+
+    @Nullable
+    public static Vector3f sample(BrBoneAnimationDefinition definition, String channelName, MolangScope scope, float currentTick,
+                                  float thisX, float thisY, float thisZ, boolean loopWrap) {
+        return lerp(scope, definition.channel(channelName).keyFrames(), currentTick, thisX, thisY, thisZ, loopWrap);
+    }
+
     /** 经已解析通道采样：跳过 channel(name) 的字符串键查找（热路径，见 BrBoneAnimation 预解析字段）。 */
     @Nullable
     public static Vector3f sample(BrAnimationChannel<BrBoneKeyFrameDefinition> channel, MolangScope scope, float currentTick,
                                   float thisX, float thisY, float thisZ) {
-        return lerp(scope, channel.keyFrames(), currentTick, thisX, thisY, thisZ);
+        return sample(channel, scope, currentTick, thisX, thisY, thisZ, false);
+    }
+
+    /** 经已解析通道采样：跳过 channel(name) 的字符串键查找（热路径，见 BrBoneAnimation 预解析字段）。 */
+    @Nullable
+    public static Vector3f sample(BrAnimationChannel<BrBoneKeyFrameDefinition> channel, MolangScope scope, float currentTick,
+                                  float thisX, float thisY, float thisZ, boolean loopWrap) {
+        return lerp(scope, channel.keyFrames(), currentTick, thisX, thisY, thisZ, loopWrap);
     }
 
     @Nullable
@@ -40,8 +54,22 @@ public final class BrBoneAnimationSampler {
                                 ImmutableFloatTreeMap<BrBoneKeyFrameDefinition> frames,
                                 float currentTick,
                                 float thisX, float thisY, float thisZ) {
+        return lerp(scope, frames, currentTick, thisX, thisY, thisZ, false);
+    }
+
+    /**
+     * @param loopWrap Blockbench interpolate() 的 loop 环回：loop 动画且通道 ≥3 帧时，
+     *                 首段缺的 before_plus 取倒数第二帧、末段缺的 after_plus 取第二帧，
+     *                 接缝处切线连续。环回点时间戳落在区间外但不影响结果（lerpSplineCurve 仅取 y）。
+     */
+    @Nullable
+    public static Vector3f lerp(MolangScope scope,
+                                ImmutableFloatTreeMap<BrBoneKeyFrameDefinition> frames,
+                                float currentTick,
+                                float thisX, float thisY, float thisZ,
+                                boolean loopWrap) {
         if (!SAMPLE_OPT) {
-            return lerpLegacy(scope, frames, currentTick, thisX, thisY, thisZ);
+            return lerpLegacy(scope, frames, currentTick, thisX, thisY, thisZ, loopWrap);
         }
 
         // 单次二分同时定位 floor/higher（与 floorEntry+higherEntry 逐次调用语义等价，
@@ -70,6 +98,15 @@ public final class BrBoneAnimationSampler {
                 } else {
                     beforePlus = frames.lowerEntry(before.timestamp());
                     afterPlus = frames.higherEntry(after.timestamp());
+                }
+
+                if (loopWrap && keys.length > 2) {
+                    if (beforePlus == null) {
+                        beforePlus = frames.valueAt(keys.length - 2);
+                    }
+                    if (afterPlus == null) {
+                        afterPlus = frames.valueAt(1);
+                    }
                 }
 
                 if (beforePlus == null || afterPlus == null) {
@@ -107,7 +144,8 @@ public final class BrBoneAnimationSampler {
     private static Vector3f lerpLegacy(MolangScope scope,
                                        ImmutableFloatTreeMap<BrBoneKeyFrameDefinition> frames,
                                        float currentTick,
-                                       float thisX, float thisY, float thisZ) {
+                                       float thisX, float thisY, float thisZ,
+                                       boolean loopWrap) {
         BrBoneKeyFrameDefinition before = frames.floorEntry(currentTick);
         BrBoneKeyFrameDefinition after = frames.higherEntry(currentTick);
 
@@ -119,6 +157,15 @@ public final class BrBoneAnimationSampler {
             } else if (before.lerpMode() == BrBoneKeyFrame.LerpMode.CATMULLROM || after.lerpMode() == BrBoneKeyFrame.LerpMode.CATMULLROM) {
                 var beforePlus = frames.lowerEntry(before.timestamp());
                 var afterPlus = frames.higherEntry(after.timestamp());
+
+                if (loopWrap && frames.getSortedKeys().length > 2) {
+                    if (beforePlus == null) {
+                        beforePlus = frames.valueAt(frames.getSortedKeys().length - 2);
+                    }
+                    if (afterPlus == null) {
+                        afterPlus = frames.valueAt(1);
+                    }
+                }
 
                 if (beforePlus == null || afterPlus == null) {
                     return BrBoneKeyFrame.linearLerp(scope, before, after, weight, thisX, thisY, thisZ);
