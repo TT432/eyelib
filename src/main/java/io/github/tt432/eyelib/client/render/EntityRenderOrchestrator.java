@@ -1,36 +1,25 @@
 package io.github.tt432.eyelib.client.render;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
 import io.github.tt432.eyelib.animation.AnimationEffects;
 import io.github.tt432.eyelib.animation.BrAnimator;
 import io.github.tt432.eyelib.animation.ModelRuntimeData;
-import io.github.tt432.eyelib.behavior.SyncedBehaviorState;
 import io.github.tt432.eyelib.bridge.behavior.BehaviorSpawnPort;
 import io.github.tt432.eyelib.common.behavior.VanillaBehaviorEntityLoader;
-import io.github.tt432.eyelib.bridge.attachment.dataattach.mc.DataAttachmentHelper;
-import io.github.tt432.eyelib.bridge.capability.DataAttachmentPort;
 import io.github.tt432.eyelib.capability.RenderData;
 import io.github.tt432.eyelib.bridge.client.adapter.EntityRenderPorts;
 import io.github.tt432.eyelib.bridge.client.ClientTickPort;
 import io.github.tt432.eyelib.bridge.client.RenderEntityParams;
 import io.github.tt432.eyelib.bridge.client.render.adapter.RenderPorts;
-import io.github.tt432.eyelib.bridge.client.render.RenderSink;
 import io.github.tt432.eyelib.bridge.client.render.skinning.SkinningSession;
-import io.github.tt432.eyelib.model.ModelVisitContext;
-import io.github.tt432.eyelib.bridge.molang.ComponentStoreView;
-import io.github.tt432.eyelib.bridge.molang.MolangContextPort;
-import io.github.tt432.eyelib.bridge.molang.MolangEntityContextView;
-import io.github.tt432.eyelib.molang.mapping.api.HostRole;
+import io.github.tt432.eyelib.bridge.client.model.ModelBakeTraversal;
+import io.github.tt432.eyelib.client.model.BedrockModelBakeTraversal;
 import io.github.tt432.eyelib.molang.mapping.api.HostRoles;
 import io.github.tt432.eyelib.bridge.particle.ParticlePort;
 import io.github.tt432.eyelib.capability.component.ClientEntityComponent;
 import io.github.tt432.eyelib.capability.component.ModelComponent;
-import io.github.tt432.eyelib.capability.component.RenderControllerComponent;
 import io.github.tt432.eyelib.client.manager.ClientEntityManager;
-import io.github.tt432.eyelib.client.manager.RenderControllerManager;
 import io.github.tt432.eyelib.client.particle.DeferredAnimationParticleSpawner;
-import io.github.tt432.eyelib.client.render.controller.RenderControllerEntry;
 import io.github.tt432.eyelib.client.render.pipeline.ParallelStageExecutor;
 import io.github.tt432.eyelib.client.render.pipeline.EntitySetupResult;
 import io.github.tt432.eyelib.client.render.pipeline.EntityTickResult;
@@ -39,27 +28,15 @@ import io.github.tt432.eyelib.client.render.pipeline.FramePipeline;
 import io.github.tt432.eyelib.client.render.pipeline.FrameStage;
 import io.github.tt432.eyelib.importer.entity.BrClientEntity;
 import io.github.tt432.eyelib.molang.MolangScope;
-import io.github.tt432.eyelib.model.GlobalBoneIdHandler;
-import io.github.tt432.eyelib.util.PortResourceLocation;
 import io.github.tt432.eyelib.material.port.PortRenderPass;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import io.github.tt432.eyelib.util.entitydata.ModelComponentInfo;
 import io.github.tt432.eyelib.util.event.api.OnRenderStage;
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
-import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.texture.OverlayTexture;
-import net.minecraft.util.Mth;
-import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.item.ItemDisplayContext;
-import net.minecraft.world.item.ItemStack;
 import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -72,17 +49,6 @@ import static net.minecraft.client.Minecraft.getInstance;
  * @author TT432
  */
 public final class EntityRenderOrchestrator {
-    private static final int leftitem = GlobalBoneIdHandler.get("leftitem");
-    private static final int rightitem = GlobalBoneIdHandler.get("rightitem");
-    private static final HostRole<MolangEntityContextView> MOLANG_ENTITY_CONTEXT =
-            HostRole.of("molang_entity_context", MolangEntityContextView.class);
-
-    private static volatile int renderCount = 0;
-    private static volatile int errorCount = 0;
-    private static volatile @Nullable String lastError = null;
-
-    /** 渲染帧序号，onRenderStage 每帧递增；用于同帧内 setup/tick 去重（见 TickStage 条件重估短路）。 */
-    private static long frameCounter = 0;
 
     private EntityRenderOrchestrator() {
     }
@@ -92,28 +58,28 @@ public final class EntityRenderOrchestrator {
                 EntityRenderOrchestrator::renderEntityFromParams,
                 EntityRenderOrchestrator::setup
         );
+        // 方块几何烘焙的遍历实现由 application 提供，ACL 侧只持有 Port（ADR-0016 §2 反向依赖禁令）
+        ModelBakeTraversal.install(new BedrockModelBakeTraversal());
     }
 
     /** Cumulative successful Eyelib entity renders, exposed for dev diagnostics. */
     public static int getRenderCount() {
-        return renderCount;
+        return RenderDiagnostics.getRenderCount();
     }
 
     /** Cumulative render failures, exposed for dev diagnostics. */
     public static int getErrorCount() {
-        return errorCount;
+        return RenderDiagnostics.getErrorCount();
     }
 
     /** First recorded render failure, or {@code null} when no failure occurred. */
     public static @Nullable String getLastError() {
-        return lastError;
+        return RenderDiagnostics.getLastError();
     }
 
     /** Resets dev-only render diagnostics before an isolated measurement. */
     public static void resetDiagnostics() {
-        renderCount = 0;
-        errorCount = 0;
-        lastError = null;
+        RenderDiagnostics.reset();
     }
 
     /** Initializes a detached dev-scene entity before it enters the render-only benchmark loop. */
@@ -140,7 +106,7 @@ public final class EntityRenderOrchestrator {
 
     @OnRenderStage
     public static void onRenderStage(float partialTick, double camX, double camY, double camZ) {
-        frameCounter++;
+        ClientEntitySetup.beginFrame();
         PIPELINE.run(new FramePlan(partialTick, camX, camY, camZ));
     }
 
@@ -221,7 +187,7 @@ public final class EntityRenderOrchestrator {
             return null;
         }
 
-        setupSyncedBehaviorContext(entity, scope);
+        ClientEntitySetup.setupSyncedBehaviorContext(entity, scope);
 
         // 动画状态/时间轴音效（switchState 与 BrAnimationEntryDefinition 的 sound 回调）
         // 依赖 PORT_ENTITY 宿主角色提供播放坐标；fromCached 保持幂等写短路。
@@ -233,7 +199,7 @@ public final class EntityRenderOrchestrator {
         // addon 卸载/换包后注册表代际变化：按 id 重新解析 clientEntity，
         // 管理器中已无此 id 时回落 vanilla（else 分支清空组件与 RC 状态）
         if (clientEntityComponent.isStale(ClientEntityManager.INSTANCE.generation())) {
-            deferred.addAll(setupClientEntity(entity, cap));
+            deferred.addAll(ClientEntitySetup.setupClientEntity(entity, cap));
         }
 
         AnimationEffects effects = new AnimationEffects();
@@ -275,10 +241,10 @@ public final class EntityRenderOrchestrator {
         // 同帧内 scope 状态对条件求值无中间变化，重估必然命中同一掩码。
         var ce = clientEntityComponent.getClientEntity();
         if (ce != null && !ce.renderControllerConditions().isEmpty()
-                && cap.getRenderControllerComponent().setupFrameStamp() != frameCounter
-                && evalConditionMask(ce, scope)
+                && cap.getRenderControllerComponent().setupFrameStamp() != ClientEntitySetup.frame()
+                && ClientEntitySetup.evalConditionMask(ce, scope)
                    != cap.getRenderControllerComponent().conditionMask()) {
-            deferred.addAll(setupClientEntity(ce, cap));
+            deferred.addAll(ClientEntitySetup.setupClientEntity(ce, cap));
         }
 
         return new EntityTickResult(entity, tickedInfos, effects);
@@ -295,29 +261,17 @@ public final class EntityRenderOrchestrator {
                     .animation(cap.getAnimationComponent())
                     .overlay(params.overlay())
                     .light(params.packedLight())
-                    .extraRender((context, action) -> renderItemInHand(context, action, entity, action.packedLight()))
+                    .extraRender((context, action) -> HandItemRenderer.renderItemInHand(context, action, entity, action.packedLight()))
                     .build()
                     .render();
         } catch (Throwable t) {
-            recordError(t);
+            RenderDiagnostics.recordError(t);
             throw t;
         }
     }
 
-    /** 记录首个渲染失败供 dev 诊断（benchmark/smoke 经 getErrorCount/getLastError 消费）；异常继续上抛。 */
-    private static void recordError(Throwable t) {
-        errorCount++;
-        if (errorCount <= 1) {
-            var sw = new java.io.StringWriter();
-            t.printStackTrace(new java.io.PrintWriter(sw));
-            lastError = sw.toString();
-        }
-    }
-
     static List<Runnable> setup(Entity entity) {
-        var cap = RenderData.getComponent(entity);
-        cap.ensureOwner(entity);
-        return setupClientEntity(entity, cap);
+        return ClientEntitySetup.setup(entity);
     }
 
     static <T> boolean renderEntity(SimpleRenderAction<T> data) {
@@ -332,80 +286,16 @@ public final class EntityRenderOrchestrator {
         if (cap.getScope() == null) {
             return false;
         }
-        setupExtraMolang(entity, cap.getScope(), data.partialTick());
+        ClientEntitySetup.setupExtraMolang(entity, cap.getScope(), data.partialTick());
         if (entity instanceof LivingEntity livingEntity) {
-            setupSyncedBehaviorContext(livingEntity, cap.getScope());
+            ClientEntitySetup.setupSyncedBehaviorContext(livingEntity, cap.getScope());
         }
 
         boolean rendered = data.animationNotNull() && renderComponents(data);
         if (rendered) {
-            renderCount++;
+            RenderDiagnostics.recordSuccess();
         }
         return rendered;
-    }
-
-    static boolean renderItemInHand(ModelVisitContext context, SimpleRenderAction<?> action,
-                                     LivingEntity renderTarget, int light) {
-        PoseStack poseStack = new PoseStack();
-        var locators = context
-                              .<Int2ObjectMap<PoseStack.Pose>>orCreate("bones", Int2ObjectOpenHashMap::new);
-        // 收集的骨骼姿态为「绕 pivot 的动画变换」，不包含 pivot 平移（applyBoneTranslate 中 +pivot/-pivot 抵消）。
-        // attachable 需要附着到骨骼原点，必须补回骨骼 pivot 平移。
-        var bindBones = action.renderData().bindBones();
-        var offHandBone = bindBones.get(leftitem);
-        var mainHandBone = bindBones.get(rightitem);
-        var offHandPose = locators.get(leftitem);
-        if (offHandPose != null && offHandBone != null) {
-            RenderPorts.get().renderSystemPort().pushPoseRaw(poseStack, offHandPose);
-            var pivot = offHandBone.pivot();
-            poseStack.translate(pivot.x(), pivot.y(), pivot.z());
-            ItemStack itemInHand = renderTarget.getItemInHand(InteractionHand.OFF_HAND);
-            renderHandItemOrAttachable(action.multiBufferSource(), action.sink(), renderTarget, itemInHand,
-                    ItemDisplayContext.THIRD_PERSON_LEFT_HAND, light, poseStack, true, InteractionHand.OFF_HAND);
-        }
-
-        var mainHandPose = locators.get(rightitem);
-        if (mainHandPose != null && mainHandBone != null) {
-            RenderPorts.get().renderSystemPort().pushPoseRaw(poseStack, mainHandPose);
-            var pivot = mainHandBone.pivot();
-            poseStack.translate(pivot.x(), pivot.y(), pivot.z());
-            ItemStack itemInHand = renderTarget.getItemInHand(InteractionHand.MAIN_HAND);
-            renderHandItemOrAttachable(action.multiBufferSource(), action.sink(), renderTarget, itemInHand,
-                    ItemDisplayContext.THIRD_PERSON_RIGHT_HAND, light, poseStack, false, InteractionHand.MAIN_HAND);
-        }
-
-        return true;
-    }
-
-    private static void renderHandItemOrAttachable(MultiBufferSource bufferSource, RenderSink sink, LivingEntity le, ItemStack item,
-                                                   ItemDisplayContext context, int light, PoseStack poseStack,
-                                                   boolean left, InteractionHand hand) {
-        if (item.isEmpty()) {
-            return;
-        }
-
-        var rd = AttachableItemRenderSetup.getOrPrepare(le, hand, false);
-        if (rd != null) {
-            poseStack.pushPose();
-            AttachableItemRenderSetup.renderAttachable(rd, poseStack, bufferSource, le, light, OverlayTexture.NO_OVERLAY);
-            poseStack.popPose();
-            return;
-        }
-
-        renderHandItem(sink, le, item, context, light, poseStack, left);
-    }
-
-    private static void renderHandItem(RenderSink sink, LivingEntity le, ItemStack item,
-                                       ItemDisplayContext context, int light, PoseStack poseStack, boolean left) {
-        if (!item.isEmpty()) {
-            poseStack.pushPose();
-
-            poseStack.mulPose(Axis.XP.rotationDegrees(-90.0F));
-            poseStack.mulPose(Axis.YP.rotationDegrees(180.0F));
-            poseStack.translate(-0.25, 0.1, -1.15);
-            RenderPorts.get().renderSystemPort().renderItemDirect(le, item, context, left, poseStack, sink, light);
-            poseStack.popPose();
-        }
     }
 
     @SuppressWarnings("unchecked")
@@ -462,7 +352,7 @@ public final class EntityRenderOrchestrator {
                                                                                return 0;
                                                                            }
 
-                                                                           setupEntityClientEntityData(data);
+                                                                           ClientEntitySetup.setupEntityClientEntityData(data);
 
                                                                            // 解析最终 renderPass+texture（含 colorMask 替换），不含 consumer；
                                                                            // consumer 由 RenderSink 在回调中提供（立即: bufferSource.getBuffer; 延迟: submitCustomGeometry 回调）。
@@ -510,209 +400,14 @@ public final class EntityRenderOrchestrator {
                                                                        .sum() > 0;
     }
 
-    static <T> void setupEntityClientEntityData(SimpleRenderAction<T> data) {
-        var cap = data.renderData();
-        var clientEntity = cap.getClientEntityComponent().getClientEntity();
-        var poseStack = data.poseStack();
-
-        if (clientEntity == null) return;
-
-        clientEntity.scripts().ifPresent(s -> {
-            var scope = cap.getScope();
-            if (scope == null) {
-                return;
-            }
-            poseStack.scale(s.getScaleX(scope), s.getScaleY(scope), s.getScaleZ(scope));
-        });
-
-        if (data.applyEntityPose() && data.entity() instanceof LivingEntity livingEntity) {
-            if (livingEntity.isBaby()) {
-                poseStack.scale(0.5F, 0.5F, 0.5F);
-            }
-
-            float yBodyRot = Mth.rotLerp(data.partialTick(), livingEntity.yBodyRotO, livingEntity.yBodyRot);
-            poseStack.mulPose(Axis.YP.rotationDegrees(-yBodyRot));
-        }
-    }
-
-    static void setupExtraMolang(Entity entity, MolangScope scope, float partialTick) {
-        RenderPorts.get().renderSystemPort().setupLlamaDecor(entity, scope);
-
-        scope.set("variable.partial_tick", partialTick);
-        if (entity instanceof LivingEntity livingEntity)
-            scope.set("variable.attack_time", ((float) livingEntity.swingTime) / livingEntity.getCurrentSwingDuration());
-    }
-
-    private static void setupSyncedBehaviorContext(LivingEntity entity, MolangScope scope) {
-        SyncedBehaviorState synced = DataAttachmentHelper.getOrNull(
-                DataAttachmentPort.syncedBehaviorState(), entity);
-        if (synced == null) {
-            scope.getHostContext().remove(MOLANG_ENTITY_CONTEXT);
-            return;
-        }
-
-        ComponentStoreView store = MolangContextPort.newComponentStore();
-        store.put("minecraft:variant", synced.variant());
-        store.put("minecraft:mark_variant", synced.markVariant());
-        store.put("minecraft:scale", synced.scale());
-        scope.getHostContext().put(MOLANG_ENTITY_CONTEXT, MolangContextPort.newMolangEntityContext(store));
-    }
-
+    /** 解析实体类型 id 并装配 clientEntity 组件（实现见 {@link ClientEntitySetup}）。 */
     public static List<Runnable> setupClientEntity(Entity entity, RenderData<?> cap) {
-        cap.ensureOwner(entity);
-
-        String entityId = RenderPorts.get().renderSystemPort().getEntityTypeId(entity);
-        return setupClientEntity(entityId, cap);
+        return ClientEntitySetup.setupClientEntity(entity, cap);
     }
 
-    /**
-     * BE 重命名实体的 JE 类型别名：BE 村与掠夺更新把 villager/zombie_villager 重命名为 *_v2，
-     * 资源包（如 A&S）只注册新名；JE 1.20.1 实体类型仍是旧名，查表时回退别名。
-     */
-    private static final Map<String, String> JE_TO_BE_ENTITY_ALIAS = Map.of(
-            "minecraft:villager", "minecraft:villager_v2",
-            "minecraft:zombie_villager", "minecraft:zombie_villager_v2"
-    );
-
+    /** 按实体类型 id 装配 clientEntity 组件（实现见 {@link ClientEntitySetup}）。 */
     public static List<Runnable> setupClientEntity(String entityId, RenderData<?> cap) {
-        ClientEntityComponent clientEntityComponent = cap.getClientEntityComponent();
-        long generation = ClientEntityManager.INSTANCE.generation();
-
-        // 注册表代际变化（addon 卸载/换包/mod 重注册）时重新解析：
-        // 解析结果为 null 也会记录代际——vanilla 实体不再每次 setup 都查表，
-        // 已卸载 addon 的实体回落 vanilla 渲染。
-        if (clientEntityComponent.isStale(generation)) {
-            BrClientEntity clientEntity = ClientEntityManager.INSTANCE.get(entityId.toString());
-            if (clientEntity == null) {
-                String alias = JE_TO_BE_ENTITY_ALIAS.get(entityId.toString());
-                if (alias != null) {
-                    clientEntity = ClientEntityManager.INSTANCE.get(alias);
-                }
-            }
-            clientEntityComponent.setClientEntity(clientEntity);
-            clientEntityComponent.markResolvedFrom(generation);
-        }
-
-        return setupClientEntity(clientEntityComponent.getClientEntity(), cap);
-    }
-
-    public static List<Runnable> setupClientEntity(@Nullable BrClientEntity clientEntity, RenderData<?> cap) {
-        ClientEntityComponent clientEntityComponent = cap.getClientEntityComponent();
-        RenderControllerComponent renderControllerComponent = cap.getRenderControllerComponent();
-        List<Runnable> syncedActions = new ArrayList<>();
-        // 引用不同才视为「外部显式指定」：setClientEntity 标记 externallySet，
-        // 不参与注册表代际失效；资源重载后由外部持有者负责重设新实例。
-        // 每帧把当前 ce 传回的重 setup 调用方（RC 条件重估等）引用相等，不触碰该标记。
-        if (clientEntity != null && clientEntityComponent.getClientEntity() != clientEntity) {
-            clientEntityComponent.setClientEntity(clientEntity);
-        }
-
-        boolean clientEntityChanged = clientEntityComponent.consumeChanged();
-        BrClientEntity appliedClientEntity = clientEntityComponent.getClientEntity();
-
-        if (appliedClientEntity != null) {
-            if (clientEntityChanged) {
-                renderControllerComponent.clear();
-                appliedClientEntity.scripts().ifPresent(s -> {
-                    if (cap.getScope() != null) {
-                        s.initialize().eval(cap.getScope());
-                        s.pre_animation().eval(cap.getScope());
-                    }
-                });
-            }
-        }
-
-        List<ModelComponent> components = cap.getModelComponents();
-
-        if (appliedClientEntity != null) {
-            BrClientEntity ce = appliedClientEntity;
-
-            // texture./geometry./material. 短名仅随 clientEntity/scope 变化，守卫内一次性注入（原每帧重建）
-            MolangScope scope = cap.getScope();
-            if (scope != null && clientEntityComponent.consumeStaticScopeInit(scope)) {
-                RenderControllerEntry.initStaticScope(scope, ce);
-            }
-
-            int conditionMask = 0;
-            int modelVersion = clientEntityComponent.getModelVersion();
-            List<ModelComponent> rebuilt = new ArrayList<>();
-            for (int i = 0; i < ce.render_controllers().size(); i++) {
-                String renderController = ce.render_controllers().get(i);
-                io.github.tt432.eyelib.molang.MolangValue condition = ce.renderControllerConditions()
-                                                                        .get(renderController);
-                if (condition != null && cap.getScope() != null && !condition.evalAsBool(cap.getScope())) {
-                    continue;
-                }
-                conditionMask |= 1 << i;
-                RenderControllerEntry renderControllerEntry = RenderControllerManager.INSTANCE.get(renderController);
-                RenderControllerComponent.Slot renderControllerSlot = renderControllerComponent.syncSlot(i, renderControllerEntry);
-                if (renderControllerEntry != null && cap.getScope() != null)
-                    rebuilt.addAll(renderControllerEntry.setupModel(cap.getScope(), appliedClientEntity, clientEntityComponent.getModels(), modelVersion, renderControllerSlot, syncedActions));
-            }
-            renderControllerComponent.setConditionMask(conditionMask);
-            renderControllerComponent.trim(ce.render_controllers().size());
-            renderControllerComponent.markSetupFrame(frameCounter);
-
-            // Opt18-A2：全部 RC 静态缓存命中时 rebuilt 与现有组件实例序完全一致——
-            // 跳过 clear/addAll 与 bind 骨骼失效（内容未变，bind 集合不变），
-            // 消除逐帧 ArrayList 重建与 Opt16 缓存的无效化。
-            if (!identicalComponents(components, rebuilt)) {
-                // components 整体替换：bind 骨骼缓存失效（Opt16 失效契约）
-                cap.invalidateBindBones();
-                components.clear();
-                components.addAll(rebuilt);
-            }
-
-            if (components.isEmpty() && !ce.geometry().isEmpty()) {
-                var entry = ce.geometry().entrySet().stream().findFirst().orElse(null);
-                if (entry != null) {
-                    var defaultTexture = ce.textures().get(entry.getKey());
-                    if (defaultTexture == null && !ce.textures().isEmpty()) {
-                        defaultTexture = ce.textures().values().stream().findFirst().orElse(null);
-                    }
-                    if (defaultTexture != null) {
-                        var modelComponent = new ModelComponent();
-                        modelComponent.setInfo(new ModelComponentInfo(
-                                entry.getValue(), PortResourceLocation.parse(defaultTexture),
-                                PortResourceLocation.parse("entity_translucent")));
-                        // 组件集变化：bind 骨骼缓存失效（Opt16 失效契约）
-                        cap.invalidateBindBones();
-                        components.add(modelComponent);
-                    }
-                }
-            }
-
-            ce.scripts().ifPresent(s -> cap.getAnimationComponent().setup(ce.animations(), s.animate()));
-
-            if (cap.getScope() != null) {
-                cap.getScope().getHostContext().put(HostRoles.CLIENT_ENTITY, ce);
-            }
-        } else {
-            if (!components.isEmpty()) {
-                cap.invalidateBindBones();
-                components.clear();
-            }
-            renderControllerComponent.clear();
-            renderControllerComponent.setConditionMask(0);
-            if (cap.getScope() != null) {
-                cap.getScope().getHostContext().remove(HostRoles.CLIENT_ENTITY);
-            }
-        }
-
-        return syncedActions;
-    }
-
-    /** 实例序恒等比较：静态缓存命中路径逐帧返回同一实例序，据此跳过组件列表重建。 */
-    private static boolean identicalComponents(List<ModelComponent> current, List<ModelComponent> rebuilt) {
-        if (current.size() != rebuilt.size()) {
-            return false;
-        }
-        for (int i = 0; i < current.size(); i++) {
-            if (current.get(i) != rebuilt.get(i)) {
-                return false;
-            }
-        }
-        return true;
+        return ClientEntitySetup.setupClientEntity(entityId, cap);
     }
 
     /**
@@ -720,14 +415,12 @@ public final class EntityRenderOrchestrator {
      * 与 setupClientEntity 的跳过逻辑一致：无条件恒启用，scope 缺失时启用。
      */
     public static int evalConditionMask(BrClientEntity ce, @Nullable MolangScope scope) {
-        int mask = 0;
-        for (int i = 0; i < ce.render_controllers().size(); i++) {
-            var condition = ce.renderControllerConditions().get(ce.render_controllers().get(i));
-            if (condition == null || scope == null || condition.evalAsBool(scope)) {
-                mask |= 1 << i;
-            }
-        }
-        return mask;
+        return ClientEntitySetup.evalConditionMask(ce, scope);
+    }
+
+    /** 装配指定 clientEntity 的渲染组件与 RC 状态（实现见 {@link ClientEntitySetup}）。 */
+    public static List<Runnable> setupClientEntity(@Nullable BrClientEntity clientEntity, RenderData<?> cap) {
+        return ClientEntitySetup.setupClientEntity(clientEntity, cap);
     }
 
     /**

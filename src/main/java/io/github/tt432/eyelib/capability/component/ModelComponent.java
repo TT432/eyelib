@@ -1,7 +1,5 @@
 package io.github.tt432.eyelib.capability.component;
 
-import io.github.tt432.eyelib.client.manager.MaterialManager;
-import io.github.tt432.eyelib.client.manager.ModelManager;
 import io.github.tt432.eyelib.util.entitydata.ModelComponentInfo;
 import io.github.tt432.eyelib.bridge.material.RenderTypeResolver;
 import io.github.tt432.eyelib.material.render.EntityRenderTypeData;
@@ -78,7 +76,7 @@ public class ModelComponent {
     @Nullable
     public Model getModel() {
         if (serializableInfo == null) return null;
-        return ModelManager.INSTANCE.get(serializableInfo.model());
+        return ClientAssetPort.get().model(serializableInfo.model());
     }
 
     @Nullable
@@ -138,7 +136,7 @@ public class ModelComponent {
     }
 
     private Map<String, BrMaterialEntry> currentMaterialMap() {
-        Map<String, BrMaterialEntry> current = MaterialManager.INSTANCE.all();
+        Map<String, BrMaterialEntry> current = ClientAssetPort.get().materials();
         if (current != matMapRef) {
             matMapRef = current;
             cachedEntry = null;

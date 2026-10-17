@@ -1,9 +1,8 @@
 # 节点图可视化 Molang 语言与 ClientEntity 制作器 — 设计规格
 
-> 状态：Draft v1（2026-08-01）
-> ⚠ ldlib1 已退役（2026-08-07，ADR-0028）：本文 ldlib1 接线描述为历史记录，当前全版本统一 LDLib2。
-> 前置调研：LDLib 1.20.1 (graphprocessor) / LDLib2 (nodegraphtookit) API、eyelib 消费端（BrClientEntity/RC/AC/MolangValue）
-> 关联：ADR（待补）、`docs/concepts/architecture.md`、`docs/decisions/0002-module-boundaries.md`
+> 状态：已实施（2026-08-02 起）；LDLib 适配为 LDLib2 单端，全版本统一（ADR-0028）。
+> 前置调研：LDLib2 (nodegraphtookit) API、eyelib 消费端（BrClientEntity/RC/AC/MolangValue）
+> 关联：ADR-0021、ADR-0028、`docs/concepts/architecture.md`、`docs/decisions/0002-module-boundaries.md`
 
 ## 0. 目标与非目标
 
@@ -32,14 +31,14 @@
 ┌───────┴─────────────┐                ┌─────────┴───────────────────────┐
 │ 运行时加载管线        │                │ 编辑器（装了 LDLib 才启用）         │
 │ client.nodegraph     │                │ client.nodegraph.editor          │
-│ 读图 JSON → 组装      │                │  ├ ldlib1 适配（1.20.1）          │
-│ → ClientEntityManager│                │  └ ldlib2 适配（1.21.1/26.1.2）   │
+│ 读图 JSON → 组装      │                │  └ ldlib2 适配（全版本统一）      │
+│ → ClientEntityManager│                │                                  │
 └─────────────────────┘                └─────────────────────────────────┘
 ```
 
 **推论**：未安装 LDLib 时，已创作的图文档仍可加载并产出 ClientEntity（运行时路径无 LDLib 依赖）；只有「编辑」能力缺失。这严格满足「装了 ldlib 时才启用」且不让 LDLib 渗入运行时。
 
-**理由**：LDLib 1.x graphprocessor 与 LDLib2 nodegraphtookit 的模型/序列化格式完全不兼容；若以其一为权威格式，跨版本不可移植。自有 JSON Schema 是跨版本、可 code review、可单元测试（零 MC）的唯一选择。
+**理由**：LDLib2 nodegraphtookit 的模型/序列化格式是第三方快照 API，直接以它为权威格式会把图文档绑死在该库的版本演进上；自有 JSON Schema 才能做到跨版本、可 code review、可单元测试（零 MC）。
 
 ### D2. 编辑器 = 翻译层，不做权威存储
 
@@ -55,17 +54,17 @@ LDLib 编辑器（GraphView/GraphViewWidget）只是图文档的**视图与编�
 
 ### D5. 子图在权威层实现，不依赖 LDLib 原生子图
 
-LDLib2 有 SubgraphNodeModel，LDLib 1.x graphprocessor 没有子图。为保证跨版本语义一致，子图是**图文档层概念**：
+LDLib2 虽提供 SubgraphNodeModel，但子图刻意作为**图文档层概念**实现，不依赖该库的原生子图语义：
 
 - 图文档库（GraphLibrary）= 一个 JSON 文件内含 1 个主图 + N 个命名子图。
 - 子图种类：**表达式子图**（命名输入端口若干 + 单一输出值）与**执行子图**（exec in/out + 命名输入/输出端口）。
 - 子图节点（SubgraphCall）在主图中引用子图名；代码生成时**内联展开**（参数替换 + 名称隔离 `temp.sg<uid>_<local>`）。
-- 编辑器「潜入」= 切换当前编辑的图为该子图（面包屑导航），两版 LDLib 均可实现（LDLib2 用 GraphEditorView breadcrumb 原生机制或自绘；1.20.1 用自绘面包屑 + GraphViewWidget.loadGraph 切换）。
+- 编辑器「潜入」= 切换当前编辑的图为该子图（面包屑导航），用 LDLib2 `GraphEditorView` 的原生 breadcrumb 机制（必要时自绘补充）。
 
 ### D6. 分组
 
-- **画布分组**（Placemat）：标题 + 颜色 + 成员节点 uid 集合 + 包围盒（随成员自动扩展）。文档层持久化；LDLib2 映射到 PlacematModel（原生），1.20.1 用自绘覆盖层（只读视觉，不支持则降级为仅文档数据，不报错）。
-- **黑板变量分组**：变量声明带可选 group 路径（`a/b/c`），编辑器黑板按树展示。LDLib2 原生支持（GroupModel）；1.20.1 的 ParameterPanelWidget 无分组 → 变量名平铺展示全路径，语义不变。
+- **画布分组**（Placemat）：标题 + 颜色 + 成员节点 uid 集合 + 包围盒（随成员自动扩展）。文档层持久化；编辑器侧映射到 LDLib2 `PlacematModel`（原生）。
+- **黑板变量分组**：变量声明带可选 group 路径（`a/b/c`），编辑器黑板按树展示（LDLib2 原生 `GroupModel`）。
 
 ### D7. 可选前置隔离
 
@@ -161,9 +160,8 @@ ClientEntity 文档 = 一个主图，含唯一 EntityRoot 节点。EntityRoot �
 
 ### 3.1 入口与宿主
 
-- 打开方式：客户端命令（如 `/eyelib nodegraph`）+ 管理器屏幕（EyelibManagerScreen）入口按钮。门控：无 LDLib 时入口不可见/提示。
-- 1.21.1/26.1.2：`GraphEditorView`（LDLib2 编辑器框架 View，含保存/脏标记/面包屑/黑板/检查器/小地图）宿主于 LDLib2 ModularUI 屏。
-- 1.20.1：`GraphViewWidget`（画布 + NodePanelWidget 节点面板 + ParameterPanelWidget 变量面板）宿主于 LDLib 1.x ModularUI 屏；保存/脏标记/子图潜入由 eyelib 侧补齐。
+- 打开方式：客户端命令（如 `/eyelib nodegraph`）+ 管理器屏幕（EyelibManagerScreen）入口按钮。门控：无 LDLib2 时入口不可见/提示。
+- `GraphEditorView`（LDLib2 编辑器框架 View，含保存/脏标记/面包屑/黑板/检查器/小地图）宿主于 LDLib2 ModularUI 屏。
 
 ### 3.2 文档库与落盘
 
@@ -178,7 +176,7 @@ ClientEntity 文档 = 一个主图，含唯一 EntityRoot 节点。EntityRoot �
 
 ### 3.4 诊断
 
-图验证/代码生成诊断（错误/警告，含节点 uid 定位）在编辑器图日志区（LDLib2 GraphLogger 机制 / 1.20.1 DebugPanelWidget）与聊天栏双通道展示。
+图验证/代码生成诊断（错误/警告，含节点 uid 定位）在编辑器图日志区（LDLib2 `GraphLogger`）与聊天栏双通道展示。
 
 ## 4. 构建与依赖（事实已验证）
 
@@ -228,54 +226,37 @@ ClientEntity 文档 = 一个主图，含唯一 EntityRoot 节点。EntityRoot �
 - **后置**：EntityRoot → BrClientEntity JSON（经 CODEC 往返解析成功）；RC/AC 文档同构；引用表冲突检测（§2.4-8）。
 - **异常**：缺 identifier 等必填 = 错误。
 
-### T7 LDLib2 编辑器适配（1.21.1/26.1.2）
+### T7 LDLib2 编辑器适配（全版本）
 - **前置**：T1、T3（模型只读接口）、T5。
 - **后置**：图文档 ↔ LDLib2 GraphModel 双向映射；GraphEditorView 打开编辑、保存回写文档；黑板/分组/便签/子图潜入可用；节点目录含 query/math 动态节点（D4）。
 - **异常**：LDLib2 缺失 → 入口隐藏（T1 门）。
 
-### T8 LDLib1 编辑器适配（1.20.1）
-- **前置**：T1、T3、T5。
-- **后置**：图文档 ↔ BaseGraph 双向映射；GraphViewWidget 打开编辑；保存/子图潜入/分组降级策略按 D5/D6。
-- **异常**：同上。
-
-### T9 预览与运行时注入
-- **前置**：T6、T7 或 T8。
+### T8 预览与运行时注入
+- **前置**：T6、T7。
 - **后置**：纹理/模型预览渲染；Build 动作注入各 Manager；测试实体挂载渲染可见。
 - **异常**：引用缺失资源 → 诊断列表 + 聊天栏警告，不崩溃。
 
-### T10 测试与验收
-- **前置**：T2–T9。
-- **后置**：domain 单测（T2/T3/T4/T5/T6 黄金样本 + 往返）；1.20.1 与 1.21.1 dev client 内编辑器打开、建图、Build、实体渲染烟雾验证（截图证据）。
+### T9 测试与验收
+- **前置**：T2–T8。
+- **后置**：domain 单测（T2/T3/T4/T5/T6 黄金样本 + 往返）；各版本 dev client 内编辑器打开、建图、Build、实体渲染烟雾验证（截图证据）。
 - **不变量**：ArchUnit 对 `eyelib.nodegraph` 零 MC import 生效。
 
 ## 6. 风险与开放问题
 
 | 风险 | 等级 | 缓解 |
 |---|---|---|
-| LDLib2 toolkit 为快照版 API，可能漂移 | 中 | 锁定 2.2.32 / 26.1.2.27.a；适配层集中 |
-| 1.20.1 graphprocessor 无 undo/子图/分组 | 中 | eyelib 侧补齐（文档层 + 自绘），接受视觉降级 |
+| LDLib2 toolkit 为快照版 API，可能漂移 | 中 | 锁定 `2.2.34` / `26.1.2.33`（见 §4）；适配层集中 |
 | 模型预览离屏渲染在 GUI 缩放下的正确性 | 中 | 复用 ModelPreviewScreen 既有路径 |
-| LDLib 1.20.1 SRG remap 在 ModDevGradle legacyforge 下的可行性 | 中 | spark 已有同路径先例（build.gradle 注释） |
 | Molang 表达式全括号化导致超长字符串 | 低 | 最小括号化 pass 后置优化（非 v1） |
 
-## 7. 实施记录（2026-08-02）
+## 7. 实施状态
 
-已实现并验证（证据：domain 单测 71 个、三节点编译、1.20.1/1.21.1 客户端冒烟截图）：
+已实现并验证（证据：domain 单测、三节点编译、客户端冒烟截图）：
 
-- T1–T10 全部落地；验证器 19 项检查、代码生成（含 temp 提取与子图内联）、三汇编器、两版编辑器适配、纹理/模型预览基础设施、运行时构建管线与实体渲染闭环。
-- 已知降级（均非本特性缺陷，见 work/feedback.json）：
+- T1–T9 全部落地；验证器 19 项检查、代码生成（含 temp 提取与子图内联）、三汇编器、LDLib2 编辑器适配、纹理/模型预览基础设施、运行时构建管线与实体渲染闭环。
+- 已知降级（均非本特性缺陷）：
   1. **26.1.2 世界内冒烟被预存渲染崩溃阻塞**（`Not building!`，无 ldlib2 亦复现）；编辑器代码与 1.21.1 全共享，编译与翻译单测覆盖。
-  2. 1.20.1 画布分组按 D6 降级为仅文档持久化；1.21.1 dev runtime 需 neoforge ≥ 21.1.216（已升 21.1.248）。
-  3. 26.1.2 模型预览按 §3.3 既定降级为纹理预览 + 文本（26.1 GUI 渲染路径未迁移）。
-
-### 6.1 模型预览根因记录（fb_msaxt2mctep9，已修复）
-
-调试初期模型预览在 1.20.1/1.21.1 不出图，一度误判为 entitySolid 着色器与 GUI 上下文不兼容。
-实测（探针四边形 + 矩阵 dump + RenderDoc 截帧）证明顶点与矩阵均正确但零像素，
-**根因是 `GuiGraphics.enableScissor` 被传入 LDLib 画布坐标**：画布 zoom/pan 只作用于 pose，
-不作用于剪刀矩形（它把入参当屏幕坐标），导致整个绘制被剪空。修复：预览不做 scissor，
-渲染改用与 `GuiGraphics.innerBlit` 同款的 Tesselator + position_tex 直接 drawWithShader 路径，
-并加包围盒自动取景。ModelPreviewScreen 同病同药（其搜索赋值块被注释的预存 bug 一并修复）。
+  2. 26.1.2 模型预览按 §3.3 既定降级为纹理预览 + 文本（26.1 GUI 渲染路径未迁移）。
 
 ## 8. 实施记录（2026-08-16）：未实现 molang 的图上 error 标记与 71 个缺失 query 补齐
 

@@ -11,7 +11,7 @@ import io.github.tt432.eyelib.behavior.component.property.Scale;
 import io.github.tt432.eyelib.behavior.event.logic.LogicNode;
 import io.github.tt432.eyelib.bridge.attachment.dataattach.mc.DataAttachmentHelper;
 import io.github.tt432.eyelib.bridge.attachment.network.adapter.DataAttachmentSyncRuntime;
-import io.github.tt432.eyelib.bridge.capability.EyelibAttachableData;
+import io.github.tt432.eyelib.bridge.capability.adapter.EyelibAttachableData;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.monster.Slime;

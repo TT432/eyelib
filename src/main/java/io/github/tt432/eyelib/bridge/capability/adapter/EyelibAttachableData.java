@@ -1,4 +1,4 @@
-package io.github.tt432.eyelib.bridge.capability;
+package io.github.tt432.eyelib.bridge.capability.adapter;
 
 import com.mojang.serialization.Codec;
 import io.github.tt432.eyelib.bridge.Eyelib;

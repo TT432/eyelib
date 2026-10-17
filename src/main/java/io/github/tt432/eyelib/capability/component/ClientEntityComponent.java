@@ -1,6 +1,5 @@
 package io.github.tt432.eyelib.capability.component;
 
-import io.github.tt432.eyelib.client.entity.ClientEntityRuntimeData;
 import io.github.tt432.eyelib.importer.entity.BrClientEntity;
 import io.github.tt432.eyelib.model.Model;
 import io.github.tt432.eyelib.molang.MolangScope;
@@ -14,7 +13,8 @@ import java.util.Collection;
 public class ClientEntityComponent {
     @Nullable
     private BrClientEntity clientEntity;
-    private final ClientEntityRuntimeData runtimeData = new ClientEntityRuntimeData();
+    private final ClientEntityRuntimeData runtimeData =
+            new ClientEntityRuntimeData(id -> ClientAssetPort.get().model(id));
     private long clientEntityVersion;
     private long appliedClientEntityVersion;
     /** clientEntity 解析来源（ClientEntityManager）的代际；初始 -1 保证首次解析视为过期。 */

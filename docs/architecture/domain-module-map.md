@@ -28,6 +28,7 @@
 ## 提取状态
 
 > ArchUnit 隔离：ADR-0014 删除后由 ADR-0015 以 freeze 模式恢复。`ArchitectureTest.java`（ADR-0016 四层模型）已落地运行，基线随仓库提交在 `archunit_store/<node>/`（`test` 任务拦截基线增长）。
+> 当前状态：**三节点冻结基线均为空**（原有 bridge→application 反向依赖与 bridge 公开类非接口债务已全部还清）。
 
 > **2026-07-17 实测**：material / model / animation / particle 四个 domain 模块已零 `net.minecraft` 引用
 （BrShaderMapping 已移除、BrMaterialEntry 迁移、particle client/ 渲染桥均已完成）。唯一剩余 MC 耦合：
@@ -58,6 +59,17 @@ FriendlyByteBuf 全限定引用经 util StreamCodec 传递，受同一决策覆�
 | `PortLevel` | molang | particle |
 | `PortRenderPass` | material | bridge (RenderPassAdapter) |
 | `PortItemStack` | molang | — |
+
+## 跨层 Port（启动期安装，反转 ACL/Application 依赖）
+
+这三类 Port 不是 domain→bridge 的适配缝，而是**同层反向依赖**的接缝：接口声明在调用方所在层，
+实现由另一层在启动期安装（`ClientBootstrap` / `ApplicationLifecyclePortImpl`），从而避免包级循环。
+
+| Port | 声明位置 | 实现/安装点 | 解决的问题 |
+|------|----------|-------------|------------|
+| `ModelBakeTraversal` + `ModelBakeSink` | `bridge/client/model/` | `client/model/BedrockModelBakeTraversal`（`EntityRenderOrchestrator.wirePorts`） | ACL 的方块几何烘焙需要遍历 domain `Model`，而遍历语义属 application；直接 import 会触发 ADR-0016 §2 反向依赖 |
+| `ClientAssetPort` | `capability/component/` | `ClientBootstrap.wire` | capability 侧按标识取模型 / 取材质表，注册表在 `client.manager`；直接 import 形成 capability ↔ client 循环 |
+| `ClientPacketSink` | `network/` | `ApplicationLifecyclePortImpl.registerNetworkHandlers` | network 是版本无关的分发层，落地渲染同步由 client 提供 |
 
 ## 依赖方向
 

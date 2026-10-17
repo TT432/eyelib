@@ -16,7 +16,7 @@
 | `eyelib.common` | 共享的行为/运行时逻辑和确定性运行时更新辅助。 |
 | `eyelib.debug` | 生物展示场地程序化生成。 |
 | `eyelib.importer` | 导入器/数据格式模块：Bedrock 资源导入、数据格式编解码、解析、附加包发现及标准化。 |
-| `eyelib.material` | 材质模块：Bedrock 材质定义、GL 状态管理、着色器管线及材质渲染工具。 |
+| `eyelib.material` | 材质模块：Bedrock 材质定义与继承解析、纯数据 GL 状态枚举、渲染状态快照与材质渲染工具 （GL 常量的实际下发在 bridge）。 |
 | `eyelib.mixin` | 共享的 Mixin 配置和技术性 Sponge Mixin 连线。 |
 | `eyelib.model` | 模型定义模块。 |
 | `eyelib.molang` | Molang 引擎：Molang 值/运行时封装、作用域、编译器、代码缓存、映射 API 及类型系统。 |

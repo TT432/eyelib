@@ -1,4 +1,4 @@
-package io.github.tt432.eyelib.client.entity;
+package io.github.tt432.eyelib.capability.component;
 
 import io.github.tt432.eyelib.importer.entity.BrClientEntity;
 

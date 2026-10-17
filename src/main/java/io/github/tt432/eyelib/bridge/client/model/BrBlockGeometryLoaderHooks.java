@@ -2,11 +2,13 @@ package io.github.tt432.eyelib.bridge.client.model;
 
 //? if <26.1 {
 //? if <1.20.6 {
+import io.github.tt432.eyelib.bridge.client.model.adapter.BrBlockGeometryLoader;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.ModelEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 //?} else {
+import io.github.tt432.eyelib.bridge.client.model.adapter.BrBlockGeometryLoader;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;

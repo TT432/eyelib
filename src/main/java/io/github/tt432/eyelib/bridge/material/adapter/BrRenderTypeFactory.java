@@ -201,10 +201,10 @@ public final class BrRenderTypeFactory {
                                 BlendFactor.OneMinusSrcAlpha));
                         RenderSystem.enableBlend();
                         GL14.glBlendFuncSeparate(
-                                blend.blendSrc().factor,
-                                blend.blendDst().factor,
-                                blend.alphaSrc().factor,
-                                blend.alphaDst().factor);
+                                mapBlendFactorToGl(blend.blendSrc()),
+                                mapBlendFactorToGl(blend.blendDst()),
+                                mapBlendFactorToGl(blend.alphaSrc()),
+                                mapBlendFactorToGl(blend.alphaDst()));
                     },
                     RenderSystem::disableBlend
             );
@@ -217,8 +217,36 @@ public final class BrRenderTypeFactory {
         }
         return new RenderStateShard.DepthTestStateShard(
                 state.depth().func().map(Enum::name).orElse("lequal"),
-                state.depth().func().map(func -> func.value).orElse(GL11.GL_LEQUAL)
+                state.depth().func().map(BrRenderTypeFactory::mapDepthFuncToGl).orElse(GL11.GL_LEQUAL)
         );
+    }
+
+    /** Bedrock 混合因子 → GL 常量（domain 枚举保持纯数据，ADR-0016）。 */
+    private static int mapBlendFactorToGl(BlendFactor factor) {
+        return switch (factor) {
+            case DestColor -> GL11.GL_DST_COLOR;
+            case SourceColor -> GL11.GL_SRC_COLOR;
+            case Zero -> GL11.GL_ZERO;
+            case One -> GL11.GL_ONE;
+            case OneMinusDestColor -> GL11.GL_ONE_MINUS_DST_COLOR;
+            case OneMinusSrcColor -> GL11.GL_ONE_MINUS_SRC_COLOR;
+            case SourceAlpha -> GL11.GL_SRC_ALPHA;
+            case DestAlpha -> GL11.GL_DST_ALPHA;
+            case OneMinusSrcAlpha -> GL11.GL_ONE_MINUS_SRC_ALPHA;
+        };
+    }
+
+    /** 深度比较函数 → GL 常量。 */
+    private static int mapDepthFuncToGl(DepthFunc func) {
+        return switch (func) {
+            case Always -> GL11.GL_ALWAYS;
+            case Equal -> GL11.GL_EQUAL;
+            case NotEqual -> GL11.GL_NOTEQUAL;
+            case Less -> GL11.GL_LESS;
+            case Greater -> GL11.GL_GREATER;
+            case GreaterEqual -> GL11.GL_GEQUAL;
+            case LessEqual -> GL11.GL_LEQUAL;
+        };
     }
     //?} else {
     private static RenderType custom(Identifier texture, BrRenderState state) {

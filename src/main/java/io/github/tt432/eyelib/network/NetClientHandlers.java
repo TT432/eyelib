@@ -1,6 +1,5 @@
 package io.github.tt432.eyelib.network;
 
-import io.github.tt432.eyelib.client.render.sync.ClientRenderSyncService;
 import io.github.tt432.eyelib.particle.api.ParticleSpawnRequest;
 import io.github.tt432.eyelib.bridge.particle.ParticlePort;
 import io.github.tt432.eyelib.bridge.network.particle.RemoveParticlePacket;
@@ -14,11 +13,11 @@ public class NetClientHandlers {
     // <editor-fold desc="Client handlers">
 
     public static void onModelComponentSyncPacket(ModelComponentSyncPacket packet) {
-        ClientRenderSyncService.apply(packet);
+        ClientPacketSink.get().applyModelSync(packet);
     }
 
     public static void onAnimationComponentSyncPacket(AnimationComponentSyncPacket packet) {
-        ClientRenderSyncService.apply(packet);
+        ClientPacketSink.get().applyAnimationSync(packet);
     }
 
     public static void onRemoveParticlePacket(RemoveParticlePacket packet) {

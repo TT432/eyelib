@@ -5,7 +5,6 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.eyelib.capability.component.ClientEntityComponent;
 import io.github.tt432.eyelib.capability.component.ModelComponent;
 import io.github.tt432.eyelib.capability.component.RenderControllerComponent;
-import io.github.tt432.eyelib.client.render.sync.ClientRenderSyncService;
 import io.github.tt432.eyelib.animation.AnimationComponent;
 import io.github.tt432.eyelib.animation.AnimationComponentInfo;
 import io.github.tt432.eyelib.util.entitydata.ModelComponentInfo;
@@ -120,10 +119,6 @@ public class RenderData<T> {
     private final ClientEntityComponent clientEntityComponent = new ClientEntityComponent();
 
     private final RenderControllerComponent renderControllerComponent = new RenderControllerComponent();
-
-    public void sync() {
-        ClientRenderSyncService.sync(this);
-    }
 
     @SuppressWarnings("unchecked")
     public <N> Optional<N> ownerAs(Class<N> tClass) {

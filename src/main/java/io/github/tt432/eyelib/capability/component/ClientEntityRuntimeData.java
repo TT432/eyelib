@@ -1,6 +1,5 @@
-package io.github.tt432.eyelib.client.entity;
+package io.github.tt432.eyelib.capability.component;
 
-import io.github.tt432.eyelib.client.manager.ModelManager;
 import io.github.tt432.eyelib.importer.entity.BrClientEntity;
 import io.github.tt432.eyelib.model.Model;
 import io.github.tt432.eyelib.model.entity.ModelResolver;
@@ -12,6 +11,11 @@ import java.util.Collection;
 import java.util.Collections;
 
 /**
+ * 客户端实体的模型运行时数据：按短名解析几何，并按内容版本驱动派生缓存失效。
+ *
+ * <p>放在 capability 而非 client：它只依赖 domain 类型，模型解析经
+ * {@link ClientAssetPort} 注入，避免 capability → client 的包级循环。
+ *
  * @author TT432
  */
 public class ClientEntityRuntimeData {
@@ -23,10 +27,6 @@ public class ClientEntityRuntimeData {
     private int modelVersion;
     @Nullable
     private BrClientEntity appliedClientEntity;
-
-    public ClientEntityRuntimeData() {
-        this(ModelManager.INSTANCE::get);
-    }
 
     ClientEntityRuntimeData(ModelResolver modelResolver) {
         this.modelResolver = modelResolver;

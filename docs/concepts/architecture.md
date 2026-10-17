@@ -86,7 +86,7 @@ ADR-0014 之后,模块边界由 **Java 包**(`io.github.tt432.eyelib.<module>`)�
 
 1. **Domain 模块包不 import `net.minecraft.*` / `net.minecraftforge.*`**。
    - 历史状态:ADR-0010 原本由 ArchUnit 强制;ADR-0014 因收益不抵成本删除;ADR-0015 以 freeze 模式恢复。
-   - 当前状态:**ArchUnit 已落地**（freeze 模式）。`ArchitectureTest.java` 按 ADR-0016 四层模型约束 domain 包零 MC import;`IqfSourceScanRulesTest.java` 按 ADR-0018 约束 IQF 规则。基线随仓库提交在 `archunit_store/<node>/`,只允许缩小;基线增长由 `test` 任务闸门拦截,老违规按 Phase 3 逐步还债(见 [ADR-0015](../decisions/0015-stonecutter-multi-version.md) §4)。
+   - 当前状态:**ArchUnit 已落地**（freeze 模式）。`ArchitectureTest.java` 按 ADR-0016 四层模型约束 domain 包零 MC import;`IqfSourceScanRulesTest.java` 按 ADR-0018 约束 IQF 规则。基线随仓库提交在 `archunit_store/<node>/`,只允许缩小;基线增长由 `test` 任务闸门拦截。**三节点基线当前为空**——存量违规已全部还清,新违规即失败(见 [ADR-0015](../decisions/0015-stonecutter-multi-version.md) §4)。
 2. **Domain 测试 oracle 来自 Bedrock 规范** —— 不来自当前实现输出。
 3. **Port 由 domain 定义,bridge 实现** —— 依赖方向不可逆。
 4. **`//?` 版本切分注释** —— 集中在 bridge 是目标态,当前 L1 散布 + L2/L3 集中(见 [ADR-0015](../decisions/0015-stonecutter-multi-version.md) §3)。
