@@ -1,4 +1,4 @@
-﻿# Host Adapter Registry Draft
+# Host Adapter Registry Draft
 
 ## Purpose
 - This document specifies how raw host objects are turned into stable, engine-visible host roles.

@@ -88,11 +88,13 @@ root `dependencies {}` 块删除所有 `api project(:eyelib-xxx)` / `modImplemen
 
 ### 9. settings.gradle 简化
 
-删除所有 `include("eyelib-xxx", ...)`。保留 `includeBuild("clientsmoke")` 和 plugin 管理。
+删除所有 `include("eyelib-xxx", ...)`。保留 plugin 管理。
+
+> 修订（ADR-0015 之后）：`includeBuild("clientsmoke")` **已不适用**——Stonecutter 多节点产生相同 `group:name` 会导致 composite build 歧义，clientsmoke 改为经 `mavenLocal` 产物消费（见 `settings.gradle` 末尾注释）。
 
 ### 10. clientsmoke
 
-`includeBuild("clientsmoke")` 保持不动。若 clientsmoke 有 import 引用旧包名（`io.github.tt432.eyelibmolang.*` 等），同步更新。
+clientsmoke 以独立 Stonecutter 子模块维护，通过 `mavenLocal` 提供 artifacts；若 clientsmoke 有 import 引用旧包名（`io.github.tt432.eyelibmolang.*` 等），同步更新。
 
 ### 11. 文档同步
 

@@ -12,7 +12,7 @@
 ## Client/Server Separation
 - All rendering, GUI, and model loading lives under `src/main/java/io/github/tt432/eyelib/client/`.
 - Common/shared logic lives under `src/main/java/io/github/tt432/eyelib/common/`.
-- Network transport lives under `src/main/java/io/github/tt432/eyelib/network/` and `eyelib-network/`.
+- Network transport lives under `src/main/java/io/github/tt432/eyelib/network/`（版本无关 handler）与 `src/main/java/io/github/tt432/eyelib/bridge/network/`（通道注册与具体 packet）。
 
 ## Module Client Integration
 - `io.github.tt432.eyelibparticle.network` contains particle-owned packet codecs as particle protocol contracts.

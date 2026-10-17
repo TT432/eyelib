@@ -54,29 +54,20 @@
 
 ### 核心约束
 
-1. **Domain 包不 import `net.minecraft.*` 或 `net.minecraftforge.*`。** ArchUnit 规则已由 [ADR-0014](0014-flat-merge.md) 删除，改为文档约定 + PR review 人工把关。
+1. **Domain 包不 import `net.minecraft.*` 或 `net.minecraftforge.*`。** ADR-0014 曾删除 ArchUnit 规则，[ADR-0015](0015-stonecutter-multi-version.md) 已以 freeze 模式恢复；当前由 `ArchitectureTest`（ADR-0016 四层模型）强制执行，基线随仓库提交在 `archunit_store/<node>/`。
 2. **Domain 模块的测试 oracle 来自 Bedrock 规范**（Mojang Creator 文档 / .mcpack 数据），不来自当前实现输出。
-3. **Port 接口由 domain 模块定义，`eyelib-bridge` 实现。** 依赖方向: bridge → domain，无循环。
-4. **Bridge 模块是所有 Stonecutter `//? if` 的唯一栖息地。** 多版本切换只改一个模块。
+3. **Port 接口由 domain 模块定义，`bridge/` 包实现。** 依赖方向: bridge → domain，无循环。
+4. **`bridge/` 是 Stonecutter `//? if` 的主要栖息地。** 例外：`mixin/`、`smoke/`、`debug/`、`client/gui/snowstorm/` 等基础设施包也合法持有版本分支（见 `ArchitectureTest.ALLOWED_VERSION_SPECIFIC_MC_HOSTS`）。
 
-### 按 Gall's Law 的提取顺序
+### 提取顺序
 
-从最内层（已最接近纯 domain）开始：
+按 Gall's Law 从最内层（已最接近纯 domain）逐批提取，每批次验证闸门：ArchUnit 过 → spec-based 测试全绿 → 再进入下一批。
 
-| 批次 | 模块 | 提取前 MC 文件数 | 当前 MC 文件数 | 状态 |
-|------|------|-----------------|---------------|------|
-| 1 | eyelib-material | 33+ | 3 (@Mod + BrShaderMapping + BrMaterialEntry) | 🔶 ArchUnit 通过，R2 消除剩余 |
-| 1 | eyelib-molang | 28+ | 4 (@Mod + 3 platform/) | ✅ ArchUnit 通过，platform/ 按 ROADMAP 保留 |
-| 2 | eyelib-model | 1 | 2 (@Mod + ModelComponentSyncPacket) | ✅ ArchUnit 通过，FriendlyByteBuf 硬依赖 |
-| 3 | eyelib-animation | 4 | 4 (@Mod + network + 2 Entity 引用) | 🔶 ArchUnit 通过，R4 Entity→Port 待完成 |
-| 3 | eyelib-behavior | 4 | 1 (@Mod) | ✅ ArchUnit 通过，已达最小 MC 接触 |
-| 4 | eyelib-particle | 15 | 8 (@Mod + client/ + network/) | ✅ ArchUnit 通过，client 渲染桥待 R4 |
-
-每批次验证闸门：ArchUnit 过 → spec-based 测试全绿 → 再进入下一批。
+各模块当前的 Port 清单、MC 渗透情况与剩余工作是**单一事实源** [:docs/architecture/domain-module-map.md:](../architecture/domain-module-map.md)，本 ADR 不再维护进度表（历史快照已删除，见 git 历史）。
 
 ### 与现有 ADR 的关系
 
-- **ADR-0002** (模块边界) 补充：新增 `eyelib-bridge` 子项目，bridge → domain 单向依赖。Domain 模块间依赖方向通过 Port 接口保持单向。
+- **ADR-0002** (模块边界) 补充：`bridge/` 是包而非独立 Gradle 子项目（ADR-0014 后），bridge → domain 单向依赖。Domain 模块间依赖方向通过 Port 接口保持单向。
 - **ADR-0005** (功能债务台账) 不冲突：domain 提取是对已有模块的内部分层，不改变模块间的功能所有权。
 - **stonecutter-multiversion-patterns.md** 的 Pattern 5 (模块分层隔离) 是本 ADR 的依据：contact surface area law → MC 接触点收拢到 bridge。
 
@@ -86,30 +77,27 @@
 
 - **行为可离线验证**：Domain 层测试不需要 MC 运行时。对照 Bedrock 文档 + .mcpack JSON 跑 JUnit 即可验证 CODEC 往返、材料继承链、Molang 求值、RC 状态转换。
 - **Oracle 正确**：测试的期望值来自 Bedrock 文档，不是来自当前代码输出。
-- **多版本可控**：MC 版本切换只影响 `eyelib-bridge` 一个模块。
-- **编译隔离**：~~ArchUnit 规则自动化检查 domain 模块的 MC 依赖~~ ArchUnit 已由 ADR-0014 删除，domain 隔离改为文档约定 + PR review 人工把关。
+- **多版本可控**：MC 版本切换只影响 `bridge/` 一个包。
+- **编译隔离**：由 `ArchitectureTest` 自动检查 domain 包的 MC 依赖（ADR-0015 恢复 freeze 模式，基线只允许缩小）。
 
 ### Negative / Risk
 
-- **Bridge 变成新 dumping ground**：缓解——Port 接口由各 domain 模块定义，bridge 不能自行发明抽象。bridge 内部按 domain 模块分包子目录（`io.github.tt432.eyelibbridge.material/`, `...animation/`）。
+- **Bridge 变成新 dumping ground**：缓解——Port 接口由各 domain 模块定义，bridge 不能自行发明抽象。bridge 内部按 domain 模块分包子目录（`io.github.tt432.eyelib.bridge.material/`、`...bridge.animation/`）。
 - **重构期间功能暂时退化**：提取过程中某些运行时桥接可能不完整。缓解——每批次编译 + 已有渲染截帧验证，不做大爆炸式合并。
 - **Port 接口设计不当**：过度抽象或粒度过细。缓解——Port 只在被至少两个 MC 代码路径调用时才创建；单一 use case 直接暴露具体 MC 类型给 bridge 内部，不走 Port。
 
 ### 不做的
 
 - 不重命名现有类或包结构（除非 move 到 bridge 的文件需要新包名）。Manager/Loader/Visitor 模式保持。
-- 不动 `eyelib-network`、`eyelib-attachment`、`eyelib-track`、`eyelib-preprocessing`——它们已经是 adapter 层。
+- 不动 `network`、`capability`、`track`——它们已经是 adapter/application 层。
 - 不动 root 模块的 Manager/Registry/reload 基础设施——它们是 Forge 生命周期胶水，职责明确。
 
 ## Verification
 
-- [x] ~~`eyelib-material` ArchUnit 规则通过（排除 @Mod + BrShaderMapping + BrMaterialEntry）~~ ArchUnit 已由 ADR-0014 删除
-- [x] ~~`eyelib-molang` ArchUnit 规则通过（排除 @Mod + platform/）~~ 同上
-- [x] ~~`eyelib-model` ArchUnit 规则通过（排除 @Mod + network.packet/ + Model）~~ 同上
-- [x] ~~`eyelib-animation` ArchUnit 规则通过（排除 @Mod + network/ + Entity 引用类）~~ 同上
-- [x] ~~`eyelib-behavior` ArchUnit 规则通过（仅排除 @Mod）~~ 同上
-- [x] ~~`eyelib-particle` ArchUnit 规则通过（排除 @Mod + client/ + network/）~~ 同上
-- [x] Spec-based 测试对照 Bedrock 文档：material(28) + molang(21) + animation(7) + behavior(9) + particle(6) = 71 个
-- [x] RenderDoc 截帧 / 运行时验证：`shouldRender=true`, `comps=2`, `useBuiltInRenderSystem=true`
-- [ ] `eyelib-material` BrShaderMapping + BrMaterialEntry 迁移到 bridge（R2 未完成部分）
-- [ ] `eyelib-animation` Entity 引用 → PortEntity（R4 未完成部分）
+验证口径（当前执行方式）：
+
+- **G1 隔离**：`ArchitectureTest`（ArchUnit freeze，基线 `archunit_store/<node>/`）与 `IqfSourceScanRulesTest`。
+- **G2 行为**：各 domain 模块的 spec-based 测试对照 Bedrock 文档（oracle 不来自实现输出）。
+- **G3 运行时**：RenderDoc 截帧 / 运行客户端确认渲染路径生效。
+
+历史各批次的提取前/后 MC 文件数与逐项勾选清单属于 git 历史，当前进度只看 [:docs/architecture/domain-module-map.md:](../architecture/domain-module-map.md)。

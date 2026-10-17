@@ -1,4 +1,4 @@
-﻿# 结构文件格式对比：Bedrock .mcstructure vs Java Edition .nbt
+# 结构文件格式对比：Bedrock .mcstructure vs Java Edition .nbt
 
 > 调查日期：2026-06-02
 > 范围：Bedrock `.mcstructure` NBT 格式 vs Java Edition `.nbt` 结构模板格式

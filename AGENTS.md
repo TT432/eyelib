@@ -14,9 +14,11 @@
   docs/decisions/0002-module-boundaries.md:。
 - **构建模型**: 单 Gradle project(:docs/decisions/0014-flat-merge.md:),通过 :Stonecutter: `centralScript` 同时维护多版本
   MC(注册 `1.20.1`(legacyforge,active)、`1.21.1`(neoforge)、`26.1.2` 三节点,详见 :
-  docs/decisions/0015-stonecutter-multi-version.md:)。`clientsmoke/` 是 composite build(烟雾测试框架),不属于主 project。
+  docs/decisions/0015-stonecutter-multi-version.md:)。`clientsmoke/` 是独立 Stonecutter 子模块(烟雾测试框架),通过 mavenLocal 产物消费,不属于主 project(无 `includeBuild`,原因见 `settings.gradle` 注释)。
 - **源码布局**: 全部源码在 `src/main/java/io/github/tt432/eyelib/<module>/`,包边界(`io.github.tt432.eyelib.<module>`)
-  定义真实架构。模块包不得依赖 root 编排包(`io.github.tt432.eyelib.client`、`io.github.tt432.eyelib.common`)。
+  定义真实架构。**Domain 层模块包**(importer/behavior/util/model/molang/material/animation/particle/wintersky/snowstorm)
+  不得依赖编排层(`client`、`common`、`network`、`capability`、`track`、`bridge`、`mixin`、`smoke`、`debug`)；分层谓词与例外以
+  `src/test/java/io/github/tt432/eyelib/architecture/ArchitectureTest.java` 为准(ADR-0016/ADR-0018)。
 - **模块清单**: :MODULES.md: 由 `:generateModulesMd` 从 `src/main/java/io/github/tt432/eyelib/*/package-info.java` *
   *自动生成**,不得手编。
 - **核心模式**: 保留现有的 manager / loader / visitor / codec 模式。
@@ -115,12 +117,12 @@ import org.jspecify.annotations.NullMarked;
 | 代码改动                                                        | 必须同步检查                                                                                                         |
 |-------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------|
 | 新增/删除/重命名包                                                  | 该包 `package-info.java`、`:MODULES.md:`(跑 `:generateModulesMd` 重生成)、`:docs/decisions/0002-module-boundaries.md:` |
-| 新增/删除/重命名顶层模块                                               | `:MODULES.md:`、`:docs/README.md:`、AGENTS.md Repository Shape                                                   |
+| 新增/删除/重命名顶层模块                                               | `:MODULES.md:`、`:docs/README.md:`、AGENTS.md「仓库结构」                                                        |
 | 新增 ADR                                                      | `:docs/README.md:` ADR 索引、被修订的旧 ADR 头部加 `amended/superseded by` 标注                                             |
-| 改 `build.gradle` 依赖图 / `settings.gradle` / Stonecutter node | AGENTS.md Tooling Restrictions、`:docs/README.md:`(若结构变)                                                        |
+| 改 `build.gradle` 依赖图 / `settings.gradle` / Stonecutter node | AGENTS.md「工具限制」、`:docs/README.md:`(若结构变)                                                                    |
 | Molang 阶段/里程碑/闸门变化                                          | `:docs/molang/ROADMAP.md:`                                                                                     |
 | 删除/重命名文件被 docs 引用                                           | grep 全 `docs/` + `AGENTS.md` + `MODULES.md` + 所有 `SKILL.md`                                                    |
-| 新增/删除 Skill                                                 | `:docs/README.md:` Skill 索引、AGENTS.md Skill Usage                                                              |
+| 新增/删除 Skill                                                 | `:docs/README.md:` Skill 索引、AGENTS.md「Skill 使用」                                                              |
 
 提交前自检:
 
@@ -182,6 +184,10 @@ import org.jspecify.annotations.NullMarked;
    null safety，不通过说明包边界/可空性出了问题，**禁止用加注解的方式静默消除报错**，先查根因。
 3. **单元测试**: `mcmcp_test`(等同 `:1.20.1:test`)。跨版本改动时按各 node 分别跑(`:1.20.1:test`、
    `:1.21.1:test`)。测试失败先 `git stash` 复现，排除预存失败(见 `eyelib` SKILL 跨域约束)。
+   - 其中包含 **ArchUnit 架构闸门**：基线随仓库提交在 `archunit_store/<node>/`，`test` 任务比较运行前后的基线行数，
+     **只允许缩小**；任何规则文件增长即失败（防止 `FreezingArchRule` 把新违规静默记为已知）。
+     确属有意变更时用 `gradlew :<node>:test --rerun -ParchunitRefreeze` 重构基线，并在提交说明里写原因。
+     基线重构必须用 `--rerun` 强制真实执行——`test` 命中 build cache 时任务动作（含该闸门）不会运行。
 4. **MODULES.md**: 仅在包/模块结构变更时执行 `:1.20.1:generateModulesMd`(bash `gradlew :1.20.1:generateModulesMd`)
    重生成，**禁止手编**，产物需随改动一起提交。
 5. **文档同步**: 见上文"文档同步规则"，grep 全仓库验证无旧路径残留、所有引用路径可解析。

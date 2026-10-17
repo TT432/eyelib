@@ -12,7 +12,7 @@
 2. 支持**子图**（可复用、可潜入编辑）与**分组**（画布注释框 + 黑板变量分组）。
 3. 模型、纹理等资源引用节点支持**预览**。
 4. 最终产物是**可用的 ClientEntity**（注入运行时管理器后可被现有渲染消费链完整渲染）。
-5. 三个版本节点全部支持：1.20.1 (LDLib 1.x graphprocessor)、1.21.1 / 26.1.2 (LDLib2 nodegraphtookit)。
+5. 三个版本节点全部支持：全版本统一 LDLib2（ADR-0028）；1.20.1 由 `TT432/LDLib2-1.20.1-Forge` fork 支撑。
 
 ### 非目标
 - 不做通用图灵完备可视化编程（无函数定义/递归）；语言只覆盖 Molang 表达能力。
@@ -73,8 +73,8 @@ LDLib2 有 SubgraphNodeModel，LDLib 1.x graphprocessor 没有子图。为保证
 > 用户决策）废止之——LDLib2 保持可选前置，非开发环境由用户另行安装 LDLib2 获得编辑器。
 > 以下类加载隔离要求不变。
 
-- 所有 `import com.lowdragmc.*` 只出现在 `client.nodegraph.editor.ldlib1|ldlib2` 包及其直接入口工厂。
-- 入口门：`ModList.get().isLoaded("ldlib2")`（1.21.1/26.1.2）/ `isLoaded("ldlib")`（1.20.1）；门后通过**隔离类加载**（专用 holder 类，仅在门内反射/ServiceLoader 触达）创建编辑器，主链路类不得静态引用 LDLib 类型。
+- 所有 `import com.lowdragmc.*` 只出现在 `client.nodegraph.editor.ldlib2` 包及其直接入口工厂。
+- 入口门：`ModList.get().isLoaded("ldlib2")`（三个节点一致）；门后通过**隔离类加载**（专用 holder 类，仅在门内反射/ServiceLoader 触达）创建编辑器，主链路类不得静态引用 LDLib 类型。
 - 构建：`compileOnly` + dev runtime（ModDevGradle `localRuntime`/`additionalRuntimeClasspath`）引入；不 jarJar 嵌入产物（ADR-0031）。
 
 ## 2. 图语言设计（EVM — Eyelib Visual Molang）
@@ -184,11 +184,11 @@ ClientEntity 文档 = 一个主图，含唯一 EntityRoot 节点。EntityRoot �
 
 | 版本节点 | 坐标 | 仓库 | modId | 状态 |
 |---|---|---|---|---|
-| 1.20.1 | `curse.maven:ldlib-626676:7652228`（1.0.49-forge） | cursemaven（已有） | `ldlib` | 已验证 200 + graphprocessor 在内 |
-| 1.21.1 | `com.lowdragmc.ldlib2:ldlib2-neoforge-1.21.1:2.2.32:all` | `https://maven.firstdark.dev/snapshots`（新增） | `ldlib2` | 已验证 200 |
-| 26.1.2 | `com.lowdragmc.ldlib2:ldlib2-neoforge-26.1:26.1.2.27.a`（无 classifier） | 同上 | `ldlib2` | 已验证 200；toolkit API 与 2.2.x 文件级近乎一致 |
+| 1.20.1 | `com.github.tt432:ldlib2-forge-1.20.1:2.2.34+forge.1.20.1-fork.6` | `mavenLocal`（fork 本地安装） | `ldlib2` | 已接入构建（ADR-0028） |
+| 1.21.1 | `com.lowdragmc.ldlib2:ldlib2-neoforge-1.21.1:2.2.34:all` | `https://maven.firstdark.dev/snapshots` | `ldlib2` | 已接入构建 |
+| 26.1.2 | `com.lowdragmc.ldlib2:ldlib2-neoforge-26.1:26.1.2.33`（无 classifier） | 同上 | `ldlib2` | 已接入构建 |
 
-LDLib 1.20.1 为 SRG 名（Forge 1.20.1 reobf 生态），ModDevGradle legacyforge 需经 `localRuntime` remap（同 spark 先例）。LDLib2 为 mojmap。
+坐标以 `build.gradle` 的 `if (isLegacyForge) / else if (isModern) / else` 三个分支为准（本节仅作索引，避免与构建脚本漂移）。1.20.1 的 fork 产物为 reobf（SRG 名）；1.21.1 / 26.1.2 为 mojmap。
 
 ## 5. 子任务规格
 
