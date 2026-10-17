@@ -5,7 +5,6 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.eyelib.importer.util.ImporterCodecUtil;
 
 /** @author TT432 */
-@org.jspecify.annotations.NullMarked
 public record BrTextureMetadataFile(
         BedrockResourceValue.ObjectValue root
 ) {

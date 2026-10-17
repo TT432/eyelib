@@ -11,7 +11,6 @@ import java.util.Map;
  *
  * @author TT432
  */
-@org.jspecify.annotations.NullMarked
 public final class BedrockLangFile {
     private BedrockLangFile() {
     }

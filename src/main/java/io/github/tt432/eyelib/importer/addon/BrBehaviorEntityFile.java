@@ -7,7 +7,6 @@ import io.github.tt432.eyelib.importer.util.ImporterCodecUtil;
 import org.jspecify.annotations.Nullable;
 
 /** @author TT432 */
-@org.jspecify.annotations.NullMarked
 public record BrBehaviorEntityFile(
         String formatVersion,
         String identifier,

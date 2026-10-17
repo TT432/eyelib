@@ -7,7 +7,6 @@ import io.github.tt432.eyelib.animation.bedrock.BrAnimationEntry;
 import io.github.tt432.eyelib.animation.AnimationParticleSpawner;
 import io.github.tt432.eyelib.animation.ModelRuntimeData;
 import io.github.tt432.eyelib.importer.animation.bedrock.controller.BrAcStateDefinition;
-import io.github.tt432.eyelib.importer.entity.BrClientEntity;
 import io.github.tt432.eyelib.molang.MolangScope;
 import io.github.tt432.eyelib.molang.mapping.api.HostRoles;
 
@@ -17,7 +16,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Map;
-import java.util.UUID;
 
 /**
  * @author TT432

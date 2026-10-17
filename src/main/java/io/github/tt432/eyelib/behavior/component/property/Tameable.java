@@ -13,7 +13,6 @@ import java.util.List;
  * @param tame_event  event fired when tamed (default target "self")
  * @author TT432
  */
-@org.jspecify.annotations.NullMarked
 public record Tameable(
         float probability,
         List<String> tame_items,

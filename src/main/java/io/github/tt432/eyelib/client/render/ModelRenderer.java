@@ -1,39 +1,22 @@
 package io.github.tt432.eyelib.client.render;
 
-import io.github.tt432.eyelib.client.render.visitor.ModelRenderVisitorList;
-import io.github.tt432.eyelib.model.ModelVisitContext;
-import io.github.tt432.eyelib.client.render.visitor.ModelVisitor;
 import io.github.tt432.eyelib.animation.ModelRuntimeData;
+import io.github.tt432.eyelib.client.render.visitor.ModelRenderVisitorList;
+import io.github.tt432.eyelib.client.render.visitor.ModelVisitor;
 import io.github.tt432.eyelib.model.Model;
+import io.github.tt432.eyelib.model.ModelVisitContext;
 import lombok.experimental.UtilityClass;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
+ * 按 visitor 列表逐个派发模型渲染；DFSModel 缓存与失效钩子的装配在 {@link RenderHelper}。
+ *
  * @author TT432
  */
 @UtilityClass
 public class ModelRenderer {
-    private static final Logger LOGGER = LoggerFactory.getLogger(ModelRenderer.class);
-    private static final AtomicInteger DEBUG_REMAINING = new AtomicInteger(Integer.getInteger("eyelib.debug.uv.limit", 256));
-
-    @SuppressWarnings("unchecked")
-    private static <T> T cast(Object o) {
-        return (T) o;
-    }
-
     public static void render(RenderParams renderParams, Model model, ModelRuntimeData infos, ModelRenderVisitorList visitors) {
-        if (DEBUG_REMAINING.getAndDecrement() > 0) {
-            LOGGER.info("[UV-DEBUG][ModelRenderer.render] visitorCount={} visitors={} boneCount={} consumerPresent={}",
-                        visitors.visitors().size(),
-                        visitors.visitors().stream().map(v -> v.getClass().getSimpleName()).toList(),
-                        model.toplevelBones().size(),
-                        renderParams.consumer() != null);
-        }
         for (ModelVisitor visitor : visitors.visitors()) {
-            visitor.visitModel(renderParams, new ModelVisitContext(), cast(infos), model);
+            visitor.visitModel(renderParams, new ModelVisitContext(), infos, model);
         }
     }
 }

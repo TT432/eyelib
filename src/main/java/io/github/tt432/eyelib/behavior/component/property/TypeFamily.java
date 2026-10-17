@@ -9,7 +9,6 @@ import java.util.List;
 /**
  * @author TT432
  */
-@org.jspecify.annotations.NullMarked
 public record TypeFamily(
         List<String> family
 ) implements Component {

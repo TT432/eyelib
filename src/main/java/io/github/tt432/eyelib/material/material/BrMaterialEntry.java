@@ -17,7 +17,6 @@ import io.github.tt432.eyelib.material.shared.PrimitiveMode;
 import io.github.tt432.eyelib.material.shared.VertexFormatElementEnum;
 import io.github.tt432.eyelib.material.port.PortRenderPass;
 import io.github.tt432.eyelib.util.PortResourceLocation;
-import io.github.tt432.eyelib.util.PortStringRepresentable;
 import org.slf4j.Logger;
 
 /**

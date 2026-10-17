@@ -7,7 +7,6 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 /** @author TT432 */
-@org.jspecify.annotations.NullMarked
 public record BrAcStateTransitionsTrackDefinition(
         io.github.tt432.eyelib.importer.animation.bedrock.controller.BrAcStateTrackName name,
         Map<String, MolangValue> transitions

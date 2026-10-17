@@ -12,7 +12,7 @@ import io.github.tt432.eyelib.material.port.PortRenderPass;
 import io.github.tt432.eyelib.util.PortResourceLocation;
 import io.github.tt432.eyelib.material.render.BrRenderState;
 import io.github.tt432.eyelib.material.render.BrRenderStateFactory;
-import io.github.tt432.eyelib.material.render.RenderTypeResolver.EntityRenderTypeData;
+import io.github.tt432.eyelib.material.render.EntityRenderTypeData;
 import org.jspecify.annotations.Nullable;
 import java.util.Map;
 import java.util.Optional;

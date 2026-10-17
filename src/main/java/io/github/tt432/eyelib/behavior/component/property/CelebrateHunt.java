@@ -11,7 +11,6 @@ import java.util.List;
  *
  * @author TT432
  */
-@org.jspecify.annotations.NullMarked
 public record CelebrateHunt(
         List<String> celebration_targets,
         boolean celebrate,

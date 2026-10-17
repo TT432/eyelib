@@ -13,7 +13,6 @@ import io.github.tt432.eyelib.nodegraph.PortDef;
 import io.github.tt432.eyelib.nodegraph.codegen.CodegenResult;
 import io.github.tt432.eyelib.nodegraph.codegen.MolangGenerator;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import net.minecraft.world.entity.Entity;

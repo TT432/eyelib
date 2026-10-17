@@ -8,7 +8,6 @@ import io.github.tt432.eyelib.util.codec.EyelibCodec;
  *
  * @author TT432
  */
-@org.jspecify.annotations.NullMarked
 public record IsBaby() implements io.github.tt432.eyelib.behavior.component.Component {
     private static final IsBaby INSTANCE = new IsBaby();
 

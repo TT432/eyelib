@@ -13,7 +13,6 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
  * @param mass          mass (default 1.0f)
  * @author TT432
  */
-@org.jspecify.annotations.NullMarked
 public record Balloonable(
         float soft_distance,
         float max_distance,

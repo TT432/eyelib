@@ -6,7 +6,6 @@ import io.github.tt432.eyelib.model.GlobalBoneIdHandler;
 import io.github.tt432.eyelib.model.tree.ModelGroupNode;
 import io.github.tt432.eyelib.util.codec.CodecOps;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jspecify.annotations.Nullable;
 
 import java.util.List;

@@ -7,7 +7,6 @@ import io.github.tt432.eyelib.behavior.component.Component;
 /**
  * @author TT432
  */
-@org.jspecify.annotations.NullMarked
 public record GroupSize(
         int value
 ) implements Component {

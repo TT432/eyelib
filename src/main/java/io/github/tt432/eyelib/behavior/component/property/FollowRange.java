@@ -11,7 +11,6 @@ import java.util.Optional;
  *
  * @author TT432
  */
-@org.jspecify.annotations.NullMarked
 public record FollowRange(
         int value,
         Optional<Integer> max

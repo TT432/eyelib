@@ -5,6 +5,8 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.jspecify.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -16,10 +18,12 @@ import java.util.function.Function;
  *
  * <p>偏离记录：JS 的 localStorage 持久化替换为读写钩子接缝
  * （{@link #setStoragePersistence(Function, BiConsumer)}），默认纯内存 Map；
- * MC 侧接 eyelib 配置文件（ADR-0036 D4/D6）。加载失败日志走 {@code System.err}
+ * MC 侧接 eyelib 配置文件（ADR-0036 D4/D6）。加载失败记 WARN 日志
  * （JS 为 console.error）。
  */
 public final class EditorOptions {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(EditorOptions.class);
 
     private EditorOptions() {
     }
@@ -73,8 +77,7 @@ public final class EditorOptions {
                 }
             }
         } catch (Exception err) {
-            System.err.println("Failed to load settings");
-            err.printStackTrace();
+            LOGGER.warn("Failed to load settings", err);
         }
     }
 

@@ -1,9 +1,7 @@
 package io.github.tt432.eyelib.material.material;
 
-import io.github.tt432.eyelib.material.gl.BlendFactor;
 import io.github.tt432.eyelib.material.gl.DepthFunc;
 import io.github.tt432.eyelib.material.gl.GLStates;
-import io.github.tt432.eyelib.material.gl.stencil.Face;
 import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;

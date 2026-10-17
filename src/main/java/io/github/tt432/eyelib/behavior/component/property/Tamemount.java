@@ -16,7 +16,6 @@ import java.util.List;
  * @param ride_text            ride action text (default "action.interact.mount")
  * @author TT432
  */
-@org.jspecify.annotations.NullMarked
 public record Tamemount(
         List<FeedItem> feed_items,
         float attempt_temper_mod,

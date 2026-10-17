@@ -10,7 +10,6 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
  * @param is_pushable_by_piston whether pushable by piston (default true)
  * @author TT432
  */
-@org.jspecify.annotations.NullMarked
 public record Pushable(
         boolean is_pushable,
         boolean is_pushable_by_piston

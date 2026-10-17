@@ -14,7 +14,6 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
  * @param can_be_stolen   whether can be stolen (default false)
  * @author TT432
  */
-@org.jspecify.annotations.NullMarked
 public record Leashable(
         float soft_distance,
         float hard_distance,

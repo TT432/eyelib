@@ -5,7 +5,6 @@ import io.github.tt432.eyelib.wintersky.three.BufferAttribute;
 import io.github.tt432.eyelib.wintersky.three.Float32Array;
 import io.github.tt432.eyelib.wintersky.three.Line3;
 import io.github.tt432.eyelib.wintersky.three.Mesh;
-import io.github.tt432.eyelib.wintersky.three.Object3D;
 import io.github.tt432.eyelib.wintersky.three.Plane;
 import io.github.tt432.eyelib.wintersky.three.PlaneGeometry;
 import io.github.tt432.eyelib.wintersky.three.Quaternion;
@@ -16,7 +15,6 @@ import io.github.tt432.eyelib.wintersky.three.Vector3;
 import io.github.tt432.eyelib.wintersky.tinycolor.TinyColor;
 import org.jspecify.annotations.Nullable;
 
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -438,7 +436,6 @@ public class Particle {
                 this.setFrame(0);
             }
 
-            // TODO:（as-is 注释）Color
             if ("expression".equals(this.emitter.config.particle_color_mode)) {
                 Object cObj = this.emitter.calculate(this.emitter.config.particle_color_expression, params, "array");
                 if (cObj instanceof List<?> c) {

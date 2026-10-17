@@ -9,7 +9,6 @@ import io.github.tt432.eyelib.wintersky.Config;
 import net.minecraft.client.Minecraft;
 import io.github.tt432.eyelib.bridge.material.ResourceLocationBridge;
 import io.github.tt432.eyelib.util.PortResourceLocation;
-import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.server.packs.resources.ResourceManager;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;

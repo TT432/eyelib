@@ -7,7 +7,6 @@ import io.github.tt432.eyelib.molang.mapping.api.MolangMappingTree.FunctionParam
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Modifier;
-import java.util.Arrays;
 import java.util.Optional;
 
 /**

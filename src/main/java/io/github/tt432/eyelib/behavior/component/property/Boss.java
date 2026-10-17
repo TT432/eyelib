@@ -12,7 +12,6 @@ import io.github.tt432.eyelib.behavior.component.Component;
  * @param should_darken_sky 默认 false
  * @author TT432
  */
-@org.jspecify.annotations.NullMarked
 public record Boss(
         int hud_range,
         String name,

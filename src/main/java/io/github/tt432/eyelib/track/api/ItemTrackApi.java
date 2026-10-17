@@ -5,9 +5,7 @@ import io.github.tt432.eyelib.track.cache.ItemStackIdCache;
 import io.github.tt432.eyelib.bridge.track.ItemTrackTagPort;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
-import org.jspecify.annotations.Nullable;
 
-import java.util.Objects;
 
 /**
  * ItemStack 追踪 ID 的获取与分配。

@@ -8,7 +8,6 @@ import io.github.tt432.eyelib.util.codec.EyelibCodec;
  *
  * @author TT432
  */
-@org.jspecify.annotations.NullMarked
 public record MovementSway() implements io.github.tt432.eyelib.behavior.component.Component {
     private static final MovementSway INSTANCE = new MovementSway();
 

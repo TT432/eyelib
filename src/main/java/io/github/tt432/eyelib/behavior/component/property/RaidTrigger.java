@@ -10,7 +10,6 @@ import io.github.tt432.eyelib.behavior.component.Component;
  * @param triggered_event 事件触发配置
  * @author TT432
  */
-@org.jspecify.annotations.NullMarked
 public record RaidTrigger(
         TriggeredEvent triggered_event
 ) implements Component {

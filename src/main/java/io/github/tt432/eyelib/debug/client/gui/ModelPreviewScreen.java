@@ -28,10 +28,6 @@ import io.github.tt432.eyelib.model.ModelVisitContext;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 //?}
-//? if >=26.1 {
-import net.minecraft.client.input.KeyEvent;
-import net.minecraft.client.input.MouseButtonEvent;
-//?}
 //? if <26.1 {
 import net.minecraft.client.gui.GuiGraphics;
 //?} else {
@@ -54,6 +50,8 @@ import net.minecraft.resources.Identifier;
 //?}
 import org.jspecify.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.nio.file.Path;
 import java.util.List;
@@ -69,6 +67,8 @@ import java.util.Map;
  */
 @org.jspecify.annotations.NullUnmarked
 public class ModelPreviewScreen extends ModalWorksurfaceScreen {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ModelPreviewScreen.class);
+
     @Nullable
     private EditBox searchBox;
     @Nullable
@@ -205,7 +205,7 @@ public class ModelPreviewScreen extends ModalWorksurfaceScreen {
                     ModelBakePort.twoSideDrawGuiPreviewFlat(bakedModel, poseStack.last().pose());
                 }
             } catch (Exception e) {
-                e.printStackTrace(); // Log rendering errors but don't crash screen
+                LOGGER.warn("Failed to render model preview", e);
             }
         }
 
@@ -375,7 +375,7 @@ public class ModelPreviewScreen extends ModalWorksurfaceScreen {
                 this.translateX = 0;
                 this.translateY = 0;
             } catch (Exception e) {
-                e.printStackTrace();
+                LOGGER.warn("Failed to load .bbmodel", e);
                 this.statusMessage = "Failed to load .bbmodel: " + e.getMessage();
             }
         }

@@ -4,7 +4,6 @@ import io.github.tt432.clientsmokeannotation.ClientSmoke;
 import io.github.tt432.eyelib.molang.MolangScope;
 import io.github.tt432.eyelib.molang.MolangValue;
 import io.github.tt432.eyelib.molang.compiler.ExpressionCompileException;
-import io.github.tt432.eyelib.molang.compiler.cache.MolangCompileCache;
 import io.github.tt432.eyelib.molang.type.MolangFloat;
 import io.github.tt432.eyelib.molang.type.MolangObject;
 import io.github.tt432.eyelib.molang.type.MolangString;

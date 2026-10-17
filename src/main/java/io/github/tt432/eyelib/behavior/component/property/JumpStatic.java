@@ -10,7 +10,6 @@ import io.github.tt432.eyelib.behavior.component.Component;
  * @param jump_power 默认 0.42f
  * @author TT432
  */
-@org.jspecify.annotations.NullMarked
 public record JumpStatic(
         float jump_power
 ) implements Component {

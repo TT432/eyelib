@@ -21,7 +21,6 @@ import java.util.List;
  * </pre>
  * @author TT432
  */
-@org.jspecify.annotations.NullMarked
 public record BrSpawnRule(
         String formatVersion,
         String identifier,

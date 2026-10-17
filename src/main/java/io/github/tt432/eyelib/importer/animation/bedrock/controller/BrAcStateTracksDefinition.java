@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.Map;
 
 /** @author TT432 */
-@org.jspecify.annotations.NullMarked
 public record BrAcStateTracksDefinition(
         io.github.tt432.eyelib.importer.animation.bedrock.controller.BrAcStateAnimationsTrackDefinition animations,
         BrAcStateParticleEffectsTrackDefinition particleEffects,

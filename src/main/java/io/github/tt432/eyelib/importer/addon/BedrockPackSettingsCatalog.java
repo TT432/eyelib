@@ -1,6 +1,5 @@
 package io.github.tt432.eyelib.importer.addon;
 
-import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.jspecify.annotations.Nullable;
 
@@ -22,7 +21,6 @@ import java.util.zip.ZipFile;
  *
  * @author TT432
  */
-@org.jspecify.annotations.NullMarked
 public record BedrockPackSettingsCatalog(
         /** 包键（资源包文件名，与 vanilla pack id "file/&lt;name&gt;" 对应）。 */
         String packKey,

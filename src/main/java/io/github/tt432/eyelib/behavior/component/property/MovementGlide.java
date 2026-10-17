@@ -11,7 +11,6 @@ import io.github.tt432.eyelib.behavior.component.Component;
  * @param speed_when_turning 默认 2.0f
  * @author TT432
  */
-@org.jspecify.annotations.NullMarked
 public record MovementGlide(
         float start_speed,
         float speed_when_turning

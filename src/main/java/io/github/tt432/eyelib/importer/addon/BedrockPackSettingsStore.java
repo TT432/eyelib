@@ -27,7 +27,6 @@ import java.util.Optional;
  *
  * @author TT432
  */
-@org.jspecify.annotations.NullMarked
 public final class BedrockPackSettingsStore {
     private static final Logger LOGGER = LoggerFactory.getLogger(BedrockPackSettingsStore.class);
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();

@@ -8,7 +8,6 @@ import io.github.tt432.eyelib.util.codec.EyelibCodec;
  *
  * @author TT432
  */
-@org.jspecify.annotations.NullMarked
 public record IsStackable() implements io.github.tt432.eyelib.behavior.component.Component {
     private static final IsStackable INSTANCE = new IsStackable();
 

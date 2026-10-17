@@ -204,7 +204,7 @@ public class Matrix4 {
         double n31 = te[2], n32 = te[6], n33 = te[10], n34 = te[14];
         double n41 = te[3], n42 = te[7], n43 = te[11], n44 = te[15];
 
-        // TODO:（as-is 注释）make this more efficient
+        // 上游 three.js 注释：此实现可进一步优化（算法见下方链接）
         //( based on http://www.euclideanspace.com/maths/algebra/matrix/functions/inverse/fourD/index.htm )
 
         return (

@@ -11,7 +11,6 @@ import java.util.List;
  * @param control_items list of control items (empty by default)
  * @author TT432
  */
-@org.jspecify.annotations.NullMarked
 public record ItemControllable(List<String> control_items) implements io.github.tt432.eyelib.behavior.component.Component {
     public static final Codec<ItemControllable> CODEC = RecordCodecBuilder.create(inst -> inst.group(
             Codec.STRING.listOf().optionalFieldOf("control_items", List.of()).forGetter(ItemControllable::control_items)

@@ -6,7 +6,7 @@ import io.github.tt432.eyelib.material.port.PortRenderPass;
 import io.github.tt432.eyelib.util.PortResourceLocation;
 import io.github.tt432.eyelib.bridge.material.RenderTypeResolver;
 import io.github.tt432.eyelib.bridge.material.adapter.RenderPassAdapter;
-import io.github.tt432.eyelib.material.render.RenderTypeResolver.EntityRenderTypeData;
+import io.github.tt432.eyelib.material.render.EntityRenderTypeData;
 import io.github.tt432.eyelib.particle.runtime.ParticleDefinition;
 import io.github.tt432.eyelib.particle.runtime.bedrock.BedrockParticleEmitter;
 import io.github.tt432.eyelib.particle.runtime.bedrock.BedrockParticleInstance;

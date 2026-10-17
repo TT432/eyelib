@@ -14,7 +14,6 @@ import java.util.Optional;
 
 /** Bedrock 战利品表数据结构。
  * @author TT432 */
-@org.jspecify.annotations.NullMarked
 public record BrLootTable(
         List<BrLootTablePool> pools
 ) {
@@ -37,7 +36,6 @@ public record BrLootTable(
 
     /** 战利品表池的 tiers 字段，包含装备/附魔品级范围。
      * @author TT432 */
-    @org.jspecify.annotations.NullMarked
     public record BrLootTableTiers(
             List<Integer> initialRange,
             int bonusRounds
@@ -63,7 +61,6 @@ public record BrLootTable(
 
     /** 战利品表池，封装 rolls、entries 和可选的 conditions/functions/bonus_rolls/tiers。
      * @author TT432 */
-    @org.jspecify.annotations.NullMarked
     public record BrLootTablePool(
             Either<Integer, BrLootTableRollsRange> rolls,
             List<BrLootTablePoolEntry> entries,
@@ -122,7 +119,6 @@ public record BrLootTable(
 
     /** rolls 为 {min, max} 范围时的数据载体。
      * @author TT432 */
-    @org.jspecify.annotations.NullMarked
     public record BrLootTableRollsRange(
             int min,
             int max
@@ -135,7 +131,6 @@ public record BrLootTable(
 
     /** 战利品表池条目。
      * @author TT432 */
-    @org.jspecify.annotations.NullMarked
     public record BrLootTablePoolEntry(
             String type,
             String name,

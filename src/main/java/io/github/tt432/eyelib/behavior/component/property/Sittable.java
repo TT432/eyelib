@@ -10,7 +10,6 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
  * @param stand_event event when standing (default target "self")
  * @author TT432
  */
-@org.jspecify.annotations.NullMarked
 public record Sittable(
         EventRef sit_event,
         EventRef stand_event

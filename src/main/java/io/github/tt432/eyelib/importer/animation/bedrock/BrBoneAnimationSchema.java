@@ -5,12 +5,10 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 
 import java.util.LinkedHashMap;
-import java.util.Map;
 import java.util.TreeMap;
 import java.util.function.Function;
 
 /** @author TT432 */
-@org.jspecify.annotations.NullMarked
 public record BrBoneAnimationSchema(
         TreeMap<Float, BrBoneKeyFrameSchema> rotation,
         TreeMap<Float, BrBoneKeyFrameSchema> position,

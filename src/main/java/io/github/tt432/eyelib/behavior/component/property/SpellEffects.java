@@ -13,7 +13,6 @@ import java.util.List;
  *                             single string or array, empty by default)
  * @author TT432
  */
-@org.jspecify.annotations.NullMarked
 public record SpellEffects(
         List<SpellEntry> add_spell_effects,
         List<String> remove_spell_effects

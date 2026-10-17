@@ -13,7 +13,6 @@ import java.util.function.Function;
 /**
  * @author TT432
  */
-@org.jspecify.annotations.NullMarked
 public record BrAcState(
         Map<String, MolangValue> animations,
         MolangValue onEntry,

@@ -3,7 +3,6 @@ package io.github.tt432.eyelib.importer.addon;
 import com.mojang.serialization.Codec;
 
 /** @author TT432 */
-@org.jspecify.annotations.NullMarked
 public enum BedrockAddonWarningCode {
     UNMANAGED_RESOURCE,
     SCHEMA_PARSE_FAILED,
