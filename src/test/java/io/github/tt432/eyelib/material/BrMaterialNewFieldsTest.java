@@ -1,8 +1,11 @@
-package io.github.tt432.eyelib.material.shared;
+package io.github.tt432.eyelib.material;
 
 import com.google.gson.JsonParser;
 import com.mojang.serialization.JsonOps;
 import io.github.tt432.eyelib.TestCodecUtil;
+import io.github.tt432.eyelib.material.gl.MsaaSupport;
+import io.github.tt432.eyelib.material.gl.PrimitiveMode;
+import io.github.tt432.eyelib.material.material.BrMaterial;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 

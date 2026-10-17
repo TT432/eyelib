@@ -1,7 +1,16 @@
-package io.github.tt432.eyelib.material.shared;
+package io.github.tt432.eyelib.material;
 
 import com.mojang.serialization.JsonOps;
 import io.github.tt432.eyelib.TestCodecUtil;
+import io.github.tt432.eyelib.material.gl.BlendFactor;
+import io.github.tt432.eyelib.material.gl.DepthFunc;
+import io.github.tt432.eyelib.material.gl.GLStates;
+import io.github.tt432.eyelib.material.gl.MsaaSupport;
+import io.github.tt432.eyelib.material.gl.PrimitiveMode;
+import io.github.tt432.eyelib.material.gl.stencil.StencilDepthFailOp;
+import io.github.tt432.eyelib.material.gl.stencil.StencilFailOp;
+import io.github.tt432.eyelib.material.gl.stencil.StencilFunc;
+import io.github.tt432.eyelib.material.gl.stencil.StencilPassOp;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;

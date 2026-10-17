@@ -1,7 +1,8 @@
-package io.github.tt432.eyelib.material.shared;
+package io.github.tt432.eyelib.material;
 
 import com.mojang.serialization.JsonOps;
 import io.github.tt432.eyelib.TestCodecUtil;
+import io.github.tt432.eyelib.material.gl.VertexFormatElementEnum;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;

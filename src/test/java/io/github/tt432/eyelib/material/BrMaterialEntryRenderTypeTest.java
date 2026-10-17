@@ -2,7 +2,7 @@ package io.github.tt432.eyelib.material;
 
 import io.github.tt432.eyelib.material.gl.GLStates;
 import io.github.tt432.eyelib.material.material.BrMaterialEntry;
-import io.github.tt432.eyelib.material.shared.VertexFormatElementEnum;
+import io.github.tt432.eyelib.material.gl.VertexFormatElementEnum;
 import io.github.tt432.eyelib.material.port.PortRenderPass;
 import io.github.tt432.eyelib.util.PortResourceLocation;
 import org.junit.jupiter.api.DisplayName;

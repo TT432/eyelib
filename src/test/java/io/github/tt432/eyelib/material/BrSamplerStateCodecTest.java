@@ -1,7 +1,8 @@
-package io.github.tt432.eyelib.material.shared;
+package io.github.tt432.eyelib.material;
 
 import com.mojang.serialization.JsonOps;
 import io.github.tt432.eyelib.TestCodecUtil;
+import io.github.tt432.eyelib.material.material.BrSamplerState;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;

@@ -1,4 +1,4 @@
-package io.github.tt432.eyelib.material.shared;
+package io.github.tt432.eyelib.material.gl;
 
 import com.mojang.serialization.Codec;
 import io.github.tt432.eyelib.util.PortStringRepresentable;
