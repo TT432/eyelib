@@ -1,25 +1,32 @@
 package io.github.tt432.eyelib.importer.addon;
 
-import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 /**
  * 用真实 Actions-and-Stuff 1.10 v2 样本包验证加载覆盖率，包括子包层叠覆盖。
  * 此测试依赖开发者本地的 {@code Actions-and-Stuff-1.10-v2.mcpack} addon 文件，
  * 该文件版权归属于 Actions-and-Stuff 团队，不能提交到仓库中。
- * 如需运行，将样本包放置到 {@code run/resourcepacks/} 目录下，并移除 {@code @Disabled} 注解。
+ * 缺失样本包时跳过（{@link org.junit.jupiter.api.Assumptions}），因此在本机放置到
+ * {@code run/resourcepacks/} 后会自动执行，CI 上自动跳过。
  *
  * @author TT432
  */
-@Disabled("需要本地 Actions-and-Stuff addon 文件 (run/resourcepacks/Actions-and-Stuff-1.10-v2.mcpack)")
 class BedrockAddonActionsAndStuffCoverageTest {
 
     private static final Path SAMPLE_PATH = Path.of("run/resourcepacks/Actions-and-Stuff-1.10-v2.mcpack");
+
+    @BeforeEach
+    void requireLocalSamplePack() {
+        assumeTrue(Files.exists(SAMPLE_PATH), "跳过：缺少本地样本包 " + SAMPLE_PATH);
+    }
 
     @Test
     void loadsSampleAndReportsCoverageStatistics() throws Exception {

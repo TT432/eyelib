@@ -10,7 +10,7 @@ import io.github.tt432.eyelib.client.manager.MaterialManager;
 import io.github.tt432.eyelib.client.manager.ModelManager;
 import io.github.tt432.eyelib.client.manager.RenderControllerManager;
 import io.github.tt432.eyelib.client.registry.AnimationAssetRegistry;
-import io.github.tt432.eyelib.client.registry.SpawnRuleRegistry;
+import io.github.tt432.eyelib.common.behavior.SpawnRuleRegistry;
 import io.github.tt432.eyelib.importer.addon.BedrockAddon;
 import io.github.tt432.eyelib.importer.addon.BedrockAddonAggregate;
 import io.github.tt432.eyelib.importer.addon.BedrockAddonSideAggregate;
