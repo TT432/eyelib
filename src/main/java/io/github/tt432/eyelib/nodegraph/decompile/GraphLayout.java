@@ -9,7 +9,6 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -36,7 +35,7 @@ import java.util.TreeSet;
  *       DFS 先序天然让链/子树成员在层内连续——实测（悦灵 812 节点，2026-08-07）比重心排序
  *       极端边数 29→9：重心排序每趟重置均布 y 会破坏链连续性（曾引以为傲的「簇邻接」收益
  *       远小于链断裂损失）。</li>
- *   <li><b>巨扇分列</b>（{@link #splitGiantFans}）：「唯一消费者同为某 hub」或「唯一生产者
+ *   <li><b>巨扇分列</b>（{@link FanLayoutOptimizer#splitGiantFans}）：「唯一消费者同为某 hub」或「唯一生产者
  *       同为某 hub」的成员群超过单列上限时切成多列（不限度数，带表达式链的 rc.root 也算）。
  *       分列只缩冠幅占用的列高、不强行移动成员——成员位置由链锚定，强挪会把长边挪进链里
  *       （实测 Σ +48%）。</li>
@@ -48,14 +47,14 @@ import java.util.TreeSet;
  *       （L1 目标的单点最优；clamp 保持层内顺序与节点高度间距），再做<b>纯叶扇居中</b>
  *       （度数为 1 且共享唯一 hub 的层内连续段作为刚性整体平移到 hub y——压紧段对逐节点
  *       趟无自由度，单向堆叠就靠这个拆开）。轮数按图规模给足并带早退。</li>
- *   <li><b>列内欲望重排</b>（{@link #reorderColumnsByDesire}，两趟）：clamp 保序会把
+ *   <li><b>列内欲望重排</b>（{@link GraphRelaxer#reorderColumnsByDesire}，两趟）：clamp 保序会把
  *       「节点与其邻居顺序不对应」的垂直错位锁死（悦灵语句值链想要 y≈2500 被钉在
  *       y≈9600 实证）。每列<b>非语句链</b>节点保持槽位集合不变、按邻居中位数欲望 y
  *       重新分配槽位后再松弛（语句链顺序是语义，不参与）。</li>
- *   <li><b>扇形居中重排</b>（{@link #improveLeafFans}，实测验收的局部搜索）：对明显偏离
+ *   <li><b>扇形居中重排</b>（{@link FanLayoutOptimizer#improveLeafFans}，实测验收的局部搜索）：对明显偏离
  *       理论最优的纯叶扇执行「按 hub 侧分区重排 + 扇窗居中压紧」，完整松弛后以全图 Σ|Δy|
  *       实测判定去留——单调下降，无振荡。</li>
- *   <li><b>hub 极小极大定位</b>（{@link #centerHubsOnFanSpan}）：把大扇 hub 移到扇成员 y 跨
+ *   <li><b>hub 极小极大定位</b>（{@link FanLayoutOptimizer#centerHubsOnFanSpan}）：把大扇 hub 移到扇成员 y 跨
  *       中心（clamp 不撞列内邻居）。松弛的中位数投票把 hub 停在 L1 最优点（偏向成员密集侧），
  *       扇尾成员的边距可达扇跨全长；移到跨中把扇的最大边压到跨度一半，牺牲的 Σ 很小
  *       （hub 移动只影响其自身边）。扇跨度本身由成员的链锚定，不可压缩。</li>
@@ -68,7 +67,7 @@ import java.util.TreeSet;
  *       无 entry 消费者）按<b>方形块</b>打包到 root 左侧子列（列数 = √(总高/列距)）；
  *       declvar/纯写入变量按<b>逐成员锚点 y</b> 共位到锚点侧子列（切块中位数居中曾把
  *       69 写变量摊成 7 列、writer 边 dx 拉到 900-2700）。</li>
- *   <li><b>芯片锚定快照</b>（2026-08-11 重设计，{@link #placeSnappedChips}）：variable
+ *   <li><b>芯片锚定快照</b>（2026-08-11 重设计，{@link GraphRelaxer#placeSnappedChips}）：variable
  *       芯片不是列公民——列槽位让芯片与消费者恒隔一个列距（写芯片 dy≈1500、读芯片
  *       dx≈2400，用户实机截图指正「关系最近的应在画布上最近」）。全部纯声明/写入变量
  *       与单消费者流变量在列布局收敛后<b>直接贴锚点边侧</b>（左读右写、同锚点芯片块
@@ -86,7 +85,7 @@ import java.util.TreeSet;
  * 链跟不上，长边从扇边挪进链边（Σ +48%、+12%、+9% 不等）；且整列居中与逐节点松弛
  * 恒幅振荡，不能进早退循环；
  * ② 远邻 blend（median 向 >2000 的邻居偏移）：Σ 与极端边数齐升；
- * ③ 松弛后再重心排序交替：收敛到同一盆域，无收益（注意：{@link #reorderColumnsByDesire}
+ * ③ 松弛后再重心排序交替：收敛到同一盆域，无收益（注意：{@link GraphRelaxer#reorderColumnsByDesire}
  * 是槽位重排 + 再松弛的单/两趟定向修复，与交替迭代不同，勿混淆）；
  * ④ 分列前按类型聚类（无居中配合时）：Σ +2.4%，纯叶段仍被度数>1 成员打断；
  * ⑤ 播种多趟迭代：上游影响回流，Σ +4%、max +24%。
@@ -103,16 +102,10 @@ public final class GraphLayout {
     public static final float Y_SPACING = 110f;
     /** 节点间垂直边距：间距 = 上节点高 + MARGIN。62（标准高）+ 48 = 110 = 旧固定行距，
      *  默认节点的视觉间距与旧版一致。 */
-    private static final float NODE_MARGIN = 48f;
+    static final float NODE_MARGIN = 48f;
 
-    /** 松弛早退阈值：单轮最大位移低于此值即视为收敛。 */
-    private static final double RELAX_EPSILON = 0.5;
-    /** 单列扇成员上限：超过则拆成并列子列（见 {@link #splitGiantFans}）。 */
-    private static final int MAX_FAN_LEAVES_PER_COLUMN = 16;
     /** 共位声明芯片列内间距（variable/ref 小节点不需要 48px 呼吸区，紧排防纵漂）。 */
     private static final float CLUSTER_GAP = 10f;
-    /** 极小极大定位的最小扇规模：小于此数的扇 hub 交给中位数投票即可。 */
-    private static final int MIN_MINIMAX_FAN_SIZE = 4;
 
     /**
      * 分层布局：返回坐标重排后的节点列表（其余字段直通，顺序与输入一致）。
@@ -456,7 +449,7 @@ public final class GraphLayout {
         }
 
         // 巨扇分列（在赋 y 之前：子列独立从 0 起均布）
-        splitGiantFans(byLayer, soleConsumer, soleProducer);
+        FanLayoutOptimizer.splitGiantFans(byLayer, soleConsumer, soleProducer);
 
         // 节点估计高度（LDLib2 编辑器实测标定，见 {@link #estimateHeight}）：垂直间距按
         // 「上节点高 + 边距」逐对计算——固定行距会让 16 个 arg 的 query.call（318px）
@@ -475,7 +468,7 @@ public final class GraphLayout {
             double y = 0;
             for (NodeInstance n : group) {
                 ys.put(n.uid(), y);
-                y += heightOf(heights, n.uid()) + NODE_MARGIN;
+                y += GraphRelaxer.heightOf(heights, n.uid()) + NODE_MARGIN;
             }
         });
         {
@@ -486,28 +479,30 @@ public final class GraphLayout {
                 double prevBottom = Double.NEGATIVE_INFINITY;
                 for (int i = 0; i < group.size(); i++) {
                     NodeInstance n = group.get(i);
-                    double current = yOf(ys, n.uid());
-                    double desired = medianAllNeighborsY(n.uid(), flowConsumers, flowProducers, ys);
+                    double current = GraphRelaxer.yOf(ys, n.uid());
+                    double desired = GraphRelaxer.medianAllNeighborsY(
+                            n.uid(), flowConsumers, flowProducers, ys);
                     double seeded = Double.isNaN(desired) ? current
                             : Math.max(desired, prevBottom + NODE_MARGIN);
                     ys.put(n.uid(), seeded);
-                    prevBottom = seeded + heightOf(heights, n.uid());
+                    prevBottom = seeded + GraphRelaxer.heightOf(heights, n.uid());
                 }
             }
         }
 
-        relaxDistances(byLayer, flowConsumers, flowProducers, ys, soleHub, heights, nodes.size());
+        GraphRelaxer.relaxDistances(byLayer, flowConsumers, flowProducers, ys, soleHub, heights, nodes.size());
         // 列内按欲望重排：列内顺序在松弛前由 DFS/链序定死，clamp 保序意味着「节点与其
         // 邻居顺序不对应」的垂直错位被锁死（悦灵 x=1800 列实证：语句值链想要 y≈2500
         // 被钉在 y≈9600，dy≈7000）。把每列**非语句链**节点占据的 y 槽位按「邻居中位数
         // 欲望」重排后再松弛——语句链（执行序是语义）与槽位骨架不动。
-        reorderColumnsByDesire(byLayer, flowConsumers, flowProducers, ys, seqNext, seqPrev);
-        relaxDistances(byLayer, flowConsumers, flowProducers, ys, soleHub, heights, nodes.size());
+        GraphRelaxer.reorderColumnsByDesire(byLayer, flowConsumers, flowProducers, ys, seqNext, seqPrev);
+        GraphRelaxer.relaxDistances(byLayer, flowConsumers, flowProducers, ys, soleHub, heights, nodes.size());
         // 第二趟：松弛后的 y 让欲望估值更准（首趟重排基于未收敛 y）
-        reorderColumnsByDesire(byLayer, flowConsumers, flowProducers, ys, seqNext, seqPrev);
-        relaxDistances(byLayer, flowConsumers, flowProducers, ys, soleHub, heights, nodes.size());
-        improveLeafFans(byLayer, soleHub, flowConsumers, flowProducers, flowWires, ys, heights, nodes.size());
-        centerHubsOnFanSpan(byLayer, soleConsumer, soleProducer, ys, flowWires, heights);
+        GraphRelaxer.reorderColumnsByDesire(byLayer, flowConsumers, flowProducers, ys, seqNext, seqPrev);
+        GraphRelaxer.relaxDistances(byLayer, flowConsumers, flowProducers, ys, soleHub, heights, nodes.size());
+        FanLayoutOptimizer.improveLeafFans(byLayer, soleHub, flowConsumers, flowProducers,
+                flowWires, ys, heights, nodes.size());
+        FanLayoutOptimizer.centerHubsOnFanSpan(byLayer, soleConsumer, soleProducer, ys, flowWires, heights);
 
         // 声明共位放置（最后做：锚点 y 已收敛，簇/共位列直接按终态锚点居中；
         // 提前做会被「压紧列无松弛自由度」钉在种子的位——悦灵 ref.ac 列实证 dy≈3400）
@@ -516,7 +511,7 @@ public final class GraphLayout {
                     layerOfUid, isolatedLayer, byUid,
                     rootDeclOf, clusterReadOf, clusterWriteOf);
         }
-        normalizeY(ys);
+        GraphRelaxer.normalizeY(ys);
 
         // 列 x 槽位：从右向左按（层号升序、层内 sub 降序）逐个占槽。无分列时与
         // （maxLayer−layer）×列距 严格一致（最长路径保证 0..maxLayer 每层都有节点，无空槽）；
@@ -535,7 +530,7 @@ public final class GraphLayout {
             }
         }
         // 槽位 x：芯片（宽 120 + 双侧净距 16）整体容纳于列间隙——有芯片贴靠的槽位对
-        // 间隙加宽 {@link #CHIP_SLOT_EXTRA}，芯片不再凸入邻列（凸入实证 82 处重叠）
+        // 按需加宽（芯片不再凸入邻列，凸入实证 82 处重叠）
         Map<String, Integer> slotOfUid = new HashMap<>();
         for (Map.Entry<String, Integer> e : xIndexOfUid.entrySet()) {
             slotOfUid.put(e.getKey(), e.getValue());
@@ -569,7 +564,7 @@ public final class GraphLayout {
             for (int i = 0; i < slotCount; i++) {
                 if (i > 0 && (slotRightChips[i - 1] || slotLeftChips[i])) {
                     float maxW = Math.max(slotMaxW[i - 1], slotMaxW[i]);
-                    x += Math.max(0, maxW + 120 + 2 * CHIP_GAP_X - X_SPACING);
+                    x += Math.max(0, maxW + 120 + 2 * GraphRelaxer.CHIP_GAP_X - X_SPACING);
                 }
                 slotX[i] = x;
                 x += X_SPACING;
@@ -583,7 +578,7 @@ public final class GraphLayout {
             xsFinal.putIfAbsent(n.uid(), (maxLayer - isolatedLayer) * X_SPACING);
         }
         // 芯片锚定放置（列布局已收敛，锚点 x/y 终态可读）
-        placeSnappedChips(snapAnchor, snapSide, byUid, heights, xsFinal, ys, slotOfUid);
+        GraphRelaxer.placeSnappedChips(snapAnchor, snapSide, byUid, heights, xsFinal, ys, slotOfUid);
         List<NodeInstance> out = new ArrayList<>(nodes.size());
         for (NodeInstance n : nodes) {
             out.add(new NodeInstance(n.uid(), n.type(),
@@ -593,127 +588,8 @@ public final class GraphLayout {
         return out;
     }
 
-    /** 芯片与锚点的水平净距。 */
-    private static final float CHIP_GAP_X = 8f;
-    /** 芯片贴靠槽位的间隙加宽量：芯片宽 120 + 双侧净距 2×8。 */
-    private static final float CHIP_SLOT_EXTRA = 136f;
-    /** 同锚点同侧芯片的堆叠净距。 */
-    private static final float CHIP_STACK_GAP = 6f;
-    /** 芯片重叠消解趟数上限。 */
-    private static final int CHIP_SEPARATION_SWEEPS = 60;
-
-    /**
-     * 芯片锚定放置：同（锚点, 侧）的芯片按 uid 序堆叠、行向锚点中心居中，
-     * x = 锚点左/右缘 ± {@link #CHIP_GAP_X}（凸入列间隙，列距 300 − 节点宽 ~190 的
-     * 间隙 ≈ 110，芯片 120 宽会凸入邻列 ≤ 70px——邻列同行为空，冲突由最后的
-     * 仅芯片移动消解兜底）。
-     */
-    private static void placeSnappedChips(Map<String, String> snapAnchor, Map<String, Integer> snapSide,
-                                          Map<String, NodeInstance> byUid, Map<String, Float> heights,
-                                          Map<String, Float> xsFinal, Map<String, Double> ys,
-                                          Map<String, Integer> slotOfUid) {
-        // 按（锚点槽位, 侧）分组：同间隙的芯片共享一条行游标（按锚点行排序，首个贴锚点行，
-        // 后续顺排——不同锚点的芯片在同一间隙不互叠）
-        Map<String, List<String>> groups = new TreeMap<>();
-        for (Map.Entry<String, String> e : snapAnchor.entrySet()) {
-            Integer slot = slotOfUid.get(e.getValue());
-            if (slot == null) {
-                continue;
-            }
-            groups.computeIfAbsent(slot + " " + snapSide.get(e.getKey()),
-                    k -> new ArrayList<>()).add(e.getKey());
-        }
-        for (Map.Entry<String, List<String>> entry : groups.entrySet()) {
-            List<String> chips = entry.getValue();
-            chips.sort(Comparator
-                    .comparingDouble((String c) -> ys.getOrDefault(snapAnchor.get(c), 0.0))
-                    .thenComparing(c -> snapAnchor.get(c))
-                    .thenComparing(Comparator.naturalOrder()));
-            double cursor = Double.NEGATIVE_INFINITY;
-            int i = 0;
-            while (i < chips.size()) {
-                // 同锚点子块：块高已知，块顶 = max(游标, 锚点中心 − 块高/2)——
-                // 芯片块居中于锚点（纯下排会让 19 芯片的 ref 尾部 dy 漂到 600）
-                int j = i;
-                while (j + 1 < chips.size()
-                        && java.util.Objects.equals(snapAnchor.get(chips.get(j + 1)),
-                                snapAnchor.get(chips.get(i)))) {
-                    j++;
-                }
-                String anchor = snapAnchor.get(chips.get(i));
-                NodeInstance anchorNode = byUid.get(anchor);
-                if (anchorNode == null) {
-                    i = j + 1;
-                    continue;
-                }
-                int side = snapSide.getOrDefault(chips.get(i), -1);
-                float anchorW = estimateWidth(anchorNode);
-                double anchorX = xsFinal.getOrDefault(anchor, 0f);
-                double anchorCy = ys.getOrDefault(anchor, 0.0)
-                        + heights.getOrDefault(anchor, UNKNOWN_NODE_HEIGHT) / 2;
-                double blockH = -CHIP_STACK_GAP;
-                for (int k = i; k <= j; k++) {
-                    blockH += heights.getOrDefault(chips.get(k), UNKNOWN_NODE_HEIGHT) + CHIP_STACK_GAP;
-                }
-                double top = Math.max(cursor, anchorCy - blockH / 2);
-                for (int k = i; k <= j; k++) {
-                    String chip = chips.get(k);
-                    float chipW = estimateWidth(java.util.Objects.requireNonNull(byUid.get(chip)));
-                    float chipH = heights.getOrDefault(chip, UNKNOWN_NODE_HEIGHT);
-                    xsFinal.put(chip, (float) (side < 0
-                            ? anchorX - chipW - CHIP_GAP_X
-                            : anchorX + anchorW + CHIP_GAP_X));
-                    ys.put(chip, top);
-                    top += chipH + CHIP_STACK_GAP;
-                }
-                cursor = top;
-                i = j + 1;
-            }
-        }
-        // 仅芯片移动的重叠消解（uid 序、最小穿透轴、逐趟至无重叠）
-        List<String> chipOrder = new ArrayList<>(snapAnchor.keySet());
-        chipOrder.sort(Comparator.naturalOrder());
-        for (int sweep = 0; sweep < CHIP_SEPARATION_SWEEPS; sweep++) {
-            boolean moved = false;
-            for (String chip : chipOrder) {
-                if (!xsFinal.containsKey(chip) || !ys.containsKey(chip)) {
-                    continue; // 锚点缺失未放置的芯片不参与消解
-                }
-                float cw = estimateWidth(java.util.Objects.requireNonNull(byUid.get(chip)));
-                float ch = heights.getOrDefault(chip, UNKNOWN_NODE_HEIGHT);
-                double cx = xsFinal.getOrDefault(chip, 0f) + cw / 2;
-                double cy = ys.getOrDefault(chip, 0.0) + ch / 2;
-                for (NodeInstance other : byUid.values()) {
-                    if (other.uid().equals(chip)) {
-                        continue;
-                    }
-                    float ow = estimateWidth(other);
-                    float oh = heights.getOrDefault(other.uid(), UNKNOWN_NODE_HEIGHT);
-                    double ocx = xsFinal.getOrDefault(other.uid(), 0f) + ow / 2;
-                    double ocy = ys.getOrDefault(other.uid(), 0.0) + oh / 2;
-                    double ox = (cw + ow) / 2 - Math.abs(cx - ocx);
-                    double oy = (ch + oh) / 2 - Math.abs(cy - ocy);
-                    if (ox <= 0 || oy <= 0) {
-                        continue;
-                    }
-                    if (ox < oy) {
-                        xsFinal.put(chip, (float) (xsFinal.getOrDefault(chip, 0f)
-                                + (cx < ocx ? -1 : 1) * (ox + 0.5)));
-                    } else {
-                        ys.put(chip, ys.getOrDefault(chip, 0.0) + (cy < ocy ? -1 : 1) * (oy + 0.5));
-                    }
-                    cx = xsFinal.getOrDefault(chip, 0f) + cw / 2;
-                    cy = ys.getOrDefault(chip, 0.0) + ch / 2;
-                    moved = true;
-                }
-            }
-            if (!moved) {
-                return;
-            }
-        }
-    }
-
-    /** 列键：layer = 到汇最长路径层；sub = 巨扇分列的子列偏移（0=主列，负=左，正=右）。 */    private record ColumnKey(int layer, int sub) implements Comparable<ColumnKey> {
+    /** 列键：layer = 到汇最长路径层；sub = 巨扇分列的子列偏移（0=主列，负=左，正=右）。 */
+    record ColumnKey(int layer, int sub) implements Comparable<ColumnKey> {
         @Override
         public int compareTo(ColumnKey other) {
             int c = Integer.compare(layer, other.layer);
@@ -761,7 +637,7 @@ public final class GraphLayout {
                     minSub = Math.min(minSub, key.sub());
                 }
             }
-            double rootY = yOf(ys, rootUid);
+            double rootY = GraphRelaxer.yOf(ys, rootUid);
             // 有序单元序列：纯声明 ref（无 entry 消费者——有 entry 消费者的 ref.ac/
             // ref.animation 已留在流分层贴 entry）。每个 ref 与其 declvar 同列（读上 / ref / 写下）。
             List<String> refs = new ArrayList<>();
@@ -786,7 +662,7 @@ public final class GraphLayout {
             double totalHeight = -CLUSTER_GAP;
             for (List<String> unit : units) {
                 for (String uid : unit) {
-                    totalHeight += heightOf(heights, uid) + CLUSTER_GAP;
+                    totalHeight += GraphRelaxer.heightOf(heights, uid) + CLUSTER_GAP;
                 }
             }
             int cols = units.isEmpty() ? 0 : (int) Math.max(1,
@@ -798,7 +674,7 @@ public final class GraphLayout {
             for (List<String> unit : units) {
                 double unitHeight = -CLUSTER_GAP;
                 for (String uid : unit) {
-                    unitHeight += heightOf(heights, uid) + CLUSTER_GAP;
+                    unitHeight += GraphRelaxer.heightOf(heights, uid) + CLUSTER_GAP;
                 }
                 if (!current.isEmpty() && columns.size() + 1 < cols
                         && currentHeight + CLUSTER_GAP + unitHeight > columnTarget) {
@@ -817,7 +693,7 @@ public final class GraphLayout {
             for (List<String> column : columns) {
                 double columnHeight = -CLUSTER_GAP;
                 for (String uid : column) {
-                    columnHeight += heightOf(heights, uid) + CLUSTER_GAP;
+                    columnHeight += GraphRelaxer.heightOf(heights, uid) + CLUSTER_GAP;
                 }
                 double y = rootY - columnHeight / 2;
                 List<NodeInstance> placed = new ArrayList<>();
@@ -825,157 +701,12 @@ public final class GraphLayout {
                 for (String uid : column) {
                     double yy = Math.max(y, prevBottom + CLUSTER_GAP);
                     ys.put(uid, yy);
-                    prevBottom = yy + heightOf(heights, uid);
+                    prevBottom = yy + GraphRelaxer.heightOf(heights, uid);
                     placed.add(byUid.get(uid));
                 }
                 byLayer.put(new ColumnKey(layer, sub++), placed);
             }
         }
-    }
-
-    /**
-     * 巨扇分列：列内「唯一消费者同为某 hub」（生产侧扇）或「唯一生产者同为某 hub」
-     * （消费侧扇）的成员数超过 {@link #MAX_FAN_LEAVES_PER_COLUMN} 时，整扇按当前组内
-     * 顺序切成 ⌈k/上限⌉ 块，每块各成一个子列（生产侧子列在主列右侧=靠近 hub，
-     * 消费侧在左侧）。分列的意义是释放列高让每块的链能各自贴近 hub——
-     * 成员位置仍由松弛决定（不强行居中：链跟不上，实测 Σ +48%）。
-     * 同层多扇按序占用子列序号，全程确定。
-     */
-    private static void splitGiantFans(Map<ColumnKey, List<NodeInstance>> byLayer,
-                                       Map<String, String> soleConsumer,
-                                       Map<String, String> soleProducer) {
-        for (Map.Entry<ColumnKey, List<NodeInstance>> entry : new ArrayList<>(byLayer.entrySet())) {
-            List<NodeInstance> group = entry.getValue();
-            Map<String, List<NodeInstance>> producerSide = new LinkedHashMap<>();
-            Map<String, List<NodeInstance>> consumerSide = new LinkedHashMap<>();
-            for (NodeInstance n : group) {
-                String consumer = soleConsumer.get(n.uid());
-                if (consumer != null) {
-                    producerSide.computeIfAbsent(consumer, k -> new ArrayList<>()).add(n);
-                }
-                String producer = soleProducer.get(n.uid());
-                if (producer != null && !producer.equals(consumer)) {
-                    consumerSide.computeIfAbsent(producer, k -> new ArrayList<>()).add(n);
-                }
-            }
-            int nextRight = 0;
-            int nextLeft = 0;
-            for (Map.Entry<String, List<NodeInstance>> fan : producerSide.entrySet()) {
-                nextRight = moveFanChunksToSubColumns(byLayer, entry.getKey(), group,
-                        fan.getKey(), fan.getValue(), 1, nextRight);
-            }
-            for (Map.Entry<String, List<NodeInstance>> fan : consumerSide.entrySet()) {
-                nextLeft = moveFanChunksToSubColumns(byLayer, entry.getKey(), group,
-                        fan.getKey(), fan.getValue(), -1, nextLeft);
-            }
-            if (group.isEmpty()) {
-                byLayer.remove(entry.getKey());
-            }
-        }
-    }
-
-    /**
-     * 把超过上限的扇按块搬入子列（direction &gt; 0 占正序号=主列右侧，反之左侧）；
-     * 已被先前扇搬走的成员跳过。返回该方向下一个可用子列序号。
-     */
-    private static int moveFanChunksToSubColumns(Map<ColumnKey, List<NodeInstance>> byLayer,
-                                                 ColumnKey baseKey, List<NodeInstance> group,
-                                                 String hub, List<NodeInstance> members,
-                                                 int direction, int nextSub) {
-        List<NodeInstance> present = new ArrayList<>(members);
-        present.retainAll(group);
-        if (present.size() <= MAX_FAN_LEAVES_PER_COLUMN) {
-            return nextSub;
-        }
-        if (LAYOUT_DEBUG) {
-            org.slf4j.LoggerFactory.getLogger(GraphLayout.class).info(
-                    "[layout] split fan hub={} k={} chunks={} dir={}",
-                    hub, present.size(),
-                    (present.size() + MAX_FAN_LEAVES_PER_COLUMN - 1) / MAX_FAN_LEAVES_PER_COLUMN,
-                    direction);
-        }
-        for (int index = 0; index < present.size(); index += MAX_FAN_LEAVES_PER_COLUMN) {
-            List<NodeInstance> chunk = new ArrayList<>(present.subList(
-                    index, Math.min(index + MAX_FAN_LEAVES_PER_COLUMN, present.size())));
-            int sub = direction > 0 ? ++nextSub : --nextSub;
-            byLayer.put(new ColumnKey(baseKey.layer(), sub), chunk);
-            group.removeAll(chunk);
-        }
-        return nextSub;
-    }
-
-    /**
-     * hub 极小极大定位（实测判定）：把大扇（≥{@link #MIN_MINIMAX_FAN_SIZE} 成员）的 hub 移向扇
-     * 成员 y 跨度中心（clamp 不撞列内邻居）。松弛的中位数投票把 hub 停在 L1 最优点（偏向成员
-     * 密集侧），扇尾成员边距可达扇跨全长（悦灵 rcr63→root 5417）；移到跨中把扇最大边压到
-     * 跨度一半。移动以「hub 全部边的最大边距」实测判定：改善不足一个行距则回滚——
-     * 小扇/已居中的 hub 移动只会把边距转移给其非扇边（如 hub→汇），实测判定挡住。
-     * 在 improveLeafFans 之后运行，不再松弛——再松弛会把 hub 拉回中位数最优点。
-     */
-    private static void centerHubsOnFanSpan(Map<ColumnKey, List<NodeInstance>> byLayer,
-                                            Map<String, String> soleConsumer,
-                                            Map<String, String> soleProducer,
-                                            Map<String, Double> ys, List<Wire> wires,
-                                            Map<String, Float> heights) {
-        // hub → 扇成员
-        Map<String, List<String>> fanOf = new HashMap<>();
-        for (Map.Entry<String, String> e : soleConsumer.entrySet()) {
-            fanOf.computeIfAbsent(e.getValue(), k -> new ArrayList<>()).add(e.getKey());
-        }
-        for (Map.Entry<String, String> e : soleProducer.entrySet()) {
-            if (!e.getValue().equals(soleConsumer.get(e.getKey()))) {
-                fanOf.computeIfAbsent(e.getValue(), k -> new ArrayList<>()).add(e.getKey());
-            }
-        }
-        Map<String, List<String>> neighbors = new HashMap<>();
-        for (Wire w : wires) {
-            neighbors.computeIfAbsent(w.from().node(), k -> new ArrayList<>()).add(w.to().node());
-            neighbors.computeIfAbsent(w.to().node(), k -> new ArrayList<>()).add(w.from().node());
-        }
-        // 汇侧列先处理（TreeMap 层号升序遍历）
-        for (List<NodeInstance> group : byLayer.values()) {
-            for (int i = 0; i < group.size(); i++) {
-                String uid = group.get(i).uid();
-                List<String> fan = fanOf.get(uid);
-                if (fan == null || fan.size() < MIN_MINIMAX_FAN_SIZE) {
-                    continue;
-                }
-                double lo = Double.POSITIVE_INFINITY;
-                double hi = Double.NEGATIVE_INFINITY;
-                for (String member : fan) {
-                    lo = Math.min(lo, yOf(ys, member));
-                    hi = Math.max(hi, yOf(ys, member));
-                }
-                double target = (lo + hi) / 2;
-                double loBound = i > 0
-                        ? yOf(ys, group.get(i - 1).uid()) + heightOf(heights, group.get(i - 1).uid()) + NODE_MARGIN
-                        : Double.NEGATIVE_INFINITY;
-                double hiBound = i + 1 < group.size()
-                        ? yOf(ys, group.get(i + 1).uid()) - NODE_MARGIN - heightOf(heights, uid)
-                        : Double.POSITIVE_INFINITY;
-                double oldY = yOf(ys, uid);
-                double newY = Math.min(Math.max(target, loBound), hiBound);
-                if (newY == oldY) {
-                    continue;
-                }
-                double before = maxEdgeToNeighbors(uid, neighbors, ys);
-                ys.put(uid, newY);
-                double after = maxEdgeToNeighbors(uid, neighbors, ys);
-                if (after > before - Y_SPACING) {
-                    ys.put(uid, oldY); // 改善不足一个行距 → 回滚
-                }
-            }
-        }
-    }
-
-    /** 节点全部边（双向）的最大垂直边距；无邻居为 0。 */
-    private static double maxEdgeToNeighbors(String uid, Map<String, List<String>> neighbors,
-                                             Map<String, Double> ys) {
-        double max = 0;
-        for (String other : neighbors.getOrDefault(uid, List.of())) {
-            max = Math.max(max, Math.abs(yOf(ys, uid) - yOf(ys, other)));
-        }
-        return max;
     }
 
     /** 便签定位：图最右列右侧一列，自上而下堆叠（行距取默认行距与便签自身高度+边距的较大者）。 */
@@ -992,346 +723,6 @@ public final class GraphLayout {
             y += Math.max(Y_SPACING, n.height() + 10f);
         }
         return out;
-    }
-
-    /**
-     * 距离松弛：高斯-塞德尔迭代。每轮两层动作：① 逐节点向「全部邻居（生产者+消费者）
-     * 的中位数 y」拉拢（L1 目标的单点最优；clamp 保持层内顺序与节点高度间距）；② 纯叶扇居中（{@link #centerLeafFans}）。
-     * 孤立节点无邻居不参与①（留在均布位）。
-     */
-    private static void relaxDistances(Map<ColumnKey, List<NodeInstance>> byLayer,
-                                       Map<String, List<String>> consumers,
-                                       Map<String, List<String>> producers,
-                                       Map<String, Double> ys, Map<String, String> soleHub,
-                                       Map<String, Float> heights, int nodeCount) {
-        int maxIterations = 2 * nodeCount + 16;
-        for (int iteration = 0; iteration < maxIterations; iteration++) {
-            double maxDelta = 0;
-            for (List<NodeInstance> group : byLayer.values()) {
-                double prevBottom = Double.NEGATIVE_INFINITY;
-                for (int i = 0; i < group.size(); i++) {
-                    NodeInstance n = group.get(i);
-                    double current = yOf(ys, n.uid());
-                    double nextY = i + 1 < group.size()
-                            ? yOf(ys, group.get(i + 1).uid()) : Double.POSITIVE_INFINITY;
-                    double desired = medianAllNeighborsY(n.uid(), consumers, producers, ys);
-                    if (Double.isNaN(desired)) {
-                        prevBottom = current + heightOf(heights, n.uid()); // 孤立节点：不动
-                        continue;
-                    }
-                    double clamped = Math.min(
-                            Math.max(desired, prevBottom + NODE_MARGIN),
-                            nextY - NODE_MARGIN - heightOf(heights, n.uid()));
-                    if (clamped != current) {
-                        ys.put(n.uid(), clamped);
-                        maxDelta = Math.max(maxDelta, Math.abs(clamped - current));
-                    }
-                    prevBottom = clamped + heightOf(heights, n.uid());
-                }
-            }
-            maxDelta = Math.max(maxDelta, centerLeafFans(byLayer, soleHub, ys, heights));
-            if (maxDelta < RELAX_EPSILON) {
-                return;
-            }
-        }
-    }
-
-    /**
-     * 纯叶扇居中：层内「度数为 1 且共享唯一 hub」的连续节点段作为刚性整体平移，使段的
-     * 垂直中心对准 hub 的 y（clamp 不挤压段外邻居；邻居的让位由下一轮逐节点趟完成）。
-     * 逐节点贪心对压紧段无自由度（每节点都被邻居卡在原位），扇形会从 hub 单向堆叠到
-     * (N−1)×行距 远；刚性居中把最大边距压到 ~(N−1)/2×行距，且居中后的压紧段对逐节点趟
-     * 是锁死稳定的。返回本趟最大位移。
-     */
-    private static double centerLeafFans(Map<ColumnKey, List<NodeInstance>> byLayer,
-                                         Map<String, String> soleHub,
-                                         Map<String, Double> ys,
-                                         Map<String, Float> heights) {
-        double maxDelta = 0;
-        for (List<NodeInstance> group : byLayer.values()) {
-            int size = group.size();
-            int i = 0;
-            while (i < size) {
-                String hub = soleHub.get(group.get(i).uid());
-                if (hub == null) {
-                    i++;
-                    continue;
-                }
-                int j = i;
-                while (j + 1 < size && hub.equals(soleHub.get(group.get(j + 1).uid()))) {
-                    j++;
-                }
-                if (j > i) { // 连续同 hub 纯叶段 ≥ 2
-                    double hubY = yOf(ys, hub);
-                    double firstY = yOf(ys, group.get(i).uid());
-                    double lastY = yOf(ys, group.get(j).uid());
-                    double t = hubY - (firstY + lastY) / 2;
-                    double lo = i > 0
-                            ? yOf(ys, group.get(i - 1).uid()) + heightOf(heights, group.get(i - 1).uid())
-                                    + NODE_MARGIN - firstY
-                            : Double.NEGATIVE_INFINITY;
-                    double hi = j + 1 < size
-                            ? yOf(ys, group.get(j + 1).uid()) - NODE_MARGIN
-                                    - heightOf(heights, group.get(j).uid()) - lastY
-                            : Double.POSITIVE_INFINITY;
-                    t = Math.min(Math.max(t, lo), hi);
-                    if (Math.abs(t) > 1e-6) {
-                        for (int k = i; k <= j; k++) {
-                            String uid = group.get(k).uid();
-                            ys.put(uid, yOf(ys, uid) + t);
-                        }
-                        maxDelta = Math.max(maxDelta, Math.abs(t));
-                    }
-                }
-                i = j + 1;
-            }
-        }
-        return maxDelta;
-    }
-
-    /** 布局调试日志开关（-Deyelib.layout.debug=true）。 */
-    private static final boolean LAYOUT_DEBUG = Boolean.getBoolean("eyelib.layout.debug");
-    /** 扇形改进接受阈值：实测全图边长和降幅低于此值则回滚（防微增益空转）。 */
-    private static final double MIN_FAN_GAIN = Y_SPACING;
-    /** 单次扫描中实测验证的候选上限（每次验证是一次完整松弛，限制最坏耗时）。 */
-    private static final int MAX_VERIFY_PER_SCAN = 5;
-    /** 扇形改进总轮数上限（每轮接受一次交换且严格降低全图边长和，必终止；此为保险）。 */
-    private static final int MAX_FAN_IMPROVE_ROUNDS = 64;
-
-    /**
-     * 纯叶扇改进（实测验证的局部搜索）：对明显偏离理论最优的扇（最大边距 > 最优 + 一行距），
-     * 执行 {@link #centerFanOnHub}（扇窗居中 + 前后缀按 hub 侧重排压紧）后完整松弛，
-     * 以全图 Σ|Δy| 实测判定：降幅超阈值才保留，否则回滚——单调下降，无振荡。
-     * 每轮只接受一个交换然后重新扫描（同层其它扇的位置已被重排改变）。
-     */
-    private static void improveLeafFans(Map<ColumnKey, List<NodeInstance>> byLayer,
-                                        Map<String, String> soleHub,
-                                        Map<String, List<String>> consumers,
-                                        Map<String, List<String>> producers,
-                                        List<Wire> wires, Map<String, Double> ys,
-                                        Map<String, Float> heights,
-                                        int nodeCount) {
-        for (int round = 0; round < MAX_FAN_IMPROVE_ROUNDS; round++) {
-            if (!tryOneFanCentering(byLayer, soleHub, consumers, producers, wires, ys, heights, nodeCount)) {
-                return;
-            }
-        }
-    }
-
-    /**
-     * 全图扫描候选扇并逐个实测（规模大优先，同则 hub uid 升序）；接受其一即返回 true。
-     * 候选条件：最大边距超过「理论最优 + 一行距」（理论最优 = 扇形压紧居中于 hub）。
-     */
-    private static boolean tryOneFanCentering(Map<ColumnKey, List<NodeInstance>> byLayer,
-                                              Map<String, String> soleHub,
-                                              Map<String, List<String>> consumers,
-                                              Map<String, List<String>> producers,
-                                              List<Wire> wires, Map<String, Double> ys,
-                                              Map<String, Float> heights, int nodeCount) {
-        for (List<NodeInstance> group : byLayer.values()) {
-            // hub → 该层内扇成员（LinkedHashMap 保证遍历确定）
-            Map<String, List<NodeInstance>> fans = new LinkedHashMap<>();
-            for (NodeInstance n : group) {
-                String hub = soleHub.get(n.uid());
-                if (hub != null) {
-                    fans.computeIfAbsent(hub, k -> new ArrayList<>()).add(n);
-                }
-            }
-            List<Map.Entry<String, List<NodeInstance>>> candidates = new ArrayList<>();
-            for (Map.Entry<String, List<NodeInstance>> e : fans.entrySet()) {
-                int k = e.getValue().size();
-                if (k < 2) {
-                    continue;
-                }
-                double hubY = yOf(ys, e.getKey());
-                double maxEdge = 0;
-                double window = -NODE_MARGIN; // 扇窗像素高 = Σ成员高 + 边距×(k−1)
-                for (NodeInstance n : e.getValue()) {
-                    maxEdge = Math.max(maxEdge, Math.abs(yOf(ys, n.uid()) - hubY));
-                    window += heightOf(heights, n.uid()) + NODE_MARGIN;
-                }
-                double optimal = window / 2;
-                if (maxEdge > optimal + Y_SPACING) {
-                    candidates.add(e);
-                }
-            }
-            candidates.sort(Comparator
-                    .comparingInt((Map.Entry<String, List<NodeInstance>> e) -> -e.getValue().size())
-                    .thenComparing(Map.Entry.comparingByKey()));
-            int verified = 0;
-            for (Map.Entry<String, List<NodeInstance>> candidate : candidates) {
-                if (verified++ >= MAX_VERIFY_PER_SCAN) {
-                    break;
-                }
-                String hub = candidate.getKey();
-                double before = totalEdgeLength(wires, ys);
-                List<NodeInstance> savedOrder = new ArrayList<>(group);
-                Map<String, Double> savedYs = new HashMap<>(ys);
-                centerFanOnHub(group, hub, soleHub, ys, heights);
-                relaxDistances(byLayer, consumers, producers, ys, soleHub, heights, nodeCount);
-                double after = totalEdgeLength(wires, ys);
-                if (LAYOUT_DEBUG) {
-                    org.slf4j.LoggerFactory.getLogger(GraphLayout.class).info(
-                            "[layout] fan-center hub={} k={} before={} after={} {}",
-                            hub, candidate.getValue().size(), (int) before, (int) after,
-                            after < before - MIN_FAN_GAIN ? "ACCEPT" : "REJECT");
-                }
-                if (after < before - MIN_FAN_GAIN) {
-                    return true;
-                }
-                group.clear();
-                group.addAll(savedOrder);
-                ys.clear();
-                ys.putAll(savedYs);
-            }
-        }
-        return false;
-    }
-
-    /**
-     * 扇窗居中重排：层内节点重排为「前缀（y &lt; hubY 的非扇成员）+ 扇 + 后缀」，
-     * 扇成员压紧在 hubY 居中窗口，前缀/后缀分别向上/向下压紧。逐节点松弛在压紧层里
-     * 没有自由度（扇会锁回原位），必须重排 + 直接放置才能让扇到达居中位置；
-     * 是否保留由全图边长和实测判定（见 {@link #tryOneFanCentering}）。
-     */
-    private static void centerFanOnHub(List<NodeInstance> group, String hub,
-                                       Map<String, String> soleHub, Map<String, Double> ys,
-                                       Map<String, Float> heights) {
-        double hubY = yOf(ys, hub);
-        List<NodeInstance> fan = new ArrayList<>();
-        List<NodeInstance> prefix = new ArrayList<>();
-        List<NodeInstance> suffix = new ArrayList<>();
-        for (NodeInstance n : group) {
-            if (hub.equals(soleHub.get(n.uid()))) {
-                fan.add(n);
-            } else if (yOf(ys, n.uid()) < hubY) {
-                prefix.add(n);
-            } else {
-                suffix.add(n);
-            }
-        }
-        // 扇窗像素高 = Σ成员高 + 边距×(k−1)；以 hub 中心居中
-        double window = -NODE_MARGIN;
-        for (NodeInstance n : fan) {
-            window += heightOf(heights, n.uid()) + NODE_MARGIN;
-        }
-        double startY = hubY + heightOf(heights, hub) / 2 - window / 2;
-        double y = startY - NODE_MARGIN;
-        for (int i = prefix.size() - 1; i >= 0; i--) {
-            y -= heightOf(heights, prefix.get(i).uid());
-            ys.put(prefix.get(i).uid(), y);
-            y -= NODE_MARGIN;
-        }
-        y = startY;
-        for (NodeInstance n : fan) {
-            ys.put(n.uid(), y);
-            y += heightOf(heights, n.uid()) + NODE_MARGIN;
-        }
-        for (NodeInstance n : suffix) {
-            ys.put(n.uid(), y);
-            y += heightOf(heights, n.uid()) + NODE_MARGIN;
-        }
-        group.clear();
-        group.addAll(prefix);
-        group.addAll(fan);
-        group.addAll(suffix);
-    }
-
-    /**
-     * 列内按欲望重排：每列内**非语句链**节点（不在 exec_out→exec_in 链上）保持其占据的
-     * y 槽位集合不变，槽位按升序重新分配给「按邻居中位数欲望 y 排序」的节点（uid 兜底
-     * 确定）。语句链成员不动（执行序是语义，不可被布局重排）；重排后需再跑一轮松弛
-     * 恢复节点间距。
-     */
-    private static void reorderColumnsByDesire(Map<ColumnKey, List<NodeInstance>> byLayer,
-                                               Map<String, List<String>> consumers,
-                                               Map<String, List<String>> producers,
-                                               Map<String, Double> ys,
-                                               Map<String, String> seqNext,
-                                               Map<String, String> seqPrev) {
-        for (List<NodeInstance> group : byLayer.values()) {
-            List<Integer> movable = new ArrayList<>();
-            for (int i = 0; i < group.size(); i++) {
-                String uid = group.get(i).uid();
-                if (!seqNext.containsKey(uid) && !seqPrev.containsKey(uid)) {
-                    movable.add(i);
-                }
-            }
-            if (movable.size() < 2) {
-                continue;
-            }
-            List<NodeInstance> nodes = new ArrayList<>();
-            List<Double> slots = new ArrayList<>();
-            for (int i : movable) {
-                nodes.add(group.get(i));
-                slots.add(yOf(ys, group.get(i).uid()));
-            }
-            nodes.sort(Comparator
-                    .comparingDouble((NodeInstance n) -> {
-                        double d = medianAllNeighborsY(n.uid(), consumers, producers, ys);
-                        return Double.isNaN(d) ? yOf(ys, n.uid()) : d;
-                    })
-                    .thenComparing(NodeInstance::uid));
-            slots.sort(Comparator.naturalOrder());
-            for (int k = 0; k < movable.size(); k++) {
-                group.set(movable.get(k), nodes.get(k));
-                ys.put(nodes.get(k).uid(), slots.get(k));
-            }
-        }
-    }
-
-    /** 全图边长 Σ|Δy|（悬空端点按 y=0 计，与布局一致）。 */
-    private static double totalEdgeLength(List<Wire> wires, Map<String, Double> ys) {
-        double total = 0;
-        for (Wire w : wires) {
-            total += Math.abs(yOf(ys, w.to().node()) - yOf(ys, w.from().node()));
-        }
-        return total;
-    }
-
-    /** 全图 y 归一化：统一平移使最小 y = 0（扇居中可能产生负 y；平移不改变边长）。 */
-    private static void normalizeY(Map<String, Double> ys) {
-        double min = ys.values().stream().mapToDouble(Double::doubleValue).min().orElse(0);
-        if (min != 0) {
-            ys.replaceAll((uid, y) -> y - min);
-        }
-    }
-
-    /**
-     * 全部邻居（双向）y 的中位数；无任何邻居返回 NaN（松弛语义：跳过）。
-     * L1 目标（Σ|y−邻居 y|）的单点最优是中位数而非均值——均值会被远端多数派拖拽，
-     * 单点移动可能反而增大总边长（实测：大扇形交换成果被均值松弛摧毁，+28551）。
-     */
-    private static double medianAllNeighborsY(String uid, Map<String, List<String>> consumers,
-                                              Map<String, List<String>> producers, Map<String, Double> ys) {
-        List<Double> neighbors = new ArrayList<>();
-        for (String other : consumers.getOrDefault(uid, List.of())) {
-            neighbors.add(yOf(ys, other));
-        }
-        for (String other : producers.getOrDefault(uid, List.of())) {
-            neighbors.add(yOf(ys, other));
-        }
-        return neighbors.isEmpty() ? Double.NaN : median(neighbors);
-    }
-
-    /** 中位数（偶数个取中间两值均值——L1 平台期内任何值都最优，取均值保证唯一）。会原地排序。 */
-    private static double median(List<Double> values) {
-        values.sort(Comparator.naturalOrder());
-        int mid = values.size() / 2;
-        return values.size() % 2 == 1
-                ? values.get(mid)
-                : (values.get(mid - 1) + values.get(mid)) / 2;
-    }
-
-    /** 读取节点 y（悬空线端点按 0 计—— dangling 由 GraphValidator 报告，布局保持全函数）。 */
-
-    private static double yOf(Map<String, Double> ys, String uid) {
-        return ys.getOrDefault(uid, 0.0);
-    }
-
-    /** 读取节点估计高度（缺省按标准高 62）。 */
-    private static float heightOf(Map<String, Float> heights, String uid) {
-        return heights.getOrDefault(uid, UNKNOWN_NODE_HEIGHT);
     }
 
     /**
@@ -1352,7 +743,7 @@ public final class GraphLayout {
     }
 
     /** 未知类型节点的等效高度（= const.number 实测高 62，配合 {@link #NODE_MARGIN} 保持默认行距 110）。 */
-    private static final float UNKNOWN_NODE_HEIGHT = 62f;
+    static final float UNKNOWN_NODE_HEIGHT = 62f;
     /** variable 节点（变量芯片）实测高 18，估计取 20。 */
     private static final float VARIABLE_NODE_HEIGHT = 20f;
     /** 内嵌资产预览的 ref 节点（ref.texture/ref.geometry，64px 预览）实测高 172，估计取 174。 */
