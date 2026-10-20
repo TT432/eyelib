@@ -35,6 +35,7 @@
 |-------|------|
 | `eyelib` | 项目总索引——概览、Skill 导航、跨域约束 |
 | `eyelib-build` | 构建、测试、环境——Gradle(Stonecutter 多版本) + eyelib-debug MCP 全流程 |
+| `eyelib-release` | 发版——Maven Central（Portal bundle）+ CurseForge（legacy Upload API）三节点发布与验收 |
 | `eyelib-debug` | MCP 调试——启动客户端、/eval 执行代码、渲染诊断 Phase |
 | `eyelib-clientsmoke` | Clientsmoke 客户端烟雾测试 |
 | `bedrock-parity` | 真实 Bedrock addon 对照验证实体、Molang 与材质渲染 |
