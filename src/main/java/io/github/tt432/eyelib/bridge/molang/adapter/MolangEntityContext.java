@@ -1,6 +1,5 @@
 package io.github.tt432.eyelib.bridge.molang.adapter;
 
-import io.github.tt432.eyelib.bridge.molang.ComponentStoreView;
 import io.github.tt432.eyelib.bridge.molang.MolangEntityContextView;
 
 /**

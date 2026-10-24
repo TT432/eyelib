@@ -17,7 +17,6 @@ import org.joml.Vector4f;
 import org.jspecify.annotations.Nullable;
 
 /** @author TT432 */
-@org.jspecify.annotations.NullMarked
 final class BbModelCodecs {
     private BbModelCodecs() {
     }

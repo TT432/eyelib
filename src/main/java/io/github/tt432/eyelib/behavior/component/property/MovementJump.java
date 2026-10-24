@@ -12,7 +12,6 @@ import java.util.List;
  * @param jump_delay 默认 [0.0f, 0.0f]
  * @author TT432
  */
-@org.jspecify.annotations.NullMarked
 public record MovementJump(
         List<Float> jump_delay
 ) implements Component {

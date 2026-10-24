@@ -9,7 +9,6 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
  * @param value push-through value (default 0.0f)
  * @author TT432
  */
-@org.jspecify.annotations.NullMarked
 public record PushThrough(float value) implements io.github.tt432.eyelib.behavior.component.Component {
     public static final Codec<PushThrough> CODEC = RecordCodecBuilder.create(inst -> inst.group(
             Codec.FLOAT.optionalFieldOf("value", 0.0f).forGetter(PushThrough::value)

@@ -3,213 +3,32 @@ package io.github.tt432.eyelib.snowstorm.io;
 import io.github.tt432.eyelib.snowstorm.editor.EditorRuntime;
 import io.github.tt432.eyelib.snowstorm.event.EditorEvent;
 import io.github.tt432.eyelib.snowstorm.gradient.Gradient;
-import io.github.tt432.eyelib.snowstorm.input.Input;
 import io.github.tt432.eyelib.snowstorm.input.InputStructure;
 import io.github.tt432.eyelib.snowstorm.util.SnowstormUtil;
 import io.github.tt432.eyelib.wintersky.Config;
 import io.github.tt432.eyelib.wintersky.JsonValues;
 import io.github.tt432.eyelib.wintersky.molang.JsSemantics;
 import io.github.tt432.eyelib.wintersky.three.MathUtils;
-import org.jspecify.annotations.Nullable;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
+import static io.github.tt432.eyelib.snowstorm.io.SnowstormExportSupport.*;
+
 /**
  * export.js 逐字移植：generateFile() 从 {@link EditorRuntime#Config} + {@link InputStructure#Data}
  * 重建基岩版 particle JSON（format_version 1.10.0）。
  *
- * <p>JS undefined 在返回结构中以 null 表示；返回前 {@link #clean} 递归删除 Map 中 null 值条目
+ * <p>JS undefined 在返回结构中以 null 表示；返回前 {@link SnowstormExportSupport#clean} 递归删除 Map 中 null 值条目
  * （JSON.stringify 丢弃 undefined 属性），List 中的 null 保留（JS 数组空洞 → JSON null）。
  * 浏览器侧的 downloadFile/IO.export/getName 文件落盘不移植（归 MC 侧，ADR-0036 D6）。
  */
 public final class SnowstormExport {
 
     private SnowstormExport() {
-    }
-
-    // ==================================================================
-    // Config 访问（configGet 共用 input.Input 的公开反射助手 + Config.types 元数据）
-    // ==================================================================
-
-    /** JS {@code Config.constructor.types[key]} 的元数据（type.type / type.array）。 */
-    private record TypeInfo(String type, boolean array) {
-    }
-
-    private static @Nullable Map<?, ?> typesMap;
-
-    /** JS {@code Config[key]}（统一走 {@link Input#configGet}）。 */
-    private static @Nullable Object configGet(Config config, String key) {
-        return Input.configGet(config, key);
-    }
-
-    // ---- InputStructure 骨架访问（字面量键；缺失即 NPE ≈ JS 读 undefined 属性后崩溃） ----
-
-    private static InputStructure.Group group(String subject, String group) {
-        return java.util.Objects.requireNonNull(java.util.Objects.requireNonNull(
-                InputStructure.Data.get(subject)).group(group));
-    }
-
-    private static Input input(String subject, String group, String key) {
-        return java.util.Objects.requireNonNull(group(subject, group).inputs.get(key));
-    }
-
-    /** JS {@code Config.constructor.types[key]}（Config.TYPES/Entry 为包私有，反射读取）。 */
-    private static @Nullable TypeInfo typeInfo(String key) {
-        try {
-            Map<?, ?> types = typesMap;
-            if (types == null) {
-                Field f = Config.class.getDeclaredField("TYPES");
-                f.setAccessible(true);
-                types = (Map<?, ?>) f.get(null);
-                typesMap = types;
-            }
-            Object entry = types.get(key);
-            if (entry == null) return null;
-            Method kind = entry.getClass().getDeclaredMethod("kind");
-            kind.setAccessible(true);
-            Method array = entry.getClass().getDeclaredMethod("array");
-            array.setAccessible(true);
-            String kindName = ((Enum<?>) kind.invoke(entry)).name().toLowerCase(Locale.ROOT);
-            return new TypeInfo(kindName, (Boolean) array.invoke(entry));
-        } catch (ReflectiveOperationException | SecurityException e) {
-            return null;
-        }
-    }
-
-    // ==================================================================
-    // processValue / getValue
-    // ==================================================================
-
-    /** export.js processValue(v, type)；{@code jsType} 为 {@code 'molang'/'number'/'string'/...}。 */
-    private static @Nullable Object processValue(@Nullable Object v, String jsType) {
-        if ("molang".equals(jsType)) {
-            if (!Double.isNaN(JsSemantics.toNumber(v))) { // JS: !isNaN(v)
-                v = JsonValues.jsParseFloat(v);
-            } else if (v instanceof String s && s.contains("\n")) {
-                v = s.replaceAll("[\\r\\n]+", "");
-            }
-            if (!JsSemantics.truthy(v)) v = 0.0;
-        } else if ("number".equals(jsType) && !(v instanceof Number)) { // JS: typeof v !== 'number'
-            v = orZero(JsonValues.jsParseFloat(v));
-        }
-        return v;
-    }
-
-    /** export.js getValue(key, required)。JS undefined → null。 */
-    private static @Nullable Object getValue(String key, boolean required) {
-        Object value = configGet(EditorRuntime.Config, key);
-        TypeInfo type = typeInfo(key);
-        if (type == null) return null;
-
-        if (type.array()) {
-            List<Object> result = new ArrayList<>();
-            // JS: for (var num of value) —— value 非数组则 JS TypeError；requireNonNull 等价
-            for (Object num : java.util.Objects.requireNonNull(JsonValues.asList(value))) {
-                Object processed = processValue(num, type.type());
-                if ("string".equals(type.type()) && processed instanceof String s && s.contains("\n")) {
-                    // JS: value.split(/\s*\n+\s*/g).filter(line => line.length)
-                    for (String line : s.split("\\s*\\n+\\s*")) {
-                        if (!line.isEmpty()) result.add(line);
-                    }
-                } else {
-                    result.add(processed);
-                }
-            }
-            // JS quirk as-is：无 truthy 元素且非 required → undefined（空数组也是 undefined）
-            if (result.stream().noneMatch(JsSemantics::truthy) && !required) return null;
-            return result;
-        } else {
-            Object result = processValue(value, type.type());
-            if (!JsSemantics.truthy(result) && !required) return null;
-            return result;
-        }
-    }
-
-    /** JS {@code x || 0}（NaN/0 → 0）。 */
-    private static double orZero(double v) {
-        return (v == 0 || Double.isNaN(v)) ? 0 : v;
-    }
-
-    // ==================================================================
-    // 事件格式化
-    // ==================================================================
-
-    /** export.js formatEventList。 */
-    private static @Nullable Object formatEventList(@Nullable List<Object> list) {
-        if (list == null) return null;
-        if (list.size() == 1) return list.get(0);
-        if (list.size() > 1) return list;
-        return null;
-    }
-
-    /** export.js formatEventTimeline。 */
-    private static @Nullable Map<String, Object> formatEventTimeline(@Nullable Map<String, Object> source) {
-        boolean hasData = false;
-        Map<String, Object> copy = new LinkedHashMap<>();
-        if (source != null) {
-            for (Map.Entry<String, Object> e : source.entrySet()) {
-                Object formatted = formatEventList(JsonValues.asList(e.getValue()));
-                copy.put(e.getKey(), formatted);
-                if (JsSemantics.truthy(formatted)) hasData = true;
-            }
-        }
-        return hasData ? copy : null;
-    }
-
-    /** export.js formatEventTimelineLooping。 */
-    private static @Nullable List<Object> formatEventTimelineLooping(@Nullable List<Object> source) {
-        if (source == null) return null;
-        List<Object> copyList = new ArrayList<>();
-        for (Object o : source) {
-            Map<String, Object> entry = JsonValues.asMap(o);
-            if (entry == null) continue;
-            Map<String, Object> copy = new LinkedHashMap<>();
-            copy.put("distance", entry.get("distance"));
-            copy.put("effects", formatEventList(JsonValues.asList(entry.get("effects"))));
-            copyList.add(copy);
-        }
-        return copyList.isEmpty() ? null : copyList;
-    }
-
-    /** export.js cleanEvent（作用于 toJson() 产出的全新 Map 树，等价 JS 的 JSON 深拷贝后清理）。 */
-    private static @Nullable Map<String, Object> cleanEvent(@Nullable Map<String, Object> subpart) {
-        if (subpart == null) return null;
-        if (subpart.get("randomize") instanceof List<?> randomize) {
-            for (Object o : randomize) {
-                Map<String, Object> option = JsonValues.asMap(o);
-                if (option != null) {
-                    option.remove("uuid");
-                    cleanEvent(option);
-                }
-            }
-        }
-        if (subpart.get("sequence") instanceof List<?> sequence) {
-            for (Object o : sequence) {
-                Map<String, Object> option = JsonValues.asMap(o);
-                if (option != null) {
-                    option.remove("uuid");
-                    cleanEvent(option);
-                }
-            }
-        }
-        Map<String, Object> particleEffect = JsonValues.asMap(subpart.get("particle_effect"));
-        if (particleEffect != null) {
-            Object expr = particleEffect.get("pre_effect_expression");
-            if (!JsSemantics.truthy(expr)) {
-                particleEffect.remove("pre_effect_expression");
-            } else if (expr instanceof String s) {
-                s = s.trim();
-                if (!s.endsWith(";")) s = s + ";";
-                particleEffect.put("pre_effect_expression", s);
-            }
-        }
-        return subpart;
     }
 
     // ==================================================================
@@ -234,9 +53,41 @@ public final class SnowstormExport {
         basicRenderParameters.put("texture",
                 JsSemantics.truthy(texturePath) ? texturePath : "textures/blocks/wool_colored_white");
 
+        putCurves(particleEffect);
+        putEvents(particleEffect);
+
+        Map<String, Object> comps = new LinkedHashMap<>();
+        particleEffect.put("components", comps);
+
+        //Emitter Components
+        putEmitterInitialization(comps);
+        putEmitterLocalSpace(comps);
+        putEmitterRate(comps);
+        putEmitterLifetime(comps);
+        putEmitterLifetimeEvents(comps);
+        putEmitterShape(comps);
+
+        //Particle Components
+        putParticleInitialization(comps);
+        putParticleLifetime(comps);
+        putParticleLifetimeEvents(comps);
+        putParticleInitialSpinAndSpeed(comps);
+        putParticleMotion(comps);
+        putParticleRotation(comps);
+        putParticleKillPlane(comps);
+        putParticleAppearance(comps);
+        putParticleCollision(comps);
+        putParticleLighting(comps);
+        putParticleTinting(comps);
+
+        clean(file);
+        return file;
+    }
+
+    private static void putCurves(Map<String, Object> particleEffect) {
         //Curves
         Map<String, Object> jsonCurves = new LinkedHashMap<>();
-        for (Map.Entry<String, Config.Curve> e : Config.curves.entrySet()) {
+        for (Map.Entry<String, Config.Curve> e : EditorRuntime.Config.curves.entrySet()) {
             Config.Curve curve = e.getValue();
             Map<String, Object> jsonCurve = new LinkedHashMap<>();
             jsonCurve.put("type", processValue(curve.mode, "string"));
@@ -268,7 +119,9 @@ public final class SnowstormExport {
         if (!jsonCurves.isEmpty()) {
             particleEffect.put("curves", jsonCurves);
         }
+    }
 
+    private static void putEvents(Map<String, Object> particleEffect) {
         //Events
         List<Object> editorEvents = group("events", "events").events;
         if (!editorEvents.isEmpty()) {
@@ -280,11 +133,9 @@ public final class SnowstormExport {
                 events.put(entry.id, cleanEvent(entry.event.toJson()));
             }
         }
+    }
 
-        Map<String, Object> comps = new LinkedHashMap<>();
-        particleEffect.put("components", comps);
-
-        //Emitter Components
+    private static void putEmitterInitialization(Map<String, Object> comps) {
         Object creationVars = getValue("variables_creation_vars", false);
         if (JsSemantics.truthy(creationVars)) {
             String s = join(JsonValues.asList(creationVars), ";") + ";";
@@ -308,6 +159,9 @@ public final class SnowstormExport {
                 comp.put("per_update_expression", s);
             }
         }
+    }
+
+    private static void putEmitterLocalSpace(Map<String, Object> comps) {
         Object localPosition = getValue("space_local_position", true);
         if (JsSemantics.truthy(localPosition)) {
             Map<String, Object> comp = new LinkedHashMap<>();
@@ -317,6 +171,9 @@ public final class SnowstormExport {
             comp.put("velocity", JsSemantics.truthy(localVelocity) ? localVelocity : null);
             comps.put("minecraft:emitter_local_space", comp);
         }
+    }
+
+    private static void putEmitterRate(Map<String, Object> comps) {
         //Rate
         Object mode = getValue("emitter_rate_mode", false);
         if ("instant".equals(mode)) {
@@ -333,8 +190,11 @@ public final class SnowstormExport {
             comp.put("max_particles", getValue("emitter_rate_maximum", false));
             comps.put("minecraft:emitter_rate_manual", comp);
         }
+    }
+
+    private static void putEmitterLifetime(Map<String, Object> comps) {
         //Lifetime
-        mode = getValue("emitter_lifetime_mode", false);
+        Object mode = getValue("emitter_lifetime_mode", false);
         if (mode != null) {
             if ("looping".equals(mode)) {
                 Map<String, Object> comp = new LinkedHashMap<>();
@@ -352,14 +212,17 @@ public final class SnowstormExport {
                 comps.put("minecraft:emitter_lifetime_expression", comp);
             }
         }
+    }
+
+    private static void putEmitterLifetimeEvents(Map<String, Object> comps) {
         //Emitter Events
         Map<String, Object> emitterEvents = new LinkedHashMap<>();
-        emitterEvents.put("creation_event", formatEventList(new ArrayList<>(Config.emitter_events_creation)));
-        emitterEvents.put("expiration_event", formatEventList(new ArrayList<>(Config.emitter_events_expiration)));
-        emitterEvents.put("timeline", formatEventTimeline(Config.emitter_events_timeline));
-        emitterEvents.put("travel_distance_events", formatEventTimeline(Config.emitter_events_distance));
+        emitterEvents.put("creation_event", formatEventList(new ArrayList<>(EditorRuntime.Config.emitter_events_creation)));
+        emitterEvents.put("expiration_event", formatEventList(new ArrayList<>(EditorRuntime.Config.emitter_events_expiration)));
+        emitterEvents.put("timeline", formatEventTimeline(EditorRuntime.Config.emitter_events_timeline));
+        emitterEvents.put("travel_distance_events", formatEventTimeline(EditorRuntime.Config.emitter_events_distance));
         emitterEvents.put("looping_travel_distance_events",
-                formatEventTimelineLooping(new ArrayList<>(Config.emitter_events_distance_looping)));
+                formatEventTimelineLooping(new ArrayList<>(EditorRuntime.Config.emitter_events_distance_looping)));
         if (JsSemantics.truthy(emitterEvents.get("creation_event"))
                 || JsSemantics.truthy(emitterEvents.get("expiration_event"))
                 || JsSemantics.truthy(emitterEvents.get("timeline"))
@@ -367,8 +230,11 @@ public final class SnowstormExport {
                 || JsSemantics.truthy(emitterEvents.get("looping_travel_distance_events"))) {
             comps.put("minecraft:emitter_lifetime_events", emitterEvents);
         }
+    }
+
+    private static void putEmitterShape(Map<String, Object> comps) {
         //Direction
-        mode = getValue("particle_direction_mode", false);
+        Object mode = getValue("particle_direction_mode", false);
         Object direction = null;
         if (mode != null) {
             if ("inwards".equals(mode)) {
@@ -435,9 +301,9 @@ public final class SnowstormExport {
                 comps.put("minecraft:emitter_shape_entity_aabb", comp);
             }
         }
+    }
 
-        //Particle Components
-
+    private static void putParticleInitialization(Map<String, Object> comps) {
         // Variables
         Object particleUpdate = getValue("particle_update_expression", false);
         if (JsSemantics.truthy(particleUpdate)) {
@@ -462,7 +328,9 @@ public final class SnowstormExport {
                 comp.put("per_render_expression", s);
             }
         }
+    }
 
+    private static void putParticleLifetime(Map<String, Object> comps) {
         //Lifetime
         Map<String, Object> lifetimeExpression = new LinkedHashMap<>();
         lifetimeExpression.put("max_lifetime", getValue("particle_lifetime_max_lifetime", false));
@@ -476,18 +344,22 @@ public final class SnowstormExport {
         if (JsSemantics.truthy(expireOutside)) {
             comps.put("minecraft:particle_expire_if_not_in_blocks", expireOutside);
         }
+    }
 
+    private static void putParticleLifetimeEvents(Map<String, Object> comps) {
         //Particle Events
         Map<String, Object> particleEvents = new LinkedHashMap<>();
-        particleEvents.put("creation_event", formatEventList(new ArrayList<>(Config.particle_events_creation)));
-        particleEvents.put("expiration_event", formatEventList(new ArrayList<>(Config.particle_events_expiration)));
-        particleEvents.put("timeline", formatEventTimeline(Config.particle_events_timeline));
+        particleEvents.put("creation_event", formatEventList(new ArrayList<>(EditorRuntime.Config.particle_events_creation)));
+        particleEvents.put("expiration_event", formatEventList(new ArrayList<>(EditorRuntime.Config.particle_events_expiration)));
+        particleEvents.put("timeline", formatEventTimeline(EditorRuntime.Config.particle_events_timeline));
         if (JsSemantics.truthy(particleEvents.get("creation_event"))
                 || JsSemantics.truthy(particleEvents.get("expiration_event"))
                 || JsSemantics.truthy(particleEvents.get("timeline"))) {
             comps.put("minecraft:particle_lifetime_events", particleEvents);
         }
+    }
 
+    private static void putParticleInitialSpinAndSpeed(Map<String, Object> comps) {
         //Spin
         Object initRot = getValue("particle_rotation_initial_rotation", false);
         Object initRotRate = getValue("particle_rotation_rotation_rate", false);
@@ -498,9 +370,11 @@ public final class SnowstormExport {
             comps.put("minecraft:particle_initial_spin", comp);
         }
         comps.put("minecraft:particle_initial_speed", getValue("particle_motion_linear_speed", false));
+    }
 
+    private static void putParticleMotion(Map<String, Object> comps) {
         //Motion
-        mode = getValue("particle_motion_mode", false);
+        Object mode = getValue("particle_motion_mode", false);
         if (mode != null) {
             if ("dynamic".equals(mode)) {
                 Map<String, Object> comp = new LinkedHashMap<>();
@@ -517,9 +391,11 @@ public final class SnowstormExport {
                 comps.put("minecraft:particle_motion_parametric", comp);
             }
         }
+    }
 
+    private static void putParticleRotation(Map<String, Object> comps) {
         //Rotation
-        mode = getValue("particle_rotation_mode", false);
+        Object mode = getValue("particle_rotation_mode", false);
         if (mode != null) {
             if ("dynamic".equals(mode)) {
                 Object rotationAcceleration = getValue("particle_rotation_rotation_acceleration", false);
@@ -545,10 +421,14 @@ public final class SnowstormExport {
                 }
             }
         }
+    }
 
+    private static void putParticleKillPlane(Map<String, Object> comps) {
         //Kill Plane
         comps.put("minecraft:particle_kill_plane", getValue("particle_lifetime_kill_plane", false));
+    }
 
+    private static void putParticleAppearance(Map<String, Object> comps) {
         //Texture
         // JS: facing_camera_mode 为 undefined 时 .substring 抛 TypeError；requireNonNull 等价
         String facingCameraMode = (String) java.util.Objects.requireNonNull(
@@ -573,8 +453,8 @@ public final class SnowstormExport {
         if (!"full".equals(getValue("particle_texture_mode", false))) {
             Map<String, Object> uv = new LinkedHashMap<>();
             texComp.put("uv", uv);
-            double textureWidth = orZero(jsParseInt(listGet(Config.particle_texture_size, 0)));
-            double textureHeight = orZero(jsParseInt(listGet(Config.particle_texture_size, 1)));
+            double textureWidth = orZero(jsParseInt(listGet(EditorRuntime.Config.particle_texture_size, 0)));
+            double textureHeight = orZero(jsParseInt(listGet(EditorRuntime.Config.particle_texture_size, 1)));
             uv.put("texture_width", textureWidth);
             uv.put("texture_height", textureHeight);
             if ("static".equals(getValue("particle_texture_mode", false))) {
@@ -594,6 +474,9 @@ public final class SnowstormExport {
                 flipbook.put("loop", getValue("particle_texture_loop", false));
             }
         }
+    }
+
+    private static void putParticleCollision(Map<String, Object> comps) {
         //Collision
         if (JsSemantics.truthy(getValue("particle_collision_toggle", false))) {
             Map<String, Object> comp = new LinkedHashMap<>();
@@ -605,9 +488,15 @@ public final class SnowstormExport {
             comp.put("events", getValue("particle_collision_events", false));
             comps.put("minecraft:particle_motion_collision", comp);
         }
+    }
+
+    private static void putParticleLighting(Map<String, Object> comps) {
         if (JsSemantics.truthy(getValue("particle_color_light", false))) {
             comps.put("minecraft:particle_appearance_lighting", new LinkedHashMap<>());
         }
+    }
+
+    private static void putParticleTinting(Map<String, Object> comps) {
         Object colorMode = getValue("particle_color_mode", false);
         if ("static".equals(colorMode)) {
             Object staticColor = getValue("particle_color_static", false);
@@ -658,9 +547,6 @@ public final class SnowstormExport {
                 comps.put("minecraft:particle_appearance_tinting", comp);
             }
         }
-
-        clean(file);
-        return file;
     }
 
     /** export.js getName()（JS 内部函数；公开给 MC 侧落盘命名用）。 */
@@ -670,63 +556,5 @@ public final class SnowstormExport {
             return JsSemantics.toJsString(name).replaceFirst("^\\w+:", "");
         }
         return "particles";
-    }
-
-    // ==================================================================
-    // 内部助手
-    // ==================================================================
-
-    /** JS Array.prototype.join：元素经 String() 转换（数字 1→"1"）。 */
-    private static String join(@Nullable List<Object> list, String separator) {
-        if (list == null) return "";
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < list.size(); i++) {
-            if (i > 0) sb.append(separator);
-            sb.append(JsSemantics.toJsString(list.get(i)));
-        }
-        return sb.toString();
-    }
-
-    private static @Nullable Object listGet(List<Object> list, int i) {
-        return i < list.size() ? list.get(i) : null;
-    }
-
-    /**
-     * JS parseInt（数字截断取整 / 字符串解析整数前缀，失败 NaN）。
-     * JsonValues 无 jsParseInt，本函数为 export 专用（见偏离记录）。
-     */
-    private static double jsParseInt(@Nullable Object v) {
-        if (v instanceof Number n) {
-            double d = n.doubleValue();
-            if (Double.isNaN(d) || Double.isInfinite(d)) return Double.NaN;
-            return d < 0 ? Math.ceil(d) : Math.floor(d);
-        }
-        if (!(v instanceof String s)) return Double.NaN;
-        s = s.stripLeading();
-        int i = 0;
-        if (i < s.length() && (s.charAt(i) == '+' || s.charAt(i) == '-')) i++;
-        int start = i;
-        while (i < s.length() && Character.isDigit(s.charAt(i))) i++;
-        if (i == start) return Double.NaN;
-        try {
-            return Double.parseDouble(s.substring(0, i));
-        } catch (NumberFormatException e) {
-            return Double.NaN;
-        }
-    }
-
-    /**
-     * JSON.stringify 的 undefined 语义：递归删除 Map 中 null 值条目；List 中的 null 保留
-     * （JS 数组空洞序列化为 null）。
-     */
-    @SuppressWarnings("unchecked")
-    private static void clean(@Nullable Object node) {
-        if (node instanceof Map<?, ?>) {
-            Map<String, Object> map = (Map<String, Object>) node;
-            map.values().removeIf(java.util.Objects::isNull);
-            for (Object v : map.values()) clean(v);
-        } else if (node instanceof List<?> list) {
-            for (Object v : list) clean(v);
-        }
     }
 }

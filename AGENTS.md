@@ -14,9 +14,11 @@
   docs/decisions/0002-module-boundaries.md:。
 - **构建模型**: 单 Gradle project(:docs/decisions/0014-flat-merge.md:),通过 :Stonecutter: `centralScript` 同时维护多版本
   MC(注册 `1.20.1`(legacyforge,active)、`1.21.1`(neoforge)、`26.1.2` 三节点,详见 :
-  docs/decisions/0015-stonecutter-multi-version.md:)。`clientsmoke/` 是 composite build(烟雾测试框架),不属于主 project。
+  docs/decisions/0015-stonecutter-multi-version.md:)。`clientsmoke/` 是独立 Stonecutter 子模块(烟雾测试框架),通过 mavenLocal 产物消费,不属于主 project(无 `includeBuild`,原因见 `settings.gradle` 注释)。
 - **源码布局**: 全部源码在 `src/main/java/io/github/tt432/eyelib/<module>/`,包边界(`io.github.tt432.eyelib.<module>`)
-  定义真实架构。模块包不得依赖 root 编排包(`io.github.tt432.eyelib.client`、`io.github.tt432.eyelib.common`)。
+  定义真实架构。**Domain 层模块包**(importer/behavior/util/model/molang/material/animation/particle/wintersky/snowstorm)
+  不得依赖编排层(`client`、`common`、`network`、`capability`、`track`、`bridge`、`mixin`、`smoke`、`debug`)；分层谓词与例外以
+  `src/test/java/io/github/tt432/eyelib/architecture/ArchitectureTest.java` 为准(ADR-0016/ADR-0018)。
 - **模块清单**: :MODULES.md: 由 `:generateModulesMd` 从 `src/main/java/io/github/tt432/eyelib/*/package-info.java` *
   *自动生成**,不得手编。
 - **核心模式**: 保留现有的 manager / loader / visitor / codec 模式。
@@ -115,12 +117,12 @@ import org.jspecify.annotations.NullMarked;
 | 代码改动                                                        | 必须同步检查                                                                                                         |
 |-------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------|
 | 新增/删除/重命名包                                                  | 该包 `package-info.java`、`:MODULES.md:`(跑 `:generateModulesMd` 重生成)、`:docs/decisions/0002-module-boundaries.md:` |
-| 新增/删除/重命名顶层模块                                               | `:MODULES.md:`、`:docs/README.md:`、AGENTS.md Repository Shape                                                   |
+| 新增/删除/重命名顶层模块                                               | `:MODULES.md:`、`:docs/README.md:`、AGENTS.md「仓库结构」                                                        |
 | 新增 ADR                                                      | `:docs/README.md:` ADR 索引、被修订的旧 ADR 头部加 `amended/superseded by` 标注                                             |
-| 改 `build.gradle` 依赖图 / `settings.gradle` / Stonecutter node | AGENTS.md Tooling Restrictions、`:docs/README.md:`(若结构变)                                                        |
+| 改 `build.gradle` 依赖图 / `settings.gradle` / Stonecutter node | AGENTS.md「工具限制」、`:docs/README.md:`(若结构变)                                                                    |
 | Molang 阶段/里程碑/闸门变化                                          | `:docs/molang/ROADMAP.md:`                                                                                     |
 | 删除/重命名文件被 docs 引用                                           | grep 全 `docs/` + `AGENTS.md` + `MODULES.md` + 所有 `SKILL.md`                                                    |
-| 新增/删除 Skill                                                 | `:docs/README.md:` Skill 索引、AGENTS.md Skill Usage                                                              |
+| 新增/删除 Skill                                                 | `:docs/README.md:` Skill 索引、AGENTS.md「Skill 使用」                                                              |
 
 提交前自检:
 
@@ -146,7 +148,7 @@ import org.jspecify.annotations.NullMarked;
 - **游戏重启**: 通过 debug HTTP `/eval` → `minecraft.stop()` 关闭运行中的客户端,切勿从 shell `kill` java 进程。
 - **游戏启动**: `mcmcp_launch`（读取项目根 `.mcmcp`，经 `AI_DEBUG_PORT` 环境变量向客户端传调试端口，默认 25999）。启动前检查该端口是否空闲；若被占用，先 `mcmcp_close` 关闭旧实例。调试 HTTP 服务器由 clientsmoke mod 内的 AIDebugServer 提供，仅在配置 `ai_debug_port` 时开启。
 - **自动化禁止抢前台**（用户禁令 2026-09-26）：任何桌面自动化不得 SetCursorPos/mouse_event 移动用户真实鼠标、不得抢前台焦点。允许的非侵入路径：PostMessage/WM_* 消息投递、UIA InvokePattern、直接运行程序生成的命令行（如 PCL 的 LatestLaunch.bat）。游戏窗口弹出属用户请求行为的固有结果，但自动化过程不得额外抢占。
-- **远端提交标准流程**（2026-10-13 实证）：`master` 受 GitHub 保护规则，要求 3 个必需状态检查（Codacy Static Code Analysis + compile 1.20.1 / 1.21.1 / 26.1.2），**禁止直推**；仓库未开启 GitHub auto-merge（`enablePullRequestAutoMerge` 拒绝）。标准流程：
+- **远端提交标准流程**（2026-10-13 实证）：`master` 受 GitHub 保护规则，要求 3 个必需状态检查（Codacy Static Code Analysis + compile 1.20.1 / 1.21.1 / 26.1.2），**禁止直推**；仓库未开启 GitHub auto-merge（`enablePullRequestAutoMerge` 拒绝）。**Codacy Static Code Analysis 失败可直接忽略**（用户决策 2026-10-14，PR #30）：Codacy 告警不阻断合并，compile 三节点全绿即可继续。标准流程：
     1. 本地在 `master` 完成提交后 `git checkout -b <type>/<topic>` 建分支（避免直推被拒后返工）
     2. `git push -u origin <branch>` → `gh pr create --base master`
     3. `gh pr checks <N> --watch --interval 30` 等待检查（全绿继续；有失败停下报告，不合并）
@@ -182,6 +184,10 @@ import org.jspecify.annotations.NullMarked;
    null safety，不通过说明包边界/可空性出了问题，**禁止用加注解的方式静默消除报错**，先查根因。
 3. **单元测试**: `mcmcp_test`(等同 `:1.20.1:test`)。跨版本改动时按各 node 分别跑(`:1.20.1:test`、
    `:1.21.1:test`)。测试失败先 `git stash` 复现，排除预存失败(见 `eyelib` SKILL 跨域约束)。
+   - 其中包含 **ArchUnit 架构闸门**：基线随仓库提交在 `archunit_store/<node>/`，`test` 任务比较运行前后的基线行数，
+     **只允许缩小**；任何规则文件增长即失败（防止 `FreezingArchRule` 把新违规静默记为已知）。
+     确属有意变更时用 `gradlew :<node>:test --rerun -ParchunitRefreeze` 重构基线，并在提交说明里写原因。
+     基线重构必须用 `--rerun` 强制真实执行——`test` 命中 build cache 时任务动作（含该闸门）不会运行。
 4. **MODULES.md**: 仅在包/模块结构变更时执行 `:1.20.1:generateModulesMd`(bash `gradlew :1.20.1:generateModulesMd`)
    重生成，**禁止手编**，产物需随改动一起提交。
 5. **文档同步**: 见上文"文档同步规则"，grep 全仓库验证无旧路径残留、所有引用路径可解析。

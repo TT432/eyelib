@@ -5,7 +5,6 @@ import io.github.tt432.eyelib.importer.addon.BrSpawnRule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 

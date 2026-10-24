@@ -1,4 +1,4 @@
-﻿# Query Variant Registry Draft
+# Query Variant Registry Draft
 
 ## Purpose
 - This document refines the query dispatch part of `molang-ast-and-semantics-draft.md`.

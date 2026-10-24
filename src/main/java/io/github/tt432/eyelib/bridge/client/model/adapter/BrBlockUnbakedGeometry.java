@@ -1,17 +1,13 @@
-package io.github.tt432.eyelib.bridge.client.model;
+package io.github.tt432.eyelib.bridge.client.model.adapter;
 
 //? if <26.1 {
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.mojang.blaze3d.vertex.PoseStack;
-import io.github.tt432.eyelib.animation.ModelRuntimeData;
-import io.github.tt432.eyelib.client.render.ModelRenderer;
-import io.github.tt432.eyelib.client.render.RenderParams;
-import io.github.tt432.eyelib.client.render.visitor.ModelRenderVisitorList;
-import io.github.tt432.eyelib.client.render.visitor.ModelVisitor;
+import io.github.tt432.eyelib.bridge.client.model.ModelBakeSink;
+import io.github.tt432.eyelib.bridge.client.model.ModelBakeTraversal;
 import io.github.tt432.eyelib.importer.model.importer.BedrockGeometryImporter;
 import io.github.tt432.eyelib.model.Model;
-import io.github.tt432.eyelib.model.ModelVisitContext;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.block.model.ItemOverrides;
 import net.minecraft.client.renderer.texture.OverlayTexture;
@@ -52,7 +48,7 @@ import java.util.function.Function;
  * 把 eyelib Bedrock 模型烘焙为 vanilla BakedModel（区块网格 / 物品渲染共用）。
  *
  * <p>坐标约定：importer 把 Blockbench/Bedrock 的 x 取反，模型空间为 x∈[-1,0]、
- * y∈[0,h]、z∈[0,1] 块单位；{@link ModelVisitor#visitPreModel} 绕原点转 Y180°
+ * y∈[0,h]、z∈[0,1] 块单位；遍历侧的 {@code ModelVisitor.visitPreModel} 绕原点转 Y180°
  * （x,z 同时取反），故预置 {@code modelState · translate(0,0,1)}，组合后顶点落在
  * vanilla 方块空间 [0,1]³，朝向与实体/attachable 渲染一致。</p>
  *
@@ -95,8 +91,7 @@ public class BrBlockUnbakedGeometry extends SimpleUnbakedGeometry<BrBlockUnbaked
         poseStack.last().pose().set(new Matrix4f(modelTransform.getRotation().getMatrix()).translate(0, 0, 1));
         poseStack.last().normal().set(new Matrix3f(modelTransform.getRotation().getNormalMatrix()));
 
-        ModelRenderer.render(RenderParams.noRender(poseStack), model, ModelRuntimeData.EMPTY,
-                new ModelRenderVisitorList(List.of(new BakeVisitor(modelBuilder, sprite))));
+        ModelBakeTraversal.get().traverse(model, poseStack, new BakeVisitor(modelBuilder, sprite, poseStack));
 
         poseStack.popPose();
     }
@@ -134,23 +129,24 @@ public class BrBlockUnbakedGeometry extends SimpleUnbakedGeometry<BrBlockUnbaked
      * NeoForge 的 {@link QuadBakingVertexConsumer} 不做图集重映射且需手动 bakeQuad；
      * Forge（1.20.1）版本由构造器传入的 consumer 在第 4 顶点自动导出。
      */
-    private static final class BakeVisitor extends ModelVisitor {
+    private static final class BakeVisitor implements ModelBakeSink {
         private final IModelBuilder<?> modelBuilder;
         private final TextureAtlasSprite sprite;
-        @SuppressWarnings("NullAway") // ModelVisitor 契约：visitFace 先于 visitVertex 初始化 buffer
+        private final PoseStack poseStack;
+        @SuppressWarnings("NullAway") // 契约：face(...) 先于 vertex(...) 初始化 buffer
         private QuadBakingVertexConsumer buffer;
         //? if >=1.20.6
         private int vertexCount;
 
-        BakeVisitor(IModelBuilder<?> modelBuilder, TextureAtlasSprite sprite) {
+        BakeVisitor(IModelBuilder<?> modelBuilder, TextureAtlasSprite sprite, PoseStack poseStack) {
             this.modelBuilder = modelBuilder;
             this.sprite = sprite;
+            this.poseStack = poseStack;
         }
 
         @Override
-        public void visitFace(RenderParams renderParams, ModelVisitContext context, Model.Cube cube,
-                              List<Vector3fc> vertexes, List<Vector2fc> uvs, Vector3fc normal) {
-            PoseStack.Pose last = renderParams.poseStack().last();
+        public void face(List<Vector3fc> vertexes, List<Vector2fc> uvs, Vector3fc normal) {
+            PoseStack.Pose last = poseStack.last();
             Vector3f n = last.normal().transform(new Vector3f(normal));
 
             //? if <1.20.6 {
@@ -166,9 +162,8 @@ public class BrBlockUnbakedGeometry extends SimpleUnbakedGeometry<BrBlockUnbaked
 
         //? if <1.20.6 {
         @Override
-        public void visitVertex(RenderParams renderParams, ModelVisitContext context, Model.Cube cube,
-                                Vector3fc vertex, Vector2fc uv, Vector3fc normal) {
-            PoseStack.Pose last = renderParams.poseStack().last();
+        public void vertex(Vector3fc vertex, Vector2fc uv, Vector3fc normal) {
+            PoseStack.Pose last = poseStack.last();
             Vector3f p = last.pose().transformPosition(vertex, new Vector3f());
             Vector3f n = last.normal().transform(new Vector3f(normal));
 
@@ -180,9 +175,8 @@ public class BrBlockUnbakedGeometry extends SimpleUnbakedGeometry<BrBlockUnbaked
         }
         //?} else {
         @Override
-        public void visitVertex(RenderParams renderParams, ModelVisitContext context, Model.Cube cube,
-                                Vector3fc vertex, Vector2fc uv, Vector3fc normal) {
-            PoseStack.Pose last = renderParams.poseStack().last();
+        public void vertex(Vector3fc vertex, Vector2fc uv, Vector3fc normal) {
+            PoseStack.Pose last = poseStack.last();
             Vector3f p = last.pose().transformPosition(vertex, new Vector3f());
             Vector3f n = last.normal().transform(new Vector3f(normal));
 

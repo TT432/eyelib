@@ -1,4 +1,4 @@
-﻿# Molang AST And Semantics Draft
+# Molang AST And Semantics Draft
 
 ## Purpose
 - This document turns `molang-syntax-baseline.md` into a draft architecture for the next-generation `molang` frontend and semantic core.

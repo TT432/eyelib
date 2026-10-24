@@ -10,7 +10,6 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
  * @param cooldown_after_being_attacked cooldown after being attacked (default 0)
  * @author TT432
  */
-@org.jspecify.annotations.NullMarked
 public record Barter(
         String barter_table,
         int cooldown_after_being_attacked

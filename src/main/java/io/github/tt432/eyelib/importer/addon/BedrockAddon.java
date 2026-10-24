@@ -4,7 +4,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 
 /** @author TT432 */
-@org.jspecify.annotations.NullMarked
 public record BedrockAddon(
         List<BedrockAddonPack> packs,
         List<BedrockAddonWarning> warnings,

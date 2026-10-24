@@ -480,19 +480,12 @@ dependencies {
         implementation(jarJar('io.github.llamalad7:mixinextras-forge:0.5.0'))
     }
 
-//    implementation("maven.modrinth:physicsmod:3.0.20")
-
-//    implementation "org.lwjgl:lwjgl-assimp:3.3.3"
-//    runtimeOnly "org.lwjgl:lwjgl-assimp:3.3.3:natives-windows"
-
     testImplementation platform('org.junit:junit-bom:5.10.2')
     testImplementation 'org.junit.jupiter:junit-jupiter'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
-    testImplementation 'com.h2database:h2:2.4.240'
     testImplementation 'com.tngtech.archunit:archunit:1.4.2'
     testImplementation 'com.tngtech.archunit:archunit-junit5-api:1.4.2'
     testRuntimeOnly 'com.tngtech.archunit:archunit-junit5-engine:1.4.2'
-    testImplementation sourceSets.main.output
 }
 
 if (isLegacyForge) {
@@ -667,13 +660,62 @@ tasks.named('test').configure {
     // Stonecutter centralScript 下 :<version> 子项目的工作目录是 versions/<ver>/，
     // 但源码在 root。测试用相对路径 Path.Of("src/...") 访问 fixture，需回指 root。
     workingDir = rootProject.projectDir
-    // ArchUnit freeze store 需按版本隔离（1.20.1/1.21.1 因 //? 条件化有不同违规集合）
-    systemProperty 'archunit.freeze.store.default.path', "build/archunit_store/${project.name}"
+    // ArchUnit freeze store 需按版本隔离（1.20.1/1.21.1 因 //? 条件化有不同违规集合）。
+    // 基线随仓库提交（archunit_store/<node>/）：放在 build/ 下会被 clean 清掉，干净检出时
+    // ArchUnit 会"新建空基线并把当前违规全部记为已知"，架构闸门在 CI 上永不失败。
+    systemProperty 'archunit.freeze.store.default.path', "archunit_store/${project.name}"
     // 自定义 freeze 匹配器：忽略违规描述中的行号，避免源码编辑导致 baseline 失效。
     // 见 IgnoreLineNumberViolationMatcher。
     systemProperty 'archunit.freeze.lineMatcher', 'io.github.tt432.eyelib.architecture.IgnoreLineNumberViolationMatcher'
     // 版本标记：26.1+ BrRenderState cull 变体需要 custom pipeline（vanilla 缺 nocull Solid RenderType）
     systemProperty 'eyelib.isModern', isModern
+
+    // 冻结只允许"缩小"：FreezingArchRule 在 1.4.2 会无条件重写 store，把新违规静默记为已知
+    // （allowStoreUpdate=false 反而让每条规则抛 StoreUpdateFailedException），因此闸门放在这里——
+    // 测试前后对基线做行数快照，任一规则文件行数增长即失败。
+    def archunitStoreDir = rootProject.file("archunit_store/${project.name}")
+    def archunitSnapshot = rootProject.file("build/archunit_store_snapshot-${project.name}.txt")
+    def archunitNodeName = project.name
+    // 显式重构基线：gradlew :<node>:test --rerun -ParchunitRefreeze
+    def archunitRefreeze = project.hasProperty('archunitRefreeze')
+    doFirst {
+        archunitSnapshot.parentFile.mkdirs()
+        archunitSnapshot.text = archunitStoreDir.listFiles()
+                ?.findAll { it.isFile() }
+                ?.collect { "${it.name}=${it.readLines().size()}" }
+                ?.sort()
+                ?.join("\n") ?: ""
+    }
+    doLast {
+        if (archunitRefreeze) {
+            logger.lifecycle("ArchUnit 基线已按 -ParchunitRefreeze 重构：archunit_store/${archunitNodeName}/（请在评审中说明原因）")
+            return
+        }
+        Map<String, Integer> before = [:]
+        if (archunitSnapshot.exists()) {
+            archunitSnapshot.readLines().each { line ->
+                int sep = line.indexOf('=')
+                if (sep > 0) before[line.substring(0, sep)] = line.substring(sep + 1) as Integer
+            }
+        }
+        List<String> grown = []
+        archunitStoreDir.listFiles()?.findAll { it.isFile() && it.name != 'stored.rules' }?.each { f ->
+            int now = f.readLines().size()
+            Integer old = before[f.name]
+            if (now == 0) return
+            if (old == null) {
+                grown << "${f.name}: 新增 ${now} 条违规".toString()
+            } else if (now > old) {
+                grown << "${f.name}: ${old} -> ${now} 条违规".toString()
+            }
+        }
+        if (!grown.isEmpty()) {
+            throw new GradleException(
+                    "ArchUnit 冻结基线新增违规（禁止自动吸收）：\n  " + grown.join("\n  ") +
+                            "\n若确属有意变更，显式更新 archunit_store/${archunitNodeName}/ 并在评审中说明原因" +
+                            "（重构基线：gradlew :${archunitNodeName}:test --rerun -ParchunitRefreeze）。")
+        }
+    }
 }
 
 // 测试源码不使用任何 annotation processor（无 Lombok/Mixin AP/NullAway）。

@@ -18,7 +18,6 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
  * @param effect_id      effect id (default -1)
  * @author TT432
  */
-@org.jspecify.annotations.NullMarked
 public record MobEffect(
         int cooldown_time,
         int effect_time,

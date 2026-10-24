@@ -17,7 +17,6 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
  * @param allow_invulnerable       whether allow invulnerable (default false)
  * @author TT432
  */
-@org.jspecify.annotations.NullMarked
 public record LookedAt(
         float search_radius,
         boolean set_target,

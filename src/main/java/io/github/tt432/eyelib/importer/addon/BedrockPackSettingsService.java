@@ -19,7 +19,6 @@ import java.util.List;
  *
  * @author TT432
  */
-@org.jspecify.annotations.NullMarked
 public final class BedrockPackSettingsService {
 
     /** 一个启用包的设置目录快照。 */

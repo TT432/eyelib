@@ -24,7 +24,7 @@ Eyelib 客户端调试：用 mcmcp 拓展启动 MC 客户端、/eval 执行 Java
   - NEVER 问题涉及多个模块时不要自己读源码，走委派模式。
   - 子代理 context 只写「目标」+「文件列表（不允许查看其他文件）」+「约束」，不预设注入点；让子代理自己发现，你只提供原材料和目标。
 - When 已知限制:
-  - Bridge 模块 Forge dev 声明要求——根模块必须：1) mods.toml 含完整 [[mods]]；2) 至少一个 @Mod 注解类；3) build.gradle 加 api/modImplementation/jarJar 三行。
+  - Bridge 是**包**不是子项目（ADR-0014 flat-merge）：`io.github.tt432.eyelib.bridge` 与主工程同一 `mods.toml` / 单一 `@Mod` 入口，不要再按子项目加 `mods.toml` / `@Mod` / `api+modImplementation+jarJar` 三行。新增 bridge 代码只需放进 `bridge/<feature>/`（接口）或 `bridge/<feature>/adapter/`（实现）。
   - NEVER Bridge → Domain 单向依赖，禁止反向。
   - Port 共享规则——多 domain 模块共享的 Port 移至 util 包。
   - NEVER PortFriendlyByteBuf 不可用于 StreamCodec——Mojang 的 StreamCodec<T> 强制要求 FriendlyByteBuf。

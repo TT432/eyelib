@@ -111,10 +111,10 @@ default 分支保留 `EmptyComponent` 日志+兜底逻辑。
 
 ## 验证命令
 
-通过 eyelib-debug MCP 或 bash 跑 `gradlew`(见 AGENTS.md Tooling Restrictions + `eyelib-build` SKILL):
+通过 `mcmcp_build` / `mcmcp_test`（或 bash 跑 `gradlew`，见 AGENTS.md「工具限制」+ `eyelib-build` SKILL）:
 
-- 编译: `eyelib_debug_build`(或 bash `gradlew compileJava`)
-- 测试: `eyelib_debug_test`(或 bash `gradlew :1.20.1:test`),active Stonecutter node 前缀见 `stonecutter.gradle`
+- 编译: `mcmcp_build`(或 bash `gradlew compileJava`)
+- 测试: `mcmcp_test`(或 bash `gradlew :1.20.1:test`),active Stonecutter node 前缀见 `stonecutter.gradle`
 
 ## 验收标准
 

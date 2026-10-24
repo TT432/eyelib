@@ -12,7 +12,7 @@
 ## Purpose
 - Record remaining cross-module debt that blocks further functional ownership extraction.
 - Track Bedrock format implementation gaps that could become ongoing blind spots.
-- Functional ownership rule: particle code → `:eyelib-particle`, material → `:eyelib-material`, importer → `:eyelib-importer`, attachment → `:eyelib-attachment`, Molang → `:eyelib-molang`, animation → `:eyelib-animation`, behavior → `:eyelib-behavior`.
+- Functional ownership rule: particle code → `io.github.tt432.eyelib.particle`, material → `io.github.tt432.eyelib.material`, importer → `io.github.tt432.eyelib.importer`, attachment → `io.github.tt432.eyelib.capability`（运行时容器）+ `io.github.tt432.eyelib.bridge.attachment`（注册与钩子）, Molang → `io.github.tt432.eyelib.molang`, animation → `io.github.tt432.eyelib.animation`, behavior → `io.github.tt432.eyelib.behavior`（ADR-0014 后不再有 Gradle 子项目）。
 - Root keeps only code that genuinely coordinates multiple feature modules or is required by the root mod entrypoint.
 
 ## Key

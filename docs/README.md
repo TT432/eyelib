@@ -1,6 +1,7 @@
 # Eyelib 文档体系
 
 > 架构知识按 **Diátaxis** 组织：概念（concepts/）/ 决策（decisions/）/ 规格（specs/）/ 差距分析（gap-analysis/）。
+> 另有五类**专题档案**（不是新的类型，只是按主题聚合的存放位置）：`architecture/`（Port 清单与提取进度）、`molang/`（Molang 路线图与设计草案）、`perf/`（性能基线与 benchmark 记录）、`research/`（调研与计划）、`vanilla_research/`（原版逆向记录）。
 > 操作流程（How-to）以 opencode Skill 形式维护，由 AGENTS.md 加载，位于 [.opencode/skills/](../.opencode/skills/)。
 
 ## 快速导航
@@ -34,6 +35,7 @@
 |-------|------|
 | `eyelib` | 项目总索引——概览、Skill 导航、跨域约束 |
 | `eyelib-build` | 构建、测试、环境——Gradle(Stonecutter 多版本) + eyelib-debug MCP 全流程 |
+| `eyelib-release` | 发版——Maven Central（Portal bundle）+ CurseForge（legacy Upload API）三节点发布与验收 |
 | `eyelib-debug` | MCP 调试——启动客户端、/eval 执行代码、渲染诊断 Phase |
 | `eyelib-clientsmoke` | Clientsmoke 客户端烟雾测试 |
 | `bedrock-parity` | 真实 Bedrock addon 对照验证实体、Molang 与材质渲染 |
@@ -56,15 +58,16 @@
 | 0002 | 模块边界 | Accepted |
 | 0003 | Side 边界 | Accepted |
 | 0004 | 生成代码策略 | Accepted |
-| 0005 | MC 功能债务台账 | Accepted |
+| 0005 | MC 功能债务台账 | Active |
 | 0006 | 关键架构决策 | Accepted |
 | 0007 | 已知陷阱与反模式 | Accepted |
 | 0008 | Item Track 设计 | Accepted |
-| 0009 | Domain 事件—粒子交互 | Accepted |
-| 0010 | 六边形架构 — Domain/Bridge 分层 | Implemented |
+| 0009 | Domain 事件—粒子交互 | Implemented (Phase 1 + Phase 2) |
+| 0010 | 六边形架构 — Domain/Bridge 分层 | Implemented (partially) |
 | 0011 | 文档设计基线 | Accepted (2026-06-09) |
 | 0012 | System 层测试策略 | Proposed (2026-06-09) |
-| 0013 | 基岩版动画控制器 & 动画计算逻辑（附录 A：`query.*` 函数清单） | Accepted (2026-06-15) |
+| 0013 | 基岩版动画控制器 & 动画计算逻辑（C++ 侧逆向分析） | Reference |
+| 0013a | 附录 A：基岩版 `query.*` 函数完整清单（316 个，随 0013 归档，非独立 ADR） | Reference |
 | 0014 | 模块扁平合并 — 取消 Gradle 子项目 | Accepted (2026-06-17) |
 | 0015 | Stonecutter 多版本改造与 ArchUnit 恢复 | Accepted (2026-06-18) |
 | 0016 | 库隔离标准 — DDD 分层与 ACL 职责边界 | Accepted (2026-06-25) |
@@ -88,7 +91,7 @@
 | 0034 | Wintersky 基岩粒子运行时的 as-is Java 移植 | Accepted (2026-09-29，用户决策) |
 | 0035 | Wintersky 融入 eyelib 的集成架构决策（双运行时共存/渲染旁路/渲染帧驱动） | Accepted (2026-09-29) |
 | 0036 | Snowstorm 粒子编辑器游戏内完整复刻（用户决策 U1-U3：完整复刻/全屏 Screen/贴图编辑器 V1） | Accepted (2026-09-29，用户决策) |
-| 0037 | [贴图原色材质的世界渲染通道](decisions/0037-texture-color-pass.md) | Experimental (Forge 1.20.1) |
+| 0037 | 贴图原色材质的世界渲染通道 | Implemented (Forge 1.20.1) |
 
 ## 核心原则
 

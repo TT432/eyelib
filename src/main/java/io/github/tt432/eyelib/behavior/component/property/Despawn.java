@@ -11,7 +11,6 @@ import java.util.Optional;
  *
  * @author TT432
  */
-@org.jspecify.annotations.NullMarked
 public record Despawn(
         Optional<Despawn.DespawnRule> despawn_from_distance
 ) implements io.github.tt432.eyelib.behavior.component.Component {

@@ -6,7 +6,6 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import java.nio.ByteBuffer;
 
 /** @author TT432 */
-@org.jspecify.annotations.NullMarked
 public record BedrockBinaryAsset(
         String extension,
         byte[] bytes

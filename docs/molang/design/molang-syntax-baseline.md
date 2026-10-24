@@ -1,4 +1,4 @@
-﻿# Molang Syntax Baseline
+# Molang Syntax Baseline
 
 ## Purpose
 - This document defines the current baseline for discussing a future `molang` package rewrite.

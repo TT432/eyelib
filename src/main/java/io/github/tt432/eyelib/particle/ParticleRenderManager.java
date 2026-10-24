@@ -1,5 +1,4 @@
 package io.github.tt432.eyelib.particle;
-import io.github.tt432.eyelib.bridge.particle.adapter.ParticleRuntimeBridge;
 
 import io.github.tt432.eyelib.particle.runtime.bedrock.BedrockParticleEmitter;
 import io.github.tt432.eyelib.particle.runtime.bedrock.BedrockParticleInstance;

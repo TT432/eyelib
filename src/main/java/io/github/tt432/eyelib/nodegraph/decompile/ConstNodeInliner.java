@@ -8,7 +8,6 @@ import io.github.tt432.eyelib.nodegraph.NodeTypes;
 import io.github.tt432.eyelib.nodegraph.PortDef;
 import io.github.tt432.eyelib.nodegraph.PortType;
 import io.github.tt432.eyelib.nodegraph.Wire;
-import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;

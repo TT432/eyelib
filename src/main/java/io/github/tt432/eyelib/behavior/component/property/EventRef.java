@@ -12,7 +12,6 @@ import org.jspecify.annotations.Nullable;
  * @param target the target for the event (default "self")
  * @author TT432
  */
-@org.jspecify.annotations.NullMarked
 public record EventRef(String event, @Nullable String target) {
     /** Sentinel value for optional event fields — represents "no event configured". */
     public static final EventRef NONE = new EventRef("", "self");

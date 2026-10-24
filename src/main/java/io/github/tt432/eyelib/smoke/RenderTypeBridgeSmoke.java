@@ -7,7 +7,7 @@ import io.github.tt432.eyelib.bridge.material.RenderTypeResolver;
 import io.github.tt432.eyelib.material.material.BrMaterialEntry;
 import io.github.tt432.eyelib.material.port.PortRenderPass;
 import io.github.tt432.eyelib.material.port.PortRenderPass.Transparency;
-import io.github.tt432.eyelib.material.render.RenderTypeResolver.EntityRenderTypeData;
+import io.github.tt432.eyelib.material.render.EntityRenderTypeData;
 import io.github.tt432.eyelib.util.PortResourceLocation;
 //? if <26.1 {
 import net.minecraft.client.renderer.RenderType;

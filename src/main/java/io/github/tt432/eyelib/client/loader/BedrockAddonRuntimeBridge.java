@@ -123,9 +123,8 @@ public final class BedrockAddonRuntimeBridge {
         }
         // 叠加材质（保留 BrMaterialLoader 加载的 vanilla 条目；阴影语义支持卸载）
         {
-            var materials = toRuntimeMaterials(resourcePack.materialFiles());
             Map<String, BrMaterialEntry> materialBatch = new LinkedHashMap<>();
-            for (BrMaterial value : materials.values()) {
+            for (BrMaterial value : resourcePack.materialFiles().values()) {
                 value.materials().forEach(materialBatch::put);
             }
             beginOverlay(MaterialManager.INSTANCE, materialBatch.keySet());
@@ -170,15 +169,6 @@ public final class BedrockAddonRuntimeBridge {
         );
     }
 
-    private static Map<String, io.github.tt432.eyelib.material.material.BrMaterial> toRuntimeMaterials(
-            Map<String, io.github.tt432.eyelib.material.shared.BrMaterial> materials
-    ) {
-        LinkedHashMap<String, io.github.tt432.eyelib.material.material.BrMaterial> adapted = new LinkedHashMap<>();
-        materials.forEach((sourceKey, material) -> adaptMaterial(material, sourceKey)
-                .ifPresent(runtimeMaterial -> adapted.put(sourceKey, runtimeMaterial)));
-        return adapted;
-    }
-
     private static Map<String, RenderControllers> toRuntimeRenderControllers(
             Map<String, io.github.tt432.eyelib.importer.render.controller.BrRenderControllers> controllers
     ) {
@@ -210,21 +200,5 @@ public final class BedrockAddonRuntimeBridge {
                 entry.onFireColor(),
                 entry.overlayColor()
         );
-    }
-
-    /**
-     * Adapts a shared pure-data {@code BrMaterial} to the runtime {@code BrMaterial},
-     * bypassing JSON encode→decode.
-     */
-    private static Optional<io.github.tt432.eyelib.material.material.BrMaterial> adaptMaterial(
-            io.github.tt432.eyelib.material.shared.BrMaterial input,
-            String sourceKey
-    ) {
-        try {
-            return Optional.of(io.github.tt432.eyelib.material.material.BrMaterial.fromShared(input));
-        } catch (Exception exception) {
-            LOGGER.error("can't bridge material {}", sourceKey, exception);
-            return Optional.empty();
-        }
     }
 }

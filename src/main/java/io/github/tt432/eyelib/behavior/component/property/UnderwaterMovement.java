@@ -11,7 +11,6 @@ import io.github.tt432.eyelib.behavior.component.Component;
  * @param interval 默认 20.0f
  * @author TT432
  */
-@org.jspecify.annotations.NullMarked
 public record UnderwaterMovement(
         float value,
         float interval

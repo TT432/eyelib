@@ -13,7 +13,6 @@ import java.util.List;
  * @param use_home_position   whether to use home position (default false)
  * @author TT432
  */
-@org.jspecify.annotations.NullMarked
 public record Home(
         List<String> home_block_list,
         int restriction_radius,

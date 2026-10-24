@@ -4,7 +4,6 @@ import com.mojang.serialization.Codec;
 import io.github.tt432.eyelib.molang.compiler.*;
 import io.github.tt432.eyelib.molang.compiler.cache.MolangCompileCache;
 import io.github.tt432.eyelib.molang.mapping.api.MolangMappingRegistries;
-import io.github.tt432.eyelib.molang.mapping.api.MolangMappingTree;
 import io.github.tt432.eyelib.molang.type.MolangFloat;
 import io.github.tt432.eyelib.molang.type.MolangNull;
 import io.github.tt432.eyelib.molang.type.MolangObject;

@@ -5,7 +5,6 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 
 /** @author TT432 */
-@org.jspecify.annotations.NullMarked
 public record Meta(
         @SerializedName("format_version")
         String formatVersion,

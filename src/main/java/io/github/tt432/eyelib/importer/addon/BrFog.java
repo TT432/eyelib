@@ -20,7 +20,6 @@ import java.util.Set;
  *
  * @author TT432
  */
-@org.jspecify.annotations.NullMarked
 public record BrFog(
         String identifier,
         LinkedHashMap<String, DistanceSetting> distances
@@ -76,7 +75,6 @@ public record BrFog(
      * / fog_color（#RRGGBB）。字段缺省时回落到中性默认值（render 型 0→1.0、白色），
      * 与 Bedrock「未设置的值取下一优先级 fog」语义的最小近似。
      */
-    @org.jspecify.annotations.NullMarked
     public record DistanceSetting(
             float fogStart,
             float fogEnd,

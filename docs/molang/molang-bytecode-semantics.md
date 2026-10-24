@@ -1,4 +1,4 @@
-﻿# Molang 字节码语义验证
+# Molang 字节码语义验证
 
 > 2026-06-10 formal proof session
 

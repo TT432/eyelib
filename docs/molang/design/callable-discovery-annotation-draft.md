@@ -1,4 +1,4 @@
-﻿# Callable Discovery And Annotation Draft
+# Callable Discovery And Annotation Draft
 
 ## Purpose
 - This document defines how implementation methods become engine-visible callable descriptors.

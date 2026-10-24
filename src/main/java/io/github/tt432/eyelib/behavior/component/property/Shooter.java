@@ -15,7 +15,6 @@ import java.util.List;
  * @param pots   list of shooter potions
  * @author TT432
  */
-@org.jspecify.annotations.NullMarked
 public record Shooter(
         String def,
         int aux_val,

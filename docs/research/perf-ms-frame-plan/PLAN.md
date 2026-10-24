@@ -1,6 +1,6 @@
 # 动画执行与渲染性能优化计划（ms/frame）
 
-> 状态：计划（未实施）。输入：两份代码级侦察报告（附录 A/B）+ 既有 spark 基线（docs/perf/spark-baseline-and-optimizations.md，Opt1–6 已合入）+ clientBenchmark 基线（run-20260724-231836）。
+> 状态：**部分实施**——A1 / A2 / A7 已合入（结果与 A-B-A benchmark 数据见 `docs/perf/spark-baseline-and-optimizations.md` Opt7/8/9）；其余子任务仍为计划。输入：两份代码级侦察报告（附录 A/B）+ 既有 spark 基线（`docs/perf/spark-baseline-and-optimizations.md`，Opt1–6 已合入）+ clientBenchmark 基线（run-20260724-231836）。
 > 本文只定义优化的决策变量、目标函数、约束与子任务规格；实施时每个子任务独立验证、独立提交。
 
 ## 1. 基线数据

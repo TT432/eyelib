@@ -9,7 +9,6 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
  *
  * @author TT432
  */
-@org.jspecify.annotations.NullMarked
 public record OnStartTakeoff(
         String event,
         String target

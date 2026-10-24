@@ -13,7 +13,6 @@ import java.util.List;
  * @param speed_multiplier  speed multiplier (default 1.0f)
  * @author TT432
  */
-@org.jspecify.annotations.NullMarked
 public record Boostable(
         List<BoostItem> boost_items,
         float duration,

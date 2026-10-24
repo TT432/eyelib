@@ -12,7 +12,6 @@ import io.github.tt432.eyelib.importer.animation.bedrock.controller.BrAnimationC
 import io.github.tt432.eyelib.importer.entity.BrClientEntity;
 import io.github.tt432.eyelib.model.Model;
 import io.github.tt432.eyelib.nodegraph.Diagnostic;
-import io.github.tt432.eyelib.nodegraph.GraphKind;
 import io.github.tt432.eyelib.nodegraph.GraphLibrary;
 import io.github.tt432.eyelib.nodegraph.GraphValidator;
 import io.github.tt432.eyelib.nodegraph.assembly.AnimationControllerAssembler;

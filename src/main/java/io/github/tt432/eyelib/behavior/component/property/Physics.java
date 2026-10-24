@@ -12,7 +12,6 @@ import io.github.tt432.eyelib.behavior.component.Component;
  * @param push_towards_closest_space 默认 false
  * @author TT432
  */
-@org.jspecify.annotations.NullMarked
 public record Physics(
         boolean has_gravity,
         boolean has_collision,

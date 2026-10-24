@@ -9,7 +9,6 @@ import io.github.tt432.eyelib.behavior.component.Component;
  *
  * @author TT432
  */
-@org.jspecify.annotations.NullMarked
 public record NavigationWalk(
         boolean avoid_water,
         boolean avoid_portals,

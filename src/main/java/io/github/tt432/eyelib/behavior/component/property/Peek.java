@@ -12,7 +12,6 @@ import io.github.tt432.eyelib.behavior.component.Component;
  * @param on_target_open 事件触发配置
  * @author TT432
  */
-@org.jspecify.annotations.NullMarked
 public record Peek(
         EventConfig on_open,
         EventConfig on_close,

@@ -10,7 +10,6 @@ import io.github.tt432.eyelib.nodegraph.NodeInstance;
 import io.github.tt432.eyelib.nodegraph.NodeTypes;
 import io.github.tt432.eyelib.nodegraph.ShortNameOps;
 import io.github.tt432.eyelib.nodegraph.ShortNames;
-import java.util.Map;
 
 /**
  * 已知短名表收集（规格 nodegraph-shortname-elimination D4 跨文档关联）：

@@ -16,6 +16,8 @@ import io.github.tt432.eyelib.wintersky.molang.JsSemantics;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.Tuple;
 import org.jspecify.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -42,6 +44,8 @@ import java.util.function.Consumer;
  * </ul>
  */
 public final class MenuBarView extends UIElement {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(MenuBarView.class);
 
     // ==================================================================
     // 接缝（Main/Screen 接线）
@@ -193,7 +197,7 @@ public final class MenuBarView extends UIElement {
         if (onOpenLink != null) {
             onOpenLink.accept(link);
         } else {
-            System.out.println("[snowstorm] open link: " + link);
+            LOGGER.info("open link: {}", link);
         }
     }
 

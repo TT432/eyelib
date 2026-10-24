@@ -2,30 +2,24 @@ package io.github.tt432.eyelib.material.gl;
 
 import com.mojang.serialization.Codec;
 import io.github.tt432.eyelib.util.PortStringRepresentable;
-import org.lwjgl.opengl.GL11;
 
 /**
+ * Bedrock 混合因子（纯数据）。到 GL 常量的映射由 bridge 渲染层承担（ADR-0016）。
+ *
  * @author TT432
  */
 public enum BlendFactor implements PortStringRepresentable {
-    DestColor(GL11.GL_DST_COLOR),
-    SourceColor(GL11.GL_SRC_COLOR),
-    Zero(GL11.GL_ZERO),
-    One(GL11.GL_ONE),
-    OneMinusDestColor(GL11.GL_ONE_MINUS_DST_COLOR),
-    OneMinusSrcColor(GL11.GL_ONE_MINUS_SRC_COLOR),
-    SourceAlpha(GL11.GL_SRC_ALPHA),
-    DestAlpha(GL11.GL_DST_ALPHA),
-    OneMinusSrcAlpha(GL11.GL_ONE_MINUS_SRC_ALPHA),
-    ;
+    DestColor,
+    SourceColor,
+    Zero,
+    One,
+    OneMinusDestColor,
+    OneMinusSrcColor,
+    SourceAlpha,
+    DestAlpha,
+    OneMinusSrcAlpha;
 
     public static final Codec<BlendFactor> CODEC = PortStringRepresentable.fromEnum(BlendFactor::values);
-
-    public final int factor;
-
-    BlendFactor(int factor) {
-        this.factor = factor;
-    }
 
     @Override
     public String getSerializedName() {

@@ -3,6 +3,7 @@ package io.github.tt432.eyelib.bridge.capability;
 import com.mojang.serialization.Codec;
 import io.github.tt432.eyelib.behavior.EntityBehaviorData;
 import io.github.tt432.eyelib.behavior.SyncedBehaviorState;
+import io.github.tt432.eyelib.bridge.capability.adapter.EyelibAttachableData;
 import io.github.tt432.eyelib.util.dataattach.DataAttachmentType;
 
 import java.util.function.Supplier;

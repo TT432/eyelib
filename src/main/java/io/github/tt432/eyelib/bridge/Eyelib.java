@@ -35,7 +35,7 @@ public class Eyelib {
             lifecycleConstructor.setAccessible(true);
             ApplicationLifecyclePort.install((ApplicationLifecyclePort) lifecycleConstructor.newInstance());
             //? if >=1.20.6 {
-            Class.forName("io.github.tt432.eyelib.bridge.capability.EyelibAttachableData");
+            Class.forName("io.github.tt432.eyelib.bridge.capability.adapter.EyelibAttachableData");
             //?}
         } catch (Exception e) {
             throw new RuntimeException(e);

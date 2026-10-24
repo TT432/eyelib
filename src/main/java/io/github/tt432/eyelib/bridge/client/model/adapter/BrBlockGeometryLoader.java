@@ -1,4 +1,4 @@
-package io.github.tt432.eyelib.bridge.client.model;
+package io.github.tt432.eyelib.bridge.client.model.adapter;
 
 //? if <26.1 {
 import com.google.gson.JsonDeserializationContext;

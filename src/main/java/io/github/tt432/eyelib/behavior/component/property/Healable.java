@@ -15,7 +15,6 @@ import java.util.List;
  * @param force_use whether force use (default false)
  * @author TT432
  */
-@org.jspecify.annotations.NullMarked
 public record Healable(
         List<HealItem> items,
         boolean force_use

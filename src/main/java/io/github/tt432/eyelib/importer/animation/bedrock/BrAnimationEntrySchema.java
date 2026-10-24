@@ -15,7 +15,6 @@ import java.util.TreeMap;
 import java.util.function.Function;
 
 /** @author TT432 */
-@org.jspecify.annotations.NullMarked
 public record BrAnimationEntrySchema(
         BrLoopType loop,
         float animationLength,

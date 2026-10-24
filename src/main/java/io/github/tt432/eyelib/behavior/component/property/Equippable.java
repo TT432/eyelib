@@ -11,7 +11,6 @@ import java.util.List;
  * @param slots list of equip slots
  * @author TT432
  */
-@org.jspecify.annotations.NullMarked
 public record Equippable(List<EquipSlot> slots) implements io.github.tt432.eyelib.behavior.component.Component {
     public static final Codec<Equippable> CODEC = RecordCodecBuilder.create(inst -> inst.group(
             EquipSlot.CODEC.listOf().fieldOf("slots").forGetter(Equippable::slots)

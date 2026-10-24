@@ -12,7 +12,6 @@ import java.util.Map;
  *
  * @author TT432
  */
-@org.jspecify.annotations.NullMarked
 public record BehaviorComponents(
         Map<String, Component> components
 ) {

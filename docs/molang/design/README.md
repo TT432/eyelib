@@ -1,4 +1,4 @@
-﻿# Molang Design Notes
+# Molang Design Notes
 
 ## Documents
 - `molang-syntax-baseline.md`: source-backed syntax baseline and acceptance corpus for the rewrite discussion.

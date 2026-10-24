@@ -15,6 +15,8 @@ import io.github.tt432.eyelib.client.gui.snowstorm.kit.SsIconButton;
 import io.github.tt432.eyelib.snowstorm.help.HelpData;
 import net.minecraft.network.chat.Component;
 import org.jspecify.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 import java.util.function.Consumer;
@@ -29,6 +31,8 @@ import java.util.function.Consumer;
  * HelpInputList.vue labels/as-is。
  */
 public final class HelpPanelView extends UIElement {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(HelpPanelView.class);
 
     /** HelpPanel.vue: width 482px。 */
     public static final int WIDTH = 482;
@@ -178,7 +182,7 @@ public final class HelpPanelView extends UIElement {
                 if (onOpenLink != null) {
                     onOpenLink.accept(link.href());
                 } else {
-                    System.out.println("[snowstorm] open link: " + link.href());
+                    LOGGER.info("open link: {}", link.href());
                 }
             });
             a.textStyle(s -> s.textColor(SnowstormTheme.ACCENT).textAlignHorizontal(Horizontal.LEFT));

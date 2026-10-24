@@ -313,18 +313,17 @@ class MolangSpecDrivenTest {
         }
         @ParameterizedTest
         @ValueSource(strings = {"'unclosed", "((1+2)", "{1+2", "x."})
-        void malformedInputRejected(String expr) {
-            // 手写解析器对畸形输入应该返回空 AST 或抛异常
-            var result = parser.parseExprSetAst(expr);
-            // 可能返回空（ParseException 被 catch）或解析成功但 binder 报错
-            // 这里只验证不 crash
-            if (result.isPresent()) {
-                try {
-                    compiler.compile(expr, CompileContext.defaults());
-                } catch (Exception e) {
-                    // 编译失败也可接受（binder 拒绝畸形 AST）
-                }
+        void malformedInputIsRejected(String expr) {
+            boolean parseRejected = parser.parseExprSetAst(expr).isEmpty();
+            boolean compileRejected;
+            try {
+                compiler.compile(expr, CompileContext.defaults());
+                compileRejected = false;
+            } catch (RuntimeException e) {
+                compileRejected = true;
             }
+            assertTrue(parseRejected || compileRejected,
+                    "畸形输入必须在解析或编译阶段被拒绝，实际被接受: " + expr);
         }
     }
 

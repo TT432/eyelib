@@ -13,7 +13,6 @@ import java.util.List;
  * @param trades       list of trades
  * @author TT432
  */
-@org.jspecify.annotations.NullMarked
 public record TradeTable(
         String display_name,
         String table,

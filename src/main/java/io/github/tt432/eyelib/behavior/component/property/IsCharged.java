@@ -8,7 +8,6 @@ import io.github.tt432.eyelib.util.codec.EyelibCodec;
  *
  * @author TT432
  */
-@org.jspecify.annotations.NullMarked
 public record IsCharged() implements io.github.tt432.eyelib.behavior.component.Component {
     private static final IsCharged INSTANCE = new IsCharged();
 

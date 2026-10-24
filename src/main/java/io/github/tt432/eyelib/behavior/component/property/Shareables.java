@@ -11,7 +11,6 @@ import java.util.List;
  * @param items list of shareable items
  * @author TT432
  */
-@org.jspecify.annotations.NullMarked
 public record Shareables(List<ShareableItem> items) implements io.github.tt432.eyelib.behavior.component.Component {
     public static final Codec<Shareables> CODEC = RecordCodecBuilder.create(inst -> inst.group(
             ShareableItem.CODEC.listOf().fieldOf("items").forGetter(Shareables::items)

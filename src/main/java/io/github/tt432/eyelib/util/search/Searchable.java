@@ -10,8 +10,4 @@ import java.util.stream.Stream;
  */
 public interface Searchable<V> {
     Stream<Map.Entry<String, V>> search(String searchStr);
-
-    default SearchResults<V> results() {
-        return new SearchResults<>(this);
-    }
 }

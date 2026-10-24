@@ -12,7 +12,6 @@ import io.github.tt432.eyelib.behavior.component.Component;
  * @param jump_prevented_value 默认 0.6f
  * @author TT432
  */
-@org.jspecify.annotations.NullMarked
 public record VariableMaxAutoStep(
         float base_value,
         float controlled_value,

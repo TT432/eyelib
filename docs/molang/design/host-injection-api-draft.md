@@ -1,4 +1,4 @@
-﻿# Host Injection API Draft
+# Host Injection API Draft
 
 ## Purpose
 - This document refines the host-side part of `molang-ast-and-semantics-draft.md`.

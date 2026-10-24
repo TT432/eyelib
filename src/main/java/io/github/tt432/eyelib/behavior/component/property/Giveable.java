@@ -11,7 +11,6 @@ import java.util.List;
  * @param triggers list of give triggers
  * @author TT432
  */
-@org.jspecify.annotations.NullMarked
 public record Giveable(List<GiveTrigger> triggers) implements io.github.tt432.eyelib.behavior.component.Component {
     public static final Codec<Giveable> CODEC = RecordCodecBuilder.create(inst -> inst.group(
             GiveTrigger.CODEC.listOf().fieldOf("triggers").forGetter(Giveable::triggers)

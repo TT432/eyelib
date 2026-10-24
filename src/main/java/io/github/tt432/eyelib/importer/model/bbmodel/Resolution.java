@@ -4,7 +4,6 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 
 /** @author TT432 */
-@org.jspecify.annotations.NullMarked
 public record Resolution(
         int width,
         int height

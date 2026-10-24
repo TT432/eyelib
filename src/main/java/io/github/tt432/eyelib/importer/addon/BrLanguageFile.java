@@ -7,7 +7,6 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 /** @author TT432 */
-@org.jspecify.annotations.NullMarked
 public record BrLanguageFile(
         LinkedHashMap<String, String> entries
 ) {

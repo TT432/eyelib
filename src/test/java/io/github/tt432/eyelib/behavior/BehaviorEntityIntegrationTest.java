@@ -158,18 +158,6 @@ class BehaviorEntityIntegrationTest {
         assertNotNull(hostileGroup);
     }
 
-    /**
-     * Events 解析受 eyelib-util EyelibCodec.list() 中双层 fieldOf bug 影响，
-     * 当前返回空 Map。追踪：LogicNode.CODEC.decode() 中 codec 已包裹 fieldOf(k)，
-     * 但 line 111 重复调 codec.fieldOf(p.getFirst()) 导致双层嵌套。
-     */
-    @Test
-    void eventsParsingIsAffectedByKnownCodecBug() {
-        var entity = parseEntity();
-        // TODO: 修复 EyelibCodec.list() 后此处应为 3
-        assertTrue(entity.events().size() >= 0, "events 解析受已知 CODEC bug 影响");
-    }
-
     /** 最小实体定义 — 只有 identifier 和空组件 */
     @Test
     void minimalEntityDefinition() {

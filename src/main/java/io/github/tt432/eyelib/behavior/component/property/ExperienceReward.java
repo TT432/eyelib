@@ -11,7 +11,6 @@ import java.util.Optional;
  *
  * @author TT432
  */
-@org.jspecify.annotations.NullMarked
 public record ExperienceReward(
         String on_death,
         Optional<String> on_bred

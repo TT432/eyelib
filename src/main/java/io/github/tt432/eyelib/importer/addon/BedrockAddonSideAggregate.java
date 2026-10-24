@@ -5,8 +5,8 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.eyelib.importer.animation.bedrock.BrAnimationEntrySchema;
 import io.github.tt432.eyelib.importer.block.BrBlock;
 import io.github.tt432.eyelib.importer.item.BrItem;
-import io.github.tt432.eyelib.material.shared.BrMaterial;
-import io.github.tt432.eyelib.material.shared.BrMaterialEntry;
+import io.github.tt432.eyelib.material.material.BrMaterial;
+import io.github.tt432.eyelib.material.material.BrMaterialEntry;
 import io.github.tt432.eyelib.importer.recipe.BrRecipe;
 import io.github.tt432.eyelib.model.Model;
 import io.github.tt432.eyelib.importer.model.importer.ImportedImageData;
@@ -21,7 +21,6 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 /** @author TT432 */
-@org.jspecify.annotations.NullMarked
 public record BedrockAddonSideAggregate(
         LinkedHashMap<String, BrAnimationEntrySchema> animations,
         LinkedHashMap<String, BrAnimationControllerSchema> animationControllers,

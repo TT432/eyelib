@@ -4,7 +4,7 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import io.github.tt432.eyelib.behavior.BehaviorEntityRegistry;
 import io.github.tt432.eyelib.behavior.EntityBehaviorData;
 import io.github.tt432.eyelib.bridge.attachment.dataattach.mc.DataAttachmentHelper;
-import io.github.tt432.eyelib.bridge.capability.EyelibAttachableData;
+import io.github.tt432.eyelib.bridge.capability.adapter.EyelibAttachableData;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.entity.Entity;
 import org.slf4j.Logger;

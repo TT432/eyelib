@@ -5,7 +5,9 @@ package io.github.tt432.eyelib.util.math;
  *
  * @author TT432
  */
-public class MathHelper {
+public final class MathHelper {
+    private MathHelper() {}
+
     public static int clamp(int value, int min, int max) {
         return Math.max(min, Math.min(value, max));
     }

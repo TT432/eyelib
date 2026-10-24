@@ -13,7 +13,6 @@ import com.mojang.serialization.JsonOps;
  *
  * @author TT432
  */
-@org.jspecify.annotations.NullMarked
 public record RawComponent(
         String componentId,
         JsonObject rawData

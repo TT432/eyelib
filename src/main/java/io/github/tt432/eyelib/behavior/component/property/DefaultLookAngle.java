@@ -10,7 +10,6 @@ import io.github.tt432.eyelib.behavior.component.Component;
  * @param value 默认 0.0f
  * @author TT432
  */
-@org.jspecify.annotations.NullMarked
 public record DefaultLookAngle(
         float value
 ) implements Component {

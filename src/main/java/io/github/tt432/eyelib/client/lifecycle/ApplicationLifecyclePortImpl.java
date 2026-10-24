@@ -6,7 +6,11 @@ import io.github.tt432.eyelib.capability.component.RenderControllerComponent;
 import io.github.tt432.eyelib.client.loader.BedrockAddonRuntimeBridge;
 import io.github.tt432.eyelib.common.behavior.BehaviorPackAutoLoader;
 import io.github.tt432.eyelib.importer.addon.BedrockAddon;
+import io.github.tt432.eyelib.bridge.network.animation.AnimationComponentSyncPacket;
+import io.github.tt432.eyelib.bridge.network.model.ModelComponentSyncPacket;
+import io.github.tt432.eyelib.network.ClientPacketSink;
 import io.github.tt432.eyelib.network.EyelibNetworkManager;
+import io.github.tt432.eyelib.client.render.sync.ClientRenderSyncService;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.entity.LivingEntity;
 
@@ -19,6 +23,18 @@ public final class ApplicationLifecyclePortImpl implements ApplicationLifecycleP
 
     @Override
     public void registerNetworkHandlers() {
+        // 渲染同步的落地实现由 client 注入，network 分发层只依赖 ClientPacketSink 接口
+        ClientPacketSink.install(new ClientPacketSink() {
+            @Override
+            public void applyModelSync(ModelComponentSyncPacket packet) {
+                ClientRenderSyncService.apply(packet);
+            }
+
+            @Override
+            public void applyAnimationSync(AnimationComponentSyncPacket packet) {
+                ClientRenderSyncService.apply(packet);
+            }
+        });
         EyelibNetworkManager.register();
     }
 

@@ -1,7 +1,6 @@
 package io.github.tt432.eyelib.importer.animation.bedrock.controller;
 
 /** @author TT432 */
-@org.jspecify.annotations.NullMarked
 public enum BrAcStateTrackName {
     ANIMATIONS("animations"),
     PARTICLE_EFFECTS("particle_effects"),

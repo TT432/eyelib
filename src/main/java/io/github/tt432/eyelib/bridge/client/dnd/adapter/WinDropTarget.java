@@ -1,6 +1,5 @@
 package io.github.tt432.eyelib.bridge.client.dnd.adapter;
 
-import com.sun.jna.Callback;
 import com.sun.jna.CallbackReference;
 import com.sun.jna.Function;
 import com.sun.jna.Memory;

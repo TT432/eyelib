@@ -13,7 +13,6 @@ import java.util.List;
  * @param controlling_seat controlling seat index (default 0)
  * @author TT432
  */
-@org.jspecify.annotations.NullMarked
 public record Rideable(
         int seat_count,
         List<String> family_types,

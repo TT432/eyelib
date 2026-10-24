@@ -15,7 +15,6 @@ import java.util.List;
  * @param preferred_path_blocks 路径块列表
  * @author TT432
  */
-@org.jspecify.annotations.NullMarked
 public record PreferredPath(
         int max_fall_blocks,
         int jump_cost,

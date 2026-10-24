@@ -16,7 +16,6 @@ import java.util.Map;
  *
  * @author TT432
  */
-@org.jspecify.annotations.NullMarked
 public record BrUiFile(
         @Nullable String namespace,
         LinkedHashMap<String, JsonObject> elements

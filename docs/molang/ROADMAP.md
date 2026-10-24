@@ -13,7 +13,7 @@ Update this file in the same change whenever Molang work does any of the followi
 1. Adds, removes, renames, or re-scopes a Molang phase, milestone, gate, or verification command.
 2. Promotes a design draft into implemented code/tests.
 3. Moves a roadmap item between `Current`, `Next`, `Blocked`, `Deferred`, or `Done`.
-4. Changes ownership between `molang/` (engine domain), `bridge/molang/` (MC adapter), or `molang/platform/` (currently leaked MC bindings — target: migrate to `bridge/molang/`).
+4. Changes ownership between `molang/` (engine domain) and `bridge/molang/` (MC adapter).
 5. Adds a new corpus layer, diagnostics mode behavior, binder family, host/query bridge, execution path, policy-pack behavior, cache behavior, or cutover mechanism.
 
 If a Molang code change does not update this roadmap, it must be because the change is an implementation detail that leaves all milestones, gates, and ownership unchanged.
@@ -24,7 +24,7 @@ When documents disagree, resolve them in this order:
 
 1. `docs/molang/ROADMAP.md` for current progress and next actions.
 2. `docs/molang/design/README.md` and design drafts for rationale and candidate architecture.
-3. `docs/decisions/`, `MODULES.md`, and package READMEs for navigation and ownership summaries.
+3. `docs/decisions/`, `MODULES.md`, and the relevant `package-info.java` for navigation and ownership summaries.
 
 Design drafts are not implementation commitments until this roadmap promotes them.
 
@@ -33,7 +33,7 @@ Design drafts are not implementation commitments until this roadmap promotes the
 - Engine-owned code lives under `src/main/java/io/github/tt432/eyelib/molang/`.
 - Handwritten parser is the sole frontend; all parser artifacts live under handwritten packages.
 - `src/main/java/io/github/tt432/eyelib/client/molang/MolangQuery.java` holds root-coupled query functions (animation controller, variant) — ported from the old `molang/mapping/` location per ADR-0014 + ADR-0010 Port design.
-- `src/main/java/io/github/tt432/eyelib/molang/platform/**` owns Minecraft/Forge platform bindings and lifecycle hooks.
+- `src/main/java/io/github/tt432/eyelib/bridge/molang/**` owns Minecraft/Forge platform bindings and lifecycle hooks.
 
 ## Current Implementation Snapshot
 
@@ -61,7 +61,7 @@ Evidence from the current tree:
 | Phase | Status | Evidence | Current rule |
 |---|---|---|---|
 | Phase 0 - Overview and boundaries | `Done / maintain` | `docs/decisions/0002-module-boundaries.md`, generated-code policy | Keep boundary docs aligned when ownership changes. |
-| Phase 1 - Corpus and harness | `Done / maintain` | All 4 KR ✅: corpus case IDs stable, linter zero errors, parse runner 100% pass (MolangCorpusHarnessTest green), 33 starter rows. | Continue using `eyelib_debug_test`; add dedicated runner command only when it exists. |
+| Phase 1 - Corpus and harness | `Done / maintain` | All 4 KR ✅: corpus case IDs stable, linter zero errors, parse runner 100% pass (MolangCorpusHarnessTest green), 33 starter rows. | Continue using `mcmcp_test`; add dedicated runner command only when it exists. |
 | Phase 2 - Parser and AST | `Done` | `compiler/frontend/ast/`, handwritten frontend, frontend tests; ANTLR-generated parser removed | Handwritten parser is the sole frontend; all parser work is AST-driven. |
 | Phase 3 - Binder and diagnostics | `Done / maintain` | All 5 KR ✅: alias canonicalization (q/t/v/c), 5 deferred reason types, write-target coverage (query/context/temp/variable), strict/debug ≥5 families, ≤1 alias impl. | Keep unsupported semantics explicit via deferred notes; widen binder families only with corpus-backed slices. |
 | Phase 4 - Host and query bridge | `Done / maintain` | All 6 KR ✅: HostRole<T> migration complete (98ed1de9), 6 contract tests green (host publication, callable discovery, query variant, callable ambiguity, callable signature, animation-clock parity). Bind-link superseded by Phase 7. | Maintain mapping registry stability; add query/callable registrations through documented API. |
@@ -74,7 +74,7 @@ Evidence from the current tree:
 ### M1 - Keep phase 1 corpus harness reliable
 
 - Preserve stable corpus case IDs, lint errors, result classes, effective diagnostics mode, and effective policy-pack reporting.
-- Keep phase1 corpus resources valid and runnable through `eyelib_debug_test`. Starter corpus: 33 rows (≥30 KR ✅), covering unary, comparison, for_each, return, member dot-chain, grouping, strings, array-literal reject, and binary-conditional.
+- Keep phase1 corpus resources valid and runnable through `mcmcp_test`. Starter corpus: 33 rows (≥30 KR ✅), covering unary, comparison, for_each, return, member dot-chain, grouping, strings, array-literal reject, and binary-conditional.
 
 ### M2 - Widen parser/AST only with corpus-backed slices
 
@@ -180,8 +180,8 @@ Target thresholds establish what "done" means before phase promotion.
 ## Verification Gates
 
 - Docs-only roadmap changes: verify every referenced path still exists.
-- **通过 eyelib-debug MCP 或 bash 跑 `gradlew`** (`eyelib_debug_build`, `eyelib_debug_test` 等) 执行所有 Gradle 命令。
-- 所有 phase 验证：`eyelib_debug_test`（单 Gradle project，ADR-0014 后无 `:eyelib-importer` / `:eyelib-preprocessing` 等子项目 task）。
+- **通过 `mcmcp_build` / `mcmcp_test`（或 bash 跑 `gradlew`）** 执行所有 Gradle 命令。
+- 所有 phase 验证：`mcmcp_test`（单 Gradle project，ADR-0014 后无 `:eyelib-importer` / `:eyelib-preprocessing` 等子项目 task）。
 
 ## Anti-Drift Checklist
 

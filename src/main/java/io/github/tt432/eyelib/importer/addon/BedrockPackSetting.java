@@ -18,7 +18,6 @@ import java.util.Map;
  *
  * @author TT432
  */
-@org.jspecify.annotations.NullMarked
 public record BedrockPackSetting(
         Type type,
         /** 设置名（如 "mypack:explosion_hands"）；label 无名为 null。 */

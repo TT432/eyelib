@@ -9,11 +9,11 @@
 
 ## 快速上手
 
-该库已发布至 Maven Central。
+该库已发布至 Maven Central（坐标里的版本号取 [Maven Central](https://repo1.maven.org/maven2/io/github/tt432/eyelib/) 上的最新发布版本；当前为 `21.1.14`，可用版本与加载器后缀见 [README.md](README.md) 的版本表）。
 
 ```groovy
 dependencies {
-    implementation "io.github.tt432:eyelib:${eyelib_version}"
+    implementation "io.github.tt432:eyelib:21.1.14+1.20.1-forge"
 }
 ```
 

@@ -14,7 +14,6 @@ import java.util.List;
  * @param behavior behavior properties (anchor, filter, etc.)
  * @author TT432
  */
-@org.jspecify.annotations.NullMarked
 public record Projectile(
         ProjectilePhysics physics,
         ProjectileCombat combat,

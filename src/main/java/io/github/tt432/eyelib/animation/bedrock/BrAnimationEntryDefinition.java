@@ -6,7 +6,6 @@ import io.github.tt432.eyelib.animation.RuntimeParticlePlayData;
 import io.github.tt432.eyelib.animation.AnimationParticleSpawner;
 import io.github.tt432.eyelib.importer.animation.bedrock.BrAnimationEntrySchema;
 import io.github.tt432.eyelib.importer.animation.bedrock.BrLoopType;
-import io.github.tt432.eyelib.importer.entity.BrClientEntity;
 import io.github.tt432.eyelib.model.GlobalBoneIdHandler;
 import io.github.tt432.eyelib.molang.MolangScope;
 import io.github.tt432.eyelib.molang.MolangValue;
