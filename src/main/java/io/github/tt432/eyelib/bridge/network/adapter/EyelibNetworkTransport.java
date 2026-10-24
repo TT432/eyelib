@@ -15,6 +15,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 //?} else {
+import net.minecraft.client.Minecraft;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
@@ -136,7 +137,11 @@ public interface EyelibNetworkTransport {
         //? if <1.20.6 {
         CHANNEL.sendToServer(packet);
         //?} elif <26.1 {
-        PacketDistributor.sendToServer((CustomPacketPayload) packet);
+        var payload = (CustomPacketPayload) packet;
+        var connection = Minecraft.getInstance().getConnection();
+        if (connection != null && connection.hasChannel(payload)) {
+            PacketDistributor.sendToServer(payload);
+        }
         //?} else {
         throw new UnsupportedOperationException("26.1 migration");
         //?}
