@@ -244,7 +244,7 @@ public record ParticleAppearanceBillboard(
 
         public static final Codec<FaceCameraMode> CODEC = Codec.STRING.xmap(
                 FaceCameraMode::byName,
-                mode -> mode.name().toLowerCase()
+                mode -> mode.name().toLowerCase(Locale.ROOT)
         );
 
         private static FaceCameraMode byName(String name) {
@@ -275,7 +275,7 @@ public record ParticleAppearanceBillboard(
 
             public static final Codec<Mode> CODEC = Codec.STRING.xmap(
                     Mode::byName,
-                    mode -> mode.name().toLowerCase()
+                    mode -> mode.name().toLowerCase(Locale.ROOT)
             );
 
             private static Mode byName(String name) {

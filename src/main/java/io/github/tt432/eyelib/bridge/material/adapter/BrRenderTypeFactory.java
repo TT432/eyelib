@@ -51,6 +51,7 @@ import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL14;
 //?}
 
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -113,7 +114,7 @@ public final class BrRenderTypeFactory {
     //? if <26.1 {
     private static RenderType custom(ResourceLocation texture, BrRenderState state) {
         RenderType renderType = RenderType.create(
-                "eyelib_material_" + state.surfaceClass().name().toLowerCase() + "_" + texture,
+                "eyelib_material_" + state.surfaceClass().name().toLowerCase(Locale.ROOT) + "_" + texture,
                 DefaultVertexFormat.NEW_ENTITY,
                 VertexFormat.Mode.QUADS,
                 RenderType.SMALL_BUFFER_SIZE,
@@ -264,7 +265,7 @@ public final class BrRenderTypeFactory {
             builder = builder.sortOnUpload();
         }
         return RenderType.create(
-                "eyelib_material_" + state.surfaceClass().name().toLowerCase() + "_" + texture,
+                "eyelib_material_" + state.surfaceClass().name().toLowerCase(Locale.ROOT) + "_" + texture,
                 builder.createRenderSetup()
         );
     }

@@ -39,6 +39,7 @@ import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * 变量表面板（规格 nodegraph-variable-table §2.4）：当前图的变量声明表格视图——
@@ -113,7 +114,7 @@ final class VariablesPanel extends UIElement {
         filterField = new TextField();
         filterField.textFieldStyle(style -> style.placeholder(Component.literal("筛选变量…")));
         filterField.setTextResponder(text -> {
-            filterText = text.trim().toLowerCase();
+            filterText = text.trim().toLowerCase(Locale.ROOT);
             rebuild();
         });
         filterField.layout(layout -> layout.flex(1).heightPercent(100));
@@ -410,7 +411,7 @@ final class VariablesPanel extends UIElement {
         List<VariableDeclarationModelBase> vars = new ArrayList<>();
         for (VariableDeclarationModelBase var : model.getGraphVariableModels()) {
             if (var == null) continue;
-            if (!filterText.isEmpty() && !var.getName().toLowerCase().contains(filterText)) {
+            if (!filterText.isEmpty() && !var.getName().toLowerCase(Locale.ROOT).contains(filterText)) {
                 continue;
             }
             vars.add(var);

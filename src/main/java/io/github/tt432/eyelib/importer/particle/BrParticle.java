@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.TreeMap;
@@ -326,7 +327,7 @@ public record BrParticle(
             }
 
             public String getSerializedName() {
-                return name().toLowerCase();
+                return name().toLowerCase(Locale.ROOT);
             }
         }
     }

@@ -2,6 +2,8 @@ package io.github.tt432.eyelib.wintersky.tinycolor;
 
 import org.jspecify.annotations.Nullable;
 
+import java.util.Locale;
+
 /**
  * tinycolor2 1.4.2 移植（wintersky 用到的子集：hex 字符串 / rgba 对象输入、
  * {@code toRgb()}、{@code toHex8String()}、{@code tinycolor.mix()}）。
@@ -85,7 +87,7 @@ public final class TinyColor {
     private static Rgba inputToRGB(String color) {
         double r = 0, g = 0, b = 0, a = 1;
 
-        String c = color.trim().toLowerCase();
+        String c = color.trim().toLowerCase(Locale.ROOT);
         Parsed parsed = parseHex(c);
         if (parsed != null) {
             r = parsed.r;

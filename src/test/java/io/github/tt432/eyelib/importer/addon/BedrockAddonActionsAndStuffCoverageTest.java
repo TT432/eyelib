@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Locale;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -40,7 +41,7 @@ class BedrockAddonActionsAndStuffCoverageTest {
 
         int tga = 0;
         for (String path : rp.textures().keySet()) {
-            if (path.toLowerCase().endsWith(".tga")) tga++;
+            if (path.toLowerCase(Locale.ROOT).endsWith(".tga")) tga++;
         }
         System.out.println("TGA count: " + tga);
         assertTrue(tga > 50, "应有至少50张TGA被解码");

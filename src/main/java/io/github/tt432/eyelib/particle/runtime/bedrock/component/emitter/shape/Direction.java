@@ -7,6 +7,7 @@ import io.github.tt432.eyelib.molang.MolangValue3;
 import org.jspecify.annotations.Nullable;
 import org.joml.Vector3f;
 
+import java.util.Locale;
 import java.util.Objects;
 
 /** @author TT432 */
@@ -18,7 +19,7 @@ public record Direction(Type type, @Nullable MolangValue3 custom) {
                         case "inwards" -> new Direction(Type.INWARDS, MolangValue3.ZERO);
                         default -> new Direction(Type.OUTWARDS, MolangValue3.ZERO);
                     },
-                    direction -> direction.type.name().toLowerCase()),
+                    direction -> direction.type.name().toLowerCase(Locale.ROOT)),
             MolangValue3.CODEC.xmap(value -> new Direction(Type.CUSTOM, value), Direction::custom)
     ).xmap(either -> either.map(left -> left, right -> right), Either::left);
 
