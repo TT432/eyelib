@@ -12,6 +12,7 @@ import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * wintersky 粒子预览屏幕：列出资源包内全部 Bedrock 粒子（identifier），
@@ -94,10 +95,10 @@ public final class WinterskyParticleScreen implements UIScreen {
             panel.setEntries(allIdentifiers);
             return;
         }
-        String lower = input.toLowerCase();
+        String lower = input.toLowerCase(Locale.ROOT);
         List<String> filtered = new ArrayList<>();
         for (String id : allIdentifiers) {
-            if (id.toLowerCase().contains(lower)) {
+            if (id.toLowerCase(Locale.ROOT).contains(lower)) {
                 filtered.add(id);
             }
         }

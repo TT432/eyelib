@@ -8,6 +8,7 @@ import io.github.tt432.eyelib.molang.MolangValue;
 import io.github.tt432.eyelib.molang.MolangValue3;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.function.Function;
 
@@ -21,11 +22,11 @@ public record BrBoneKeyFrameSchema(
         CATMULLROM;
 
         public static final Codec<LerpMode> CODEC = Codec.STRING.xmap(
-                value -> switch (value.toLowerCase()) {
+                value -> switch (value.toLowerCase(Locale.ROOT)) {
                     case "catmullrom" -> CATMULLROM;
                     default -> LINEAR;
                 },
-                value -> value.name().toLowerCase()
+                value -> value.name().toLowerCase(Locale.ROOT)
         );
     }
 

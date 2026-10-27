@@ -55,6 +55,7 @@ import org.slf4j.LoggerFactory;
 
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -243,7 +244,7 @@ public class ModelPreviewScreen extends ModalWorksurfaceScreen {
             return;
         }
 
-        String lowerQuery = query.toLowerCase();
+        String lowerQuery = query.toLowerCase(Locale.ROOT);
         Map<String, Model> allModels = ModelManager.INSTANCE.all();
 
         Model found = null;
@@ -253,7 +254,7 @@ public class ModelPreviewScreen extends ModalWorksurfaceScreen {
             String id = entry.getKey();
             Model model = entry.getValue();
 
-            if (id.toLowerCase().contains(lowerQuery) || model.name().toLowerCase().contains(lowerQuery)) {
+            if (id.toLowerCase(Locale.ROOT).contains(lowerQuery) || model.name().toLowerCase(Locale.ROOT).contains(lowerQuery)) {
                 found = model;
                 break; // Stop at first match
             }

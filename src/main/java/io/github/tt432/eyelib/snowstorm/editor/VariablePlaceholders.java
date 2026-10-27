@@ -10,6 +10,7 @@ import org.jspecify.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -102,7 +103,7 @@ public final class VariablePlaceholders {
         Set<String> predefined = new LinkedHashSet<>();
         for (Object element : molangStrings) {
             if (!(element instanceof String string)) continue;
-            String stringLowerCase = string.toLowerCase();
+            String stringLowerCase = string.toLowerCase(Locale.ROOT);
             Matcher matches = VARIABLE_USAGE.matcher(stringLowerCase);
             while (matches.find()) {
                 String match = matches.group();

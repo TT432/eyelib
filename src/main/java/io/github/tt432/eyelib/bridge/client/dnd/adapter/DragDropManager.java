@@ -13,6 +13,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * 客户端拖放悬停管理器（单例）。
@@ -92,7 +93,7 @@ public final class DragDropManager {
 
     private static boolean isWindows() {
         String os = System.getProperty("os.name", "");
-        return os.toLowerCase().contains("win");
+        return os.toLowerCase(Locale.ROOT).contains("win");
     }
 
     private void doInstallWindows() {

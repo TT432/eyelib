@@ -3,6 +3,7 @@ package io.github.tt432.eyelib.animation.bedrock.baked;
 import io.github.tt432.eyelib.importer.animation.bedrock.BrBoneKeyFrameSchema;
 import io.github.tt432.eyelib.molang.MolangValue3;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * 烘焙后的骨骼关键帧数据（纯数据，无 Minecraft 依赖）。
@@ -19,7 +20,7 @@ public record BakedBoneKeyFrame(
         CATMULLROM;
 
         public static BakedLerpMode fromSchemaName(String name) {
-            return switch (name.toLowerCase()) {
+            return switch (name.toLowerCase(Locale.ROOT)) {
                 case "catmullrom" -> CATMULLROM;
                 default -> LINEAR;
             };

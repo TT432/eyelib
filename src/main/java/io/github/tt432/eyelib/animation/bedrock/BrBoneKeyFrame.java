@@ -22,6 +22,7 @@ import org.joml.Vector2f;
 import org.joml.Vector3f;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 
 /**
@@ -60,7 +61,7 @@ public record BrBoneKeyFrame(
 
         @Override
         public String getSerializedName() {
-            return name().toLowerCase();
+            return name().toLowerCase(Locale.ROOT);
         }
     }
 

@@ -93,21 +93,20 @@ public final class BedrockPackResources implements net.minecraft.server.packs.Pa
 
     /** pack_icon.png 的 IoSupplier；无图标返回 null（vanilla 回落 unknown_pack.png）。 */
     private static @Nullable IoSupplier<InputStream> iconSupplier(Path file) {
-        try {
-            ZipFile zip = new ZipFile(file.toFile());
+        try (ZipFile zip = new ZipFile(file.toFile())) {
+            // 探测句柄必须在返回前关闭：图标流由返回的 supplier 每次自开新 ZipFile 读取
             ZipEntry entry = zip.getEntry("pack_icon.png");
             if (entry == null) {
                 entry = zip.getEntry("resource_pack/pack_icon.png");
             }
             if (entry == null) {
-                zip.close();
                 return null;
             }
-            ZipEntry finalEntry = entry;
+            String entryName = entry.getName();
             return () -> {
                 // 每次 open 新 ZipFile：IoSupplier 可被多次调用，且关闭流时连同 zip 一起释放
                 ZipFile opened = new ZipFile(file.toFile());
-                InputStream in = opened.getInputStream(opened.getEntry(finalEntry.getName()));
+                InputStream in = opened.getInputStream(opened.getEntry(entryName));
                 return new java.io.FilterInputStream(in) {
                     @Override
                     public void close() throws IOException {
