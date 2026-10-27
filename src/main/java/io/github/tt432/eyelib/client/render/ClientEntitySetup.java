@@ -21,9 +21,11 @@ import io.github.tt432.eyelib.molang.mapping.api.HostRole;
 import io.github.tt432.eyelib.molang.mapping.api.HostRoles;
 import io.github.tt432.eyelib.util.PortResourceLocation;
 import io.github.tt432.eyelib.util.entitydata.ModelComponentInfo;
+import net.minecraft.core.Direction;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Pose;
 import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -91,8 +93,17 @@ final class ClientEntitySetup {
                 poseStack.scale(0.5F, 0.5F, 0.5F);
             }
 
-            float yBodyRot = Mth.rotLerp(data.partialTick(), livingEntity.yBodyRotO, livingEntity.yBodyRot);
-            poseStack.mulPose(Axis.YP.rotationDegrees(-yBodyRot));
+            Direction bedOrientation = livingEntity.getBedOrientation();
+            if (livingEntity.hasPose(Pose.SLEEPING) && bedOrientation != null) {
+                // RenderLivingEvent.Pre 在 vanilla 的 scale(-1, -1, 1) 之后触发，故水平平移取相反符号。
+                float bedOffset = livingEntity.getEyeHeight(Pose.STANDING) - 0.1F;
+                poseStack.translate(bedOrientation.getStepX() * bedOffset, 0, bedOrientation.getStepZ() * bedOffset);
+                // Bedrock 的 get_in_bed 剪辑负责平躺；这里只负责床轴朝向，避免重复施加 vanilla 的 ZP(90)。
+                poseStack.mulPose(Axis.YP.rotationDegrees(-bedOrientation.toYRot()));
+            } else {
+                float yBodyRot = Mth.rotLerp(data.partialTick(), livingEntity.yBodyRotO, livingEntity.yBodyRot);
+                poseStack.mulPose(Axis.YP.rotationDegrees(-yBodyRot));
+            }
         }
     }
 
