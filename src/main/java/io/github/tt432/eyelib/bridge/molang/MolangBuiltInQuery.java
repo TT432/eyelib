@@ -804,19 +804,14 @@ public interface MolangBuiltInQuery {
 
     @MolangFunction(value = "modified_move_speed", description = "移动速度")
     public static float modifiedMoveSpeed(MolangScope scope) {
+        // 基岩语义：返回「当前行走速度」，即每 tick 水平位移 / 0.25，上限 1。不按 MOVEMENT_SPEED 属性归一。
+        // 依据 Bedrock Wiki(query.modified_move_speed) 取值示例：玩家行走 ≈0.86（4.317 格/s ÷ 20 ÷ 0.25），
+        // 疾跑 1.0、着火行走 1.0（均被 1.0 封顶），疾跑跳跃 0.35。
+        // 动画包按 mms∈[0,1] 设计（math.min(1,mms)、mms>0.6 判跑、mms>0.8 判冲刺），按属性归一会整体偏离。
         return livingFloat(scope, e -> {
-            var xo = e.xo;
-            var zo = e.zo;
-
-            var x = e.getX();
-            var z = e.getZ();
-
-            float speed = (float) e.getAttributeBaseValue(Attributes.MOVEMENT_SPEED) * 1.3F;
-            // 属性移速为 0 时避免 0/0=NaN（NaN 会沿动画链扩散致整模型消失）
-            if (speed <= 1.0E-6F) {
-                return 0F;
-            }
-            return ((float) Math.sqrt((x - xo) * (x - xo) + (z - zo) * (z - zo))) / speed;
+            var dx = e.getX() - e.xo;
+            var dz = e.getZ() - e.zo;
+            return Math.min(1F, (float) Math.sqrt(dx * dx + dz * dz) * 4F);
         });
     }
 
