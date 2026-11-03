@@ -86,7 +86,7 @@ public final class EntityRenderOrchestrator {
     public static void prepareDetachedEntity(Entity entity) {
         if (entity instanceof LivingEntity living) {
             // detached/dev 场景无服务端 EntityJoinLevelEvent：走同一套行为包 spawn 逻辑，
-            // 保证 variant 语义与实机一致（variant 为真源，JE 实体状态跟随 variant）。
+            // 保证 variant 语义与实机一致（史莱姆尺寸由 JE 决定，variant 镜像该尺寸）。
             VanillaBehaviorEntityLoader.ensureVanillaLoaded(getInstance().gameDirectory.toPath());
             BehaviorSpawnPort.applyFreshSpawn(living, false);
         }

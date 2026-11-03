@@ -95,11 +95,16 @@ final class ClientEntitySetup {
 
             Direction bedOrientation = livingEntity.getBedOrientation();
             if (livingEntity.hasPose(Pose.SLEEPING) && bedOrientation != null) {
-                // RenderLivingEvent.Pre 在 vanilla 的 scale(-1, -1, 1) 之后触发，故水平平移取相反符号。
+                // vanilla 在 RenderLivingEvent.Pre 之前只施加了实体位置平移（无旋转/缩放），
+                // 因此这里必须自行复刻 vanilla LivingEntityRenderer 的睡眠变换：
+                //   translate(-step * (eyeHeight(STANDING) - 0.1))  → 把模型根（脚）移到床脚一侧
+                //   mulPose(YP(-bedOrientation.toYRot() + 180))    → 床轴朝向（180 为模型面向 +Z 与 vanilla -Z 的差）
+                // 平躺本身由 get_in_bed 剪辑负责，这里只摆正床轴与落点。
                 float bedOffset = livingEntity.getEyeHeight(Pose.STANDING) - 0.1F;
-                poseStack.translate(bedOrientation.getStepX() * bedOffset, 0, bedOrientation.getStepZ() * bedOffset);
-                // Bedrock 的 get_in_bed 剪辑负责平躺；这里只负责床轴朝向，避免重复施加 vanilla 的 ZP(90)。
-                poseStack.mulPose(Axis.YP.rotationDegrees(-bedOrientation.toYRot()));
+                poseStack.translate(-bedOrientation.getStepX() * bedOffset,
+                                    0F,
+                                    -bedOrientation.getStepZ() * bedOffset);
+                poseStack.mulPose(Axis.YP.rotationDegrees(-bedOrientation.toYRot() + 180F));
             } else {
                 float yBodyRot = Mth.rotLerp(data.partialTick(), livingEntity.yBodyRotO, livingEntity.yBodyRot);
                 poseStack.mulPose(Axis.YP.rotationDegrees(-yBodyRot));

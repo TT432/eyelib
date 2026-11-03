@@ -89,8 +89,8 @@ public final class MolangQuery {
             }
             Variant component = DataAttachmentHelper.getOrCreate(DataAttachmentPort.entityBehaviorData(), l)
                                                     .component(Variant.class);
-            // variant 的唯一真源是行为包 spawn 事件（见 BehaviorSpawnApplicator）；
-            // 无行为包数据时保持 BE 中性值 0，禁止从 JE 实体状态反向推导。
+            // variant 由行为包 spawn 事件赋予（见 BehaviorSpawnApplicator）；史莱姆/岩浆怪的
+            // 尺寸维度归 JE 生成逻辑，variant 在生成时镜像 JE 尺寸。无行为包数据时保持 BE 中性值 0。
             return component != null ? (float) component.value() : 0;
         });
     }
