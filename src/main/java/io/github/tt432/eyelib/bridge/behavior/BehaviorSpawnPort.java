@@ -6,8 +6,8 @@ import net.minecraft.world.entity.LivingEntity;
 /**
  * 行为包 spawn 逻辑 Port —— 隔离 application 对 adapter 具体实现的直接依赖（ADR-0018 I-5）。
  * <p>
- * BE 语义：variant 由行为包 spawn 事件赋予，是实体变体的唯一真源；
- * JE 实体状态（如史莱姆尺寸层级）跟随 variant，不允许反向推导。
+ * BE 语义：variant 由行为包 spawn 事件赋予，是实体变体的真源；史莱姆/岩浆怪的尺寸维度
+ * 归 JE 生成逻辑，variant 镜像 JE 尺寸（见 {@link BehaviorSpawnApplicator}）。
  *
  * @author TT432
  */
@@ -30,12 +30,5 @@ public interface BehaviorSpawnPort {
      */
     static boolean hasSyncedState(LivingEntity living) {
         return BehaviorSpawnApplicator.hasSyncedState(living);
-    }
-
-    /**
-     * 磁盘加载路径：不重新随机化，用已持久化的 variant 重新对齐 JE 实体状态。
-     */
-    static void reapplyVariantToEntity(LivingEntity living) {
-        BehaviorSpawnApplicator.reapplyVariantToEntity(living);
     }
 }

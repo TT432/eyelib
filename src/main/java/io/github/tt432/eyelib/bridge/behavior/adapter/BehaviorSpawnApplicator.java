@@ -22,8 +22,12 @@ import java.util.Optional;
 /**
  * 行为包 spawn 逻辑应用器：求值 {@code minecraft:entity_spawned} 并把结果写入实体附件。
  * <p>
- * BE 语义：variant 由行为包 spawn 事件赋予，是实体变体的唯一真源；
- * JE 实体状态（如史莱姆尺寸层级）跟随 variant，不允许反向推导。
+ * BE 语义：variant 由行为包 spawn 事件赋予，是实体变体的真源。
+ * <p>
+ * 例外：史莱姆/岩浆怪的尺寸层级归 JE 生成逻辑所有——自然生成由 {@code Slime#finalizeSpawn}
+ * 随机，分裂子代由 {@code Slime#remove} 从父尺寸派生（{@code size / 2}）。分裂子代进入世界时
+ * 也走 {@code EntityJoinLevelEvent}，若此时按行为包随机 variant 回写尺寸，分裂结果会被重新
+ * 随机化（issue #36）。因此这类实体的 variant 镜像 JE 尺寸，绝不由 variant 反向设置尺寸。
  *
  * @author TT432
  */
@@ -58,13 +62,17 @@ public final class BehaviorSpawnApplicator {
         Scale scale = data.component(Scale.class);
         MarkVariant markVariant = data.component(MarkVariant.class);
 
+        // 尺寸维度归 JE：分裂子代已带父尺寸/2，禁止用随机 variant 回写（issue #36）。
+        // spawn 事件仍决定其余组件（血量、碰撞盒等），只是尺寸层级以 JE 为准。
+        int variantValue = living instanceof Slime slime
+                ? slime.getSize()
+                : variant != null ? variant.value() : 0;
+
         SyncedBehaviorState state = new SyncedBehaviorState(
-                variant != null ? variant.value() : 0,
+                variantValue,
                 scale != null ? scale.value() : 1.0f,
                 markVariant != null ? markVariant.value() : 0
         );
-
-        applyVariantToEntity(living, state.variant());
 
         DataAttachmentHelper.setLocal(
                 EyelibAttachableData.ENTITY_BEHAVIOR_DATA.get(),
@@ -89,28 +97,5 @@ public final class BehaviorSpawnApplicator {
      */
     public static boolean hasSyncedState(LivingEntity living) {
         return DataAttachmentHelper.getOrNull(EyelibAttachableData.SYNCED_BEHAVIOR_STATE.get(), living) != null;
-    }
-
-    /**
-     * 磁盘加载路径：不重新随机化，用已持久化的 variant 重新对齐 JE 实体状态。
-     * variant 为真源——即使持久化状态由未联动尺寸的旧版本写入，加载后也会收敛为一致。
-     */
-    public static void reapplyVariantToEntity(LivingEntity living) {
-        SyncedBehaviorState state = DataAttachmentHelper.getOrNull(
-                EyelibAttachableData.SYNCED_BEHAVIOR_STATE.get(), living);
-        if (state != null) {
-            applyVariantToEntity(living, state.variant());
-        }
-    }
-
-    /**
-     * JE 实体状态跟随 BE variant：史莱姆/岩浆怪（JE 均为 {@link Slime} 子类）尺寸层级
-     * 与 variant 同值（1/2/4，JE/BE 一致），随 variant 一并更新 hitbox、血量与经验。
-     */
-    private static void applyVariantToEntity(LivingEntity living, int variant) {
-        if (variant <= 0) return;
-        if (living instanceof Slime slime) {
-            slime.setSize(variant, true);
-        }
     }
 }

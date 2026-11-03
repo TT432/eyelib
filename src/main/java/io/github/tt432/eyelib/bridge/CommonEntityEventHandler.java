@@ -40,10 +40,8 @@ public final class CommonEntityEventHandler {
         if (!(entity instanceof LivingEntity living)) return;
 
         // BE 语义：entity_spawned 仅在生成时触发一次；已持有持久化 SyncedBehaviorState 的
-        // 实体（区块重载、世界重进）不得重新随机化 variant，但仍需用持久化 variant 重新对齐
-        // JE 实体状态（史莱姆尺寸）——variant 为真源，旧版本写下的不一致状态随之收敛。
+        // 实体（区块重载、世界重进）不得重新随机化 variant。
         if (BehaviorSpawnApplicator.hasSyncedState(living)) {
-            BehaviorSpawnApplicator.reapplyVariantToEntity(living);
             return;
         }
 
