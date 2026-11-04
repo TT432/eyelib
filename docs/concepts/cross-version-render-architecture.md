@@ -49,7 +49,7 @@ geo_render 三份文档揭示了一个**两次断裂**的演进：
 | 着色器 | `ShaderInstance`（每 RenderType 绑定） | `ShaderManager`（集中管理源码，管线预编译） |
 | 渲染层叠加 | `RenderLayer.render()`（立即） | `Feature` 系统（`FeatureRenderDispatcher` 调度） |
 | 渲染调度 | 直接 `draw` / `endBatch` | `FrameGraphBuilder` 声明 Pass，统一执行 |
-| 渲染阶段事件 | `RenderLevelStageEvent.Stage.AFTER_SKY` | `RenderLevelStageEvent.AfterOpaqueBlocks`（细分事件类型） |
+| 渲染阶段事件 | `RenderFrameEvent.Pre`（1.20.1 为 `RenderTickEvent.START`） | `RenderFrameEvent.Pre` |
 | `LivingEntityRenderer` 泛型 | `<T, M>` 双泛型 | `<T, State, M>` 三泛型 |
 | 顶点写入 | `vertex(x,y,z,...)` 14 参数 | `addVertex(x,y,z).setColor()...` 链式 |
 | 资源标识 | `ResourceLocation` | `Identifier` |
@@ -110,7 +110,7 @@ eyelib 的跨版本张力**几乎全部来自 1.21.1 → 26.1.2**。1.20.1 ↔ 1
 ```mermaid
 flowchart TD
     subgraph JE["JE 渲染基础设施（版本相关）"]
-        E1["RenderLevelStageEvent<br/>(Forge AFTER_SKY / NeoForge AfterOpaqueBlocks)"]
+        E1["RenderFrameEvent.Pre<br/>(1.20.1: RenderTickEvent.START)"]
         E2["LivingEntityRenderer.render / submit"]
     end
 
@@ -171,7 +171,7 @@ VertexConsumerPort.vertex(consumer,     // 屏蔽 vertex(14参) vs addVertex() �
 | D5 | `RenderType`（状态巨类）→ `RenderType`+`RenderSetup`(`RenderPipeline` PSO) | **L2** | `BrRenderTypeFactory.custom` `//?` 两份 + `PIPELINE_CACHE` | `26.1` | ✅ 26.1.2 编译 + client 启动 |
 | D6 | `RenderType.entityXxx` → `RenderTypes.entityXxx` | L1 | `RenderPassAdapter` switch `//?` 两份 | `26.1` | ✅ 26.1.2 编译 + client 启动 |
 | D7 | `ResourceLocation` → `Identifier` | L1 | `ResourceLocationBridge` `//?` 三分支 | `1.20.6`/`26.1` | ✅ |
-| D8 | `RenderLevelStageEvent.Stage.AFTER_SKY` → `AfterOpaqueBlocks`（事件类型） | L1 | `RenderStageEventAdapter` `//?` | `26.1` | ✅ 26.1.2 编译 + client 启动 |
+| D8 | 帧渲染前事件：Forge `TickEvent.RenderTickEvent.START` → NeoForge `RenderFrameEvent.Pre`（ADR-0038，必须早于 shadow pass） | L1 | `RenderStageEventAdapter` `//?` | `1.20.6` | ✅ 1.20.1/1.21.1/26.1.2 编译；1.21.1 + Iris 实机 |
 | D9 | **渲染调度分歧**：立即模式（JE 调 render） vs 两阶段（submit + 全局批量） | **L2/L3** | `RenderStageEventAdapter` 移除全局批量 + `setCanceled` 互斥守卫（见 §7.1） | `26.1` | ✅ §7.1 已解决 |
 | D10 | Forge `@Mod.EventBusSubscriber` → NeoForge `@EventBusSubscriber` | L1 | adapter 类注解 `//?` | `1.20.6` | ✅ |
 | D11 | `ForgeRegistries` → `BuiltInRegistries` | L1 | `EntityRenderSystem.getEntityTypeId` `//?` | `1.20.6` | ✅ |
@@ -214,7 +214,7 @@ sequenceDiagram
     participant Orch as EntityRenderOrchestrator
     participant VC as VertexConsumerPort
 
-    JE->>RSEA: RenderLevelStageEvent (AFTER_SKY)
+    JE->>RSEA: 帧渲染前 (RenderTickEvent.START / RenderFrameEvent.Pre)
     RSEA->>FP: dispatch(@OnRenderStage)
     FP->>FP: Setup→EffectCommit→Tick (动画tick/效果)
     Note over RSEA: <26.1 不在此批量渲染实体
@@ -250,27 +250,22 @@ sequenceDiagram
     participant ELR as EyelibLivingEntityRenderer
     participant Orch as EntityRenderOrchestrator
 
-    JE->>RSEA: RenderLevelStageEvent.AfterOpaqueBlocks
+    JE->>RSEA: 帧渲染前 RenderFrameEvent.Pre
     RSEA->>FP: dispatch(@OnRenderStage)
     FP->>FP: Setup→EffectCommit→Tick
-    RSEA->>RSEA: 新建 ByteBufferBuilder + immediate BufferSource
-    RSEA->>Orch: renderBufferPort.renderEntities(partialTick, camXYZ, poseStack, bufferSource)
-    Orch->>Orch: 遍历 useBuiltInRenderSystem 实体<br/>SimpleRenderAction.render()
-    RSEA->>RSEA: bufferSource.endBatch() + close
 
     JE->>ELR: submit(state, poseStack, submitNodeCollector, camera)
     ELR->>ELR: 新建独立 ByteBufferBuilder(786432) + immediate BufferSource
     ELR->>Orch: renderEntityPort.render(RenderEntityParams)
-    Orch->>Orch: SimpleRenderAction.render()
-    ELR->>ELR: bufferSource.endBatch() + close
+    Orch->>Orch: SimpleRenderAction.render()<br/>几何经 submitCustomGeometry 延迟提交
+    ELR->>ELR: bufferSource.endBatch()（仅手持物等附属渲染）+ close
 ```
 
 **特征**：
 - `RenderType` = `RenderSetup.builder(RenderPipeline).withTexture(...)`，`RenderPipeline` 由 `RenderPipelines.ENTITY_SNIPPET`/`ENTITY_EMISSIVE_SNIPPET` 基座 + `buildColorTargetState/buildDepthStencilState/buildStencilTest` 构建（`BrRenderTypeFactory.custom` `>=26.1` 分支，`PIPELINE_CACHE: Map<BrRenderState, RenderPipeline>` 共享 PSO）
 - `LivingEntityRenderer<T, EyelibEntityRenderState, EmptyEntityModel>` 三泛型，`extractRenderState` + `submit` 两阶段
 - 顶点格式 `addVertex(x,y,z).setColor().setUv().setOverlay().setLight().setNormal()`
-
-> ⚠️ **设计张力（详见 §7.1）**：上图显示 `renderBufferPort.renderEntities()`（全局批量）与 `submit()`（每实体 immediate）**两条路径都会触发** `renderEntityPort.render()`，对 `useBuiltInRenderSystem==true` 的实体存在双重渲染风险。
+- 几何不再由 `RenderStageEventAdapter` 全局批量绘制（2026-08 已移除，避免与 per-entity `submit` 双重渲染）
 
 ---
 
@@ -302,10 +297,9 @@ static void vertex(VertexConsumer, x,y,z, r,g,b,a, u,v, overlay, light, nx,ny,nz
 
 | 版本 | 行为 |
 |------|------|
-| `<26.1` | 订阅 `AFTER_SKY`，仅 `dispatch`（触发 FramePipeline）。实体几何绘制由 JE 调 `EyelibLivingEntityRenderer.render` 完成 |
-| `>=26.1` | 订阅 `AfterOpaqueBlocks`，`dispatch` **+** 新建全局 `BufferSource` 调 `renderBufferPort.renderEntities()` 全局批量绘制。同时 JE 仍调 `submit()` |
-
-> 该 Port 是 §7.1 双重渲染张力的源头，是 D9 唯一未定级的差异。
+| `1.20.1` | 订阅 Forge `TickEvent.RenderTickEvent`（`Phase.START`），仅 `dispatch`（触发 FramePipeline）。实体几何绘制由 JE 调 `EyelibLivingEntityRenderer.render` 完成 |
+| `>=1.20.6` | 订阅 `RenderFrameEvent.Pre`，仅 `dispatch`。1.21.1 由 JE 调 `render` 立即绘制；26.1.2 由 JE 调 `submit` 延迟提交 |
+| 时机 | 必须早于 Iris/Oculus shadow pass（ADR-0038），否则 shadow map 使用上一帧姿态，实体整片发黑 |
 
 ### 6.4 `BrRenderTypeFactory` / `RenderPassAdapter`（材质→RenderType）
 
@@ -392,7 +386,7 @@ ADR-0016 §"过渡期已知债务"记录的、与渲染流程相关的债务：
 | §3.1 RenderType 系统 | `BrRenderTypeFactory` 把 Bedrock 语义映射到 vanilla RenderType（<26.1）/ RenderPipeline PSO（>=26.1）（§6.4） |
 | §3.2 顶点缓冲系统 | eyelib 复用 vanilla `MultiBufferSource.BufferSource` + `VertexConsumer`，仅 `VertexConsumerPort` 屏蔽 API 差异；C1 GPU 蒙皮起允许经 vanilla `VertexBuffer`/`GpuBuffer` 抽象持有自有静态几何缓冲（ADR-0032） |
 | §3.3 着色器系统 | eyelib 复用 vanilla entity 着色器（经 RenderType/RenderPipeline 绑定）；C1 GPU 蒙皮起允许经官方扩展点（Forge `RegisterShadersEvent` / 26.1 `RenderPipeline.withVertexShader`）注册自有蒙皮着色器（ADR-0032） |
-| §3.4/§3.5 主渲染循环 + GPU 上传 | eyelib 接入点 = `RenderLevelStageEvent`（§5）；GPU 上传完全委托 vanilla `endBatch`/`RenderPass` |
+| §3.4/§3.5 主渲染循环 + GPU 上传 | eyelib 接入点 = `RenderFrameEvent.Pre`（1.20.1 为 `RenderTickEvent.START`，§5；须早于 shadow pass，ADR-0038）；GPU 上传完全委托 vanilla `endBatch`/`RenderPass` |
 | 26.1.2 §2.2 两阶段 submit | `EyelibLivingEntityRenderer` 的 `>=26.1` 分支实现 `extractRenderState`+`submit`（§5.4），作为 `RenderLivingEventAdapter` 的 fallback（§7.1 已解决双重渲染） |
 
 **设计原则**：eyelib 是 Bedrock 渲染语义在 JE 基础设施上的**薄映射层**，不重写 vanilla 管线，只在材质语义→RenderType、骨骼变换→顶点写入两个接缝处做翻译。「骨骼变换→顶点写入」接缝自 C1 起迁移为「骨骼矩阵→调色板上传 + VS 蒙皮」（ADR-0032），仍以 vanilla GPU 抽象为限、禁止裸 GL。vanilla 三版本的基础设施差异（PSO、submit、FrameGraph）被 bridge Port 吸收，对 Application 层不可见。

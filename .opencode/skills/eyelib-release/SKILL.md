@@ -32,8 +32,9 @@ Eyelib 发版 SOP：把当前 `mod_version` 的三个 Stonecutter 节点产物�
 ## 步骤 1：构建并发布到 mavenLocal（自动签名）
 主项目编译依赖 `io.github.tt432:clientsmoke:${version}`（版本号跟随主项目 `mod_version`），所以**先 bump 并发布 clientsmoke**，否则主构建报 `Could not find io.github.tt432:clientsmoke:<version>`：
 1. 同步改 `clientsmoke/gradle.properties` 的 `mod_version`（clientsmoke 是 git submodule，提交需在其仓库内单独提交）。
-2. `cmd.exe /c gradlew.bat -p clientsmoke :1.20.1:publishToMavenLocal :1.21.1:publishToMavenLocal :26.1.2:publishToMavenLocal --no-daemon --console=plain`
-3. 再发主项目三节点：
+2. **把该提交推送到 `TT432/clientsmoke` 远端 `main`**，再在主仓库提交 gitlink：`git -C clientsmoke push origin <sha>:main`。漏这步会让主仓库 pin 一个远端不存在的 commit，所有 CI compile job 在 checkout 阶段 7–10s 秒败（`upload-pack: not our ref`）。2026-10-10（PR #28）与 2026-11-03（PR #37）两次踩中。
+3. `cmd.exe /c gradlew.bat -p clientsmoke :1.20.1:publishToMavenLocal :1.21.1:publishToMavenLocal :26.1.2:publishToMavenLocal --no-daemon --console=plain`
+4. 再发主项目三节点：
 ```text
 cmd.exe /c gradlew.bat :1.20.1:publishMavenJavaPublicationToMavenLocal :1.21.1:publishMavenJavaPublicationToMavenLocal :26.1.2:publishMavenJavaPublicationToMavenLocal --no-daemon --console=plain
 ```
