@@ -112,6 +112,17 @@ public final class BrRenderTypeFactory {
         );
     }
 
+    /**
+     * 是否走「无方向光粒子上色器」（eyelib:particle_unlit）：仅 AMBIENT / NONE。
+     *
+     * <p>{@link BrRenderState.LightingModel#LIGHTMAP_ONLY} 不算——它保留 vanilla entity shader，只在 26.1
+     * 通过 {@code NO_CARDINAL_LIGHTING} 编译分支去掉法线方向项（ADR-0040）。
+     */
+    private static boolean isParticleUnlit(BrRenderState state) {
+        return state.lighting() == BrRenderState.LightingModel.AMBIENT
+                || state.lighting() == BrRenderState.LightingModel.NONE;
+    }
+
     //? if <26.1 {
     private static RenderType custom(ResourceLocation texture, BrRenderState state) {
         RenderType renderType = RenderType.create(
@@ -143,8 +154,10 @@ public final class BrRenderTypeFactory {
     /** 与 {@link #shaderState} 的 vanilla shader 选择一一对应的蒙皮变体（GLINT 等不支持的回退 CPU）。 */
     private static int legacySkinningVariant(BrRenderState state) {
         // 无方向光 state 使用 eyelib:particle_unlit（非 vanilla 逐行复刻对象），无对应蒙皮变体；
-        // 粒子本就不走蒙皮，登记 UNSUPPORTED 防御误路由（ADR-0033）
-        if (state.lighting() != BrRenderState.LightingModel.DIRECTIONAL) {
+        // 粒子本就不走蒙皮，登记 UNSUPPORTED 防御误路由（ADR-0033）。
+        // LIGHTMAP_ONLY 仍走 vanilla entity shader（26.1 起该 shader 支持 NO_CARDINAL_LIGHTING 编译分支），
+        // 蒙皮变体照常可用（ADR-0040）。
+        if (isParticleUnlit(state)) {
             return LegacySkinningManager.VARIANT_UNSUPPORTED;
         }
         return switch (state.surfaceClass()) {
@@ -161,8 +174,7 @@ public final class BrRenderTypeFactory {
 
     private static RenderStateShard.ShaderStateShard shaderState(BrRenderState state) {
         return new RenderStateShard.ShaderStateShard(() -> {
-            if (state.lighting() != BrRenderState.LightingModel.DIRECTIONAL
-                    && !OculusCompat.shaderPackActive()) {
+            if (isParticleUnlit(state) && !OculusCompat.shaderPackActive()) {
                 // 无方向光（粒子）：eyelib:particle_unlit；注册失败/重载窗口退化 vanilla（方向光近似），不崩
                 // Oculus/Iris 光影激活时不走自定义 shader：非 Iris 自有 ShaderInstance.apply() 会被
                 // DepthColorStorage 锁深度/颜色写入（零像素，OculusCompat 实证）；光影下光照模型本就由
@@ -269,6 +281,59 @@ public final class BrRenderTypeFactory {
                 "eyelib_material_" + state.surfaceClass().name().toLowerCase(Locale.ROOT) + "_" + texture,
                 builder.createRenderSetup()
         );
+    }
+
+    /**
+     * 26.1 实体渲染主路径：按 {@link PortRenderPass} 语义构造 LIGHTMAP_ONLY 的
+     * {@link BrRenderState} 并建自定义 RenderType（ADR-0040）。
+     *
+     * <p>不能继续直接用 vanilla {@code RenderTypes.entity*}: 26.1 的 {@code ENTITY_CUTOUT} /
+     * {@code ENTITY_TRANSLUCENT} 带 {@code PER_FACE_LIGHTING}（{@code entity.vsh} 里优先级高于
+     * NO_CARDINAL_LIGHTING），按世界法线给每个面 0.4~1.0 的亮度。Bedrock 纹理已烘焙面明暗，
+     * 叠加后得到 0.4 暗面；骨骼动画改变法线又让整面亮度在 0.4↔1.0 间跳变（实机表现为"阴影闪烁"）。
+     * 自定义 pipeline 基于 {@code ENTITY_SNIPPET}（不含 PER_FACE_LIGHTING）并加
+     * {@code NO_CARDINAL_LIGHTING}，观感与 1.20.1/1.21.1 一致。
+     */
+    public static RenderType createForEntityPass(PortResourceLocation texture,
+                                                 PortRenderPass.Transparency transparency,
+                                                 boolean disableCulling) {
+        BrRenderState state = entityPassState(transparency, disableCulling);
+        return CACHE.computeIfAbsent(new Key(texture, state),
+                key -> custom(ResourceLocationBridge.toMc(texture), state));
+    }
+
+    private static BrRenderState entityPassState(PortRenderPass.Transparency transparency, boolean disableCulling) {
+        BrRenderState.Transparency t = switch (transparency) {
+            case SOLID -> BrRenderState.Transparency.NONE;
+            case ALPHA_TEST -> BrRenderState.Transparency.ALPHA_TEST;
+            case TRANSLUCENT, TRANSLUCENT_EMISSIVE -> BrRenderState.Transparency.BLEND;
+            case ADDITIVE -> BrRenderState.Transparency.ADDITIVE;
+        };
+        BrRenderState.SurfaceClass sc = switch (transparency) {
+            case SOLID -> BrRenderState.SurfaceClass.OPAQUE;
+            case ALPHA_TEST -> BrRenderState.SurfaceClass.CUTOUT;
+            case TRANSLUCENT -> BrRenderState.SurfaceClass.TRANSLUCENT;
+            case TRANSLUCENT_EMISSIVE -> BrRenderState.SurfaceClass.TRANSLUCENT_EMISSIVE;
+            case ADDITIVE -> BrRenderState.SurfaceClass.ADDITIVE;
+        };
+        boolean blend = t == BrRenderState.Transparency.BLEND || t == BrRenderState.Transparency.ADDITIVE;
+        return new BrRenderState(
+                sc,
+                !disableCulling,
+                t,
+                new BrRenderState.Depth(true, Optional.empty()),
+                // 半透明不写深度（与 vanilla entityTranslucent 一致），其余写
+                new BrRenderState.WriteMask(true, !blend),
+                blend ? Optional.of(new BrRenderState.Blend(
+                        BlendFactor.SourceAlpha, BlendFactor.OneMinusSrcAlpha,
+                        BlendFactor.One, BlendFactor.OneMinusSrcAlpha)) : Optional.empty(),
+                Optional.empty(),
+                true,
+                true,
+                java.util.Set.of(),
+                false,
+                transparency == PortRenderPass.Transparency.TRANSLUCENT_EMISSIVE,
+                BrRenderState.LightingModel.LIGHTMAP_ONLY);
     }
 
     private static RenderPipeline buildPipeline(BrRenderState state) {

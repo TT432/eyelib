@@ -92,6 +92,9 @@
 | 0035 | Wintersky 融入 eyelib 的集成架构决策（双运行时共存/渲染旁路/渲染帧驱动） | Accepted (2026-09-29) |
 | 0036 | Snowstorm 粒子编辑器游戏内完整复刻（用户决策 U1-U3：完整复刻/全屏 Screen/贴图编辑器 V1） | Accepted (2026-09-29，用户决策) |
 | 0037 | 贴图原色材质的世界渲染通道 | Implemented (Forge 1.20.1) |
+| 0038 | 实体姿态管道必须早于光影 shadow pass | Accepted (2026-11-03) |
+| 0039 | Iris 光影下 26.1 GPU 蒙皮必须回退 CPU 路径 | Accepted (2026-11-04) |
+| 0040 | 实体材质默认光照模型改为 LIGHTMAP_ONLY——26.1 方向光根修 | Accepted (2026-11-04) |
 
 ## 核心原则
 

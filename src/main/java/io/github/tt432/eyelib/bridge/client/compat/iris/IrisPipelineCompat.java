@@ -53,10 +53,12 @@ public interface IrisPipelineCompat {
 
     /** 主通道程序名（{@code IrisProgram} 常量名）。 */
     private static String mainProgram(BrRenderState state) {
-        if (state.lighting() != BrRenderState.LightingModel.DIRECTIONAL) {
+        if (state.lighting() == BrRenderState.LightingModel.AMBIENT
+                || state.lighting() == BrRenderState.LightingModel.NONE) {
             // 无方向光（粒子）也登记 ENTITIES：这些 pipeline 的 vertex format 是 ENTITY，
             // 而 Iris 的 PARTICLES 键要求 DefaultVertexFormat.PARTICLE，匹配过去会让属性布局错位；
             // 光影包本来接管光照，牺牲"自发光不受光"只影响光影下的亮度语义，不会画错/画黑。
+            // LIGHTMAP_ONLY（实体，ADR-0040）不走此分支：其几何仍是实体语义，按 surfaceClass 映射。
             return "ENTITIES";
         }
         return switch (state.surfaceClass()) {
