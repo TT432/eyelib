@@ -11,7 +11,6 @@ import io.github.tt432.eyelib.util.PortResourceLocation;
 import net.minecraft.client.renderer.RenderType;
 //?} else {
 import net.minecraft.client.renderer.rendertype.RenderType;
-import net.minecraft.client.renderer.rendertype.RenderTypes;
 //?}
 /**
  * 将 PortRenderPass 语义转换为 MC RenderType 实例。
