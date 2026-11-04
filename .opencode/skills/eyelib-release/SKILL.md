@@ -47,6 +47,8 @@ Portal 要求每个文件带 `.md5` 与 `.sha1`；mavenLocal 发布**不生成**
 
 ## 步骤 3：上传 Maven Central（Portal Publisher API）
 - 上传：`POST https://central.sonatype.com/api/v1/publisher/upload?name=<name>&publishingType=AUTOMATIC`，HTTP Basic（user token），multipart 字段名 `bundle`，返回 deployment id（201）。
+  - 响应体是**裸 UUID 文本**（`c584cda0-9458-...`），不是 JSON；`resp.json()` 会抛 `Extra data: line 1 column 2`。
+  - 现成脚本：`work/release_21126/central_publish.py`（组 bundle + 补校验和 + 上传 + 轮询；`--dry-run` 只组包，`--check <deploymentId>` 只查状态）。
 - 查询状态：`POST /api/v1/publisher/status?id=<id>`，`Authorization: Bearer <base64(user:token)>`。
   - 状态序列：`PENDING → VALIDATING → VALIDATED → PUBLISHING → PUBLISHED`（或 `FAILED`，`errors` 字段给出逐文件原因）。
   - 发布耗时可达 10–30 分钟，需轮询到 `PUBLISHED`。
@@ -66,7 +68,33 @@ Portal 要求每个文件带 `.md5` 与 `.sha1`；mavenLocal 发布**不生成**
 - Central：`https://repo1.maven.org/maven2/io/github/tt432/eyelib/<version>/` 目录 200，且 `eyelib-<version>.jar` 200（只有 pom 200 说明该版本不完整）。
 - CurseForge：`https://r.jina.ai/https://www.curseforge.com/minecraft/mc-mods/eyelib/files/all` 能看到新文件名与 `Latest release`；文件详情页显示正确的 game version / loader / size。
 
+## 发布记录（21.1.26，2026-11-04）
+- Central Portal（`publishingType=AUTOMATIC`），三节点各一个 deployment：
+
+  | 节点 | deploymentId | 结果 |
+  | --- | --- | --- |
+  | `21.1.26+1.20.1-forge` | `2f7015fc-fa2e-4e8c-b2d7-908b85561d67` | PUBLISHED（上传→PUBLISHED 约 12.6 分钟） |
+  | `21.1.26+1.21.1-neoforge` | `25d82623-00c9-4a00-9162-01aa9451f576` | PUBLISHED |
+  | `21.1.26+26.1.2-neoforge` | `6dd58e7f-d031-4df9-bcd5-ef92714eb498` | PUBLISHED |
+
+  - repo1 同步实测：`21.1.26+1.20.1-forge` / `+1.21.1-neoforge` 目录在上传后约 2 分钟出现；`+1.21.1-neoforge` 目录内 `eyelib-...jar` 10398212 B 与 mavenLocal 一致，`.asc`/`.md5`/`.sha1` 齐全。
+  - `21.1.25` 当时只发 CurseForge、未进 Central，所以 21.1.26 是 `21.1.24` 之后 Central 上的第一个版本。
+- CurseForge（legacy Upload API），displayName 去扩展名：
+
+  | 节点 | fileId |
+  | --- | --- |
+  | `21.1.26+1.20.1-forge` | 9432072 |
+  | `21.1.26+1.21.1-neoforge` | 9432073 |
+  | `21.1.26+26.1.2-neoforge` | 9432074 |
+
+  - 17:32 上传 → 17:52 `files/all` 三文件全部可见（约 20 分钟），各自 `Latest release`、`R Release`，Size 10.6 / 9.9 / 9.8 MB 与本地一致，Loader 与 game version 正确。
+  - 详情页 9432074：`File name` 把 `+` 显示成 `-`（`eyelib-21.1.26-26.1.2-neoforge.jar`），`What's new` 的 markdown changelog 已渲染。
+- 本次脚本：`work/release_21126/{central_publish.py, cf_upload.py, cf_wait_verify.py, cf_changelog.md, cf_ids.json}`。
+
 ## Common Pitfalls
+- [when 用本机 Windows 自带 curl 调这些 API] 任何 HTTPS 请求都返回 exit 43（`A libcurl function was given a bad argument`），`-o NUL` / `--proxy` 都不改变结果——这是 curl 自身问题，不是网络；改用 `python -m pip install requests` 后的 requests（本机 3.13 + requests 2.34.2 直连可用，无需代理）。
+- [when 上传返回非 JSON] Portal `upload` 的响应体是**裸 deploymentId UUID**（HTTP 201），`resp.json()` 抛 `Extra data: line 1 column 2`；按纯文本取。
+- [when 同一 GAV 再次上传] 仍返回 201 但状态 `FAILED`，`errors.common` 提示 `Component ... is currently being published in another deployment (<id>)`——说明首次上传已受理，用那个 `<id>` 查状态，不要重发。
 - [when 想用 OSSRH staging API 发布] `https://s01.oss.sonatype.org/...` 对现有账号返回 402（已退役）；一律走 Portal bundle API。
 - [when Portal 上传后 FAILED 且 errors 全是 "Missing md5/sha1 checksum"] mavenLocal 产物没有校验和；按步骤 2 补齐后重传（同一 GAV 的失败部署不会占用坐标，可重试）。
 - [when 用 GET 或 HTTP Basic 查 `/publisher/status`] 返回 500/401；必须 `POST` + `Bearer base64(user:token)`。
