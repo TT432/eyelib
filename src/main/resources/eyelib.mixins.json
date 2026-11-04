@@ -30,7 +30,7 @@
     "client.TextureColorGameRendererMixin",
     //?}
     "client.TextureManagerMixin",
-    //? if !legacy {
+    //? if !legacy && <26.1 {
     "PoseStackPoseAccessor",
     //?}
     //? if !modern {

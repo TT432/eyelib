@@ -80,9 +80,24 @@ public final class NgSkinningManager {
         return ENABLED;
     }
 
+    /** 光影激活回退提示只打一次，避免每帧刷屏。 */
+    private static final java.util.concurrent.atomic.AtomicBoolean WARNED_SHADER_FALLBACK =
+            new java.util.concurrent.atomic.AtomicBoolean();
+
     /** DeferredRenderSink 入口：创建一次提交的蒙皮会话；关闭时返回 null（走经典路径）。 */
     public static @Nullable NgSkinningSession createSession(RenderType routingType, Identifier texture) {
         if (!ENABLED) {
+            return null;
+        }
+        // Iris/Oculus 光影激活期间禁用 GPU 蒙皮（与 1.21.1 LegacySkinningManager 同款回退）：
+        // 蒙皮路径派生自有的 RenderPipeline（eyelib:core/entity_skinned 顶点着色器 + 自有顶点格式），
+        // Iris 26.1 只按 RenderPipeline 对象身份接管程序，未登记管线以原版程序绘制，顶点布局与着色器
+        // 期望不符 → 整段几何错位（实测：天空/云被大面积污染、模型发白）。经典 CPU 路径写回 vanilla
+        // RenderType 批次，Iris 正常接管，语义正确；光影下光照本就由 pack 决定。
+        if (io.github.tt432.eyelib.bridge.client.compat.oculus.OculusCompat.shaderPackActive()) {
+            if (WARNED_SHADER_FALLBACK.compareAndSet(false, true)) {
+                LOGGER.info("[skinning] 检测到 Oculus/Iris 光影激活，GPU 蒙皮回退经典 CPU 路径");
+            }
             return null;
         }
         installInvalidationHooks();
