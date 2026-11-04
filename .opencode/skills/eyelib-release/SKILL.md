@@ -77,7 +77,7 @@ Portal 要求每个文件带 `.md5` 与 `.sha1`；mavenLocal 发布**不生成**
   | `21.1.26+1.21.1-neoforge` | `25d82623-00c9-4a00-9162-01aa9451f576` | PUBLISHED |
   | `21.1.26+26.1.2-neoforge` | `6dd58e7f-d031-4df9-bcd5-ef92714eb498` | PUBLISHED |
 
-  - repo1 同步实测：`21.1.26+1.20.1-forge` / `+1.21.1-neoforge` 目录在上传后约 2 分钟出现；`+1.21.1-neoforge` 目录内 `eyelib-...jar` 10398212 B 与 mavenLocal 一致，`.asc`/`.md5`/`.sha1` 齐全。
+  - repo1 同步实测：`21.1.26+1.20.1-forge` / `+1.21.1-neoforge` 目录在 portal 显示 PUBLISHED 后约 2 分钟出现；`+26.1.2-neoforge` 晚了约 15 分钟（PUBLISHED 后短时间内 404 属正常，不要重发）。目录内 `eyelib-...jar` 与 mavenLocal 字节数一致，`.asc`/`.md5`/`.sha1` 齐全。
   - `21.1.25` 当时只发 CurseForge、未进 Central，所以 21.1.26 是 `21.1.24` 之后 Central 上的第一个版本。
 - CurseForge（legacy Upload API），displayName 去扩展名：
 
