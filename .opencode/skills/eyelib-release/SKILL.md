@@ -91,6 +91,25 @@ Portal 要求每个文件带 `.md5` 与 `.sha1`；mavenLocal 发布**不生成**
   - 详情页 9432074：`File name` 把 `+` 显示成 `-`（`eyelib-21.1.26-26.1.2-neoforge.jar`），`What's new` 的 markdown changelog 已渲染。
 - 本次脚本：`work/release_21126/{central_publish.py, cf_upload.py, cf_wait_verify.py, cf_changelog.md, cf_ids.json}`。
 
+## 发布记录（21.1.27，2026-11-04）
+
+内容：26.1 实体材质改走 `LIGHTMAP_ONLY`（ADR-0040）——去掉 26.1 vanilla 实体着色器的逐面方向光，
+修复 Bedrock 模型面亮度在 0.4↔1.0 间跳变（表现为暗面闪烁）。1.20.1 / 1.21.1 行为零变化。
+
+- 代码：PR #42（`release/21.1.27` → `master`），CI `compile 1.20.1/1.21.1/26.1.2` 全绿；
+  `Codacy Static Code Analysis` 为 `action_required`（非必需门禁，`mergeStateStatus=UNSTABLE` 仍可合并）。
+- Central（`publishingType=AUTOMATIC`）：
+
+  | 节点 | 结果 |
+  | --- | --- |
+  | `21.1.27+1.20.1-forge` | PUBLISHED，repo1 jar 200 |
+  | `21.1.27+1.21.1-neoforge` | PUBLISHED，repo1 jar 200 |
+  | `21.1.27+26.1.2-neoforge` | 首轮上传因代理失败，改直连 session 后补发（见下条 pitfall） |
+
+- CurseForge（displayName 去扩展名）：`9434633` / `9434634` / `9434635`；23:26 上传 → 23:35 `files/all` 三文件全部可见（约 9 分钟，快于往常的 15–20 分钟）。
+- 本次脚本：`work/release_21127/{central_publish.py, cf_upload.py, cf_wait_verify.py, cf_changelog.md, cf_ids.json}`。
+  `central_publish.py` 已改为 `requests.Session()` + `trust_env = False` 直连。
+
 ## Common Pitfalls
 - [when 用本机 Windows 自带 curl 调这些 API] 任何 HTTPS 请求都返回 exit 43（`A libcurl function was given a bad argument`），`-o NUL` / `--proxy` 都不改变结果——这是 curl 自身问题，不是网络；改用 `python -m pip install requests` 后的 requests（本机 3.13 + requests 2.34.2 直连可用，无需代理）。
 - [when 上传返回非 JSON] Portal `upload` 的响应体是**裸 deploymentId UUID**（HTTP 201），`resp.json()` 抛 `Extra data: line 1 column 2`；按纯文本取。
@@ -106,3 +125,4 @@ Portal 要求每个文件带 `.md5` 与 `.sha1`；mavenLocal 发布**不生成**
 - [when 需要通过 API 改已上传文件的 changelog/metadata] `POST /api/projects/<id>/update-file`，multipart 只带 `metadata`（JSON，含 `fileID`）；偶发 500 直接重试（2026-10-20 实测 3 次内成功）。
 - [when 用脚本重试上传 Portal] 成功判定要解析响应里的 HTTP 码字段（`-w "|%{http_code}|"` 的**倒数第二段**），别用 `${out##*|}` 抓末段（那是 `time_total`），否则会把成功当失败、反复重传并产生大量重复部署（重复部署会因「already exists」FAILED，但不会污染已发布内容）。
 - [when 发布前未确认版本] 版本一旦 `PUBLISHED` 不可修改；发版前先确认 `mod_version` 未被占用：`curl -o NUL -w "%{http_code}" https://repo1.maven.org/maven2/io/github/tt432/eyelib/<version>/` 应为 404（Git Bash 下 Windows curl 写 `/dev/null` 会 exit 23，用 `NUL`）。
+- [when Portal 上传中途抛 `ProxyError ... ConnectionResetError(10054)`] 本机系统代理会重置到 `central.sonatype.com` 的长连接（2026-11-04 实测：前两个节点成功、第三个在 upload 阶段被重置）。修法：脚本用 `s = requests.Session(); s.trust_env = False` 直连，别只清环境变量（Windows 下 requests 还会读注册表代理设置）。已失败的节点可单独补发：`python central_publish.py --nodes-only <完整节点名>`，注意 `--nodes-only` 匹配的是**完整**节点名（`21.1.27+26.1.2-neoforge`），传简称会静默不做事并打印 `{}`。
