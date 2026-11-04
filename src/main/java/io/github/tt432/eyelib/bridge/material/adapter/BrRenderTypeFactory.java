@@ -40,6 +40,7 @@ import io.github.tt432.eyelib.bridge.client.compat.oculus.OculusCompat;
 import io.github.tt432.eyelib.bridge.client.render.skinning.adapter.LegacySkinningManager;
 //?} else {
 import net.minecraft.client.renderer.rendertype.RenderType;
+import io.github.tt432.eyelib.bridge.client.compat.iris.IrisPipelineCompat;
 //?}
 //? if <26.1 {
 import net.minecraft.resources.ResourceLocation;
@@ -292,7 +293,11 @@ public final class BrRenderTypeFactory {
         if (state.stencil().isPresent()) {
             builder = builder.withStencilTest(buildStencilTest(state.stencil().get()));
         }
-        return builder.build();
+        RenderPipeline pipeline = builder.build();
+        // Iris 26.1 按 RenderPipeline 对象身份匹配光影程序，未登记的 pipeline 会用原版程序绘制
+        // （不写 G-buffer：整片发黑/不投影/近景大面变黑）。构建期用官方 API 登记主通道与阴影通道。
+        IrisPipelineCompat.assign(pipeline, state);
+        return pipeline;
     }
 
     private static boolean isEmissive(BrRenderState.SurfaceClass sc) {
