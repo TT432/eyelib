@@ -55,15 +55,9 @@ public final class RenderPassAdapter {
         });
         return legacy;
         //?} else {
-        return switch (pass.transparency()) {
-            case SOLID -> RenderTypes.entitySolid(ResourceLocationBridge.toMc(texture));
-            case ALPHA_TEST -> pass.disableCulling()
-                    ? RenderTypes.entityCutout(ResourceLocationBridge.toMc(texture))
-                    : RenderTypes.entityCutoutCull(ResourceLocationBridge.toMc(texture));
-            case TRANSLUCENT -> RenderTypes.entityTranslucent(ResourceLocationBridge.toMc(texture));
-            case TRANSLUCENT_EMISSIVE -> RenderTypes.entityTranslucentEmissive(ResourceLocationBridge.toMc(texture));
-            case ADDITIVE -> RenderTypes.entityTranslucent(ResourceLocationBridge.toMc(texture));
-        };
+        // ADR-0040：不再返回 vanilla RenderTypes —— 26.1 的 ENTITY_CUTOUT/ENTITY_TRANSLUCENT 带
+        // PER_FACE_LIGHTING（逐面法线方向光），会把已烘焙面明暗的 Bedrock 纹理压成 0.4 暗面并在动画中跳变。
+        return BrRenderTypeFactory.createForEntityPass(texture, pass.transparency(), pass.disableCulling());
         //?}
     }
 }

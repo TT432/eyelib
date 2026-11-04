@@ -54,15 +54,23 @@ public record BrRenderState(
     }
 
     /**
-     * 光照模型（ADR-0033）：
-     * DIRECTIONAL = lightmap + 法线方向光（实体默认）；
+     * 光照模型（ADR-0033 / ADR-0040）：
+     * DIRECTIONAL = lightmap + 法线方向光；
+     * LIGHTMAP_ONLY = 仅 lightmap（无方向项，26.1 实体默认）；
      * AMBIENT = 仅 lightmap tint（Bedrock lit 粒子语义）；
      * NONE = 不受光照（Bedrock unlit 粒子；实现上与 AMBIENT 同 shader，差异由顶点 UV2 承载）。
+     *
+     * <p>LIGHTMAP_ONLY 与 DIRECTIONAL 渲染路径不同：26.1 起 vanilla {@code entity.vsh} 默认执行
+     * {@code minecraft_mix_light}（面亮度 = 纹理 × [0.4, 1.0]，由<b>法线</b>决定），而 Bedrock 实体纹理
+     * 已烘焙面明暗，叠加后会得到 0.4 的暗面；骨骼动画改变法线又让整面亮度在 0.4↔1.0 间跳变（"阴影闪烁"）。
+     * LIGHTMAP_ONLY 走 {@code NO_CARDINAL_LIGHTING} 分支（{@code vertexColor = Color}），观感与
+     * 1.20.1/1.21.1（vanilla entity shader 无方向光）一致。详见 ADR-0040。
      */
     public enum LightingModel {
         NONE,
         AMBIENT,
-        DIRECTIONAL
+        DIRECTIONAL,
+        LIGHTMAP_ONLY
     }
 
     public enum SurfaceClass {
