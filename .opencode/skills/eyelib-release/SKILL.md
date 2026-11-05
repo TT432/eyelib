@@ -126,3 +126,28 @@ Portal 要求每个文件带 `.md5` 与 `.sha1`；mavenLocal 发布**不生成**
 - [when 用脚本重试上传 Portal] 成功判定要解析响应里的 HTTP 码字段（`-w "|%{http_code}|"` 的**倒数第二段**），别用 `${out##*|}` 抓末段（那是 `time_total`），否则会把成功当失败、反复重传并产生大量重复部署（重复部署会因「already exists」FAILED，但不会污染已发布内容）。
 - [when 发布前未确认版本] 版本一旦 `PUBLISHED` 不可修改；发版前先确认 `mod_version` 未被占用：`curl -o NUL -w "%{http_code}" https://repo1.maven.org/maven2/io/github/tt432/eyelib/<version>/` 应为 404（Git Bash 下 Windows curl 写 `/dev/null` 会 exit 23，用 `NUL`）。
 - [when Portal 上传中途抛 `ProxyError ... ConnectionResetError(10054)`] 本机系统代理会重置到 `central.sonatype.com` 的长连接（2026-11-04 实测：前两个节点成功、第三个在 upload 阶段被重置）。修法：脚本用 `s = requests.Session(); s.trust_env = False` 直连，别只清环境变量（Windows 下 requests 还会读注册表代理设置）。已失败的节点可单独补发：`python central_publish.py --nodes-only <完整节点名>`，注意 `--nodes-only` 匹配的是**完整**节点名（`21.1.27+26.1.2-neoforge`），传简称会静默不做事并打印 `{}`。
+
+## 发布记录（21.1.28，2026-11-05）
+
+内容：26.1 光影下不透明材质实体整体不显示（只剩阴影）——Iris 26.1 的 `ShaderKey.findBestMatch`
+在管线无 `ALPHA_CUTOUT` define 时按枚举顺序命中 `ENTITIES_ALPHA`（顶点 alpha 测试 = NEVER），
+片元全被丢弃。改为经 `IrisPipelines.assignPipeline/assignPipelineShadow` 按 `ShaderKey` 精确登记
+（ADR-0041）。1.20.1 / 1.21.1 行为零变化（该桥接类只在 26.1 分支编译）。
+
+- **本次只发 CurseForge**（用户指定「到 CF」），未发 Maven Central。
+- 前置：`clientsmoke` 同步 bump 到 21.1.28 并发布 mavenLocal（提交 `fe15f7a`）；主项目三节点
+  `publishToMavenLocal` 均已含最终源码（`~/.m2/.../21.1.28+<node>/` 各 10 个文件齐全，1.20.1 的
+  jar 为 SRG 名，可直接分发）。
+- CurseForge（displayName 去扩展名）：
+
+  | 节点 | fileId |
+  | --- | --- |
+  | `21.1.28+1.20.1-forge` | 9449975 |
+  | `21.1.28+1.21.1-neoforge` | 9450004 |
+  | `21.1.28+26.1.2-neoforge` | 9450034 |
+
+  - 14:41 上传（三节点串行，共 189 s，HTTP 200 三次）→ 14:45/14:49 轮询仍 `0/3` → 14:53
+    `files/all` 三文件全部可见（约 12 分钟），各自 `Latest release`、`R`，版本与 loader 正确。
+  - 上传脚本沿用 21.1.27 的直连修复：`requests.Session()` + `trust_env = False`。
+  - 本次脚本与页面快照：`work/release_21128/{cf_upload.py, cf_wait_verify.py, cf_changelog.md, cf_ids.json, cf-files-page.txt}`。
+- 联动：dokimobs 0.3.4 依赖本版本，14:54 上传、15:06 三节点可见。
