@@ -151,3 +151,29 @@ Portal 要求每个文件带 `.md5` 与 `.sha1`；mavenLocal 发布**不生成**
   - 上传脚本沿用 21.1.27 的直连修复：`requests.Session()` + `trust_env = False`。
   - 本次脚本与页面快照：`work/release_21128/{cf_upload.py, cf_wait_verify.py, cf_changelog.md, cf_ids.json, cf-files-page.txt}`。
 - 联动：dokimobs 0.3.4 依赖本版本，14:54 上传、15:06 三节点可见。
+
+## 发布记录（21.1.29，2026-11-06）
+
+内容：26.1 分支的 `EntityExtraDataRuntimeHooks` 把 `RangedAttackGoal.attackTime` /
+`AvoidEntityGoal.toAvoid` 观测写死成常量（false / null），且 modern 分支的
+`eyelib.mixins.json` 剔除了对应 accessor —— `query.facing_target_to_range_attack` 与
+`query.is_avoiding_mobs` 在 26.1 恒为 0（doki 羊驼生气表情、回避类动画永不播放）。
+修复后两个观测走 accessor，modern 分支重新登记 accessor。1.20.1 / 1.21.1 生成代码不变。
+
+- **本次只发 CurseForge**（用户指定「到 CF」），未发 Maven Central。
+- 前置：`clientsmoke` 同步 bump 21.1.29 并推送 `TT432/clientsmoke`（提交 `5810030`），
+  主项目三节点 `publishToMavenLocal` 完成（`~/.m2/.../21.1.29+<node>/` 齐全）。
+- 代码：PR #44（`release/21.1.29` → `master`），CI `compile 1.20.1/1.21.1/26.1.2` 全绿
+  （Codacy 仍 fail，按用户决策忽略），merge commit `b7c1a978`。
+- CurseForge（displayName 去扩展名）：
+
+  | 节点 | fileId |
+  | --- | --- |
+  | `21.1.29+1.20.1-forge` | 9468327 |
+  | `21.1.29+1.21.1-neoforge` | 9468328 |
+  | `21.1.29+26.1.2-neoforge` | 9468329 |
+
+  - 11:2x 上传（三节点串行 15 s）→ `cf_wait_verify.py` 轮询到三文件全部可见，
+    各自 `Latest release`、`R`，game version / loader 正确。
+  - 本次脚本与页面快照：`work/release_21129/{cf_upload.py, cf_wait_verify.py, cf_changelog.md, cf_ids.json, cf-files-page.txt}`。
+- 联动：dokimobs 0.3.6 依赖本版本。
