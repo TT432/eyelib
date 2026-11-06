@@ -86,10 +86,8 @@ public final class EntityExtraDataRuntimeHooks {
                 if (availableGoal.getGoal() instanceof RangedAttackGoal rangedAttackGoal) {
                     //? if <1.20.6 {
                     rangedAttackGoalActive = rangedAttackGoal.attackTime > 0;
-                    //?} elif <26.1 {
-                    rangedAttackGoalActive = ((io.github.tt432.eyelib.mixin.RangedAttackGoalAccessor) rangedAttackGoal).eyelib$getAttackTime() > 0;
                     //?} else {
-                    rangedAttackGoalActive = false;
+                    rangedAttackGoalActive = ((io.github.tt432.eyelib.mixin.RangedAttackGoalAccessor) rangedAttackGoal).eyelib$getAttackTime() > 0;
                     //?}
                 }
                 if (rangedAttackGoalActive
@@ -98,14 +96,10 @@ public final class EntityExtraDataRuntimeHooks {
                 }
             }
             if (availableGoal.getGoal() instanceof AvoidEntityGoal<?> avoid) {
-                //? if <26.1 {
                 //? if <1.20.6 {
                 var toAvoid = avoid.toAvoid;
                 //?} else {
                 var toAvoid = ((io.github.tt432.eyelib.mixin.AvoidEntityGoalAccessor) avoid).eyelib$getToAvoid();
-                //?}
-                //?} else {
-                var toAvoid = (Mob) null;
                 //?}
                 if (toAvoid instanceof Mob) {
                     isAvoidingMobs = true;

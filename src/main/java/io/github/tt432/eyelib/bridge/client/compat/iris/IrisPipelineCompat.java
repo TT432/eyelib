@@ -20,15 +20,18 @@ import java.lang.reflect.Method;
  * {@code Missing program <loc> in override list ... could lead to weird rendering}，
  * 表现是光影打开后这些材质件不写 G-buffer：整片发黑、不投影、近景大字面变黑色平面。
  *
- * <p>对策：构建 pipeline 时调用官方 API（IrisApi v0.3/v0.4）登记主通道与阴影通道程序。
- * 反射调用，无编译期依赖；Iris/Oculus 不在时静默跳过。
+ * <p>对策：构建 pipeline 时登记主通道与阴影通道程序。反射调用，无编译期依赖；Iris/Oculus 不在时静默跳过。
  *
- * <p>程序选择约束：{@code IrisApi.assignPipeline} 内部用 {@code ShaderKey.findBestMatch} 匹配，
- * 只有带 {@code ALPHA_CUTOUT} define 的 pipeline 才可能命中实体细化键（{@code ENTITIES_CUTOUT} /
- * {@code ENTITIES_EYES_TRANS}）；无该 define 时退化为「同程序首个键」，而 {@code SpiderEyes} 的首个键
- * {@code SPS} 是 {@code POSITION_TEX_COLOR} 格式，与实体自带 vertex format 不符 → 会画出垃圾像素。
- * 因此非 cutout 的发光面登记为 {@code ENTITIES}（命中 {@code ENTITIES_ALPHA}，顶点 alpha 测试），
- * 只有 {@code EMISSIVE_CUTOUT}（带 ALPHA_CUTOUT）才登记 {@code EMISSIVE_ENTITIES}。
+ * <p>登记走 Iris 内部的 {@code IrisPipelines.assignPipeline(RenderPipeline, ShaderKey)} 直接指定键，
+ * 不经官方 {@code IrisApi.assignPipeline}：后者内部调 {@code ShaderKey.findBestMatch}，其「okay」分支按
+ * 枚举声明顺序返回<b>同 program 的第一个键</b>，而 {@code ENTITIES_ALPHA}（{@code AlphaTests.VERTEX_ALPHA}
+ * = {@code NEVER}/{@code MAX_VALUE}）声明在 {@code ENTITIES_SOLID} 之前。于是任何不带 {@code ALPHA_CUTOUT}
+ * define 的不透明实体 pipeline 都会被匹配成顶点 alpha 测试 → 片元全被丢弃 → 光影开启后不透明材质实体
+ * 整体不渲染（阴影通道单独绘制，故只剩影子）。cospack 用材质 {@code entity}（无 defines/states →
+ * SOLID）的鸡/猪/牛/哞菇即此形态（ADR-0041）。{@code ALPHA_CUTOUT} 存在时才会命中
+ * {@code ENTITIES_CUTOUT}，所以同包内 cutout/translucent 材质表现正常。
+ *
+ * <p>精确键不可用时（Iris 内部类改名/缺失）退回 {@code IrisApi} 路径，保持旧行为不崩。
  *
  * @author TT432
  */
@@ -41,17 +44,92 @@ public interface IrisPipelineCompat {
     Method ASSIGN_PIPELINE_SHADOW = resolveMethod("assignPipelineShadow");
     Class<?> PROGRAM_TYPE = resolveType("net.irisshaders.iris.api.v0.IrisProgram");
     Class<?> SHADOW_PROGRAM_TYPE = resolveType("net.irisshaders.iris.api.v0.IrisShadowProgram");
+    /** 阴影通道键：实体几何在 Iris 里只有这一个 {@code ShadowEntities} 键。 */
+    String SHADOW_ENTITIES_KEY = "SHADOW_ENTITIES_CUTOUT";
 
-    /** 登记自定义 pipeline 的光影主通道与阴影通道程序；Iris 缺席或 API 不可用时为空操作。 */
+    /**
+     * 精确登记所需的 Iris 内部句柄。
+     *
+     * <p>必须在<b>首次真正需要</b>时才解析，且解析结果可重试：接口静态字段一锤定音会锁死
+     * 「首次解析时机不对」（例如 `ShaderKey` 的静态初始化在 Iris 管线就绪前被触发）导致的
+     * 永久回退——实机出现过登记静默走回 {@code IrisApi} 的情况（此时日志只有
+     * {@code Found okay program match ... ENTITIES_ALPHA}，画面即不显示）。
+     */
+    final class ExactKeys {
+        private static Class<?> shaderKeyType;
+        private static Method assignMain;
+        private static Method assignShadow;
+        private static boolean resolveWarned;
+    }
+
+    /** 登记自定义 pipeline 的光影主通道与阴影通道程序；Iris 缺席时为空操作。 */
     static void assign(RenderPipeline pipeline, BrRenderState state) {
         if (API == null) {
             return;
         }
-        assign(ASSIGN_PIPELINE, PROGRAM_TYPE, pipeline, mainProgram(state));
-        assign(ASSIGN_PIPELINE_SHADOW, SHADOW_PROGRAM_TYPE, pipeline, shadowProgram(state));
+        if (ExactKeys.shaderKeyType == null) {
+            resolveExactKeys();
+        }
+        if (!assignExact(ExactKeys.assignMain, pipeline, mainShaderKey(state))) {
+            assign(ASSIGN_PIPELINE, PROGRAM_TYPE, pipeline, mainProgram(state));
+        }
+        if (!assignExact(ExactKeys.assignShadow, pipeline, SHADOW_ENTITIES_KEY)) {
+            assign(ASSIGN_PIPELINE_SHADOW, SHADOW_PROGRAM_TYPE, pipeline, shadowProgram(state));
+        }
     }
 
-    /** 主通道程序名（{@code IrisProgram} 常量名）。 */
+    private static void resolveExactKeys() {
+        try {
+            // 不初始化：ShaderKey 的静态初始化会拉入 Iris 顶点格式，留给 Enum.valueOf 触发
+            ExactKeys.shaderKeyType = Class.forName(
+                    "net.irisshaders.iris.pipeline.programs.ShaderKey", false,
+                    IrisPipelineCompat.class.getClassLoader());
+            Class<?> pipelines = Class.forName("net.irisshaders.iris.pipeline.IrisPipelines");
+            ExactKeys.assignMain = pipelines.getMethod("assignPipeline", RenderPipeline.class, ExactKeys.shaderKeyType);
+            ExactKeys.assignShadow = pipelines.getMethod("assignPipelineShadow", RenderPipeline.class, ExactKeys.shaderKeyType);
+        } catch (Throwable t) {
+            if (!ExactKeys.resolveWarned) {
+                ExactKeys.resolveWarned = true;
+                LOGGER.warn("[compat] Iris 内部 ShaderKey 句柄解析失败（{}），本次会话退化为 IrisApi 程序匹配", t.toString());
+            }
+        }
+    }
+
+    /**
+     * 主通道精确程序键（{@code ShaderKey} 常量名）。
+     *
+     * <p>键与 Iris 给 vanilla pipeline 的映射对齐（{@code IrisPipelines.getSolid/getCutout/getTranslucent}），
+     * 使自定义 pipeline 与「同一材质的 vanilla RenderType」在光影里走同一条程序，观感一致。
+     */
+    private static String mainShaderKey(BrRenderState state) {
+        return switch (state.surfaceClass()) {
+            case GLINT -> "GLINT";
+            case EMISSIVE_CUTOUT, TRANSLUCENT_EMISSIVE -> "ENTITIES_EYES_TRANS";
+            case EMISSIVE -> "ENTITIES_EYES";
+            case TRANSLUCENT, ADDITIVE -> "ENTITIES_TRANSLUCENT";
+            case CUTOUT -> "ENTITIES_CUTOUT";
+            default -> "ENTITIES_SOLID";
+        };
+    }
+
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private static boolean assignExact(Method method, RenderPipeline pipeline, String keyName) {
+        if (method == null || ExactKeys.shaderKeyType == null) {
+            return false;
+        }
+        try {
+            method.invoke(null, pipeline, Enum.valueOf((Class<? extends Enum>) ExactKeys.shaderKeyType, keyName));
+            return true;
+        } catch (IllegalStateException alreadyAssigned) {
+            return true;
+        } catch (Throwable t) {
+            LOGGER.warn("[compat] Iris ShaderKey 登记失败（{} / {}），退回 IrisApi 路径：{}",
+                    pipeline.getLocation(), keyName, t.toString());
+            return false;
+        }
+    }
+
+    /** 回退路径的主通道程序名（{@code IrisProgram} 常量名）；仅在精确 {@code ShaderKey} 不可用时使用。 */
     private static String mainProgram(BrRenderState state) {
         if (state.lighting() == BrRenderState.LightingModel.AMBIENT
                 || state.lighting() == BrRenderState.LightingModel.NONE) {
