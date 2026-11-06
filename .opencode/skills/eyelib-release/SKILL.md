@@ -110,6 +110,27 @@ Portal 要求每个文件带 `.md5` 与 `.sha1`；mavenLocal 发布**不生成**
 - 本次脚本：`work/release_21127/{central_publish.py, cf_upload.py, cf_wait_verify.py, cf_changelog.md, cf_ids.json}`。
   `central_publish.py` 已改为 `requests.Session()` + `trust_env = False` 直连。
 
+## 发布记录（21.1.30，2026-11-06）
+
+内容：实体 pass 状态的 alpha test / 深度写 / cull 统一到单一 policy（ADR-0042）。
+
+- 代码：`cb6c…`（主仓库，含 clientsmoke gitlink 21.1.30）；三节点 `compileJava` 通过；
+  `BrRenderTypePassPolicyTest` 三节点全绿；`material.*`/`bridge.material.*` 测试仅剩 HEAD 既有基线
+  失败；NullAway 三节点错误集与基线一致（`ClientEntitySetup` 95/96/115 + 26.1 的 `IrisPipelineCompat:38`）。
+- **本次只发 CurseForge（用户指定）**，Maven Central 未发布；`mavenLocal` 已发布三节点（供 dokimobs 构建）。
+- CurseForge（displayName 去扩展名）：
+
+  | 节点 | fileId |
+  | --- | --- |
+  | `21.1.30+1.20.1-forge` | 9472600 |
+  | `21.1.30+1.21.1-neoforge` | 9472601 |
+  | `21.1.30+26.1.2-neoforge` | 9472604 |
+
+  - 19:31 上传（三节点串行 18 秒）→ 19:45 `files/all` 三文件全部可见（约 14 分钟），各自
+    `Latest release`、`R Release`，Forge/NeoForge 与 game version 正确。
+- 本次脚本：`work/release_21130/{cf_upload.py, cf_wait_verify.py, cf_changelog.md, cf_ids.json}`。
+- 静态审计脚本（本次新增，可复用）：`scripts/alpha_pass_audit.py --pack <cospack> --material <*.material>`。
+
 ## Common Pitfalls
 - [when 用本机 Windows 自带 curl 调这些 API] 任何 HTTPS 请求都返回 exit 43（`A libcurl function was given a bad argument`），`-o NUL` / `--proxy` 都不改变结果——这是 curl 自身问题，不是网络；改用 `python -m pip install requests` 后的 requests（本机 3.13 + requests 2.34.2 直连可用，无需代理）。
 - [when 上传返回非 JSON] Portal `upload` 的响应体是**裸 deploymentId UUID**（HTTP 201），`resp.json()` 抛 `Extra data: line 1 column 2`；按纯文本取。
