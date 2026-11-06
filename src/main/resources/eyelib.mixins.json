@@ -13,6 +13,10 @@
   "mixins": [
     "CamelAccessor",
     "WolfAccessor",
+    //? if modern {
+    "RangedAttackGoalAccessor",
+    "AvoidEntityGoalAccessor",
+    //?}
     //? if !modern {
     "LivingEntityAccessor",
     "RangedAttackGoalAccessor",
