@@ -145,4 +145,43 @@ class MolangScopeTest {
         assertTrue(child.contains("pKey"));
         assertFalse(child.contains("nonexistent"));
     }
+
+    @Test
+    void 变量名大小写不敏感_与Bedrock规范一致() {
+        MolangScope scope = new MolangScope();
+        scope.set("variable.DecorTextureIndex", 3.0f);
+
+        assertEquals(3.0f, scope.get("variable.decortextureindex").asFloat(), 0.0001f);
+        assertEquals(3.0f, scope.get("VARIABLE.DecorTextureIndex").asFloat(), 0.0001f);
+        assertTrue(scope.contains("variable.DECORTEXTUREINDEX"));
+
+        // 同一变量按不同大小写写入 = 覆盖，而不是新增键
+        scope.set("variable.decorTextureIndex", 4.0f);
+        assertEquals(4.0f, scope.get("variable.DecorTextureIndex").asFloat(), 0.0001f);
+
+        scope.remove("Variable.DecorTextureIndex");
+        assertFalse(scope.contains("variable.DecorTextureIndex"));
+    }
+
+    @Test
+    void 结构成员大小写不敏感() {
+        MolangScope scope = new MolangScope();
+        scope.set("variable.location.X", 1.0f);
+        scope.set("variable.Location.y", 2.0f);
+
+        assertEquals(1.0f, scope.get("variable.location.x").asFloat(), 0.0001f);
+        assertEquals(2.0f, scope.get("VARIABLE.location.Y").asFloat(), 0.0001f);
+        assertTrue(scope.contains("variable.LOCATION.X"));
+    }
+
+    @Test
+    void 惰性供应商按规范名绑定后任意大小写读取() {
+        MolangScope scope = new MolangScope();
+        float[] value = {1.0f};
+        scope.set("variable.Counter", () -> value[0]);
+
+        assertEquals(1.0f, scope.get("variable.counter").asFloat(), 0.0001f);
+        value[0] = 5.0f;
+        assertEquals(5.0f, scope.get("variable.COUNTER").asFloat(), 0.0001f);
+    }
 }

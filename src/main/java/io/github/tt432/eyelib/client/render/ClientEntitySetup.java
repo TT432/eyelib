@@ -121,7 +121,7 @@ final class ClientEntitySetup {
     }
 
     static void setupExtraMolang(Entity entity, MolangScope scope, float partialTick) {
-        RenderPorts.get().renderSystemPort().setupLlamaDecor(entity, scope);
+        EngineEntityVariables.bind(entity, scope);
 
         scope.set("variable.partial_tick", partialTick);
         if (entity instanceof LivingEntity livingEntity)

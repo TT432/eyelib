@@ -28,11 +28,13 @@ import io.github.tt432.eyelib.client.render.pipeline.FramePipeline;
 import io.github.tt432.eyelib.client.render.pipeline.FrameStage;
 import io.github.tt432.eyelib.importer.entity.BrClientEntity;
 import io.github.tt432.eyelib.molang.MolangScope;
+import io.github.tt432.eyelib.model.Model;
 import io.github.tt432.eyelib.material.port.PortRenderPass;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import io.github.tt432.eyelib.util.event.api.OnRenderStage;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
+import org.joml.Matrix4f;
 import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -326,7 +328,13 @@ public final class EntityRenderOrchestrator {
     public static <T> boolean renderComponents(SimpleRenderAction<T> data) {
         var components = new ArrayList<>(data.renderData().getModelComponents());
         components.sort(java.util.Comparator.comparingInt(EntityRenderOrchestrator::passOrder));
-        return components.stream()
+        boolean[] carriedBlockRendered = {false};
+        // 栓绳锚点需要「实体根位姿」与「施加脚本缩放/身体朝向后的根位姿」：
+        // 前者在 setupEntityClientEntityData 之前取，后者取一次即可（所有组件共享同一实体位姿）。
+        Matrix4f basePose = new Matrix4f(data.poseStack().last().pose());
+        Model[] leashModel = {null};
+        Matrix4f[] leashEntityPose = {null};
+        boolean rendered = components.stream()
                                                                        .filter(mc -> mc.readyForRendering() || (mc.getSerializableInfo() != null && mc.getSerializableInfo()
                                                                                                                                                       .texture() != null))
                                                                        .mapToLong(modelComponent -> {
@@ -354,10 +362,26 @@ public final class EntityRenderOrchestrator {
 
                                                                            ClientEntitySetup.setupEntityClientEntityData(data);
 
+                                                                           // 优先选带 Bedrock `lead` locator 的模型：同一实体的多个渲染组件
+                                                                           // （发光/羊毛覆盖层）共享骨骼位姿，但只有基础模型一定带 locator。
+                                                                           if (leashEntityPose[0] == null
+                                                                                   || (!LeashRenderer.hasLead(leashModel[0]) && LeashRenderer.hasLead(model))) {
+                                                                               leashModel[0] = model;
+                                                                               leashEntityPose[0] = new Matrix4f(poseStack.last().pose());
+                                                                           }
+
                                                                            // 解析最终 renderPass+texture（含 colorMask 替换），不含 consumer；
                                                                            // consumer 由 RenderSink 在回调中提供（立即: bufferSource.getBuffer; 延迟: submitCustomGeometry 回调）。
                                                                            RenderOutput output = resolveOutput(data, modelComponent);
                                                                            ModelRuntimeData finalTickedInfos = tickedInfos;
+
+                                                                           // 搬运方块：在实体 submit 阶段同步提交一次（26.1 的 collector 在
+                                                                           // renderAllFeatures 之后不再接收新的方块模型，不能放进 extraRender）。
+                                                                           if (!carriedBlockRendered[0]
+                                                                                   && CarriedBlockRenderer.render(entity, poseStack, model,
+                                                                                   finalTickedInfos, data.packedLight(), data.sink())) {
+                                                                               carriedBlockRendered[0] = true;
+                                                                           }
 
                                                                            // skipIfUnbaked（特效等瞬发内容）：模型烘焙未就绪时跳过本帧绘制并提交
                                                                            // 后台预热，消除渲染线程上的首烘尖刺（实测单帧 40-80ms）；
@@ -398,6 +422,11 @@ public final class EntityRenderOrchestrator {
                                                                            return 1;
                                                                        })
                                                                        .sum() > 0;
+        if (rendered) {
+            // 栓绳：每个实体一次，放在模型几何之后（与原版 MobRenderer.render 的顺序一致）。
+            LeashRenderer.render(data, leashModel[0], data.tickedInfos(), basePose, leashEntityPose[0]);
+        }
+        return rendered;
     }
 
     /** 解析实体类型 id 并装配 clientEntity 组件（实现见 {@link ClientEntitySetup}）。 */

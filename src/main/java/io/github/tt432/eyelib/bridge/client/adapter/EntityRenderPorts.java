@@ -2,6 +2,7 @@ package io.github.tt432.eyelib.bridge.client.adapter;
 
 import io.github.tt432.eyelib.bridge.client.RenderEntityParams;
 import io.github.tt432.eyelib.bridge.client.render.RenderSink;
+import io.github.tt432.eyelib.molang.EngineEntityVariable;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -11,13 +12,9 @@ import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
-//? if <26.1 {
-import net.minecraft.world.entity.animal.horse.Llama;
-//?} else {
-import net.minecraft.world.entity.animal.equine.Llama;
-//?}
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.state.BlockState;
 import org.jspecify.annotations.Nullable;
 
 import java.util.List;
@@ -50,12 +47,32 @@ public final class EntityRenderPorts {
     public interface RenderSystemPort {
         String getEntityTypeId(Entity entity);
 
-        int getLlamaDecorColorIndex(Llama llama);
+        /**
+         * 解析宿主提供的 Bedrock 引擎变量（见 {@link EngineEntityVariable}）。
+         *
+         * @return 当前实体的变量值；该变量不适用于此实体时返回 {@link Float#NaN}
+         *         （application 层据此决定是否绑定，未绑定 = 资源包读写自己的值）。
+         */
+        float engineVariable(Entity entity, EngineEntityVariable variable);
 
         void pushPoseRaw(PoseStack poseStack, PoseStack.Pose pose);
 
         void renderItemDirect(LivingEntity le, ItemStack item, ItemDisplayContext context,
                               boolean left, PoseStack poseStack, RenderSink sink, int light);
+
+        /**
+         * 实体当前搬运的方块状态（Bedrock {@code query.is_carrying_block} 的宿主来源，如末影人）。
+         * 无搬运方块时返回 {@code null}。
+         */
+        @Nullable
+        BlockState getCarriedBlockState(Entity entity);
+
+        /**
+         * 用宿主游戏的方块渲染器绘制一个方块状态。
+         * 与实体模型使用同一 {@link PoseStack}，方块模型/贴图/渲染类型全部由宿主决定，
+         * application 层不硬编码任何方块 id。
+         */
+        void renderBlockState(BlockState state, PoseStack poseStack, RenderSink sink, int light);
 
         /**
          * 将 MC {@link EquipmentSlot} 翻译为 Bedrock {@code context.item_slot} 字符串。
@@ -72,8 +89,6 @@ public final class EntityRenderPorts {
         float @Nullable [] getEntityTintColor(@Nullable Entity entity);
 
         PoseStack createPoseStackFromMatrix(org.joml.Matrix4f matrix);
-
-        void setupLlamaDecor(Entity entity, io.github.tt432.eyelib.molang.MolangScope scope);
     }
 }
 

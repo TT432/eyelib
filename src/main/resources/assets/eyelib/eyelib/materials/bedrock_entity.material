@@ -93,6 +93,7 @@
     "iron_golem:entity_alphatest": {
     },
     "llama:entity_alphatest": {
+      "+defines": ["MASKED_MULTITEXTURE"]
     },
     "magma_cube:entity_alphatest": {
     },

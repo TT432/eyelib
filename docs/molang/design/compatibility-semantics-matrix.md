@@ -65,7 +65,8 @@ Each row below uses the following columns:
 | Array negative index clamp / wrap behavior | official/community | negative clamps, large indexes wrap | Required | runtime / compatibility layer | Precise behavior should be covered by acceptance corpus later |
 | Runtime fallback to neutral values (often `0.0`) | community + query practice | many failures degrade to neutral values | Targeted | compatibility layer / query defaults | Prefer explicit default variants over ad hoc silent fallback |
 | Strings single-quoted, limited escaping | official + community | single-quoted strings, odd/limited escaping | Required | lexer/parser | Keep exact behavior narrow and documented |
-| Case-insensitivity except strings | official | identifiers/operators are case-insensitive | Required | lexer/binder | Preserve string content case |
+| Case-insensitivity except strings | official | identifiers/operators are case-insensitive | Required | lexer/binder + scope storage | Preserve string content case; 变量名/struct 成员在 `MolangScope`/`MolangStruct` 存取时规范化为小写 |
+| `==`/`!=` numeric cross-representation | official | all numerical values are floats；variable 可能是惰性 supplier/动态绑定 | Required | runtime (`MolangObject#equalsF`) | 数值类型之间按 `asFloat` 比较；`nEqualsF = 1 - equalsF`；非数值按对象相等 |
 | Ternary associativity/version quirks | community + official version notes | behavior changed across versions | Targeted | versioned policy | Do not entangle base parser with version policy unnecessarily |
 | `initialize` / `pre_animation` lazy concatenation | community | strings are concatenated lazily in practice | Deferred | integration policy | Likely belongs above core Molang engine |
 | Query unavailable -> neutral fallback | ecosystem pattern | unresolved query often behaves like neutral result | Targeted | query registry default variants | Prefer explicit default descriptor entries |
