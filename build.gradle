@@ -500,6 +500,11 @@ if (isLegacyForge) {
 }
 
 jar {
+    // assets/test/** 是 attachable 链路 smoke 夹具（identifier eyelib:test_stick / test_helmet，
+    // 绑定 minecraft:stick / minecraft:iron_helmet）。夹具只能在 dev 运行时（build/resources/main）
+    // 可见：一旦进入发布 jar，玩家手持木棍/穿铁头盔时 attachable 会顶替原版物品渲染
+    // （ItemInHandRendererMixin 取消原版后画调试立方体）——issue #41。
+    exclude 'assets/test/**'
     if (isLegacyForge) {
         manifest.attributes([
                 "MixinConfigs": "${mod_id}.mixins.json"
