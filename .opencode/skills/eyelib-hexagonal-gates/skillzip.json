@@ -124,23 +124,23 @@
         "locked": false
       },
       {
-        "id": "C1",
+        "id": "C3",
         "scope": "root/eyelib-六边形架构验收闸门/g1-编译隔离/archunit-规则",
         "modality": "must",
-        "predicate": "过渡债台账：1623af11 引入的 BrBlockUnbakedGeometry.BakeVisitor 反向依赖 application 层 ModelVisitor/RenderParams 已 refreeze（build/archunit_store/*/deb3fb09-8ea2-45cf-9b41-8d2535ce9ec5）；阶段 2 抽 Port 时回收：BakeVisitor 改实现 bridge 侧 Visitor Port 后删除该 freeze store 对应条目",
+        "predicate": "过渡债台账：1623af11 引入的 BrBlockUnbakedGeometry.BakeVisitor 反向依赖 application 层 ModelVisitor/RenderParams 已 refreeze（基线条目在 archunit_store/*/deb3fb09-8ea2-45cf-9b41-8d2535ce9ec5）；阶段 2 抽 Port 时回收：BakeVisitor 改实现 bridge 侧 Visitor Port 后删除该 freeze store 对应条目",
         "spans": [
-          "Bf6661abe88ab4d04"
+          "Baf050f41c7083c1f"
         ],
         "locked": false
       },
       {
-        "id": "C2",
+        "id": "C4",
         "scope": "root/eyelib-六边形架构验收闸门/g1-编译隔离/archunit-规则",
         "modality": "must_not",
-        "predicate": "把 ArchUnit freeze 基线丢失后的全绿当作债务已回收——freeze store 在 build/ 下未被 git 跟踪，clean/换机后基线丢失，须对照过渡债台账重建基线并逐条复核债务",
-        "guard": "ArchUnit freeze 基线丢失（clean/换机）",
+        "predicate": "把基线丢失后的全绿当作债务已回收——基线随仓库提交在 archunit_store/<node>/（build/archunit_store_snapshot-<node>.txt 只是行数快照，不是基线），源码扫描类基线在 archunit_store/stonecutter-comment-baseline.txt 且文件缺失即测试失败；基线丢失须对照过渡债台账重建（gradlew :<node>:test --rerun -ParchunitRefreeze）并逐条复核债务是否仍存在",
+        "guard": "ArchUnit freeze 基线丢失",
         "spans": [
-          "B50adbfaddfa2ca27"
+          "B0729f6cd3d433d7b"
         ],
         "locked": false
       }
@@ -535,10 +535,12 @@
     "Bb12d15584f034b62": "**Spec-based 测试 oracle 来自当前实现** — 这不是测试，是 pin 了 bug。oracle 必须来自规范",
     "Be4be445f76592679": "**G3 在每批次都跑** — G3 只在最终集成时跑一次，日常不跑",
     "Bf6661abe88ab4d04": "- 过渡债台账：1623af11（bedrock 方块几何 loader 恢复）引入 BrBlockUnbakedGeometry.BakeVisitor 反向依赖 application 层 ModelVisitor/RenderParams，aclMustNotDependOnApplication 已按过渡债流程 refreeze（基线条目在 build/archunit_store/*/deb3fb09-8ea2-45cf-9b41-8d2535ce9ec5）。回收方式（阶段 2 抽 Port 时执行）：BakeVisitor 改实现 bridge 侧 Visitor Port 后，删除该 freeze store 中对应条目（2026-08-26 记录）。",
-    "B50adbfaddfa2ca27": "- [when ArchUnit freeze 基线丢失] freeze store 在 build/ 下未被 git 跟踪，clean/换机后基线丢失；基线丢失不等于债务清零——须对照过渡债台账重建基线并复核每条债务是否仍存在，禁止把 freeze 重置后的全绿当作债务已回收。"
+    "B50adbfaddfa2ca27": "- [when ArchUnit freeze 基线丢失] freeze store 在 build/ 下未被 git 跟踪，clean/换机后基线丢失；基线丢失不等于债务清零——须对照过渡债台账重建基线并复核每条债务是否仍存在，禁止把 freeze 重置后的全绿当作债务已回收。",
+    "Baf050f41c7083c1f": "- 过渡债台账：1623af11 引入的 BrBlockUnbakedGeometry.BakeVisitor 反向依赖 application 层 ModelVisitor/RenderParams 已 refreeze（基线条目在 `archunit_store/*/deb3fb09-8ea2-45cf-9b41-8d2535ce9ec5`）；阶段 2 抽 Port 时回收：BakeVisitor 改实现 bridge 侧 Visitor Port 后删除该 freeze store 对应条目",
+    "B0729f6cd3d433d7b": "- [when ArchUnit freeze 基线丢失] NEVER 把基线丢失后的全绿当作债务已回收——基线随仓库提交在 `archunit_store/<node>/`（`build/archunit_store_snapshot-<node>.txt` 只是行数快照，不是基线），源码扫描类基线在 `archunit_store/stonecutter-comment-baseline.txt` 且文件缺失即测试失败；基线丢失须对照过渡债台账重建（`gradlew :<node>:test --rerun -ParchunitRefreeze`）并逐条复核债务是否仍存在"
   },
   "stats": {
-    "patches": 3,
+    "patches": 5,
     "repacks": 0,
     "lastRepackAt": "2026-08-13T08:53:47.488Z",
     "totalSavedTokens": 0
@@ -561,9 +563,21 @@
       "operation": "EXTEND",
       "summary": "EXTEND: +2 rules, +0 workflow, +0 tools, +0 fields",
       "savingTokens": 0
+    },
+    {
+      "ts": "2026-11-08T13:52:36.402Z",
+      "operation": "REFINE",
+      "summary": "REFINE: +2 added, ~0 refined, -0 removed",
+      "savingTokens": 0
+    },
+    {
+      "ts": "2026-11-08T13:52:42.528Z",
+      "operation": "DELETE",
+      "summary": "DELETE: +0 added, ~0 refined, -2 removed",
+      "savingTokens": 0
     }
   ],
   "createdAt": "2026-08-13T08:53:47.488Z",
-  "updatedAt": "2026-10-07T03:02:32.971Z",
+  "updatedAt": "2026-11-08T13:52:42.569Z",
   "frontMatterRaw": "---\nname: eyelib-hexagonal-gates\ndescription: Verify a hexagonal architecture refactoring batch — run ArchUnit isolation, spec-based tests, and RenderDoc integration checks per the G1→G2→G3 gate pipeline.\nlicense: MIT\ncompatibility: opencode\nmetadata:\n  author: https://github.com/TT432\n  version: \"1.0.0\"\n  tags: eyelib, hexagonal, architecture, gates, acceptance\n  related-skills: eyelib-domain-extraction, eyelib-build, eyelib-debug, eyelib-renderdoc\n---"
 }

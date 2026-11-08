@@ -1,5 +1,6 @@
 package io.github.tt432.eyelib.material.material;
 
+import io.github.tt432.eyelib.bridge.material.adapter.RenderTypeCapabilities;
 import io.github.tt432.eyelib.material.gl.BlendFactor;
 import io.github.tt432.eyelib.material.gl.GLStates;
 import io.github.tt432.eyelib.material.render.BrRenderState;
@@ -109,7 +110,7 @@ class BrMaterialResolverTest {
         BrRenderState state = BrRenderStateFactory.from(BrMaterialResolver.resolve(material, materials));
 
         assertEquals(BrRenderState.Transparency.ADDITIVE, state.transparency());
-        assertTrue(state.needsCustomRenderType());
+        assertTrue(RenderTypeCapabilities.needsCustomRenderType(state));
         assertEquals(BlendFactor.One, state.blend().orElseThrow().blendSrc());
         assertEquals(BlendFactor.One, state.blend().orElseThrow().blendDst());
     }

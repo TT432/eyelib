@@ -126,7 +126,7 @@ Application 层(编排)通过 ACL 接触 MC,自身保持版本无关:
 
 ### ArchUnit 强制(已落地)
 
-`src/test/java/io/github/tt432/eyelib/architecture/ArchitectureTest.java` 用 freeze 模式维护多条规则,baseline 存于 `build/archunit_store/<node>/`:
+`src/test/java/io/github/tt432/eyelib/architecture/ArchitectureTest.java` 用 freeze 模式维护多条规则,baseline 存于仓库根的 `archunit_store/<node>/`(随仓库提交；放在 `build/` 下会被 clean 清掉，干净检出时会把当前违规整体吸收成已知):
 
 | 规则 | 检查 | 当前状态 |
 |---|---|---|
@@ -142,9 +142,9 @@ Application 层(编排)通过 ACL 接触 MC,自身保持版本无关:
 
 | 检查 | 当前状态 |
 |---|---|
-| `//?` Stonecutter 条件化注释只出现在 ACL(bridge) 和 Infrastructure(mixin/smoke/debug) | ⚠️ baseline 43 文件 —— 过渡期债务,见下 |
+| `//?` Stonecutter 条件化注释只出现在 ACL(bridge) 和 Infrastructure(mixin/smoke/debug) | ✅ 零违规（基线文件为空） |
 
-baseline 存于 `build/archunit_store/stonecutter-comment-baseline.txt`(不分 node,因 `src/main/java/` 是 Stonecutter 处理前的模板源,各版本一致)。
+baseline 存于仓库根的 `archunit_store/stonecutter-comment-baseline.txt`(不分 node,因 `src/main/java/` 是 Stonecutter 处理前的模板源,各版本一致;随仓库提交,文件缺失即测试失败;重建用 `gradlew :<node>:test --rerun -ParchunitRefreeze`)。
 
 ### 迁移原则
 

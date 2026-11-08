@@ -141,7 +141,7 @@ public final class MolangFunctionSignatures {
     private static Map<String, Signature> buildTable() {
         Map<String, Signature> t = new HashMap<>();
 
-        // ---------- math.*（59 个，全部带参、定长；命名对齐 Microsoft molang 文档） ----------
+        // ---------- math.*（全部带参、定长；命名对齐 Microsoft molang 文档） ----------
         Map<String, String[]> math = new HashMap<>();
         math.put("abs", new String[]{"value"});
         math.put("acos", new String[]{"x"});
@@ -173,7 +173,8 @@ public final class MolangFunctionSignatures {
         math.put("sqrt", new String[]{"x"});
         math.put("trunc", new String[]{"x"});
         String[] ease = {"start", "end", "t"};
-        for (String family : new String[]{"ease_in", "ease_inout", "ease_out"}) {
+        // ease_in_out_* 是 Bedrock 规范名（实现侧 @MolangFunction 同时挂历史别名 ease_inout_*）
+        for (String family : new String[]{"ease_in", "ease_in_out", "ease_inout", "ease_out"}) {
             for (String kind : new String[]{"back", "bounce", "circ", "cubic", "elastic",
                     "expo", "quad", "quart", "quint", "sine"}) {
                 math.put(family + "_" + kind, ease);
@@ -187,7 +188,10 @@ public final class MolangFunctionSignatures {
             t.put("math." + entry.getKey(), fixed(args));
         }
 
-        // ---------- query.*（33 个带参；按 bridge/molang/MolangBuiltInQuery 实现核对） ----------
+        // ---------- query.*（带参；按 bridge/molang/MolangBuiltInQuery 实现核对） ----------
+        // 登记名 = @MolangFunction.value（不许驼峰：驼峰会让 BE 蛇形调用形选不中变体）；
+        // 多态（数字/字符串两形）无法用单条 Signature 表达，登记主形即可。
+        // 未登记：query.get_equipped_item_name（0/1/2 三种元数，编辑器走 args 列表）。
         t.put("query.any", varArgs(num("value"), num("candidates")));
         t.put("query.armor_color_slot", fixed(num("slot")));
         t.put("query.armor_texture_slot", fixed(num("slot")));
@@ -210,7 +214,6 @@ public final class MolangFunctionSignatures {
         t.put("query.head_y_rotation", fixed(num("head")));
         t.put("query.helmet_is", varArgs(str("items")));
         t.put("query.in_range", fixed(num("value"), num("min"), num("max")));
-        t.put("query.isItemNameAny", varArgs(List.of(str("hand"), num("index")), str("items")));
         t.put("query.is_damage_by", varArgs(str("damage_types")));
         t.put("query.is_item_equipped", fixed(str("hand")));
         t.put("query.is_item_name_any", varArgs(str("hand"), str("items")));

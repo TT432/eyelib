@@ -49,6 +49,9 @@ public record BrAnimationEntryDefinition(
                     .map(e -> new Matrix4f().translation(e.getX(), e.getY(), e.getZ()))
                     .orElseGet(Matrix4f::new);
 
+    /** 模型根空间 locator 位移（块）解析；未安装实现 → null。 */
+    private static RootLocatorOffsetProvider rootLocatorOffsetProvider = (scope, locatorName) -> null;
+
     public static void installSoundPlayer(SoundPlayer sp) {
         soundPlayer = sp;
     }
@@ -66,8 +69,17 @@ public record BrAnimationEntryDefinition(
         locatorProvider = provider;
     }
 
+    public static void installRootLocatorOffsetProvider(RootLocatorOffsetProvider provider) {
+        rootLocatorOffsetProvider = provider;
+    }
+
     public static Matrix4f resolveLocatorPose(MolangScope scope, @Nullable String locatorName) {
         return locatorProvider.resolve(scope, locatorName);
+    }
+
+    /** 模型根空间（块）的 locator 位移；未安装实现或 locator 不存在 → {@code null}。 */
+    public static @Nullable Vector3f resolveRootLocatorOffset(MolangScope scope, String locatorName) {
+        return rootLocatorOffsetProvider.resolve(scope, locatorName);
     }
 
     public static Vector3f resolveLocator(MolangScope scope, @Nullable String locatorName) {

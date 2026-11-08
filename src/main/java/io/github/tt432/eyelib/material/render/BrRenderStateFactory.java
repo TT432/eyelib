@@ -64,17 +64,10 @@ public final class BrRenderStateFactory {
                 !material.hasState(GLStates.DisableDepthWrite)
         );
 
-        //? if <26.1 {
-        // <26.1 vanilla entity shader 无方向项：DIRECTIONAL 的实际含义是「走 vanilla 实体 shader」，
-        // 观感即 lightmap-only。保持既有行为零变化。
+        // 版本无关：DIRECTIONAL 的语义是「走宿主 vanilla 实体着色器通道」，1.20.1/1.21.1 该通道本就
+        // 无方向项。26.1 起该通道默认叠方向光，把它翻译成 LIGHTMAP_ONLY 的职责在 ACL
+        // （bridge.material.adapter.RenderTypeCapabilities.channelState，ADR-0040）。
         BrRenderState.LightingModel lightingModel = BrRenderState.LightingModel.DIRECTIONAL;
-        //?} else {
-        // 26.1 起 vanilla entity.vsh 默认执行 minecraft_mix_light（面亮度 = 纹理 × [0.4,1.0]，由法线决定）。
-        // Bedrock 实体纹理已烘焙面明暗，再乘方向光得到 0.4 暗面；骨骼动画改变法线又让整面亮度在
-        // 0.4↔1.0 之间跳变（实机表现为模型暗面闪烁）。实体材质改用 LIGHTMAP_ONLY
-        // （NO_CARDINAL_LIGHTING），与 1.20.1/1.21.1 观感一致（ADR-0040）。
-        BrRenderState.LightingModel lightingModel = BrRenderState.LightingModel.LIGHTMAP_ONLY;
-        //?}
 
         return new BrRenderState(
                 surfaceClass,

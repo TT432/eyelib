@@ -7,6 +7,8 @@ import io.github.tt432.eyelib.molang.mapping.api.MolangFunction;
 import io.github.tt432.eyelib.molang.mapping.api.MolangMapping;
 import io.github.tt432.eyelib.molang.mapping.api.MolangQueryRuntimeBridge;
 import io.github.tt432.eyelib.bridge.material.ResourceLocationBridge;
+import io.github.tt432.eyelib.animation.bedrock.BrAnimationEntryDefinition;
+import io.github.tt432.eyelib.animation.bedrock.RootLocatorOffsetProvider;
 
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
@@ -71,13 +73,16 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
 import java.util.Arrays;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
 
+import org.joml.Vector3f;
 import org.jspecify.annotations.Nullable;
 
 import io.github.tt432.eyelib.bridge.molang.adapter.ComponentStore;
+import io.github.tt432.eyelib.bridge.molang.adapter.ItemNameMatcher;
 import io.github.tt432.eyelib.bridge.molang.adapter.MolangEntityContext;
 
 import static io.github.tt432.eyelib.molang.MolangValue.FALSE;
@@ -131,6 +136,23 @@ public interface MolangBuiltInQuery {
     public static float any(MolangScope scope, float value, float... candidates) {
         for (float candidate : candidates) {
             if (Float.compare(value, candidate) == 0) {
+                return TRUE;
+            }
+        }
+        return FALSE;
+    }
+
+    // BE 的 query.any 比较不限类型：纯字符串调用形走此重载（变体选择按 STRING/NUMBER 精确匹配，
+    // 数字 vs 字符串在 BE 里也恒不等，故混合类型不另设变体）。
+    // 注意出版签名（varArgs, visibleArity）去重：数字形是 (true,1)，字符串形必须避开同签名，
+    // 故拆成「首参 + 第二参 + 变长候选」= (true,2)——正好也是 BE「至少 3 参」的下界。
+    @MolangFunction(value = "any", description = "对第一个参数求值后，若后续任意参数与第一个参数值相等则返回 1.0（字符串形）")
+    public static float anyString(MolangScope scope, String value, String second, String... candidates) {
+        if (value.equals(second)) {
+            return TRUE;
+        }
+        for (String candidate : candidates) {
+            if (value.equals(candidate)) {
                 return TRUE;
             }
         }
@@ -226,30 +248,21 @@ public interface MolangBuiltInQuery {
         };
     }
 
-    @MolangFunction(value = "is_item_name_any", description = "在手上的物品")
+    @MolangFunction(value = "is_item_name_any", description = "槽位物品名是否为任意指定名字；'' 匹配空槽")
     public static float isItemNameAny(MolangScope scope, String hand, String... items) {
         return isItemNameAny(scope, hand, 0, items);
     }
 
+    // 带索引的变体必须同挂蛇形名：BE 合法形 ('slot.hotbar', 3, 'ns:item') 才会被变体选择命中
+    @MolangFunction(value = "is_item_name_any", description = "带索引槽位（如 'slot.hotbar'）的物品名检查")
     public static float isItemNameAny(MolangScope scope, String hand, float index, String... items) {
-        return livingBool(scope, l -> {
-            var itemKey = BuiltInRegistries.ITEM.getKey(getItemBySlot(l, hand.toString(), (int) index).getItem());
+        return livingBool(scope, l ->
+                ItemNameMatcher.matchesAny(itemName(getItemBySlot(l, hand, (int) index)), items));
+    }
 
-            for (Object item : items) {
-                //? if <1.20.6 {
-                if (new ResourceLocation(item.toString()).equals(itemKey)) {
-                //?} elif <26.1 {
-                if (ResourceLocation.parse(item.toString()).equals(itemKey)) {
-                //?} else {
-                if (Identifier.parse(item.toString()).equals(itemKey)) {
-
-                //?}
-                    return true;
-                }
-            }
-
-            return false;
-        });
+    /** 物品注册名的 BE 形式（{@code namespace:path}）；空栈 → {@code null}（供 '' 空槽匹配）。 */
+    private static @Nullable String itemName(ItemStack stack) {
+        return stack.isEmpty() ? null : BuiltInRegistries.ITEM.getKey(stack.getItem()).toString();
     }
 
     @MolangFunction(value = "is_gliding", description = "滑翔")
@@ -1002,11 +1015,63 @@ public interface MolangBuiltInQuery {
         });
     }
 
-    @MolangFunction(value = "get_equipped_item_name", description = "获取指定槽位的物品名称（已弃用，建议使用 is_item_name_any）")
+    @MolangFunction(value = "get_equipped_item_name", description = "装备槽物品名（已弃用，建议 is_item_name_any）；缺省主手，空槽返回 ''")
     public static String getEquippedItemName(MolangScope scope) {
+        return equippedItemName(scope, 0, false);
+    }
+
+    @MolangFunction(value = "get_equipped_item_name", description = "手槽物品名：0 主手 / 1 副手")
+    public static String getEquippedItemName(MolangScope scope, float hand) {
+        return equippedItemName(scope, handIndex(hand), false);
+    }
+
+    // 出版签名去重（varArgs, visibleArity）约束：手槽数字形是 (false,1)，字符串形改变长避让 → (true,1)
+    @MolangFunction(value = "get_equipped_item_name", description = "手槽物品名：'main_hand' / 'off_hand'（也接受 '0'/'1'）")
+    public static String getEquippedItemName(MolangScope scope, String hand, String... rest) {
+        return equippedItemName(scope, handIndex(hand), false);
+    }
+
+    @MolangFunction(value = "get_equipped_item_name", description = "第二参非 0 取当前正在渲染的物品（attachable 语境），否则取手槽")
+    public static String getEquippedItemName(MolangScope scope, float hand, float rendered) {
+        return equippedItemName(scope, handIndex(hand), rendered != 0F);
+    }
+
+    // BE 允许「槽名 + rendered 标志」混合形（'main_hand', 1）；数字手槽版是 (false,2)，
+    // 故这里靠变长形参错开出版签名 → (true,2)
+    @MolangFunction(value = "get_equipped_item_name", description = "槽名 + rendered 标志：'main_hand'/'off_hand' 与非 0 第二参")
+    public static String getEquippedItemName(MolangScope scope, String hand, float rendered, String... rest) {
+        return equippedItemName(scope, handIndex(hand), rendered != 0F);
+    }
+
+    private static String equippedItemName(MolangScope scope, int hand, boolean renderedItem) {
+        if (renderedItem) {
+            // AttachableItemRenderSetup 以 ItemStack 为 RenderData owner 发布到 class store
+            ItemStack stack = scope.getHostContext().get(ItemStack.class).orElse(null);
+            if (stack != null) {
+                String renderedName = itemName(stack);
+                return renderedName != null ? renderedName : "";
+            }
+        }
+
         return scope.getHostContext().get(LIVING_ENTITY)
-                    .map(l -> BuiltInRegistries.ITEM.getKey(getItemBySlot(l, "0", 0).getItem()).toString())
+                    .map(l -> {
+                        String name = itemName(hand == 1 ? l.getOffhandItem() : l.getMainHandItem());
+                        return name != null ? name : "";
+                    })
                     .orElse("");
+    }
+
+    /** BE 手槽编号：1 为副手，其余按主手。 */
+    private static int handIndex(float hand) {
+        return (int) hand == 1 ? 1 : 0;
+    }
+
+    /** BE 手槽名：{@code off_hand}/{@code 1} 为副手，其余按主手。 */
+    private static int handIndex(String hand) {
+        return switch (hand.toLowerCase(Locale.ROOT)) {
+            case "1", "off_hand" -> 1;
+            default -> 0;
+        };
     }
 
     @MolangFunction(value = "relative_block_has_any_tag", description = "检查实体相对位置的方块是否拥有任意指定的方块标签")
@@ -1040,9 +1105,49 @@ public interface MolangBuiltInQuery {
         return 0F;
     }
 
-    @MolangFunction(value = "get_root_locator_offset", description = "根模型定位器偏移（Bedrock .geo 模型数据，Java 运行时无等效数据源，始终返回 0）")
-    public static float getRootLocatorOffset(MolangScope scope, String locator, String axis) {
-        return 0F;
+    @MolangFunction(value = "get_root_locator_offset", description = "根模型上指定 locator 的指定轴偏移（BE 单位 1/16 块）；axis：0/1/2 = x/y/z。locator 不存在或轴越界 → 0")
+    public static float getRootLocatorOffset(MolangScope scope, String locator, float axis) {
+        return rootLocatorOffset(scope, locator, axisIndex(axis));
+    }
+
+    // 出版签名去重（varArgs, visibleArity）约束：数字轴是 (false,2)，字符串轴改变长避让 → (true,1)
+    @MolangFunction(value = "get_root_locator_offset", description = "同上，axis 也接受 'x'/'y'/'z' 或 '0'/'1'/'2'")
+    public static float getRootLocatorOffset(MolangScope scope, String locator, String... axis) {
+        return rootLocatorOffset(scope, locator, axis.length == 0 ? -1 : axisIndex(axis[0]));
+    }
+
+    private static float rootLocatorOffset(MolangScope scope, String locator, int axis) {
+        if (axis < 0) {
+            return 0F;
+        }
+
+        Vector3f offset = BrAnimationEntryDefinition.resolveRootLocatorOffset(scope, locator);
+        if (offset == null) {
+            return 0F;
+        }
+
+        float blocks = switch (axis) {
+            case 0 -> offset.x;
+            case 1 -> offset.y;
+            default -> offset.z;
+        };
+        // eyelib 模型空间内部单位是块（导入期 /16），BE 该查询的单位是 1/16 块
+        return blocks * RootLocatorOffsetProvider.BLOCKS_TO_BEDROCK_UNITS;
+    }
+
+    /** 轴索引：0/1/2 与 'x'/'y'/'z'（BE 两种写法都出现过）；越界 → -1。 */
+    private static int axisIndex(float axis) {
+        int index = (int) axis;
+        return index >= 0 && index <= 2 ? index : -1;
+    }
+
+    private static int axisIndex(String axis) {
+        return switch (axis.toLowerCase(Locale.ROOT)) {
+            case "0", "x" -> 0;
+            case "1", "y" -> 1;
+            case "2", "z" -> 2;
+            default -> -1;
+        };
     }
 
     @MolangFunction(value = "graphics_mode_is_any", description = "图形模式检查（Bedrock 客户端特性，Java 无等效数据源，始终返回 1.0 代表 fancy）")

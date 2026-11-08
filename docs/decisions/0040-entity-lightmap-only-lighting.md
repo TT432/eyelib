@@ -3,6 +3,8 @@
 ## 状态
 
 已接受（2026-11-04）。修订 ADR-0033 的实体默认值部分（粒子的 AMBIENT/NONE 语义不变）。
+2026-11-08 修订决策 2：版本分叉从 domain（`BrRenderStateFactory`）下移到 ACL
+（`RenderTypeCapabilities`），行为不变，`//?` 闸门基线因此归零。
 
 ## 背景
 
@@ -35,10 +37,23 @@
 
 1. `BrRenderState.LightingModel` 新增 **`LIGHTMAP_ONLY`**：仅 lightmap，无方向项。
    - 26.1 的 `buildPipeline` 对它加 `NO_CARDINAL_LIGHTING`（既有条件 `lighting != DIRECTIONAL` 已覆盖）。
-   - 与 DIRECTIONAL 的区别只在渲染路径：`needsCustomRenderType()` 为 true（走 eyelib 自定义 pipeline）。
-2. `BrRenderStateFactory.compute` 的实体默认值按版本分叉：
-   - `<26.1`：`DIRECTIONAL`（既有行为零变化；vanilla shader 本就无方向项）。
-   - `>=26.1`：`LIGHTMAP_ONLY`。
+   - 与 DIRECTIONAL 的区别只在渲染路径：需要自建 RenderType（走 eyelib 自定义 pipeline）。
+2. **实体默认光照模型与版本无关，版本分叉只在 ACL**（2026-11-08 修订，原决策为「`BrRenderStateFactory.compute`
+   按版本分叉」）：`BrRenderStateFactory.compute` 恒定产出 `DIRECTIONAL`，语义 = 「走宿主 vanilla 实体
+   着色器通道」。26.1 的「不得叠加方向光」由 ACL 施加：
+   `bridge.material.adapter.RenderTypeCapabilities.channelState(state)` 在 `>=26.1` 把
+   `DIRECTIONAL` 翻成 `LIGHTMAP_ONLY`，`BrRenderTypeFactory.create` 用它算出的有效 state 做门控与建管线。
+   理由：
+   - `DIRECTIONAL` 与 `LIGHTMAP_ONLY` 的差别**只存在于 26.1 的 pipeline define**；在 `<26.1` 上两者渲染
+     等价，仅差一个「vanilla RenderType 名录」判断。
+   - 名录与 pipeline define 都是 ACL 知识（`RenderTypeCapabilities.needsCustomRenderType` 与
+     `BrRenderTypeFactory.buildPipeline` 已在 bridge）。
+   - domain 保留版本分叉会被 `StonecutterCommentPlacementTest`（ADR-0016 §6）记为违规。
+2b. **「哪些 (transparency, cull) 组合只能走 custom」同属 ACL**：原 `BrRenderState.needsCustomRenderType()`
+   整体迁入 `RenderTypeCapabilities.needsCustomRenderType(state)`，其中 `>=26.1` 保留
+   `(BLEND && cull)`、`(NONE && !cull)` 两个 vanilla 名录缺口组合。
+2c. 由此 26.1 的实体材质恒获得非 `DIRECTIONAL` 的有效 state ⇒ 全部走自定义 pipeline（与决策 5 的回退路径
+   `createForEntityPass` 的 canonical `LIGHTMAP_ONLY` 口径一致）。
 3. **粒子路径不变**：新判定 `isParticleUnlit(state)` = `AMBIENT || NONE`，取代原先
    `lighting != DIRECTIONAL` 的三处判定（`<26.1` 的 `shaderState` / `legacySkinningVariant`、
    `IrisPipelineCompat.mainProgram`）。LIGHTMAP_ONLY **不**走 `eyelib:particle_unlit`，仍用 vanilla
@@ -59,6 +74,8 @@
   RenderType 仍按 `(texture, state)` 缓存，同材质多实体共享同一批；Iris 侧由
   `IrisPipelineCompat.assign` 登记主通道与阴影通道，蒙皮派生管线（`NgSkinningManager.derivePipeline`
   的 `toBuilder()`）继承 `NO_CARDINAL_LIGHTING`，经典/蒙皮两条路径观感一致。
+- 「是否必须自建 RenderType」的判定在 ACL（`RenderTypeCapabilities.needsCustomRenderType`），
+  domain 的 `BrRenderState` 只承载语义分量。
 - 光影包激活时按既有回退：GPU 蒙皮回退 CPU 路径，光照由 pack 接管。
 - Bedrock 资产的面明暗完全来自纹理与 lightmap，与 1.20.1/1.21.1 一致；不再随动画跳变。
 

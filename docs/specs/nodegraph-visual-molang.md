@@ -306,3 +306,55 @@ body_x_rotation（实体 pitch）、is_on_screen（视距内近似，无视锥�
 surface_particle_*（贴图平均色 × 群系着色 / 图集原点 / 贴图尺寸）。
 camera_rotation / rotation_to_camera 在 1.20.1 与 1.21.1 已读取本帧实际渲染摄像机
 （见 [molang-render-camera.md](molang-render-camera.md)），仅 26.1.2 仍为宿主视角近似。
+
+## 9. 实施记录（2026-11-08）：5 个 molang 调用形覆盖缺口
+
+**起因**：Actions & Stuff 实机日志（`run/clientsmoke/logs/{latest,debug}.log`、`build/uitest_*.log`）
+反复出现 `Molang function 'X' not found or unresolvable — returning 0`，其中
+`math.ease_in_out_back`、`query.any`、`query.get_equipped_item_name`、
+`query.is_item_name_any`、`query.get_root_locator_offset` 在 §8 的 71 项补齐之后仍然报错。
+
+**根因（全部是「名字在表里、BE 合法调用形选不中变体」，不是实现缺失）**：
+
+| 函数 | 根因 |
+|---|---|
+| `math.ease_in_out_back` 等 10 个 | 整个 `in_out` 家族按 `ease_inout_*` 命名注册，BE 规范名是 `ease_in_out_*` |
+| `query.any` | 只有 `(float, float...)` 变体，字符串调用形 kind 不匹配 |
+| `query.get_equipped_item_name` | 只有零参变体，且实现取 `"0"` 槽（落到 default → `ItemStack.EMPTY`）恒返回 `minecraft:air` |
+| `query.is_item_name_any` | 带 index 的重载漏挂 `@MolangFunction`，注册成驼峰 `query.isItemNameAny`；`''` 空槽语义缺失 |
+| `query.get_root_locator_offset` | 恒 0 桩，且 axis 只声明 `String`（BE 常见 `0/1/2` 数字形选不中） |
+
+**决策与落地**：
+
+1. `MolangMath` 的 10 个 `ease_inout_*` 方法各挂
+   `@MolangFunction(value = "ease_in_out_*", alias = "ease_inout_*")`（Java 名不变，旧拼写保留为别名）；
+   `MolangFunctionSignatures` 的 math 表同时收录两个 family。
+2. `query.any` 增加字符串变体：纯字符串调用形命中它，数字形不变；
+   混合类型（首参数字 + 后续字符串）在 BE 里也恒不等，不另设变体。
+   **注意**：映射树发布期按 `(varArgs, visibleArity)` 出版签名去重（`FingerprintCalculator.deduplicateEqualTies`，
+   见 `MolangCallablePublicationSignatureRoleTest` 的 last-win 契约），**同元数的类型化重载会被合并掉一个**，
+   所以字符串形一律用变长形参把出版签名错开：`any` 字符串形 = `(String, String, String...)` → `(true,2)`
+   （正好是 BE「至少 3 参」的下界），数字形仍是 `(true,1)`。签名表仍登记数字前缀（`value` + `candidates`），
+   字符串形的第二固定参不产生端口。
+3. `query.get_equipped_item_name` 按 BE 补 0/1/2 参五个变体：零参 `(false,0)`、数字手槽 `(false,1)`、
+   字符串手槽 `(true,1)`（`String hand, String... rest` 错开出版签名）、带 rendered 的两参数字手槽 `(false,2)`、
+   以及 BE 同样合法的「槽名 + rendered 标志」混合形 `(true,2)`（`String hand, float rendered, String... rest`）；
+   缺省主手、空槽返回 `''`；第二参非 0 时从 scope 的 class store 取 RenderData owner（`ItemStack`）
+   作为「当前正在渲染的物品」，取不到回落槽位。签名表不入表：`Signature` 单条无法表达 0/1/2 三种元数，
+   编辑器对其走 `args` 列表选项（与零参内建同路径）。
+4. `query.is_item_name_any` 的带 index 变体改回蛇形名；名字匹配抽到
+   `bridge/molang/adapter/ItemNameMatcher`（`''` 空槽、命名空间省略、大小写不敏感）。
+5. `query.get_root_locator_offset` 改为真值：新增 domain 端口
+   `animation/bedrock/RootLocatorOffsetProvider`（返回**模型根空间、单位块**），由
+   `bridge/animation/AnimationLocatorResolver.install()` 用 `ModelPoseTransforms.resolveLocatorPose(...,
+   单位根位姿)` 实现并注册；查询侧 `× RootLocatorOffsetProvider.BLOCKS_TO_BEDROCK_UNITS (=16)`
+   回到 BE 的 1/16 块单位（决策：对齐 BE 骨骼 position 单位，单测常量钉死）。
+   口径为**渲染链空间**（含模型级 Y 翻转，X/Z 镜像），与骨骼 position 的施加空间一致。
+   axis 两形：数字 `(false,2)` 与字符串 `String...`（`(true,1)`，同样为错开出版签名去重）。
+6. 防回归：`MolangQueryCoverageGapContractTest`（每个新调用形的变体选择 + 端到端求值）、
+   `ItemNameMatcherTest`、`ModelPoseTransformsTest.rootSpaceLocatorOffsetUsesIdentityRootAndModelFlip`、
+   `MolangEaseFunctionsTest.easeInoutBackOvershootsBothEndsAndIsSmoothAtMidpoint`。
+
+**只能实机验证的剩余点**：`t` 超出 `[0,1]` 是否需要 clamp；A&S 是否使用混合类型 `query.any`；
+attachable 首/第三人称下「渲染中物品」的取值；`slot.hotbar` 在非本地玩家上的空值；
+`get_root_locator_offset` 与 BE 的轴手性/单位一致性（eyelib 模型空间做过 X 镜像）。

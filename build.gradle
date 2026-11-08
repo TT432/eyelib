@@ -683,6 +683,8 @@ tasks.named('test').configure {
     def archunitNodeName = project.name
     // 显式重构基线：gradlew :<node>:test --rerun -ParchunitRefreeze
     def archunitRefreeze = project.hasProperty('archunitRefreeze')
+    // 源码文本扫描类闸门（StonecutterCommentPlacementTest）共用同一开关重建其基线。
+    systemProperty 'eyelib.archunitRefreeze', archunitRefreeze
     doFirst {
         archunitSnapshot.parentFile.mkdirs()
         archunitSnapshot.text = archunitStoreDir.listFiles()

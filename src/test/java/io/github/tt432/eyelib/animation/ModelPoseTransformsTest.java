@@ -52,6 +52,40 @@ class ModelPoseTransformsTest {
     }
 
     @Test
+    void rootSpaceLocatorOffsetUsesIdentityRootAndModelFlip() {
+        int rootId = 31;
+        LocatorEntry locator = new LocatorEntry("lead", new Vector3f(1, 2, 3), new Vector3f());
+        Model.Bone root = Model.Bone.of(
+                rootId,
+                -1,
+                new Vector3f(),
+                new Vector3f(),
+                new Vector3f(),
+                new Vector3f(1),
+                null,
+                new Int2ObjectOpenHashMap<>(),
+                List.of(),
+                new GroupLocator(new Int2ObjectOpenHashMap<>(), List.of(locator))
+        );
+        Int2ObjectOpenHashMap<Model.Bone> bones = new Int2ObjectOpenHashMap<>();
+        bones.put(rootId, root);
+        Model model = Model.of("geometry.root_locator", bones);
+
+        Vector3f offset = ModelPoseTransforms.resolveLocatorPose(
+                model,
+                ModelRuntimeData.EMPTY,
+                "lead",
+                new Matrix4f()
+        ).orElseThrow().getTranslation(new Vector3f());
+
+        // 单位根位姿 = 模型根空间（query.get_root_locator_offset 的口径）：
+        // 只含模型级 Y 翻转（X/Z 镜像），不含实体位姿/朝向
+        assertEquals(-1F, offset.x, 0.0001F);
+        assertEquals(2F, offset.y, 0.0001F);
+        assertEquals(-3F, offset.z, 0.0001F);
+    }
+
+    @Test
     void bonePoseAccumulatesParentChainWithPivotRotationAndModelFlip() {
         int rootId = 11;
         int handId = 12;

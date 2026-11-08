@@ -101,21 +101,22 @@ public final class BrRenderTypeFactory {
      * @return 语义化 PortRenderPass
      */
     public static PortRenderPass create(PortResourceLocation texture, BrRenderState state, PassKind kind) {
+        BrRenderState effective = RenderTypeCapabilities.channelState(state);
         //? if <26.1 {
         ResourceLocation mcTex = ResourceLocationBridge.toMc(texture);
-        if (!state.needsCustomRenderType()) {
-            return toPortPass(state);
+        if (!RenderTypeCapabilities.needsCustomRenderType(effective)) {
+            return toPortPass(effective);
         }
-        RenderType renderType = CACHE.computeIfAbsent(new Key(texture, state, kind), key -> custom(mcTex, state, kind));
-        PortRenderPass pass = toPortPass(state);
+        RenderType renderType = CACHE.computeIfAbsent(new Key(texture, effective, kind), key -> custom(mcTex, effective, kind));
+        PortRenderPass pass = toPortPass(effective);
         return new BridgeRenderPass(pass.transparency(), pass.disableCulling(), renderType);
         //?} else {
         Identifier mcTex = ResourceLocationBridge.toMc(texture);
-        if (!state.needsCustomRenderType()) {
-            return toPortPass(state);
+        if (!RenderTypeCapabilities.needsCustomRenderType(effective)) {
+            return toPortPass(effective);
         }
-        RenderType renderType = CACHE.computeIfAbsent(new Key(texture, state, kind), key -> custom(mcTex, state, kind));
-        PortRenderPass pass = toPortPass(state);
+        RenderType renderType = CACHE.computeIfAbsent(new Key(texture, effective, kind), key -> custom(mcTex, effective, kind));
+        PortRenderPass pass = toPortPass(effective);
         return new BridgeRenderPass(pass.transparency(), pass.disableCulling(), renderType);
         //?}
     }

@@ -6,6 +6,8 @@ import com.mojang.blaze3d.pipeline.RenderPipeline;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import org.jspecify.annotations.Nullable;
+
 import java.lang.reflect.Method;
 
 /**
@@ -39,11 +41,11 @@ public interface IrisPipelineCompat {
     Logger LOGGER = LoggerFactory.getLogger(IrisPipelineCompat.class);
 
     /** {@code IrisApi} 实例；Iris 未安装时为 null。 */
-    Object API = resolveApi();
-    Method ASSIGN_PIPELINE = resolveMethod("assignPipeline");
-    Method ASSIGN_PIPELINE_SHADOW = resolveMethod("assignPipelineShadow");
-    Class<?> PROGRAM_TYPE = resolveType("net.irisshaders.iris.api.v0.IrisProgram");
-    Class<?> SHADOW_PROGRAM_TYPE = resolveType("net.irisshaders.iris.api.v0.IrisShadowProgram");
+    @Nullable Object API = resolveApi();
+    @Nullable Method ASSIGN_PIPELINE = resolveMethod("assignPipeline");
+    @Nullable Method ASSIGN_PIPELINE_SHADOW = resolveMethod("assignPipelineShadow");
+    @Nullable Class<?> PROGRAM_TYPE = resolveType("net.irisshaders.iris.api.v0.IrisProgram");
+    @Nullable Class<?> SHADOW_PROGRAM_TYPE = resolveType("net.irisshaders.iris.api.v0.IrisShadowProgram");
     /** 阴影通道键：实体几何在 Iris 里只有这一个 {@code ShadowEntities} 键。 */
     String SHADOW_ENTITIES_KEY = "SHADOW_ENTITIES_CUTOUT";
 
@@ -56,9 +58,9 @@ public interface IrisPipelineCompat {
      * {@code Found okay program match ... ENTITIES_ALPHA}，画面即不显示）。
      */
     final class ExactKeys {
-        private static Class<?> shaderKeyType;
-        private static Method assignMain;
-        private static Method assignShadow;
+        private static @Nullable Class<?> shaderKeyType;
+        private static @Nullable Method assignMain;
+        private static @Nullable Method assignShadow;
         private static boolean resolveWarned;
     }
 
@@ -113,12 +115,13 @@ public interface IrisPipelineCompat {
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})
-    private static boolean assignExact(Method method, RenderPipeline pipeline, String keyName) {
-        if (method == null || ExactKeys.shaderKeyType == null) {
+    private static boolean assignExact(@Nullable Method method, RenderPipeline pipeline, String keyName) {
+        Class<?> keyType = ExactKeys.shaderKeyType;
+        if (method == null || keyType == null) {
             return false;
         }
         try {
-            method.invoke(null, pipeline, Enum.valueOf((Class<? extends Enum>) ExactKeys.shaderKeyType, keyName));
+            method.invoke(null, pipeline, Enum.valueOf((Class<? extends Enum>) keyType, keyName));
             return true;
         } catch (IllegalStateException alreadyAssigned) {
             return true;
@@ -153,7 +156,8 @@ public interface IrisPipelineCompat {
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})
-    private static void assign(Method method, Class<?> enumType, RenderPipeline pipeline, String programName) {
+    private static void assign(@Nullable Method method, @Nullable Class<?> enumType,
+                               RenderPipeline pipeline, String programName) {
         if (method == null || enumType == null) {
             return;
         }
@@ -167,7 +171,7 @@ public interface IrisPipelineCompat {
         }
     }
 
-    private static Object resolveApi() {
+    private static @Nullable Object resolveApi() {
         try {
             Class<?> apiClass = Class.forName("net.irisshaders.iris.api.v0.IrisApi");
             return apiClass.getMethod("getInstance").invoke(null);
@@ -180,7 +184,7 @@ public interface IrisPipelineCompat {
         }
     }
 
-    private static Method resolveMethod(String name) {
+    private static @Nullable Method resolveMethod(String name) {
         if (API == null) {
             return null;
         }
@@ -196,7 +200,7 @@ public interface IrisPipelineCompat {
         }
     }
 
-    private static Class<?> resolveType(String name) {
+    private static @Nullable Class<?> resolveType(String name) {
         try {
             return Class.forName(name);
         } catch (Throwable t) {

@@ -11,6 +11,7 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import org.joml.Matrix4f;
+import org.joml.Vector3f;
 import org.jspecify.annotations.Nullable;
 
 import java.lang.reflect.Method;
@@ -28,6 +29,40 @@ public interface AnimationLocatorResolver {
 
     static void install() {
         BrAnimationEntryDefinition.installLocatorProvider(AnimationLocatorResolver::resolve);
+        BrAnimationEntryDefinition.installRootLocatorOffsetProvider(AnimationLocatorResolver::resolveRootOffset);
+    }
+
+    /**
+     * 模型根空间（块）的 locator 位移：{@code ModelPoseTransforms} 的 locator 链以单位根位姿求值，
+     * 因此不含实体世界位姿、朝向与实体缩放，只保留模型自身骨骼/locator 变换。
+     */
+    private static @Nullable Vector3f resolveRootOffset(MolangScope scope, String locatorName) {
+        Object renderData = renderData(scope, scope.getHostContext().get(ENTITY).orElse(null));
+        if (renderData == null) {
+            return null;
+        }
+
+        ModelRuntimeData data = scope.getHostContext().get(HostRoles.MODEL_RUNTIME_DATA)
+                .orElse(ModelRuntimeData.EMPTY);
+        try {
+            List<?> components = (List<?>) Refs.GET_MODEL_COMPONENTS.invoke(renderData);
+            for (Object component : components) {
+                Method getModel = GET_MODEL.get(component.getClass());
+                if (getModel == null) {
+                    continue;
+                }
+                Object value = getModel.invoke(component);
+                if (value instanceof Model model) {
+                    var resolved = ModelPoseTransforms.resolveLocatorPose(model, data, locatorName, new Matrix4f());
+                    if (resolved.isPresent()) {
+                        return resolved.get().getTranslation(new Vector3f());
+                    }
+                }
+            }
+        } catch (ReflectiveOperationException ignored) {
+            return null;
+        }
+        return null;
     }
 
     private static Matrix4f resolve(MolangScope scope, @Nullable String locatorName) {
@@ -87,10 +122,13 @@ public interface AnimationLocatorResolver {
         return entityPose;
     }
 
-    private static @Nullable Object renderData(MolangScope scope, Entity entity) {
+    private static @Nullable Object renderData(MolangScope scope, @Nullable Entity entity) {
         Object scoped = scope.getHostContext().get(Refs.RENDER_DATA_CLASS).orElse(null);
         if (scoped != null) {
             return scoped;
+        }
+        if (entity == null) {
+            return null;
         }
         try {
             return Refs.GET_COMPONENT.invoke(null, entity);
