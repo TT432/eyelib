@@ -19,7 +19,7 @@ import java.util.stream.Stream;
  * ACL(bridge) 和 Infrastructure(mixin/smoke/debug)。
  *
  * <p>ArchUnit 字节码层面查不到源码注释，本测试做文本扫描。与 ArchitectureTest 同 freeze 模式：
- * baseline 存于 {@code build/archunit_store/stonecutter-comment-baseline.txt}。
+ * baseline 存于 {@code archunit_store/stonecutter-comment-baseline.txt}（随仓库提交，缺失即失败）。
  *
  * <p>扫的是 {@code src/main/java/} 模板源（Stonecutter 处理前），各版本 node 共享同一份 baseline。
  */
@@ -50,17 +50,33 @@ class StonecutterCommentPlacementTest {
 
     private static final String STONECUTTER_MARKER = "//?";
 
+    /**
+     * 基线随仓库提交（与 ArchUnit 的 {@code archunit_store/<node>/} 同生命周期）：
+     * 放在 {@code build/} 下会被 clean 清掉，干净检出时本测试会「新建空基线并把当前违规全部记为已知」，
+     * 闸门在 CI 上永不失败。模板源三节点共享，故基线不带 node 前缀。
+     */
     private static final Path BASELINE_FILE =
-            Paths.get("build", "archunit_store", "stonecutter-comment-baseline.txt");
+            Paths.get("archunit_store", "stonecutter-comment-baseline.txt");
+
+    /** 显式重建基线：{@code gradlew :<node>:test --rerun -ParchunitRefreeze}。 */
+    private static final boolean REFREEZE = Boolean.getBoolean("eyelib.archunitRefreeze");
 
     @Test
     void stonecutterCommentsOnlyInBridgeOrInfrastructure() throws IOException {
         List<String> actual = scanViolations();
 
-        if (!Files.exists(BASELINE_FILE)) {
+        if (REFREEZE) {
             Files.createDirectories(BASELINE_FILE.getParent());
             Files.write(BASELINE_FILE, actual, StandardCharsets.UTF_8);
             return;
+        }
+
+        if (!Files.exists(BASELINE_FILE)) {
+            throw new AssertionError(String.format(
+                    "ADR-0016 §6 //? 散布约束：基线缺失（%s），拒绝凭空建立。"
+                            + "基线必须随仓库提交，否则干净检出时当前违规会被整体吸收成已知。"
+                            + "确属有意变更时用 `gradlew :1.20.1:test --rerun -ParchunitRefreeze` 重建。",
+                    BASELINE_FILE));
         }
 
         List<String> baseline = Files.readAllLines(BASELINE_FILE, StandardCharsets.UTF_8);

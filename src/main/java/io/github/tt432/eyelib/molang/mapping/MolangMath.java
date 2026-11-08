@@ -1,5 +1,6 @@
 package io.github.tt432.eyelib.molang.mapping;
 
+import io.github.tt432.eyelib.molang.mapping.api.MolangFunction;
 import io.github.tt432.eyelib.molang.mapping.api.MolangMapping;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
@@ -98,6 +99,8 @@ public final class MolangMath {
         return interpolate(start, end, easeOutSineCurve(t));
     }
 
+    // Bedrock 规范名为 math.ease_in_out_*；ease_inout_* 作为历史别名保留
+    @MolangFunction(value = "ease_in_out_sine", alias = "ease_inout_sine")
     public static float ease_inout_sine(float start, float end, float t) {
         return interpolate(start, end, easeInoutSineCurve(t));
     }
@@ -110,6 +113,7 @@ public final class MolangMath {
         return interpolate(start, end, easeOutQuadCurve(t));
     }
 
+    @MolangFunction(value = "ease_in_out_quad", alias = "ease_inout_quad")
     public static float ease_inout_quad(float start, float end, float t) {
         return interpolate(start, end, easeInoutQuadCurve(t));
     }
@@ -122,6 +126,7 @@ public final class MolangMath {
         return interpolate(start, end, easeOutCubicCurve(t));
     }
 
+    @MolangFunction(value = "ease_in_out_cubic", alias = "ease_inout_cubic")
     public static float ease_inout_cubic(float start, float end, float t) {
         return interpolate(start, end, easeInoutCubicCurve(t));
     }
@@ -134,6 +139,7 @@ public final class MolangMath {
         return interpolate(start, end, easeOutQuartCurve(t));
     }
 
+    @MolangFunction(value = "ease_in_out_quart", alias = "ease_inout_quart")
     public static float ease_inout_quart(float start, float end, float t) {
         return interpolate(start, end, easeInoutQuartCurve(t));
     }
@@ -146,6 +152,7 @@ public final class MolangMath {
         return interpolate(start, end, easeOutQuintCurve(t));
     }
 
+    @MolangFunction(value = "ease_in_out_quint", alias = "ease_inout_quint")
     public static float ease_inout_quint(float start, float end, float t) {
         return interpolate(start, end, easeInoutQuintCurve(t));
     }
@@ -158,6 +165,7 @@ public final class MolangMath {
         return interpolate(start, end, easeOutExpoCurve(t));
     }
 
+    @MolangFunction(value = "ease_in_out_expo", alias = "ease_inout_expo")
     public static float ease_inout_expo(float start, float end, float t) {
         return interpolate(start, end, easeInoutExpoCurve(t));
     }
@@ -170,6 +178,7 @@ public final class MolangMath {
         return interpolate(start, end, easeOutCircCurve(t));
     }
 
+    @MolangFunction(value = "ease_in_out_circ", alias = "ease_inout_circ")
     public static float ease_inout_circ(float start, float end, float t) {
         return interpolate(start, end, easeInoutCircCurve(t));
     }
@@ -182,6 +191,7 @@ public final class MolangMath {
         return interpolate(start, end, easeOutBackCurve(t));
     }
 
+    @MolangFunction(value = "ease_in_out_back", alias = "ease_inout_back")
     public static float ease_inout_back(float start, float end, float t) {
         return interpolate(start, end, easeInoutBackCurve(t));
     }
@@ -194,6 +204,7 @@ public final class MolangMath {
         return interpolate(start, end, easeOutBounceCurve(t));
     }
 
+    @MolangFunction(value = "ease_in_out_bounce", alias = "ease_inout_bounce")
     public static float ease_inout_bounce(float start, float end, float t) {
         return interpolate(start, end, easeInoutBounceCurve(t));
     }
@@ -206,6 +217,7 @@ public final class MolangMath {
         return interpolate(start, end, easeOutElasticCurve(t));
     }
 
+    @MolangFunction(value = "ease_in_out_elastic", alias = "ease_inout_elastic")
     public static float ease_inout_elastic(float start, float end, float t) {
         return interpolate(start, end, easeInoutElasticCurve(t));
     }

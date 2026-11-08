@@ -96,6 +96,8 @@
 | 0039 | Iris 光影下 26.1 GPU 蒙皮必须回退 CPU 路径 | Accepted (2026-11-04) |
 | 0040 | 实体材质默认光照模型改为 LIGHTMAP_ONLY——26.1 方向光根修 | Accepted (2026-11-04) |
 | 0041 | 26.1 自定义实体 pipeline 按 ShaderKey 精确登记——光影下不透明实体消失 | Accepted (2026-11-05) |
+| 0042 | 实体 pass 状态的单一权威（alpha test / 深度写 / cull） | Accepted (2026-11-06) |
+| 0043 | 装备挂载抽象——item 骨骼锚点与 body-part 骨骼绑定（手持物 + 盔甲） | Accepted (2026-11-08) |
 
 ## 核心原则
 

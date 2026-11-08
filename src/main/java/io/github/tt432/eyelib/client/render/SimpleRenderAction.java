@@ -7,7 +7,6 @@ import io.github.tt432.eyelib.capability.RenderData;
 import io.github.tt432.eyelib.animation.AnimationComponent;
 import io.github.tt432.eyelib.animation.AnimationEffects;
 import io.github.tt432.eyelib.animation.ModelRuntimeData;
-import io.github.tt432.eyelib.model.ModelVisitContext;
 import lombok.With;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.texture.OverlayTexture;
@@ -30,7 +29,6 @@ public record SimpleRenderAction<T>(
         boolean applyEntityPose,
         @Nullable ModelRuntimeData tickedInfos,
         @Nullable AnimationEffects effects,
-        Builder.ExtraRender<T> extraRender,
         boolean skipIfUnbaked
 ) {
     public static <T> Builder<T> builder(MultiBufferSource multiBufferSource, RenderSink sink, PoseStack poseStack, RenderData<T> renderData, float partialTick) {
@@ -58,8 +56,6 @@ public record SimpleRenderAction<T>(
         boolean applyEntityPose = true;
         @Nullable ModelRuntimeData tickedInfos = ModelRuntimeData.EMPTY;
         @Nullable AnimationEffects effects = new AnimationEffects();
-        ExtraRender<T> extraRender = (context, action) -> {
-        };
         /** 见 {@link #skipIfUnbaked(boolean)}。 */
         boolean skipIfUnbaked = false;
 
@@ -111,17 +107,8 @@ public record SimpleRenderAction<T>(
             return animation(animationComponent.tickedInfos, animationComponent.effects);
         }
 
-        public interface ExtraRender<T> {
-            void render(ModelVisitContext context, SimpleRenderAction<T> action);
-        }
-
-        public Builder<T> extraRender(ExtraRender<T> consumer) {
-            this.extraRender = consumer;
-            return this;
-        }
-
         public SimpleRenderAction<T> build() {
-            return new SimpleRenderAction<>(multiBufferSource, sink, poseStack, renderData, partialTick, light, overlay, entity, applyEntityPose, tickedInfos, effects, extraRender, skipIfUnbaked);
+            return new SimpleRenderAction<>(multiBufferSource, sink, poseStack, renderData, partialTick, light, overlay, entity, applyEntityPose, tickedInfos, effects, skipIfUnbaked);
         }
     }
 }

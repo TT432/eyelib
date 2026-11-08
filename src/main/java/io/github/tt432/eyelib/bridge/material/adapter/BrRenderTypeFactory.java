@@ -54,6 +54,7 @@ import org.lwjgl.opengl.GL14;
 
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -63,10 +64,30 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public final class BrRenderTypeFactory {
     private BrRenderTypeFactory() {}
+
+    /**
+     * JE 实体通道的 alpha 阈值（vanilla <26.1 各实体着色器硬编码 0.1；26.1 各实体 pipeline
+     * 定义 {@code ALPHA_CUTOUT=0.1}）。
+     */
+    public static final float ENTITY_ALPHA_CUTOUT = 0.1F;
+
+    /**
+     * 同一个 {@link BrRenderState} 在两种通道里的 alpha test / 深度写语义不同，故构造时必须显式区分：
+     * <ul>
+     *   <li>{@link #ENTITY}：Bedrock 实体几何。vanilla 实体通道对「所有非不透明 pass」都 alpha test
+     *       （<26.1 写死在 cutout/translucent/translucent_emissive 着色器里；26.1 由
+     *       {@code ALPHA_CUTOUT} define 显式开启），且半透明实体写深度（ENTITY_TRANSLUCENT
+     *       DEFAULT = 写；只有 ENTITY_TRANSLUCENT_EMISSIVE 明确不写）。</li>
+     *   <li>{@link #PARTICLE}：粒子几何。26.1 vanilla 粒子 pipeline 没有 {@code ALPHA_CUTOUT}
+     *       （软 alpha 粒子不能剔除），只有材质自带 {@code ALPHA_TEST} 的参与剔除。</li>
+     * </ul>
+     */
+    public enum PassKind { ENTITY, PARTICLE }
+
     private static final Map<Key, RenderType> CACHE = new ConcurrentHashMap<>();
     //? if <26.1 {
     //?} else {
-    private static final Map<BrRenderState, RenderPipeline> PIPELINE_CACHE = new ConcurrentHashMap<>();
+    private static final Map<PipelineKey, RenderPipeline> PIPELINE_CACHE = new ConcurrentHashMap<>();
     //?}
 
 
@@ -76,24 +97,26 @@ public final class BrRenderTypeFactory {
      *
      * @param texture 纹理标识
      * @param state   Bedrock 渲染状态
+     * @param kind    通道语义（实体几何 / 粒子），决定 alpha test 与深度写口径
      * @return 语义化 PortRenderPass
      */
-    public static PortRenderPass create(PortResourceLocation texture, BrRenderState state) {
+    public static PortRenderPass create(PortResourceLocation texture, BrRenderState state, PassKind kind) {
+        BrRenderState effective = RenderTypeCapabilities.channelState(state);
         //? if <26.1 {
         ResourceLocation mcTex = ResourceLocationBridge.toMc(texture);
-        if (!state.needsCustomRenderType()) {
-            return toPortPass(state);
+        if (!RenderTypeCapabilities.needsCustomRenderType(effective)) {
+            return toPortPass(effective);
         }
-        RenderType renderType = CACHE.computeIfAbsent(new Key(texture, state), key -> custom(mcTex, state));
-        PortRenderPass pass = toPortPass(state);
+        RenderType renderType = CACHE.computeIfAbsent(new Key(texture, effective, kind), key -> custom(mcTex, effective, kind));
+        PortRenderPass pass = toPortPass(effective);
         return new BridgeRenderPass(pass.transparency(), pass.disableCulling(), renderType);
         //?} else {
         Identifier mcTex = ResourceLocationBridge.toMc(texture);
-        if (!state.needsCustomRenderType()) {
-            return toPortPass(state);
+        if (!RenderTypeCapabilities.needsCustomRenderType(effective)) {
+            return toPortPass(effective);
         }
-        RenderType renderType = CACHE.computeIfAbsent(new Key(texture, state), key -> custom(mcTex, state));
-        PortRenderPass pass = toPortPass(state);
+        RenderType renderType = CACHE.computeIfAbsent(new Key(texture, effective, kind), key -> custom(mcTex, effective, kind));
+        PortRenderPass pass = toPortPass(effective);
         return new BridgeRenderPass(pass.transparency(), pass.disableCulling(), renderType);
         //?}
     }
@@ -113,6 +136,68 @@ public final class BrRenderTypeFactory {
     }
 
     /**
+     * 该 pass 是否必须 alpha test（discard）以及阈值。
+     *
+     * <p>实体通道的判据不是「材质写了 ALPHA_TEST」而是「这个 pass 会不会在不该写深度的地方写深度」：
+     * alpha≈0 的 texel 一旦照常光栅化，写深度的 pass 就会遮住之后绘制的半透明地形（水），
+     * 不写深度的 pass 则会因绘制顺序翻转产生「z 冲突」式闪烁。两代 vanilla 的答案一致：
+     * <b>只有不透明 pass 不 alpha test</b>。
+     * <ul>
+     *   <li><26.1：cutout / translucent / translucent_emissive 着色器都硬编码 {@code color.a < 0.1 → discard}；
+     *       只有 {@code rendertype_entity_solid.fsh} 不 discard。</li>
+     *   <li>26.1：统一 {@code entity.fsh} 只在 {@code #ifdef ALPHA_CUTOUT} 时 discard；vanilla 的
+     *       ENTITY_CUTOUT(_CULL) / ENTITY_TRANSLUCENT(_CULL) / ENTITY_TRANSLUCENT_EMISSIVE /
+     *       ARMOR_TRANSLUCENT / BREEZE_WIND / ENERGY_SWIRL 都定义 {@code ALPHA_CUTOUT=0.1}，
+     *       只有 ENTITY_SOLID / GLINT 不定义。</li>
+     * </ul>
+     *
+     * <p>粒子通道不套用该规则：26.1 vanilla 的 TRANSLUCENT_PARTICLE 没有 {@code ALPHA_CUTOUT}
+     * （软 alpha 粒子必须保留边缘），仅材质显式 {@code ALPHA_TEST} 的粒子参与剔除。
+     */
+    static Optional<Float> alphaTest(BrRenderState state, PassKind kind) {
+        if (kind == PassKind.PARTICLE) {
+            return isCutout(state.surfaceClass()) ? Optional.of(ENTITY_ALPHA_CUTOUT) : Optional.empty();
+        }
+        return isOpaque(state.surfaceClass())
+                ? Optional.empty()
+                : Optional.of(ENTITY_ALPHA_CUTOUT);
+    }
+
+    /**
+     * pass 的实际深度写开关。
+     *
+     * <p>实体通道的深度写不是自由参数：写深度 = 参与遮挡后面的几何（含半透明地形）。
+     * vanilla 26.1 的 ENTITY_TRANSLUCENT 写深度（DEFAULT），只有 ENTITY_TRANSLUCENT_EMISSIVE
+     * 明确 {@code DepthStencilState(LESS_THAN_OR_EQUAL, false)}；1.20.1 的
+     * {@code entityTranslucentEmissive} 同样是 COLOR_WRITE。发光叠加层若写深度，会把后面的
+     * 发光层/水整片剔掉，故实体通道里 {@code TRANSLUCENT_EMISSIVE} 一律不写深度。
+     * 其余 surfaceClass 仍尊重 Bedrock 的 {@code DisableDepthWrite}（默认写）。
+     */
+    static boolean effectiveWriteDepth(BrRenderState state, PassKind kind) {
+        if (kind == PassKind.ENTITY && state.surfaceClass() == BrRenderState.SurfaceClass.TRANSLUCENT_EMISSIVE) {
+            return false;
+        }
+        return state.writeMask().writeDepth();
+    }
+
+    private static boolean isOpaque(BrRenderState.SurfaceClass sc) {
+        return sc == BrRenderState.SurfaceClass.OPAQUE
+                || sc == BrRenderState.SurfaceClass.EMISSIVE
+                || sc == BrRenderState.SurfaceClass.GLINT;
+    }
+
+    private static boolean isEmissive(BrRenderState.SurfaceClass sc) {
+        return sc == BrRenderState.SurfaceClass.TRANSLUCENT_EMISSIVE
+                || sc == BrRenderState.SurfaceClass.EMISSIVE
+                || sc == BrRenderState.SurfaceClass.EMISSIVE_CUTOUT;
+    }
+
+    private static boolean isCutout(BrRenderState.SurfaceClass sc) {
+        return sc == BrRenderState.SurfaceClass.CUTOUT
+                || sc == BrRenderState.SurfaceClass.EMISSIVE_CUTOUT;
+    }
+
+    /**
      * 是否走「无方向光粒子上色器」（eyelib:particle_unlit）：仅 AMBIENT / NONE。
      *
      * <p>{@link BrRenderState.LightingModel#LIGHTMAP_ONLY} 不算——它保留 vanilla entity shader，只在 26.1
@@ -124,7 +209,7 @@ public final class BrRenderTypeFactory {
     }
 
     //? if <26.1 {
-    private static RenderType custom(ResourceLocation texture, BrRenderState state) {
+    private static RenderType custom(ResourceLocation texture, BrRenderState state, PassKind kind) {
         RenderType renderType = RenderType.create(
                 "eyelib_material_" + state.surfaceClass().name().toLowerCase(Locale.ROOT) + "_" + texture,
                 DefaultVertexFormat.NEW_ENTITY,
@@ -141,7 +226,7 @@ public final class BrRenderTypeFactory {
                         .setCullState(new RenderStateShard.CullStateShard(state.cull()))
                         .setWriteMaskState(new RenderStateShard.WriteMaskStateShard(
                                 state.writeMask().writeColor(),
-                                state.writeMask().writeDepth()))
+                                effectiveWriteDepth(state, kind)))
                         .setLightmapState(new RenderStateShard.LightmapStateShard(state.lightmap()))
                         .setOverlayState(new RenderStateShard.OverlayStateShard(state.overlay()))
                         .createCompositeState(false)
@@ -263,8 +348,9 @@ public final class BrRenderTypeFactory {
         };
     }
     //?} else {
-    private static RenderType custom(Identifier texture, BrRenderState state) {
-        RenderPipeline pipeline = PIPELINE_CACHE.computeIfAbsent(state, BrRenderTypeFactory::buildPipeline);
+    private static RenderType custom(Identifier texture, BrRenderState state, PassKind kind) {
+        RenderPipeline pipeline = PIPELINE_CACHE.computeIfAbsent(new PipelineKey(state, kind),
+                key -> buildPipeline(key.state(), key.kind()));
         RenderSetup.RenderSetupBuilder builder = RenderSetup.builder(pipeline)
                 .withTexture("Sampler0", texture);
         if (state.lightmap()) {
@@ -276,6 +362,10 @@ public final class BrRenderTypeFactory {
         if (state.transparency() == BrRenderState.Transparency.BLEND
                 || state.transparency() == BrRenderState.Transparency.ADDITIVE) {
             builder = builder.sortOnUpload();
+        }
+        if (kind == PassKind.ENTITY) {
+            // vanilla 的 entity RenderType 全部 AFFECTS_OUTLINE（发光描边依赖它）；粒子不参与实体描边
+            builder = builder.setOutline(RenderSetup.OutlineProperty.AFFECTS_OUTLINE);
         }
         return RenderType.create(
                 "eyelib_material_" + state.surfaceClass().name().toLowerCase(Locale.ROOT) + "_" + texture,
@@ -294,62 +384,23 @@ public final class BrRenderTypeFactory {
      * 自定义 pipeline 基于 {@code ENTITY_SNIPPET}（不含 PER_FACE_LIGHTING）并加
      * {@code NO_CARDINAL_LIGHTING}，观感与 1.20.1/1.21.1 一致。
      */
-    public static RenderType createForEntityPass(PortResourceLocation texture,
-                                                 PortRenderPass.Transparency transparency,
-                                                 boolean disableCulling) {
-        BrRenderState state = entityPassState(transparency, disableCulling);
-        return CACHE.computeIfAbsent(new Key(texture, state),
-                key -> custom(ResourceLocationBridge.toMc(texture), state));
-    }
-
-    private static BrRenderState entityPassState(PortRenderPass.Transparency transparency, boolean disableCulling) {
-        BrRenderState.Transparency t = switch (transparency) {
-            case SOLID -> BrRenderState.Transparency.NONE;
-            case ALPHA_TEST -> BrRenderState.Transparency.ALPHA_TEST;
-            case TRANSLUCENT, TRANSLUCENT_EMISSIVE -> BrRenderState.Transparency.BLEND;
-            case ADDITIVE -> BrRenderState.Transparency.ADDITIVE;
-        };
-        BrRenderState.SurfaceClass sc = switch (transparency) {
-            case SOLID -> BrRenderState.SurfaceClass.OPAQUE;
-            case ALPHA_TEST -> BrRenderState.SurfaceClass.CUTOUT;
-            case TRANSLUCENT -> BrRenderState.SurfaceClass.TRANSLUCENT;
-            case TRANSLUCENT_EMISSIVE -> BrRenderState.SurfaceClass.TRANSLUCENT_EMISSIVE;
-            case ADDITIVE -> BrRenderState.SurfaceClass.ADDITIVE;
-        };
-        boolean blend = t == BrRenderState.Transparency.BLEND || t == BrRenderState.Transparency.ADDITIVE;
-        return new BrRenderState(
-                sc,
-                !disableCulling,
-                t,
-                new BrRenderState.Depth(true, Optional.empty()),
-                // 半透明不写深度（与 vanilla entityTranslucent 一致），其余写
-                new BrRenderState.WriteMask(true, !blend),
-                blend ? Optional.of(new BrRenderState.Blend(
-                        BlendFactor.SourceAlpha, BlendFactor.OneMinusSrcAlpha,
-                        BlendFactor.One, BlendFactor.OneMinusSrcAlpha)) : Optional.empty(),
-                Optional.empty(),
-                true,
-                true,
-                java.util.Set.of(),
-                false,
-                transparency == PortRenderPass.Transparency.TRANSLUCENT_EMISSIVE,
-                BrRenderState.LightingModel.LIGHTMAP_ONLY);
-    }
-
-    private static RenderPipeline buildPipeline(BrRenderState state) {
+    private static RenderPipeline buildPipeline(BrRenderState state, PassKind kind) {
         RenderPipeline.Snippet baseSnippet = isEmissive(state.surfaceClass())
                 ? RenderPipelines.ENTITY_EMISSIVE_SNIPPET
                 : RenderPipelines.ENTITY_SNIPPET;
         RenderPipeline.Builder builder = RenderPipeline.builder(baseSnippet)
-                .withLocation(Identifier.parse("eyelib:material_" + Integer.toHexString(state.hashCode())))
+                // 同一 state 在不同 PassKind 下 define（ALPHA_CUTOUT）与深度写不同 → location 必须区分，
+                // 否则 Iris 按 pipeline 身份登记光影程序时会互相覆盖
+                .withLocation(Identifier.parse("eyelib:material_" + Integer.toHexString(31 * state.hashCode() + kind.ordinal())))
                 .withCull(state.cull())
                 // entity shader 在 !NO_OVERLAY 时声明 Sampler1(overlay 纹理)；BrRenderStateFactory 强制 overlay=true，
                 // 故 pipeline 必须声明 Sampler1，否则 shader 读未绑定 sampler → 全黑。vanilla 所有实体 pipeline 均如此。
                 .withSampler("Sampler1")
                 .withColorTargetState(buildColorTargetState(state))
-                .withDepthStencilState(Optional.of(buildDepthStencilState(state)));
-        if (isCutout(state.surfaceClass())) {
-            builder = builder.withShaderDefine("ALPHA_CUTOUT", 0.1f);
+                .withDepthStencilState(Optional.of(buildDepthStencilState(state, kind)));
+        Optional<Float> alphaTest = alphaTest(state, kind);
+        if (alphaTest.isPresent()) {
+            builder = builder.withShaderDefine("ALPHA_CUTOUT", alphaTest.get());
         }
         if (state.lighting() != BrRenderState.LightingModel.DIRECTIONAL) {
             // vanilla entity.vsh 原生编译期分支：vertexColor = Color，去掉法线方向光（ADR-0033）
@@ -363,17 +414,6 @@ public final class BrRenderTypeFactory {
         // （不写 G-buffer：整片发黑/不投影/近景大面变黑）。构建期用官方 API 登记主通道与阴影通道。
         IrisPipelineCompat.assign(pipeline, state);
         return pipeline;
-    }
-
-    private static boolean isEmissive(BrRenderState.SurfaceClass sc) {
-        return sc == BrRenderState.SurfaceClass.TRANSLUCENT_EMISSIVE
-                || sc == BrRenderState.SurfaceClass.EMISSIVE
-                || sc == BrRenderState.SurfaceClass.EMISSIVE_CUTOUT;
-    }
-
-    private static boolean isCutout(BrRenderState.SurfaceClass sc) {
-        return sc == BrRenderState.SurfaceClass.CUTOUT
-                || sc == BrRenderState.SurfaceClass.EMISSIVE_CUTOUT;
     }
 
     private static ColorTargetState buildColorTargetState(BrRenderState state) {
@@ -400,11 +440,11 @@ public final class BrRenderTypeFactory {
         );
     }
 
-    private static DepthStencilState buildDepthStencilState(BrRenderState state) {
+    private static DepthStencilState buildDepthStencilState(BrRenderState state, PassKind kind) {
         CompareOp func = state.depth().test()
                 ? state.depth().func().map(BrRenderTypeFactory::mapCompareOp).orElse(CompareOp.LESS_THAN_OR_EQUAL)
                 : CompareOp.ALWAYS_PASS;
-        return new DepthStencilState(func, state.writeMask().writeDepth());
+        return new DepthStencilState(func, effectiveWriteDepth(state, kind));
     }
 
     private static StencilTest buildStencilTest(ResolvedBrMaterial.StencilState ss) {
@@ -494,8 +534,71 @@ public final class BrRenderTypeFactory {
     }
     //?}
 
-    private record Key(PortResourceLocation texture, BrRenderState state) {
+    public static RenderType createForEntityPass(PortResourceLocation texture,
+                                                 PortRenderPass.Transparency transparency,
+                                                 boolean disableCulling) {
+        BrRenderState state = canonicalEntityState(transparency, disableCulling);
+        return CACHE.computeIfAbsent(new Key(texture, state, PassKind.ENTITY),
+                key -> custom(ResourceLocationBridge.toMc(texture), state, PassKind.ENTITY));
     }
+
+    /**
+     * canonical {@link PortRenderPass}（状态只有透明度 + cull 两维）→ 实体通道 {@link BrRenderState}。
+     *
+     * <p>补全的维度口径必须与 vanilla 26.1 同名 pipeline 一致，否则「材质驱动」与「回退 RenderType」
+     * 两条路径会给同一材质不同的深度/剔除行为（历史上就是 26.1 半透明不写深度、且 cull 丢失的根源）：
+     * <ul>
+     *   <li>深度写：solid / cutout / translucent 写；translucent_emissive 不写
+     *       （vanilla ENTITY_TRANSLUCENT_EMISSIVE = {@code DepthStencilState(LESS_THAN_OR_EQUAL, false)}）。</li>
+     *   <li>混合：additive 用 SRC_ALPHA/ONE（Bedrock additive 语义），其余用标准 alpha 混合。</li>
+     * </ul>
+     */
+    private static BrRenderState canonicalEntityState(PortRenderPass.Transparency transparency, boolean disableCulling) {
+        BrRenderState.Transparency t = switch (transparency) {
+            case SOLID -> BrRenderState.Transparency.NONE;
+            case ALPHA_TEST -> BrRenderState.Transparency.ALPHA_TEST;
+            case TRANSLUCENT, TRANSLUCENT_EMISSIVE -> BrRenderState.Transparency.BLEND;
+            case ADDITIVE -> BrRenderState.Transparency.ADDITIVE;
+        };
+        BrRenderState.SurfaceClass sc = switch (transparency) {
+            case SOLID -> BrRenderState.SurfaceClass.OPAQUE;
+            case ALPHA_TEST -> BrRenderState.SurfaceClass.CUTOUT;
+            case TRANSLUCENT -> BrRenderState.SurfaceClass.TRANSLUCENT;
+            case TRANSLUCENT_EMISSIVE -> BrRenderState.SurfaceClass.TRANSLUCENT_EMISSIVE;
+            case ADDITIVE -> BrRenderState.SurfaceClass.ADDITIVE;
+        };
+        Optional<BrRenderState.Blend> blend = switch (transparency) {
+            case ADDITIVE -> Optional.of(new BrRenderState.Blend(
+                    BlendFactor.SourceAlpha, BlendFactor.One, BlendFactor.One, BlendFactor.OneMinusSrcAlpha));
+            case TRANSLUCENT, TRANSLUCENT_EMISSIVE -> Optional.of(new BrRenderState.Blend(
+                    BlendFactor.SourceAlpha, BlendFactor.OneMinusSrcAlpha,
+                    BlendFactor.One, BlendFactor.OneMinusSrcAlpha));
+            case SOLID, ALPHA_TEST -> Optional.empty();
+        };
+        return new BrRenderState(
+                sc,
+                !disableCulling,
+                t,
+                new BrRenderState.Depth(true, Optional.empty()),
+                new BrRenderState.WriteMask(true, transparency != PortRenderPass.Transparency.TRANSLUCENT_EMISSIVE),
+                blend,
+                Optional.empty(),
+                true,
+                true,
+                java.util.Set.of(),
+                false,
+                transparency == PortRenderPass.Transparency.TRANSLUCENT_EMISSIVE,
+                BrRenderState.LightingModel.LIGHTMAP_ONLY);
+    }
+
+    private record Key(PortResourceLocation texture, BrRenderState state, PassKind kind) {
+    }
+
+    //? if <26.1 {
+    //?} else {
+    private record PipelineKey(BrRenderState state, PassKind kind) {
+    }
+    //?}
 }
 
 

@@ -308,6 +308,23 @@ public final class MolangScope {
         return name.startsWith("temp.");
     }
 
+    /**
+     * Bedrock Molang 标识符大小写不敏感（官方 syntax 文档「Case Sensitivity」：除字符串字面量外
+     * 全部不敏感）。变量名与 struct 成员统一按小写存储/查找；无大写字母时零分配返回原串。
+     *
+     * <p>统一入口是 scope 的各公开存取方法 + {@link MolangStruct} 成员表，编译期名字原样保留
+     * （不同资源包可能写 {@code variable.DecorTextureIndex} / {@code variable.decortextureindex}）。
+     */
+    static String canonicalName(String name) {
+        for (int i = 0, len = name.length(); i < len; i++) {
+            char c = name.charAt(i);
+            if (c >= 'A' && c <= 'Z') {
+                return name.toLowerCase(java.util.Locale.ROOT);
+            }
+        }
+        return name;
+    }
+
     // ---- struct 支持（官方 syntax-guide「Structs」：结构按使用隐式定义）----
     // 点分名按「根键 + 成员路径」解析：molang 根前缀（variable./temp./context./query./math.）
     // 的根键取前两段（variable.qpptaw.r → 根 variable.qpptaw、路径 r），其余点名取首段。
@@ -409,6 +426,7 @@ public final class MolangScope {
     }
 
     public boolean contains(String name) {
+        name = canonicalName(name);
         String rootKey = rootKeyOf(name);
         MolangObject root = cache.get(rootKey);
         boolean local = root != null && descend(root, name, rootKey) != null;
@@ -423,6 +441,7 @@ public final class MolangScope {
      * 根键本层缺失才委托 parent（根级遮蔽语义与引入 struct 前的整键遮蔽一致）。
      */
     public MolangObject get(String name) {
+        name = canonicalName(name);
         String rootKey = rootKeyOf(name);
         MolangObject root = cache.get(rootKey);
         if (root == null) {
@@ -451,6 +470,7 @@ public final class MolangScope {
     }
 
     public MolangObject set(String name, FloatSupplier value) {
+        name = canonicalName(name);
         MolangFloatSupplierObject object = new MolangFloatSupplierObject(value);
         putTracked(name, object);
         return object;
@@ -461,6 +481,7 @@ public final class MolangScope {
      * 按 BE 隐式 struct 语义重建，覆盖既有标量）；整名赋值为 struct 时是引用共享。
      */
     public MolangObject set(String name, MolangObject object) {
+        name = canonicalName(name);
         String rootKey = rootKeyOf(name);
         if (rootKey.length() == name.length()) {
             putTracked(name, object);
@@ -490,6 +511,7 @@ public final class MolangScope {
     }
 
     public void remove(String name) {
+        name = canonicalName(name);
         String rootKey = rootKeyOf(name);
         if (rootKey.length() < name.length()) {
             // 成员路径：删叶成员；根 struct 保留（空 struct 是无害占位）

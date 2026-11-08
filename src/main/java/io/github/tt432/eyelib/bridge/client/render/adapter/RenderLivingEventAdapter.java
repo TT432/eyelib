@@ -9,10 +9,11 @@ import net.minecraft.client.renderer.entity.LivingEntityRenderer;
 import net.minecraft.world.entity.LivingEntity;
 import io.github.tt432.eyelib.mixin.LivingEntityRendererAccessor;
 //?} else {
+import io.github.tt432.eyelib.mixin.LivingEntityRendererAccessor;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.EntityModel;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.client.renderer.entity.LivingEntityRenderer;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
 import org.jspecify.annotations.Nullable;
@@ -59,6 +60,9 @@ public final class RenderLivingEventAdapter {
                                             event.getPackedLight(), event.getPartialTick(), overlay);
         if (RenderPorts.get().renderEntityPort().render(params)) {
             event.setCanceled(true);
+            // 1.20.1 的原版栓绳在 super.render 返回后绘制，取消事件不会跳过它；
+            // 标记本实体由 eyelib 接管，供 MobRendererLeashMixin 抑制原版绳。
+            LeashSuppression.markHandled(entity);
         }
     }
     //?} else {
@@ -76,8 +80,15 @@ public final class RenderLivingEventAdapter {
         // multiBufferSource 仅用于手持物等附属渲染。
         MultiBufferSource bufferSource = Minecraft.getInstance().renderBuffers().bufferSource();
 
+        // 与原版 LivingEntityRenderer.submit 使用同一 overlay：受伤/死亡红闪由 hasRedOverlay 决定，
+        // 白闪进度取渲染器覆写值（creeper 膨胀等）。原先固定 NO_OVERLAY 会让所有萌化生物
+        // 丢失受伤红闪。
+        var renderer = event.getRenderer();
+        int overlay = LivingEntityRenderer.getOverlayCoords(state,
+                ((LivingEntityRendererAccessor) renderer).callGetWhiteOverlayProgress(state));
+
         var params = new RenderEntityParams(entity, bufferSource, RenderSink.of(event.getSubmitNodeCollector()), event.getPoseStack(),
-                                            state.lightCoords, event.getPartialTick(), OverlayTexture.NO_OVERLAY);
+                                            state.lightCoords, event.getPartialTick(), overlay);
         boolean rendered = RenderPorts.get().renderEntityPort().render(params);
 
         if (rendered) event.setCanceled(true);

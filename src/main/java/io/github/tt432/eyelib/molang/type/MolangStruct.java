@@ -17,16 +17,30 @@ import java.util.Map;
 public final class MolangStruct implements MolangObject {
     private final Map<String, MolangObject> members = new LinkedHashMap<>();
 
+    /**
+     * Bedrock Molang 标识符大小写不敏感（官方 syntax 文档「Case Sensitivity」）；
+     * struct 成员与变量名同一规则。无大写字母时零分配。
+     */
+    private static String canonicalMember(String member) {
+        for (int i = 0, len = member.length(); i < len; i++) {
+            char c = member.charAt(i);
+            if (c >= 'A' && c <= 'Z') {
+                return member.toLowerCase(java.util.Locale.ROOT);
+            }
+        }
+        return member;
+    }
+
     public @Nullable MolangObject get(String member) {
-        return members.get(member);
+        return members.get(canonicalMember(member));
     }
 
     public void set(String member, MolangObject value) {
-        members.put(member, value);
+        members.put(canonicalMember(member), value);
     }
 
     public void remove(String member) {
-        members.remove(member);
+        members.remove(canonicalMember(member));
     }
 
     /** 成员只读视图（插入序），供调试展示与格式化。 */

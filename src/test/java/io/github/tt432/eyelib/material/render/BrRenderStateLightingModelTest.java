@@ -1,5 +1,6 @@
 package io.github.tt432.eyelib.material.render;
 
+import io.github.tt432.eyelib.bridge.material.adapter.RenderTypeCapabilities;
 import io.github.tt432.eyelib.material.material.ResolvedBrMaterial;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -60,14 +61,16 @@ class BrRenderStateLightingModelTest {
     @Test
     @DisplayName("DIRECTIONAL 默认状态可走 vanilla RenderType（无需 custom）")
     void directionalStateDoesNotForceCustomRenderType() {
-        assertFalse(directionalCutout().needsCustomRenderType());
+        assertFalse(RenderTypeCapabilities.needsCustomRenderType(directionalCutout()));
     }
 
     @Test
     @DisplayName("NONE/AMBIENT 光照强制 custom RenderType（vanilla 无无方向光实体 shader）")
     void nonDirectionalLightingForcesCustomRenderType() {
-        assertTrue(directionalCutout().withLighting(BrRenderState.LightingModel.NONE).needsCustomRenderType());
-        assertTrue(directionalCutout().withLighting(BrRenderState.LightingModel.AMBIENT).needsCustomRenderType());
+        assertTrue(RenderTypeCapabilities.needsCustomRenderType(
+                directionalCutout().withLighting(BrRenderState.LightingModel.NONE)));
+        assertTrue(RenderTypeCapabilities.needsCustomRenderType(
+                directionalCutout().withLighting(BrRenderState.LightingModel.AMBIENT)));
     }
 
     @Test

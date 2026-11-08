@@ -81,21 +81,25 @@ final class ClientEntitySetup {
         if (clientEntity == null) return;
 
         LivingEntity livingEntity = data.applyEntityPose() && data.entity() instanceof LivingEntity living ? living : null;
-        Direction bedOrientation = livingEntity != null ? livingEntity.getBedOrientation() : null;
-        boolean sleeping = livingEntity != null && livingEntity.hasPose(Pose.SLEEPING) && bedOrientation != null;
 
-        if (sleeping) {
-            // vanilla 在 RenderLivingEvent.Pre 之前只施加了实体位置平移（无旋转/缩放），
-            // 因此这里必须自行复刻 vanilla LivingEntityRenderer 的睡眠变换：
-            //   translate(-step * (eyeHeight(STANDING) - 0.1))  → 把模型根（脚）移到床脚一侧
-            //   mulPose(YP(-bedOrientation.toYRot() + 180))    → 床轴朝向（180 为模型面向 +Z 与 vanilla -Z 的差）
-            // 平躺本身由 get_in_bed 剪辑负责，这里只摆正床轴与落点。
-            // 顺序必须与 vanilla 一致：translate 在 scripts.scale / 幼体缩放之前施加，
-            // 否则平移量会被缩放系数乘小（村民 scale=0.8 时少移 0.3 格，幼体 0.5 时少移 0.76 格）。
-            float bedOffset = livingEntity.getEyeHeight(Pose.STANDING) - 0.1F;
-            poseStack.translate(-bedOrientation.getStepX() * bedOffset,
-                                0F,
-                                -bedOrientation.getStepZ() * bedOffset);
+        // vanilla 在 RenderLivingEvent.Pre 之前只施加了实体位置平移（无旋转/缩放），
+        // 因此这里必须自行复刻 vanilla LivingEntityRenderer 的睡眠变换：
+        //   translate(-step * (eyeHeight(STANDING) - 0.1))  → 把模型根（脚）移到床脚一侧
+        //   mulPose(YP(-bedOrientation.toYRot() + 180))    → 床轴朝向（180 为模型面向 +Z 与 vanilla -Z 的差）
+        // 平躺本身由 get_in_bed 剪辑负责，这里只摆正床轴与落点。
+        // 顺序必须与 vanilla 一致：translate 在 scripts.scale / 幼体缩放之前施加，
+        // 否则平移量会被缩放系数乘小（村民 scale=0.8 时少移 0.3 格，幼体 0.5 时少移 0.76 格）。
+        // 判据取「非空的床朝向」而不是 boolean：translate 与 mulPose 两处都要窄化，而 boolean 蕴含
+        // 非空这件事 NullAway 追踪不到。
+        Direction sleepingBed = null;
+        if (livingEntity != null && livingEntity.hasPose(Pose.SLEEPING)) {
+            sleepingBed = livingEntity.getBedOrientation();
+            if (sleepingBed != null) {
+                float bedOffset = livingEntity.getEyeHeight(Pose.STANDING) - 0.1F;
+                poseStack.translate(-sleepingBed.getStepX() * bedOffset,
+                                    0F,
+                                    -sleepingBed.getStepZ() * bedOffset);
+            }
         }
 
         clientEntity.scripts().ifPresent(s -> {
@@ -111,8 +115,8 @@ final class ClientEntitySetup {
                 poseStack.scale(0.5F, 0.5F, 0.5F);
             }
 
-            if (sleeping) {
-                poseStack.mulPose(Axis.YP.rotationDegrees(-bedOrientation.toYRot() + 180F));
+            if (sleepingBed != null) {
+                poseStack.mulPose(Axis.YP.rotationDegrees(-sleepingBed.toYRot() + 180F));
             } else {
                 float yBodyRot = Mth.rotLerp(data.partialTick(), livingEntity.yBodyRotO, livingEntity.yBodyRot);
                 poseStack.mulPose(Axis.YP.rotationDegrees(-yBodyRot));
@@ -121,7 +125,7 @@ final class ClientEntitySetup {
     }
 
     static void setupExtraMolang(Entity entity, MolangScope scope, float partialTick) {
-        RenderPorts.get().renderSystemPort().setupLlamaDecor(entity, scope);
+        EngineEntityVariables.bind(entity, scope);
 
         scope.set("variable.partial_tick", partialTick);
         if (entity instanceof LivingEntity livingEntity)

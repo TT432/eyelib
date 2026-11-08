@@ -32,8 +32,10 @@
   "client": [
     //? if legacy {
     "client.TextureColorGameRendererMixin",
+    "client.MobRendererLeashMixin",
     //?}
     "client.TextureManagerMixin",
+    "LivingEntityRendererAccessor",
     //? if !legacy && <26.1 {
     "PoseStackPoseAccessor",
     //?}
@@ -41,7 +43,6 @@
     "PoseStackAccessor",
     "client.PackEntryMixin",
     "client.AbstractSelectionListAccessor",
-    "LivingEntityRendererAccessor",
     "HumanoidModelMixin",
     "client.ItemRendererMixin",
     "client.ItemInHandRendererMixin",

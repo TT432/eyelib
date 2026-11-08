@@ -50,6 +50,37 @@ public final class ModelPoseTransforms {
         void apply(Vector3fc rotation, Vector3fc scale);
     }
 
+    /**
+     * 解析单个骨骼的累积位姿：模型根位姿 → 骨骼链（与模型渲染同一条变换链，含模型 Y 翻转）。
+     * 挂载物（手持物/盔甲）用它取得「基岩版骨骼帧」，骨骼不存在时返回空。
+     */
+    public static Optional<Matrix4f> resolveBonePose(
+            Model model,
+            ModelRuntimeData data,
+            int boneId,
+            Matrix4fc rootPose
+    ) {
+        Model.Bone bone = model.allBones().get(boneId);
+        if (bone == null) {
+            return Optional.empty();
+        }
+
+        // 由叶到根收集链，再正向施加；parent 缺省/自引用视为根
+        List<Model.Bone> chain = new java.util.ArrayList<>(6);
+        Model.Bone current = bone;
+        while (current != null) {
+            chain.add(current);
+            int parentId = current.parent();
+            current = parentId < 0 || parentId == current.id() ? null : model.allBones().get(parentId);
+        }
+
+        Matrix4f pose = new Matrix4f(rootPose).rotateY(MODEL_Y_ROTATION);
+        for (int i = chain.size() - 1; i >= 0; i--) {
+            applyBone(pose, chain.get(i), data);
+        }
+        return Optional.of(pose);
+    }
+
     public static Optional<Matrix4f> resolveLocatorPose(
             Model model,
             ModelRuntimeData data,

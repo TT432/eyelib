@@ -1,10 +1,16 @@
 package io.github.tt432.eyelib.bridge.client.render.adapter;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import io.github.tt432.eyelib.molang.EngineEntityVariable;
 import io.github.tt432.eyelib.bridge.client.adapter.EntityRenderPorts;
 import io.github.tt432.eyelib.bridge.client.render.RenderSink;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
+//? if >=26.1 {
+import net.minecraft.client.renderer.block.BlockModelRenderState;
+import net.minecraft.client.renderer.block.model.BlockDisplayContext;
+//?}
+import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.registries.BuiltInRegistries;
 //? if <1.20.6 {
 import net.minecraft.resources.ResourceLocation;
@@ -12,6 +18,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.monster.EnderMan;
 //? if <26.1 {
 import net.minecraft.world.entity.animal.Sheep;
 import net.minecraft.world.entity.animal.horse.AbstractHorse;
@@ -26,7 +33,10 @@ import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.WoolCarpetBlock;
+import net.minecraft.world.level.block.state.BlockState;
 import org.jspecify.annotations.Nullable;
+
+import java.util.List;
 //? if <1.20.6 {
 import net.minecraftforge.registries.ForgeRegistries;
 //?}
@@ -52,7 +62,15 @@ public final class EntityRenderSystem implements EntityRenderPorts.RenderSystemP
     }
 
     @Override
-    public int getLlamaDecorColorIndex(Llama llama) {
+    public float engineVariable(Entity entity, EngineEntityVariable variable) {
+        if (variable == EngineEntityVariable.DECOR_TEXTURE_INDEX && entity instanceof Llama llama) {
+            return llamaDecorColorIndex(llama);
+        }
+        return Float.NaN;
+    }
+
+    /** 羊驼地毯颜色 → Bedrock {@code variable.DecorTextureIndex}（0 = 无装饰）。 */
+    private static int llamaDecorColorIndex(Llama llama) {
         //? if <1.20.6 {
         if (llama.inventory.getItem(AbstractHorse.INV_SLOT_ARMOR)
         //?} else {
@@ -66,19 +84,26 @@ public final class EntityRenderSystem implements EntityRenderPorts.RenderSystemP
     }
 
     @Override
-    public void setupLlamaDecor(Entity entity, io.github.tt432.eyelib.molang.MolangScope scope) {
-        if (entity instanceof Llama llama) {
-            scope.set("variable.decortextureindex", getLlamaDecorColorIndex(llama));
-        }
+    public @Nullable BlockState getCarriedBlockState(Entity entity) {
+        return entity instanceof EnderMan enderman ? enderman.getCarriedBlock() : null;
     }
 
     @Override
-    public void pushPoseRaw(PoseStack poseStack, PoseStack.Pose pose) {
-        //? if <1.20.6 {
-        poseStack.poseStack.addLast(pose);
-        //?} elif <26.1 {
-        ((io.github.tt432.eyelib.mixin.PoseStackAccessor) poseStack).eyelib$getPoseStackDeque().addLast(pose);
+    public void renderBlockState(BlockState state, PoseStack poseStack, RenderSink sink, int light) {
+        //? if <26.1 {
+        Minecraft.getInstance().getBlockRenderer()
+                .renderSingleBlock(state, poseStack, sink.multiBufferSource(), light, OverlayTexture.NO_OVERLAY);
+        //?} else {
+        BlockModelRenderState renderState = new BlockModelRenderState();
+        Minecraft.getInstance().getBlockModelResolver()
+                .update(renderState, state, BlockDisplayContext.create());
+        renderState.submit(poseStack, sink.submitNodeCollector(), light, OverlayTexture.NO_OVERLAY, 0);
         //?}
+    }
+
+    @Override
+    public List<EntityRenderPorts.RenderSystemPort.ArmorRenderPiece> armorPieces(LivingEntity entity, EquipmentSlot slot) {
+        return ArmorRenderAdapter.pieces(entity, slot);
     }
 
     @Override

@@ -35,36 +35,18 @@ public record BrRenderState(
         return transparency == Transparency.NONE && writeMask.writeDepth();
     }
 
-    public boolean needsCustomRenderType() {
-        return lighting != LightingModel.DIRECTIONAL
-                || blend.filter(value -> !value.isDefaultTranslucent()).isPresent()
-                || depth.func().filter(func -> func != DepthFunc.LessEqual).isPresent()
-                || !depth.test()
-                || !writeMask().writeColor()
-                || !writeMask().writeDepth()
-                || stencil.isPresent()
-                //? if >=26.1 {
-                // 26.1.2 vanilla RenderTypes 缺 entityTranslucentCull(plain)/无剔除 entitySolid，
-                // 这些 cull 组合 vanilla 路径无法表达，须走 custom buildPipeline（.withCull 正确处理）。
-                // ALPHA_TEST 的 entityCutout/entityCutoutCull 两值 vanilla 都有，无需走 custom。
-                || (transparency == Transparency.BLEND && cull)
-                || (transparency == Transparency.NONE && !cull)
-                //?}
-                ;
-    }
-
     /**
      * 光照模型（ADR-0033 / ADR-0040）：
-     * DIRECTIONAL = lightmap + 法线方向光；
-     * LIGHTMAP_ONLY = 仅 lightmap（无方向项，26.1 实体默认）；
+     * DIRECTIONAL = 走宿主 vanilla 实体着色器通道（lightmap + 该通道自带的光照项）；
+     * LIGHTMAP_ONLY = 仅 lightmap（无方向项）；
      * AMBIENT = 仅 lightmap tint（Bedrock lit 粒子语义）；
      * NONE = 不受光照（Bedrock unlit 粒子；实现上与 AMBIENT 同 shader，差异由顶点 UV2 承载）。
      *
-     * <p>LIGHTMAP_ONLY 与 DIRECTIONAL 渲染路径不同：26.1 起 vanilla {@code entity.vsh} 默认执行
+     * <p>domain 恒产出 DIRECTIONAL（版本无关）；26.1 起该通道默认执行
      * {@code minecraft_mix_light}（面亮度 = 纹理 × [0.4, 1.0]，由<b>法线</b>决定），而 Bedrock 实体纹理
-     * 已烘焙面明暗，叠加后会得到 0.4 的暗面；骨骼动画改变法线又让整面亮度在 0.4↔1.0 间跳变（"阴影闪烁"）。
-     * LIGHTMAP_ONLY 走 {@code NO_CARDINAL_LIGHTING} 分支（{@code vertexColor = Color}），观感与
-     * 1.20.1/1.21.1（vanilla entity shader 无方向光）一致。详见 ADR-0040。
+     * 已烘焙面明暗，叠加后会得到 0.4 的暗面、且骨骼动画改变法线让整面亮度跳变。把 DIRECTIONAL
+     * 翻译成 LIGHTMAP_ONLY（从而走 {@code NO_CARDINAL_LIGHTING}，{@code vertexColor = Color}）的职责
+     * 在 ACL：{@code bridge.material.adapter.RenderTypeCapabilities.channelState}。详见 ADR-0040。
      */
     public enum LightingModel {
         NONE,

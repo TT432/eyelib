@@ -53,7 +53,8 @@ public interface RenderTypeResolver {
             case "minecraft:particles_alpha" -> new EntityRenderTypeData(id, false,
                     tex -> PortRenderPass.of(PortRenderPass.Transparency.ALPHA_TEST, true));
             case "minecraft:particles_add" -> new EntityRenderTypeData(id, false,
-                    texture -> BrRenderTypeFactory.create(texture, BrRenderStateFactory.from(particleAdd())));
+                    texture -> BrRenderTypeFactory.create(texture, BrRenderStateFactory.from(particleAdd()),
+                            BrRenderTypeFactory.PassKind.PARTICLE));
             default -> {
                 EntityRenderTypeData vanilla = resolveVanilla(id);
                 if (vanilla != null) {
@@ -115,7 +116,8 @@ public interface RenderTypeResolver {
     public static PortRenderPass resolve(PortResourceLocation texture, BrMaterialEntry entry, Map<String, BrMaterialEntry> materials) {
         try {
             ResolvedBrMaterial material = BrMaterialResolver.resolve(entry, materials);
-            return BrRenderTypeFactory.create(texture, BrRenderStateFactory.from(material));
+            return BrRenderTypeFactory.create(texture, BrRenderStateFactory.from(material),
+                    BrRenderTypeFactory.PassKind.ENTITY);
         } catch (IllegalStateException e) {
             // 材质继承链存在循环引用，fallback 到仅检查自身状态
             if (entry.hasBlending(Map.of())) return PortRenderPass.of(PortRenderPass.Transparency.TRANSLUCENT, false);
@@ -132,7 +134,8 @@ public interface RenderTypeResolver {
                 return cached;
             }
         }
-        PortRenderPass created = BrRenderTypeFactory.create(texture, BrRenderStateFactory.from(material));
+        PortRenderPass created = BrRenderTypeFactory.create(texture, BrRenderStateFactory.from(material),
+                BrRenderTypeFactory.PassKind.ENTITY);
         RESOLVED_PASS_CACHE.computeIfAbsent(material, m -> new ConcurrentHashMap<>()).put(texture, created);
         return created;
     }
@@ -190,16 +193,20 @@ public interface RenderTypeResolver {
         return switch (id.path()) {
             case "particles_opaque", "particles_base" -> new EntityRenderTypeData(id, true,
                     tex -> BrRenderTypeFactory.create(tex, particleState(
-                            BrRenderState.SurfaceClass.OPAQUE, BrRenderState.Transparency.NONE, true, lighting)));
+                            BrRenderState.SurfaceClass.OPAQUE, BrRenderState.Transparency.NONE, true, lighting),
+                            BrRenderTypeFactory.PassKind.PARTICLE));
             case "particles_alpha" -> new EntityRenderTypeData(id, false,
                     tex -> BrRenderTypeFactory.create(tex, particleState(
-                            BrRenderState.SurfaceClass.CUTOUT, BrRenderState.Transparency.ALPHA_TEST, false, lighting)));
+                            BrRenderState.SurfaceClass.CUTOUT, BrRenderState.Transparency.ALPHA_TEST, false, lighting),
+                            BrRenderTypeFactory.PassKind.PARTICLE));
             case "particles_blend" -> new EntityRenderTypeData(id, false,
                     tex -> BrRenderTypeFactory.create(tex, particleState(
-                            BrRenderState.SurfaceClass.TRANSLUCENT, BrRenderState.Transparency.BLEND, false, lighting)));
+                            BrRenderState.SurfaceClass.TRANSLUCENT, BrRenderState.Transparency.BLEND, false, lighting),
+                            BrRenderTypeFactory.PassKind.PARTICLE));
             case "particles_add" -> new EntityRenderTypeData(id, false,
                     tex -> BrRenderTypeFactory.create(tex,
-                            BrRenderStateFactory.from(particleAdd()).withLighting(lighting)));
+                            BrRenderStateFactory.from(particleAdd()).withLighting(lighting),
+                            BrRenderTypeFactory.PassKind.PARTICLE));
             // 非内建粒子材质：按实体材质语义解析（方向光），与原 fallback 行为一致
             default -> resolve(id);
         };

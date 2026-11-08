@@ -1,6 +1,7 @@
 package io.github.tt432.eyelib.material.render;
 
 import io.github.tt432.eyelib.bridge.material.adapter.BrRenderTypeFactory;
+import io.github.tt432.eyelib.bridge.material.adapter.RenderTypeCapabilities;
 
 import io.github.tt432.eyelib.material.gl.BlendFactor;
 import io.github.tt432.eyelib.material.gl.GLStates;
@@ -284,10 +285,10 @@ class BrRenderStateSpecTest {
 
         boolean isModern = Boolean.parseBoolean(System.getProperty("eyelib.isModern", "false"));
         if (isModern) {
-            assertTrue(state.needsCustomRenderType(),
+            assertTrue(RenderTypeCapabilities.needsCustomRenderType(state),
                        "26.1+ entity_nocull 仅改 cull → needsCustomRenderType=true（vanilla 缺 nocull Solid RenderType）");
         } else {
-            assertFalse(state.needsCustomRenderType(),
+            assertFalse(RenderTypeCapabilities.needsCustomRenderType(state),
                         "entity_nocull 仅改 cull → needsCustomRenderType=false（cull 改变不触发 custom RT）");
         }
     }
@@ -309,7 +310,7 @@ class BrRenderStateSpecTest {
                 ),
                 "entity_beam_additive:entity_alphablend");
 
-        assertTrue(state.needsCustomRenderType(),
+        assertTrue(RenderTypeCapabilities.needsCustomRenderType(state),
                    "entity_beam_additive blendDst=One（非默认 blend）→ needsCustomRenderType=true");
     }
 
@@ -333,7 +334,7 @@ class BrRenderStateSpecTest {
         BrRenderState state = BrRenderStateFactory.from(material);
 
         assertTrue(state.customShader());
-        assertFalse(state.needsCustomRenderType(),
+        assertFalse(RenderTypeCapabilities.needsCustomRenderType(state),
                     "仅存在 Bedrock shader 字段时仍应复用普通实体 RenderType");
     }
 
@@ -356,7 +357,7 @@ class BrRenderStateSpecTest {
         assertTrue(state.blend().isPresent());
         assertEquals(BlendFactor.One, state.blend().orElseThrow().blendSrc());
         assertEquals(BlendFactor.One, state.blend().orElseThrow().blendDst());
-        assertTrue(state.needsCustomRenderType(),
+        assertTrue(RenderTypeCapabilities.needsCustomRenderType(state),
                    "charged_creeper 的 One/One 混合必须保留为自定义 RenderType");
     }
 

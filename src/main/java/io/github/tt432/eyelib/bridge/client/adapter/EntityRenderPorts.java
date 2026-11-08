@@ -2,8 +2,11 @@ package io.github.tt432.eyelib.bridge.client.adapter;
 
 import io.github.tt432.eyelib.bridge.client.RenderEntityParams;
 import io.github.tt432.eyelib.bridge.client.render.RenderSink;
+import io.github.tt432.eyelib.molang.EngineEntityVariable;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import io.github.tt432.eyelib.util.PortResourceLocation;
 import net.minecraft.client.renderer.MultiBufferSource;
 //? if <26.1 {
 import net.minecraft.client.renderer.LightTexture;
@@ -11,13 +14,9 @@ import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
-//? if <26.1 {
-import net.minecraft.world.entity.animal.horse.Llama;
-//?} else {
-import net.minecraft.world.entity.animal.equine.Llama;
-//?}
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.state.BlockState;
 import org.jspecify.annotations.Nullable;
 
 import java.util.List;
@@ -50,12 +49,54 @@ public final class EntityRenderPorts {
     public interface RenderSystemPort {
         String getEntityTypeId(Entity entity);
 
-        int getLlamaDecorColorIndex(Llama llama);
+        /**
+         * 解析宿主提供的 Bedrock 引擎变量（见 {@link EngineEntityVariable}）。
+         *
+         * @return 当前实体的变量值；该变量不适用于此实体时返回 {@link Float#NaN}
+         *         （application 层据此决定是否绑定，未绑定 = 资源包读写自己的值）。
+         */
+        float engineVariable(Entity entity, EngineEntityVariable variable);
 
-        void pushPoseRaw(PoseStack poseStack, PoseStack.Pose pose);
+        /**
+         * 该槽位当前要绘制的盔甲部件。BE 语义：盔甲几何按名称绑定到持有者的同名 body-part 骨骼，
+         * 因此每个部件自带目标部件名（vanilla 命名：{@code head}/{@code body}/{@code right_arm}/…），
+         * 骨骼解析与位姿由应用层完成。空列表 = 无盔甲 / 物品不提供人形盔甲几何。
+         */
+        List<ArmorRenderPiece> armorPieces(LivingEntity entity, EquipmentSlot slot);
+
+        /** 单个盔甲部件：部件名 + 纹理 + 顶点色 + 几何。 */
+        interface ArmorRenderPiece {
+            /** vanilla 盔甲部件名（小写，如 {@code head}、{@code right_arm}）。 */
+            String part();
+
+            PortResourceLocation texture();
+
+            /** 顶点色（ARGB），{@code 0xFFFFFFFF} = 不染色。 */
+            int tint();
+
+            /**
+             * 在给定 pose 下写出部件顶点。pose 必须已是「持有者骨骼帧 × vanilla 模型空间→持有者模型空间」
+             * 的结果；部件自身的 {@code PartPose} 偏移由实现抵消。
+             */
+            void emit(PoseStack.Pose pose, VertexConsumer consumer, int light, int overlay);
+        }
 
         void renderItemDirect(LivingEntity le, ItemStack item, ItemDisplayContext context,
                               boolean left, PoseStack poseStack, RenderSink sink, int light);
+
+        /**
+         * 实体当前搬运的方块状态（Bedrock {@code query.is_carrying_block} 的宿主来源，如末影人）。
+         * 无搬运方块时返回 {@code null}。
+         */
+        @Nullable
+        BlockState getCarriedBlockState(Entity entity);
+
+        /**
+         * 用宿主游戏的方块渲染器绘制一个方块状态。
+         * 与实体模型使用同一 {@link PoseStack}，方块模型/贴图/渲染类型全部由宿主决定，
+         * application 层不硬编码任何方块 id。
+         */
+        void renderBlockState(BlockState state, PoseStack poseStack, RenderSink sink, int light);
 
         /**
          * 将 MC {@link EquipmentSlot} 翻译为 Bedrock {@code context.item_slot} 字符串。
@@ -72,8 +113,6 @@ public final class EntityRenderPorts {
         float @Nullable [] getEntityTintColor(@Nullable Entity entity);
 
         PoseStack createPoseStackFromMatrix(org.joml.Matrix4f matrix);
-
-        void setupLlamaDecor(Entity entity, io.github.tt432.eyelib.molang.MolangScope scope);
     }
 }
 
