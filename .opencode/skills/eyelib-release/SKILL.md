@@ -256,3 +256,35 @@ Portal 要求每个文件带 `.md5` 与 `.sha1`；mavenLocal 发布**不生成**
     快照 `work/release_21132/cf-files-page.txt`。
   - 本次脚本：`work/release_21132/{cf_upload.py, cf_wait_verify.py, cf_changelog.md, cf_ids.json}`。
 - 联动：dokimobs 0.3.11 依赖本版本（`eyelib_version=21.1.32`）。
+
+## 发布记录（21.1.33，2026-11-08）
+
+内容：装备挂载抽象（ADR-0043）——手持物按 item 骨骼（`rightitem` / `leftitem`）pivot 锚定，删除
+`Rx(-90)·Ry(180)` 之外的固定偏移；新增盔甲渲染（vanilla 人形盔甲部件按 body-part 骨骼名绑定，
+四槽 + 染色 tint）；挂载物改到模型几何提交之前每实体渲染一次（修复 26.1 完全不显示与多渲染组件
+重复绘制）。三个节点的行为变化均经实机验证（原版可持工具僵尸 + 铁剑 + 全套铁甲）。
+
+- **本次只发 CurseForge**（用户指定），未发 Maven Central；mavenLocal 三节点供 dokimobs 0.3.12 构建。
+- 前置：`clientsmoke` bump 21.1.33（提交 `e9f7fb8`，**未推送远端**——本次不建 PR 也不发 CI，
+  主仓库 gitlink 指向该本地提交，推主仓库前必须先 `git -C clientsmoke push origin e9f7fb8:main`）。
+  `~/.m2/.../clientsmoke/21.1.33+<node>/` 各 4 文件（无 javadoc，与 21.1.32 一致）。
+- 构建：`clean assemble --no-daemon --console=plain --no-build-cache`，3m34s / 44 tasks executed，
+  三节点 `compileJava` 均真实执行（无 `FROM-CACHE`），`BUILD SUCCESSFUL`（日志
+  `work/release_21133_build.log`）。
+- `publishMavenJavaPublicationToMavenLocal` 三节点各 10 文件；m2 jar 与 `versions/<node>/build/libs`
+  的 sha256 逐一相符（`84f557bc…` / `f5cbaf3b…` / `8fac0304…`；
+  11 128 986 / 10 424 519 / 10 337 681 B）。
+- CurseForge（displayName 去扩展名）：
+
+  | 节点 | fileId |
+  | --- | --- |
+  | `21.1.33+1.20.1-forge` | 9506218 |
+  | `21.1.33+1.21.1-neoforge` | 9506220 |
+  | `21.1.33+26.1.2-neoforge` | 9506221 |
+
+  - 15:19:27 上传完成（Python/requests 直连成功，未触发 Cloudflare，三节点串行 23 s）→
+    15:19:42 / 15:23:46 / 15:28:03 轮询仍 `0/3` → 15:32:11 `files/all` 三文件全部可见
+    （约 12.7 分钟），各自 `Latest release`、`R`，Forge/NeoForge 与 game version 正确
+    （快照 `work/release_21133/cf-files-page.txt`）。
+  - 本次脚本：`work/release_21133/{cf_upload.py, cf_wait_verify.py, cf_changelog.md, cf_ids.json}`。
+- 联动：dokimobs 0.3.12 依赖本版本（`eyelib_version=21.1.33`；CF 9506313 / 9506315 / 9506318）。

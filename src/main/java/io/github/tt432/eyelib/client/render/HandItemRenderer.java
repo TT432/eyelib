@@ -2,21 +2,37 @@ package io.github.tt432.eyelib.client.render;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
-import io.github.tt432.eyelib.bridge.client.render.RenderSink;
+import io.github.tt432.eyelib.animation.ModelPoseTransforms;
+import io.github.tt432.eyelib.animation.ModelRuntimeData;
 import io.github.tt432.eyelib.bridge.client.render.adapter.RenderPorts;
 import io.github.tt432.eyelib.model.GlobalBoneIdHandler;
-import io.github.tt432.eyelib.model.ModelVisitContext;
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
-import net.minecraft.client.renderer.MultiBufferSource;
+import io.github.tt432.eyelib.model.Model;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
+import org.joml.Matrix4f;
 
 /**
- * 手持物（主手/副手物品与 attachable）渲染簇，从 {@link EntityRenderOrchestrator} 提取。
+ * 手持物（主手/副手物品与 attachable）渲染簇。
+ * <p>
+ * 挂载点按基岩版语义取自 {@code q.item_slot_to_bone_name(context.item_slot)} 对应的
+ * <b>item 骨骼</b>（{@code rightitem}/{@code leftitem}，骨骼名大小写不敏感）。该骨骼是模型作者
+ * 在几何里给出的挂点（基岩版 humanoid 几何的 {@code rightItem} 位于手臂链末端）。骨骼缺失时不绘制：
+ * 基岩版没有「找不到挂点就退回模型原点」的可用语义，任何兜底位置都是错位。
+ * <p>
+ * 骨骼帧由 {@link ModelPoseTransforms#resolveBonePose} 从模型根位姿累积得到；在其上
+ * {@code translate(pivot)} 的结果正是 pivot 点在当前帧中的位置（矩阵平移 + 旋转后的 pivot），
+ * 即基岩版 attachable 的挂载原点。之后的方向由两类挂载物各自决定：
+ * <ul>
+ *   <li><b>attachable 模型</b>：几何与焊接动画都写在「持有者模型空间里的 item 骨骼帧」中，
+ *       直接渲染，不追加旋转或平移；</li>
+ *   <li><b>普通物品</b>（无 attachable 定义）：物品模型处在 Java 物品空间，需要 {@code Rx(-90)}
+ *       才呈「握在手里」的方向。该角度可由两个模型空间的关系推导：基岩版模型空间相对 Java 实体
+ *       模型空间是绕 Z 轴 180°（x、y 取反），把它代入 vanilla {@code ItemInHandLayer} 的
+ *       {@code Rx(-90)·Ry(180)} 后 {@code Ry(180)} 被抵消，只剩 {@code Rx(-90)}。</li>
+ * </ul>
  *
  * @author TT432
  */
@@ -27,67 +43,50 @@ final class HandItemRenderer {
     private HandItemRenderer() {
     }
 
-    static boolean renderItemInHand(ModelVisitContext context, SimpleRenderAction<?> action,
-                                    LivingEntity renderTarget, int light) {
-        PoseStack poseStack = new PoseStack();
-        var locators = context
-                .<Int2ObjectMap<PoseStack.Pose>>orCreate("bones", Int2ObjectOpenHashMap::new);
-        // 收集的骨骼姿态为「绕 pivot 的动画变换」，不包含 pivot 平移（applyBoneTranslate 中 +pivot/-pivot 抵消）。
-        // attachable 需要附着到骨骼原点，必须补回骨骼 pivot 平移。
-        var bindBones = action.renderData().bindBones();
-        var offHandBone = bindBones.get(leftitem);
-        var mainHandBone = bindBones.get(rightitem);
-        var offHandPose = locators.get(leftitem);
-        if (offHandPose != null && offHandBone != null) {
-            RenderPorts.get().renderSystemPort().pushPoseRaw(poseStack, offHandPose);
-            var pivot = offHandBone.pivot();
-            poseStack.translate(pivot.x(), pivot.y(), pivot.z());
-            ItemStack itemInHand = renderTarget.getItemInHand(InteractionHand.OFF_HAND);
-            renderHandItemOrAttachable(action.multiBufferSource(), action.sink(), renderTarget, itemInHand,
-                    ItemDisplayContext.THIRD_PERSON_LEFT_HAND, light, poseStack, true, InteractionHand.OFF_HAND);
-        }
-
-        var mainHandPose = locators.get(rightitem);
-        if (mainHandPose != null && mainHandBone != null) {
-            RenderPorts.get().renderSystemPort().pushPoseRaw(poseStack, mainHandPose);
-            var pivot = mainHandBone.pivot();
-            poseStack.translate(pivot.x(), pivot.y(), pivot.z());
-            ItemStack itemInHand = renderTarget.getItemInHand(InteractionHand.MAIN_HAND);
-            renderHandItemOrAttachable(action.multiBufferSource(), action.sink(), renderTarget, itemInHand,
-                    ItemDisplayContext.THIRD_PERSON_RIGHT_HAND, light, poseStack, false, InteractionHand.MAIN_HAND);
-        }
-
-        return true;
+    /**
+     * 每实体每帧渲染一次双手，必须在模型几何提交之前调用（26.1 的 submit 节点在几何 writer 内
+     * 已不能接收新内容）。
+     *
+     * @param modelRoot   模型根位姿（已含实体位姿；模型 Y 翻转由 {@link ModelPoseTransforms} 施加）
+     * @param tickedInfos 本帧动画采样结果
+     */
+    static void render(SimpleRenderAction<?> action, LivingEntity holder, Model model, ModelRuntimeData tickedInfos,
+                       Matrix4f modelRoot, int light) {
+        renderHand(action, holder, model, tickedInfos, modelRoot, InteractionHand.OFF_HAND, leftitem,
+                ItemDisplayContext.THIRD_PERSON_LEFT_HAND, light, true);
+        renderHand(action, holder, model, tickedInfos, modelRoot, InteractionHand.MAIN_HAND, rightitem,
+                ItemDisplayContext.THIRD_PERSON_RIGHT_HAND, light, false);
     }
 
-    private static void renderHandItemOrAttachable(MultiBufferSource bufferSource, RenderSink sink, LivingEntity le, ItemStack item,
-                                                   ItemDisplayContext context, int light, PoseStack poseStack,
-                                                   boolean left, InteractionHand hand) {
+    private static void renderHand(SimpleRenderAction<?> action, LivingEntity holder, Model model,
+                                   ModelRuntimeData tickedInfos, Matrix4f modelRoot, InteractionHand hand, int boneId,
+                                   ItemDisplayContext displayContext, int light, boolean left) {
+        ItemStack item = holder.getItemInHand(hand);
         if (item.isEmpty()) {
             return;
         }
-
-        var rd = AttachableItemRenderSetup.getOrPrepare(le, hand, false);
-        if (rd != null) {
-            poseStack.pushPose();
-            AttachableItemRenderSetup.renderAttachable(rd, poseStack, bufferSource, le, light, OverlayTexture.NO_OVERLAY);
-            poseStack.popPose();
+        Model.Bone bindBone = model.allBones().get(boneId);
+        if (bindBone == null) {
+            return;
+        }
+        var frame = ModelPoseTransforms.resolveBonePose(model, tickedInfos, boneId, modelRoot);
+        if (frame.isEmpty()) {
             return;
         }
 
-        renderHandItem(sink, le, item, context, light, poseStack, left);
-    }
+        PoseStack poseStack = RenderPorts.get().renderSystemPort().createPoseStackFromMatrix(frame.get());
+        var pivot = bindBone.pivot();
+        poseStack.translate(pivot.x(), pivot.y(), pivot.z());
 
-    private static void renderHandItem(RenderSink sink, LivingEntity le, ItemStack item,
-                                       ItemDisplayContext context, int light, PoseStack poseStack, boolean left) {
-        if (!item.isEmpty()) {
-            poseStack.pushPose();
-
-            poseStack.mulPose(Axis.XP.rotationDegrees(-90.0F));
-            poseStack.mulPose(Axis.YP.rotationDegrees(180.0F));
-            poseStack.translate(-0.25, 0.1, -1.15);
-            RenderPorts.get().renderSystemPort().renderItemDirect(le, item, context, left, poseStack, sink, light);
-            poseStack.popPose();
+        var attachable = AttachableItemRenderSetup.getOrPrepare(holder, hand, false);
+        if (attachable != null) {
+            AttachableItemRenderSetup.renderAttachable(attachable, poseStack, action.multiBufferSource(), holder, light,
+                    OverlayTexture.NO_OVERLAY);
+            return;
         }
+
+        poseStack.mulPose(Axis.XP.rotationDegrees(-90.0F));
+        RenderPorts.get().renderSystemPort()
+                .renderItemDirect(holder, item, displayContext, left, poseStack, action.sink(), light);
     }
 }

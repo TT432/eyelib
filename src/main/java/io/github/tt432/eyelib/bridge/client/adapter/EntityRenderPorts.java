@@ -5,6 +5,8 @@ import io.github.tt432.eyelib.bridge.client.render.RenderSink;
 import io.github.tt432.eyelib.molang.EngineEntityVariable;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import io.github.tt432.eyelib.util.PortResourceLocation;
 import net.minecraft.client.renderer.MultiBufferSource;
 //? if <26.1 {
 import net.minecraft.client.renderer.LightTexture;
@@ -55,7 +57,29 @@ public final class EntityRenderPorts {
          */
         float engineVariable(Entity entity, EngineEntityVariable variable);
 
-        void pushPoseRaw(PoseStack poseStack, PoseStack.Pose pose);
+        /**
+         * 该槽位当前要绘制的盔甲部件。BE 语义：盔甲几何按名称绑定到持有者的同名 body-part 骨骼，
+         * 因此每个部件自带目标部件名（vanilla 命名：{@code head}/{@code body}/{@code right_arm}/…），
+         * 骨骼解析与位姿由应用层完成。空列表 = 无盔甲 / 物品不提供人形盔甲几何。
+         */
+        List<ArmorRenderPiece> armorPieces(LivingEntity entity, EquipmentSlot slot);
+
+        /** 单个盔甲部件：部件名 + 纹理 + 顶点色 + 几何。 */
+        interface ArmorRenderPiece {
+            /** vanilla 盔甲部件名（小写，如 {@code head}、{@code right_arm}）。 */
+            String part();
+
+            PortResourceLocation texture();
+
+            /** 顶点色（ARGB），{@code 0xFFFFFFFF} = 不染色。 */
+            int tint();
+
+            /**
+             * 在给定 pose 下写出部件顶点。pose 必须已是「持有者骨骼帧 × vanilla 模型空间→持有者模型空间」
+             * 的结果；部件自身的 {@code PartPose} 偏移由实现抵消。
+             */
+            void emit(PoseStack.Pose pose, VertexConsumer consumer, int light, int overlay);
+        }
 
         void renderItemDirect(LivingEntity le, ItemStack item, ItemDisplayContext context,
                               boolean left, PoseStack poseStack, RenderSink sink, int light);

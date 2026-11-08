@@ -35,6 +35,8 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.WoolCarpetBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jspecify.annotations.Nullable;
+
+import java.util.List;
 //? if <1.20.6 {
 import net.minecraftforge.registries.ForgeRegistries;
 //?}
@@ -82,15 +84,6 @@ public final class EntityRenderSystem implements EntityRenderPorts.RenderSystemP
     }
 
     @Override
-    public void pushPoseRaw(PoseStack poseStack, PoseStack.Pose pose) {
-        //? if <1.20.6 {
-        poseStack.poseStack.addLast(pose);
-        //?} elif <26.1 {
-        ((io.github.tt432.eyelib.mixin.PoseStackAccessor) poseStack).eyelib$getPoseStackDeque().addLast(pose);
-        //?}
-    }
-
-    @Override
     public @Nullable BlockState getCarriedBlockState(Entity entity) {
         return entity instanceof EnderMan enderman ? enderman.getCarriedBlock() : null;
     }
@@ -106,6 +99,11 @@ public final class EntityRenderSystem implements EntityRenderPorts.RenderSystemP
                 .update(renderState, state, BlockDisplayContext.create());
         renderState.submit(poseStack, sink.submitNodeCollector(), light, OverlayTexture.NO_OVERLAY, 0);
         //?}
+    }
+
+    @Override
+    public List<EntityRenderPorts.RenderSystemPort.ArmorRenderPiece> armorPieces(LivingEntity entity, EquipmentSlot slot) {
+        return ArmorRenderAdapter.pieces(entity, slot);
     }
 
     @Override

@@ -33,6 +33,7 @@ import io.github.tt432.eyelib.material.port.PortRenderPass;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import io.github.tt432.eyelib.util.event.api.OnRenderStage;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import org.joml.Matrix4f;
 import org.jspecify.annotations.Nullable;
@@ -263,7 +264,6 @@ public final class EntityRenderOrchestrator {
                     .animation(cap.getAnimationComponent())
                     .overlay(params.overlay())
                     .light(params.packedLight())
-                    .extraRender((context, action) -> HandItemRenderer.renderItemInHand(context, action, entity, action.packedLight()))
                     .build()
                     .render();
         } catch (Throwable t) {
@@ -334,6 +334,9 @@ public final class EntityRenderOrchestrator {
         Matrix4f basePose = new Matrix4f(data.poseStack().last().pose());
         Model[] leashModel = {null};
         Matrix4f[] leashEntityPose = {null};
+        // 挂载物（盔甲/手持物）必须在模型几何提交之前渲染：26.1 的 submit 节点在几何 writer 内
+        // 已不再接收新内容；骨骼帧只依赖「模型 + 本帧动画采样 + 模型根位姿」，与几何提交无关。
+        renderAttachments(data, components);
         boolean rendered = components.stream()
                                                                        .filter(mc -> mc.readyForRendering() || (mc.getSerializableInfo() != null && mc.getSerializableInfo()
                                                                                                                                                       .texture() != null))
@@ -376,7 +379,7 @@ public final class EntityRenderOrchestrator {
                                                                            ModelRuntimeData finalTickedInfos = tickedInfos;
 
                                                                            // 搬运方块：在实体 submit 阶段同步提交一次（26.1 的 collector 在
-                                                                           // renderAllFeatures 之后不再接收新的方块模型，不能放进 extraRender）。
+                                                                           // renderAllFeatures 之后不再接收新的方块模型，不能延迟到挂载物渲染里）。
                                                                            if (!carriedBlockRendered[0]
                                                                                    && CarriedBlockRenderer.render(entity, poseStack, model,
                                                                                    finalTickedInfos, data.packedLight(), data.sink())) {
@@ -406,7 +409,6 @@ public final class EntityRenderOrchestrator {
                                                                                    RenderParams renderParams = buildRenderParams(capturedPose, data, modelComponent, output, consumer, skinning);
                                                                                    RenderHelper renderHelper = RenderHelper.start()
                                                                                            .render(renderParams, model, cast(finalTickedInfos));
-                                                                                   data.extraRender().render(renderHelper.getContext(), data);
                                                                                });
                                                                                data.sink().flush();
                                                                            } else {
@@ -414,7 +416,6 @@ public final class EntityRenderOrchestrator {
                                                                                 RenderParams renderParams = buildRenderParams(data.poseStack(), data, modelComponent, null, null, null);
                                                                                RenderHelper renderHelper = RenderHelper.start()
                                                                                        .render(renderParams, model, cast(finalTickedInfos));
-                                                                               data.extraRender().render(renderHelper.getContext(), data);
                                                                            }
 
                                                                            poseStack.popPose();
@@ -427,6 +428,67 @@ public final class EntityRenderOrchestrator {
             LeashRenderer.render(data, leashModel[0], data.tickedInfos(), basePose, leashEntityPose[0]);
         }
         return rendered;
+    }
+
+    /**
+     * 挂载物渲染入口（每实体每帧一次，先于模型几何提交）。
+     * 顺序与 vanilla {@code LivingEntityRenderer.render} 一致：先盔甲层，再手持层。
+     * 骨骼帧从模型根位姿累积；根位姿复刻 {@link ClientEntitySetup#setupEntityClientEntityData} 的
+     * 实体位姿（脚本缩放/幼体缩放/身体朝向），因此挂载物与模型同姿。
+     */
+    private static void renderAttachments(SimpleRenderAction<?> data, List<ModelComponent> components) {
+        if (!(data.entity() instanceof LivingEntity holder) || !hasEquipment(holder)) {
+            return;
+        }
+        Model model = attachmentModel(components);
+        if (model == null) {
+            return;
+        }
+
+        PoseStack poseStack = RenderPorts.get().renderSystemPort()
+                .createPoseStackFromMatrix(data.poseStack().last().pose());
+        ClientEntitySetup.setupEntityClientEntityData(data.withPoseStack(poseStack));
+        Matrix4f modelRoot = new Matrix4f(poseStack.last().pose());
+        ModelRuntimeData tickedInfos = data.tickedInfos() != null ? data.tickedInfos() : ModelRuntimeData.EMPTY;
+        int light = data.packedLight();
+
+        ArmorAttachmentRenderer.render(data, holder, model, tickedInfos, modelRoot, light);
+        HandItemRenderer.render(data, holder, model, tickedInfos, modelRoot, light);
+    }
+
+    /** 双手/盔甲槽全空时不做任何挂载物工作（绝大多数实体走这条短路）。 */
+    private static boolean hasEquipment(LivingEntity holder) {
+        return !holder.getMainHandItem().isEmpty()
+                || !holder.getOffhandItem().isEmpty()
+                || !holder.getItemBySlot(EquipmentSlot.HEAD).isEmpty()
+                || !holder.getItemBySlot(EquipmentSlot.CHEST).isEmpty()
+                || !holder.getItemBySlot(EquipmentSlot.LEGS).isEmpty()
+                || !holder.getItemBySlot(EquipmentSlot.FEET).isEmpty();
+    }
+
+    /**
+     * 挂载物用的模型：同一实体的各渲染组件共享骨骼位姿，取骨骼最多的组件（基础模型，
+     * 覆盖层/发光层的骨骼是其子集）即可解析全部挂载点。
+     */
+    private static @Nullable Model attachmentModel(List<ModelComponent> components) {
+        Model model = null;
+        int best = -1;
+        for (ModelComponent component : components) {
+            // 只跟已就绪的组件走：模型尚未烘焙时不能只画装备不画身体
+            if (!component.readyForRendering()) {
+                continue;
+            }
+            Model candidate = component.getModel();
+            if (candidate == null) {
+                continue;
+            }
+            int boneCount = candidate.allBones().size();
+            if (boneCount > best) {
+                best = boneCount;
+                model = candidate;
+            }
+        }
+        return model;
     }
 
     /** 解析实体类型 id 并装配 clientEntity 组件（实现见 {@link ClientEntitySetup}）。 */

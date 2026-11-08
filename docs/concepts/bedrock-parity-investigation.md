@@ -50,7 +50,9 @@ RenderDoc 用于 GPU 顶点和像素历史；`mcmcp_execute`/`/eval` 用于查�
 
 ### 姿态与 attachable
 
-收集的骨骼姿态不包含 pivot 平移。附着物或 locator 在使用骨骼姿态时必须额外应用 pivot 平移，否则会落到实体原点。实体级 `RenderData` 与 attachable 自身的 `RenderData` 作用域也必须区分：父级 setup 修改父实体作用域，attachable 动画读取自身作用域。
+装备挂载的挂点语义与实现见 [ADR-0043](../decisions/0043-equipment-attachment-bone-anchoring.md)：手持物锚在 `q.item_slot_to_bone_name` 对应的 item 骨骼（缺失不画），盔甲部件按 body-part 骨骼名绑定，骨骼帧统一由 `ModelPoseTransforms.resolveBonePose` 从模型根位姿累积（与 locator 同一链数学：实体插值位置 → 脚本/幼体缩放 → 身体朝向 → 模型 Y 翻转 → 逐骨平移/枢轴旋转/缩放）。骨骼帧用 `translate(pivot)` 即可得到 pivot 点（`Matrix4f.translate` 施加 `R·pivot`），不需要另加 pivot 平移。
+
+实体级 `RenderData` 与 attachable 自身的 `RenderData` 作用域也必须区分：父级 setup 修改父实体作用域，attachable 动画读取自身作用域。
 
 ### 动画粒子锚点
 
