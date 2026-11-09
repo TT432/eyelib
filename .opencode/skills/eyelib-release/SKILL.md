@@ -288,3 +288,22 @@ Portal 要求每个文件带 `.md5` 与 `.sha1`；mavenLocal 发布**不生成**
     （快照 `work/release_21133/cf-files-page.txt`）。
   - 本次脚本：`work/release_21133/{cf_upload.py, cf_wait_verify.py, cf_changelog.md, cf_ids.json}`。
 - 联动：dokimobs 0.3.12 依赖本版本（`eyelib_version=21.1.33`；CF 9506313 / 9506315 / 9506318）。
+
+## 发布记录（21.1.34，2026-11-09）
+
+内容：head 槽普通物品渲染（掠夺者不祥旗帜）、body 盔甲锚点改 head pivot（skeleton/villager/husk/drowned/zombie_villager）、26.1 `query.is_powered` 恢复并显示 charged creeper 闪电层、26.1 off-level 实体 render state→实体映射（CarryOn 抱起的 doki 实体不再退回 vanilla）。1.20.1 / 1.21.1 的 `is_powered` 旧分支不变。
+
+- **本次只发 CurseForge**（用户指定），未发 Maven Central。
+- 代码：PR #48（`release/21.1.34` → `master`），CI `compile 1.20.1/1.21.1/26.1.2` 全绿；Codacy 仍 fail（非必需门禁，按用户决策忽略），merge commit `08e195d0`。
+- 前置：`clientsmoke` bump 21.1.34（提交 `f67b099`，已推送 `TT432/clientsmoke` main）；主项目三节点 `publishMavenJavaPublicationToMavenLocal` 完成，`~/.m2/.../21.1.34+<node>/` 各 10 文件齐全。
+- CurseForge（displayName 去扩展名）：
+
+  | 节点 | fileId |
+  | --- | --- |
+  | `21.1.34+1.20.1-forge` | 9526576 |
+  | `21.1.34+1.21.1-neoforge` | 9526579 |
+  | `21.1.34+26.1.2-neoforge` | 9526580 |
+
+  - 21:33:20 CST 上传完成（三节点串行）→ 21:46:12 CST `files/all` 三文件全部可见（约 13 分钟），各自 `Latest release`、`R`，Forge/NeoForge 与 game version 正确。
+- 本次脚本与页面快照：`work/release_21134/{cf_upload.py, cf_wait_verify.py, cf_changelog.md, cf_ids.json, cf-files-page.txt}`。
+- 联动：dokimobs 0.3.13 依赖本版本。
