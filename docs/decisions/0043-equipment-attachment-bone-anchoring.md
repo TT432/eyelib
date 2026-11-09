@@ -103,3 +103,46 @@
 - 同场景原版渲染僵尸（`doki=false`）作参照：物品/盔甲形态一致，仅骨骼姿态不同（原版僵尸双臂前平举）。
 - 副手：doki 僵尸无 `leftitem` 骨骼 → 副手盾牌不显示，且**没有**错误的兜底几何（`attach_offhand_missing.png`）。
 - 静态核对：`resolveBonePose` 与手写链（root→waist→body→rightarm→righthandxia→rightitem）逐元素同值。
+
+## 5. 2026-11-09 修正与扩展（dokimobs 反馈）
+
+### 5.1 body 盔甲部件锚点 = 颈部，不是 body 骨骼 pivot
+
+§2.2 假设「body-part 骨骼的 pivot 就是 vanilla 部件原点」。实机证明该假设只对 zombie 成立：
+skeleton/villager/zombie_villager/husk/drowned 的 `body` 骨骼 pivot 在**腰部**
+（skeleton head=1.889 vs body=1.114），而 vanilla `body` 盔甲部件原点在**颈部**，导致胸甲/护腿
+整体下移 0.6~0.8 格。修正：`piece.part()=="body"` 时仍在 body 骨骼帧内（继承躯干旋转/动画），
+但平移锚点换成该模型 `head` 骨骼 pivot；无 head 骨骼回退 body pivot。`head`/`arm`/`leg` 不变。
+证据：`ArmorAttachmentRenderer.neckPivot`；dokimobs
+`docs/bbmodel-pipeline.md` 2026-11-09 §④（skeleton 修复前后截图）。
+
+### 5.2 head 槽普通物品是独立层，不属于盔甲 attachable
+
+不祥旗帜由 `Raid` 装备在 `EquipmentSlot.HEAD`，原版由 `CustomHeadLayer` 以
+`ItemDisplayContext.HEAD` 的物品模型绘制；它不是 `ArmorItem`，因此 §2.2 的盔甲路径永远不会画它。
+新增 `client/render/HeadItemRenderer`，与 vanilla 同变换（head 骨骼帧 → pivot →
+`scale(-1,-1,1)` → `translateToHead`），在 `renderAttachments` 中先于盔甲/手持物调用；盔甲物品
+跳过避免双画。证据：`HeadItemRenderer`、`EntityRenderOrchestrator.renderAttachments`；
+dokimobs 2026-11-09 §①。
+
+### 5.3 26.1 off-level 实体渲染：render state → 实体直接映射
+
+26.1 的 `RenderLivingEvent` 不携带实体，原反查只搜索 `level.entitiesForRendering()`。CarryOn
+等模组用不入世界的 NBT 假实体 + `extractEntity/submit` 渲染，反查失败 → doki 渲染不接管。
+新增 `EntityRenderDispatcherMixin`（仅 26.1）在 `extractEntity` RETURN 记录
+`EntityRenderState → WeakReference<LivingEntity>`（只登记 `level.getEntity(id) != entity` 的
+off-level 实体）；`RenderLivingEventAdapter` 先查直接映射。`extractEntity` 每次返回新 state，
+身份作 key 安全。证据：`EntityRenderDispatcherMixin`、`ExtractedEntityStates`、
+`RenderLivingEventAdapter` 26.1 分支；dokimobs 2026-11-09 §⑤（CarryOn 牛截图）。
+
+### 5.4 26.1 `query.is_powered` 不再写死 false
+
+`EntityPortAdapter.isPowered` 的 `>=26.1` 分支曾直接 `return false`（`PowerableMob` 在 26.1 移除）。
+苦力怕是唯一实现者，改为 `entity instanceof Creeper c && c.isPowered()`。该查询同时驱动
+charged creeper 的基础贴图数组与 armor RC 的 `part_visibility`，写死 false 会让闪电层完全不显示。
+证据：`EntityPortAdapter.isPowered`；dokimobs 2026-11-09 §⑥（三节点 charged creeper 截图）。
+
+**验证**：三节点 `compileJava`、`:test`、`:nullawayMain` 全部通过；26.1.2 实机 CarryOn 2.10.0
+（服务端 `Player#interactOn` 事件链返回 `Success`、`carry=true`）抱起 doki 牛显示 doki 模型；
+1.20.1/1.21.1/26.1.2 的掠夺者旗帜/弩显隐/头部独立转动、skeleton 盔甲、charged creeper 均已
+实机截图（见 dokimobs 同节）。未覆盖：CarryOn 客户端键位完整输入链路；`uv_anim` 滚动。

@@ -85,6 +85,12 @@ public final class EntityRenderPorts {
                               boolean left, PoseStack poseStack, RenderSink sink, int light);
 
         /**
+         * 物品是否是该槽位的人形盔甲（版本差异收敛在 host adapter）。
+         * head 槽物品层用它跳过盔甲，避免与 {@code ArmorAttachmentRenderer} 双画。
+         */
+        boolean isArmorItem(ItemStack stack, EquipmentSlot slot);
+
+        /**
          * 实体当前搬运的方块状态（Bedrock {@code query.is_carrying_block} 的宿主来源，如末影人）。
          * 无搬运方块时返回 {@code null}。
          */

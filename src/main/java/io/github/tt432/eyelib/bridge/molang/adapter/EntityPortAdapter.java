@@ -182,7 +182,9 @@ public final class EntityPortAdapter {
             //? if <26.1 {
             return entity instanceof net.minecraft.world.entity.PowerableMob powerableMob && powerableMob.isPowered();
             //?} else {
-            return false;
+            // 26.1 移除了 PowerableMob，苦力怕是唯一实现者；query.is_powered 不能写死 false，
+            // 否则 charged creeper 的闪电层永远不显示（RenderController / 贴图层都依赖该查询）。
+            return entity instanceof net.minecraft.world.entity.monster.Creeper creeper && creeper.isPowered();
             //?}
         }
     }

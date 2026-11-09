@@ -432,7 +432,7 @@ public final class EntityRenderOrchestrator {
 
     /**
      * 挂载物渲染入口（每实体每帧一次，先于模型几何提交）。
-     * 顺序与 vanilla {@code LivingEntityRenderer.render} 一致：先盔甲层，再手持层。
+     * 顺序与 vanilla {@code LivingEntityRenderer.render} 一致：先 head 槽物品层，再盔甲层，再手持层。
      * 骨骼帧从模型根位姿累积；根位姿复刻 {@link ClientEntitySetup#setupEntityClientEntityData} 的
      * 实体位姿（脚本缩放/幼体缩放/身体朝向），因此挂载物与模型同姿。
      */
@@ -452,6 +452,7 @@ public final class EntityRenderOrchestrator {
         ModelRuntimeData tickedInfos = data.tickedInfos() != null ? data.tickedInfos() : ModelRuntimeData.EMPTY;
         int light = data.packedLight();
 
+        HeadItemRenderer.render(data, holder, model, tickedInfos, modelRoot, light);
         ArmorAttachmentRenderer.render(data, holder, model, tickedInfos, modelRoot, light);
         HandItemRenderer.render(data, holder, model, tickedInfos, modelRoot, light);
     }

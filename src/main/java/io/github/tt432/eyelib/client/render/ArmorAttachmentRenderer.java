@@ -87,12 +87,22 @@ final class ArmorAttachmentRenderer {
                 }
 
                 PoseStack poseStack = port.createPoseStackFromMatrix(frame.get());
-                var pivot = bone.pivot();
+                // vanilla 的 body 盔甲部件原点在颈部（与 head 骨骼同高）；而多数萌化模型的
+                // body 骨骼 pivot 在腰部（skeleton 1.114 vs head 1.889，villager 1.063 vs 1.8…），
+                // 直接按 body pivot 摆放会把胸甲/护腿整体下移约 0.6~0.8 格。
+                // 仍在 body 骨骼帧内（继承躯干旋转/动画），只把锚点换成 head pivot。
+                var pivot = "body".equals(piece.part()) ? neckPivot(model, bone) : bone.pivot();
                 poseStack.translate(pivot.x(), pivot.y(), pivot.z());
                 poseStack.scale(-1.0F, -1.0F, 1.0F);
                 piece.emit(poseStack.last(), bufferSource.getBuffer(renderType), light, overlay);
             }
         }
+    }
+
+    /** 躯干部件的锚点：模型有 head 骨骼时用其 pivot（颈部），否则退回 body pivot。 */
+    private static Vector3fc neckPivot(Model model, RenderBone body) {
+        RenderBone head = resolveBone(model, "head");
+        return head != null ? head.pivot() : body.pivot();
     }
 
     private record RenderBone(int boneId, Vector3fc pivot) {

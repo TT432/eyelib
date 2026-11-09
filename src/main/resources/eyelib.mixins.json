@@ -36,6 +36,9 @@
     //?}
     "client.TextureManagerMixin",
     "LivingEntityRendererAccessor",
+    //? if modern {
+    "client.EntityRenderDispatcherMixin",
+    //?}
     //? if !legacy && <26.1 {
     "PoseStackPoseAccessor",
     //?}
