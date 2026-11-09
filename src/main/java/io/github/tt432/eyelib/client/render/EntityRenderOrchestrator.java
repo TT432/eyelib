@@ -409,7 +409,6 @@ public final class EntityRenderOrchestrator {
                                                                                    RenderParams renderParams = buildRenderParams(capturedPose, data, modelComponent, output, consumer, skinning);
                                                                                    RenderHelper renderHelper = RenderHelper.start()
                                                                                            .render(renderParams, model, cast(finalTickedInfos));
-                                                                                   data.extraRender().render(renderHelper.getContext(), data);
                                                                                });
                                                                                data.sink().flush();
                                                                            } else {
@@ -417,7 +416,6 @@ public final class EntityRenderOrchestrator {
                                                                                 RenderParams renderParams = buildRenderParams(data.poseStack(), data, modelComponent, null, null, null);
                                                                                RenderHelper renderHelper = RenderHelper.start()
                                                                                        .render(renderParams, model, cast(finalTickedInfos));
-                                                                               data.extraRender().render(renderHelper.getContext(), data);
                                                                            }
 
                                                                            poseStack.popPose();
