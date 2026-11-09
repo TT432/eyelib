@@ -107,6 +107,19 @@ public final class EntityRenderSystem implements EntityRenderPorts.RenderSystemP
     }
 
     @Override
+    public boolean isArmorItem(ItemStack stack, EquipmentSlot slot) {
+        //? if <26.1 {
+        if (!(stack.getItem() instanceof net.minecraft.world.item.ArmorItem armor)) {
+            return false;
+        }
+        return armor.getEquipmentSlot() == slot;
+        //?} else {
+        var equippable = stack.get(net.minecraft.core.component.DataComponents.EQUIPPABLE);
+        return equippable != null && equippable.slot() == slot;
+        //?}
+    }
+
+    @Override
     public void renderItemDirect(LivingEntity le, ItemStack item, ItemDisplayContext context,
                                  boolean left, PoseStack poseStack, RenderSink sink, int light) {
         //? if <26.1 {

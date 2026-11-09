@@ -72,6 +72,11 @@ public final class RenderLivingEventAdapter {
         var state = event.getRenderState();
         LivingEntity entity = sceneEntityOverride;
         if (entity == null) {
+            // 优先取 extractEntity 记录的直接映射：CarryOn 等模组的假实体不在 level 里，
+            // 下面的类型+坐标反查找不到它们（会退回 vanilla 模型）。
+            entity = ExtractedEntityStates.get(state);
+        }
+        if (entity == null) {
             entity = findEntityByRenderState(state.entityType, state.x, state.y, state.z, event.getPartialTick());
         }
         if (entity == null) return;
