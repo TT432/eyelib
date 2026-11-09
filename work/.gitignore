@@ -1,0 +1,8 @@
+# 发版过程产物：日志、页面快照、一次性补丁/脚本；只保留可复用的发版脚本与结果记录。
+*.log
+*.patch
+cf-files-page*.txt
+cf-files-check.txt
+cf-file-*.txt
+*_pr_body.md
+merge_*.sh
