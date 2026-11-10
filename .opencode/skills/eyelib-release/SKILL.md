@@ -307,3 +307,25 @@ Portal 要求每个文件带 `.md5` 与 `.sha1`；mavenLocal 发布**不生成**
   - 21:33:20 CST 上传完成（三节点串行）→ 21:46:12 CST `files/all` 三文件全部可见（约 13 分钟），各自 `Latest release`、`R`，Forge/NeoForge 与 game version 正确。
 - 本次脚本与页面快照：`work/release_21134/{cf_upload.py, cf_wait_verify.py, cf_changelog.md, cf_ids.json, cf-files-page.txt}`。
 - 联动：dokimobs 0.3.13 依赖本版本。
+
+## 发布记录（21.1.35，2026-11-10）
+
+内容：盔甲槽 attachable 参与渲染 + 逐骨骼绑定（`binding` Molang 求值 / 同名骨骼 / 持有者根位姿三级锚点，ADR-0043 §5.5）；盔甲四槽命中 attachable 即接管，头部物品与 vanilla 人形盔甲回退路径跳过避免双画。`Model.Bone.binding()` 从「已解析未使用」变为真实消费点，clientsmoke 增加 binding 求值断言。
+
+- **本次只发 CurseForge**（用户指定），未发 Maven Central。
+- 代码：PR #51（`feat/armor-attachable-slots` → `master`）。
+- 前置：`clientsmoke` bump 21.1.35（提交 `b5d98d2`，已推送 `TT432/clientsmoke` main；首次 CI 因该提交未推送导致 submodule checkout 失败，推送后重跑）；主项目三节点 `publishToMavenLocal` 完成，`~/.m2/.../21.1.35+<node>/` 齐全。
+- CurseForge（displayName 去扩展名）：
+
+  | 节点 | fileId |
+  | --- | --- |
+  | `21.1.35+1.20.1-forge` | 9537831 |
+  | `21.1.35+1.21.1-neoforge` | 9537833 |
+  | `21.1.35+26.1.2-neoforge` | 9537835 |
+
+  - 三节点串行 34 s 上传完成（Python/requests 直连 legacy Upload API，未触发 Cloudflare）→
+    14:39:46 / 14:43:55 / 14:48:02 轮询仍 `0/3` → 14:52:09 `files/all` 三文件全部可见
+    （约 12 分钟），各自 `Latest release`、`R`，Forge/NeoForge 与 game version 正确
+    （快照 `work/release_21135/cf-files-page.txt`）。
+  - 本次脚本：`work/release_21135/{cf_upload.py, cf_wait_verify.py, cf_changelog.md, cf_ids.json}`。
+- 联动：dokimobs 0.3.14 依赖本版本（`eyelib_version=21.1.35`）。
