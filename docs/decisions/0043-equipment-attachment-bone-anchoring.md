@@ -78,14 +78,16 @@
 
 ## 3. 后果
 
-- **已覆盖**：主/副手物品、attachable 模型（按 item 骨骼帧渲染）、四类人形盔甲 + 染色 tint、
-  受伤 overlay、盔甲随骨骼动画（头/臂/腿）移动、资源包 reload 失效缓存。
+- **已覆盖**：主/副手物品、attachable 模型（手持按 item 骨骼帧；**盔甲槽按逐骨骼 binding/同名绑定**，
+  见 §5.5）、四类人形盔甲 + 染色 tint、受伤 overlay、盔甲随骨骼动画（头/臂/腿）移动、
+  资源包 reload 失效缓存。
 - **未覆盖（显式登记）**：
-  - `Model.Bone.binding()` 的 Molang 求值仍未实现。当前实现把 attachable 渲染在 item 骨骼帧上，
-    等价于 `binding = q.item_slot_to_bone_name(...)` 这一最常见写法；自定义 binding（绑到别的骨骼）
-    与 Bedrock 的 ±24px 绑定偏移未复刻。
+  - Bedrock 的 ±24px 绑定偏移未复刻（`binding` 的 Molang 求值已实现，见 §5.5）。
   - 盔甲 trim / 附魔 glint 未渲染；`hide_armor` 未消费；`BODY` 槽（狼/马铠）不在范围内。
-  - 萌化实体上的**盔甲 attachable** 不参与（人形盔甲优先），仅非萌化实体走 `HumanoidArmorLayerMixin`。
+  - 盔甲 attachable 只在**存在 attachable 定义**时接管；没有定义时回退到 vanilla 人形盔甲部件
+    （几何是玩家比例，萌化模型上尺寸不匹配，见 dokimobs `docs/bbmodel-pipeline.md` 2026-11-09 追记）。
+  - 非萌化实体仍走 `HumanoidArmorLayerMixin`：整件 attachable 挂在单个 `ModelPart` 上，多骨骼部件
+    刚性跟随一根骨。
   - 非人形持有者（狼/蜘蛛等）没有 body-part 同名骨骼 → 不画盔甲，符合「按名绑定」语义。
 
 ## 4. 验证
@@ -146,3 +148,36 @@ charged creeper 的基础贴图数组与 armor RC 的 `part_visibility`，写死
 （服务端 `Player#interactOn` 事件链返回 `Success`、`carry=true`）抱起 doki 牛显示 doki 模型；
 1.20.1/1.21.1/26.1.2 的掠夺者旗帜/弩显隐/头部独立转动、skeleton 盔甲、charged creeper 均已
 实机截图（见 dokimobs 同节）。未覆盖：CarryOn 客户端键位完整输入链路；`uv_anim` 滚动。
+
+### 5.5 盔甲槽 attachable 参与渲染 + 逐骨骼绑定
+
+§3 曾把「萌化实体上的盔甲 attachable 不参与」登记为缺口：`renderAttachments` 只走
+`HeadItemRenderer`/`ArmorAttachmentRenderer`/`HandItemRenderer`，attachables 只 tick 不渲染。
+现在盔甲四槽（HEAD/CHEST/LEGS/FEET）先查 `AttachableResolver`，命中即按基岩版语义渲染，
+并由 `renderSlotAttachables` 把该槽加入「已被接管」集合，头部物品与 vanilla 人形盔甲两条回退路径
+跳过该槽（避免双画）。
+
+绑定规则（对应官方 *Using Attachables* 的两种做法）：
+
+| 情形 | 锚点 |
+|---|---|
+| 骨骼有 `binding`（Molang，通常 `q.item_slot_to_bone_name(context.item_slot)`） | 求值得到持有者骨骼名 → 该骨骼 pivot 作为子树根位置，几何仍写在挂载物模型空间 |
+| 无 `binding` 但骨骼名与持有者同名（`head`/`body`/`rightarm`…） | 持有者同名骨骼驱动（「复制骨骼」做法） |
+| 两者都无 | 持有者模型根位姿（基岩模型空间） |
+
+实现要点：
+
+- 骨骼帧由 `ModelPoseTransforms.resolveBonePose` 从**同一帧**的持有者动画采样现算：矩阵 = 持有者骨骼帧
+  × `T(持有者骨骼 pivot)` × `T(-挂载物骨骼 pivot)`，即把挂载物骨骼 pivot 对齐到持有者骨骼 pivot；
+- 每个**顶层**骨骼单独渲染，其余子树用 `part_visibility` 逐骨骼关掉（`PreBoneFrame` 不继承父隐藏，
+  不能只关顶层），子树内保留渲染控制器的 part_visibility；
+- `binding` 表达式按源码缓存为 `MolangValue`（编译缓存之外的每帧分配优化），求值失败按「无绑定」降级；
+- `ModelPoseTransforms.bedrockRootPose` 提供「持有者根位姿 → 基岩模型空间」的换算，供无绑定骨骼使用。
+
+数据侧（dokimobs）：27 个萌化实体的 client entity description 全部加 `enable_attachables: true`
+（此前缺省 false，`AttachableResolver.isAttachableEnabled` 对萌化 holder 恒 false，盔甲/手持 attachable
+从未参与）。裸 `enable_attachables` 默认 value 见 `BrClientEntity` codec。
+
+**未改变的行为**：没有 attachable 定义的物品（如原版铁甲）仍走 §2.2 的 vanilla 人形盔甲路径，
+外观与 21.1.34 一致；手持 attachable 仍走 item 骨骼帧路径（本次未迁移）。
+

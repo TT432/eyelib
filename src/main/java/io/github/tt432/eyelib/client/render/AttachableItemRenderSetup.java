@@ -15,10 +15,15 @@ import io.github.tt432.eyelib.animation.AnimationEffects;
 import io.github.tt432.eyelib.animation.BrAnimator;
 import io.github.tt432.eyelib.animation.ModelRuntimeData;
 import io.github.tt432.eyelib.importer.entity.BrClientEntity;
+import io.github.tt432.eyelib.model.GlobalBoneIdHandler;
 import io.github.tt432.eyelib.model.Model;
+import io.github.tt432.eyelib.animation.ModelPoseTransforms;
+import io.github.tt432.eyelib.molang.MolangScope;
+import io.github.tt432.eyelib.molang.MolangValue;
 import io.github.tt432.eyelib.molang.type.MolangString;
 import io.github.tt432.eyelib.molang.mapping.api.HostRole;
 import io.github.tt432.eyelib.molang.mapping.api.HostRoles;
+import it.unimi.dsi.fastutil.ints.Int2BooleanOpenHashMap;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import net.minecraft.client.Minecraft;
@@ -28,6 +33,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.item.ItemStack;
+import org.joml.Matrix4f;
 import org.jspecify.annotations.Nullable;
 
 import java.util.EnumMap;
@@ -192,6 +198,153 @@ public final class AttachableItemRenderSetup {
 
             poseStack.popPose();
         }
+    }
+
+    /**
+     * 挂载物按基岩版语义绑定到持有者骨骼后渲染（盔甲等按 body-part 挂载的槽位走这条路径）。
+     * <p>
+     * 绑定规则（对应基岩版 attachable 的两种官方做法）：
+     * <ol>
+     *   <li>骨骼声明了 {@code binding}（Molang，通常 {@code q.item_slot_to_bone_name(context.item_slot)}）：
+     *       求值得到持有者骨骼名，该骨骼（及其子树）以「持有者骨骼 pivot」为根位置——
+     *       即把挂载物骨骼的 pivot 对齐到持有者骨骼 pivot，再继承持有者的骨骼帧；</li>
+     *   <li>未声明 {@code binding} 但骨骼名与持有者同名（{@code head}/{@code body}/{@code rightarm}…）：
+     *       由持有者同名骨骼驱动（基岩版「复制骨骼」做法）；</li>
+     *   <li>两者都不满足：以持有者模型根位姿为根（基岩模型空间）。</li>
+     * </ol>
+     * 每个顶层骨骼单独渲染：骨骼子树用 part_visibility 屏蔽其它子树，互不影响。
+     * 骨骼帧由 {@link ModelPoseTransforms#resolveBonePose} 从持有者同一帧的动画采样现算，
+     * 与模型几何共享同一条变换链。
+     *
+     * @param holderRoot 持有者模型根位姿（Java 实体空间，已含脚本缩放/幼体/身体朝向）
+     */
+    public static void renderAttachableBound(RenderData<ItemStack> rd, LivingEntity holder,
+                                             Model holderModel, ModelRuntimeData holderTicked, Matrix4f holderRoot,
+                                             MultiBufferSource buffer, int light, int overlay) {
+        var tickedInfos = rd.getAnimationComponent().tickedInfos;
+        if (tickedInfos == null) {
+            tickedInfos = ModelRuntimeData.EMPTY;
+        }
+        Matrix4f unboundRoot = ModelPoseTransforms.bedrockRootPose(holderRoot);
+
+        var sorted = new java.util.ArrayList<>(rd.getModelComponents());
+        sorted.sort(java.util.Comparator.comparingInt(EntityRenderOrchestrator::passOrder));
+        for (ModelComponent mc : sorted) {
+            if (!mc.readyForRendering()) {
+                continue;
+            }
+            Model model = mc.getModel();
+            if (model == null) {
+                continue;
+            }
+            for (Model.Bone rootBone : model.toplevelBones().values()) {
+                int anchorId = resolveAnchor(rd, holderModel, rootBone);
+                Matrix4f pose;
+                if (anchorId >= 0) {
+                    var frame = ModelPoseTransforms.resolveBonePose(holderModel, holderTicked, anchorId, holderRoot);
+                    Model.Bone anchorBone = holderModel.allBones().get(anchorId);
+                    if (frame.isEmpty() || anchorBone == null) {
+                        continue;
+                    }
+                    pose = new Matrix4f(frame.get());
+                    // 挂载物骨骼 pivot → 持有者骨骼 pivot：binding 的「pivot 作为根位置」
+                    pose.translate(anchorBone.pivot());
+                    pose.translate(-rootBone.pivot().x(), -rootBone.pivot().y(), -rootBone.pivot().z());
+                } else {
+                    pose = new Matrix4f(unboundRoot);
+                }
+
+                PoseStack poseStack = RenderPorts.get().renderSystemPort().createPoseStackFromMatrix(pose);
+                RenderParams rp = RenderParams.builder(poseStack, buffer, mc)
+                                              .entity(holder)
+                                              .light(light)
+                                              .overlay(overlay)
+                                              .partVisibility(subtreeVisibility(model, rootBone, mc.getPartVisibility()))
+                                              .build();
+                RenderHelper.start().render(rp, model, tickedInfos);
+            }
+        }
+    }
+
+    /** 子树可见性掩码缓存：键是挂载物模型，值是「以某顶层骨骼为根的保留掩码」。 */
+    private static final Map<Model, it.unimi.dsi.fastutil.ints.Int2ObjectMap<Int2BooleanOpenHashMap>> SUBTREE_MASKS =
+            java.util.Collections.synchronizedMap(new WeakHashMap<>());
+
+    /**
+     * 只保留 {@code rootBone} 子树：其它骨骼显式关掉（{@code PreBoneFrame} 不继承父骨骼隐藏，
+     * 因此必须逐骨骼写 false），子树内沿用渲染控制器给出的 part_visibility。
+     */
+    private static Int2BooleanOpenHashMap subtreeVisibility(Model model, Model.Bone rootBone,
+                                                            Int2BooleanOpenHashMap componentVisibility) {
+        var perModel = SUBTREE_MASKS.computeIfAbsent(model, m -> new it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap<>());
+        Int2BooleanOpenHashMap mask = perModel.get(rootBone.id());
+        if (mask == null) {
+            mask = new Int2BooleanOpenHashMap(model.allBones().size());
+            for (Model.Bone bone : model.allBones().values()) {
+                mask.put(bone.id(), false);
+            }
+            markSubtree(rootBone, mask);
+            perModel.put(rootBone.id(), mask);
+        }
+        Int2BooleanOpenHashMap result = new Int2BooleanOpenHashMap(mask);
+        for (var entry : componentVisibility.int2BooleanEntrySet()) {
+            if (!entry.getBooleanValue()) {
+                result.put(entry.getIntKey(), false);
+            }
+        }
+        return result;
+    }
+
+    private static void markSubtree(Model.Bone bone, Int2BooleanOpenHashMap mask) {
+        mask.put(bone.id(), true);
+        for (Model.Bone child : bone.children().values()) {
+            markSubtree(child, mask);
+        }
+    }
+
+    /**
+     * 解析挂载物骨骼的绑定锚点：优先 {@code binding} Molang（求值出持有者骨骼名），
+     * 其次按同名骨骼绑定。返回持有者模型中的骨骼 id，无绑定返回 -1。
+     */
+    private static int resolveAnchor(RenderData<ItemStack> rd, Model holderModel, Model.Bone bone) {
+        String binding = bone.binding();
+        if (binding != null && !binding.isBlank()) {
+            return holderBoneId(holderModel, bindingTargetName(rd, bone));
+        }
+        return holderBoneId(holderModel, GlobalBoneIdHandler.get(bone.id()));
+    }
+
+    /**
+     * 求值挂载物骨骼的 {@code binding}（基岩版语义：返回持有者骨骼名）。
+     * 无 binding、作用域缺失或表达式报错时返回 null（按「无绑定」处理）。
+     */
+    public static @Nullable String bindingTargetName(RenderData<ItemStack> rd, Model.Bone bone) {
+        String binding = bone.binding();
+        if (binding == null || binding.isBlank()) {
+            return null;
+        }
+        MolangScope scope = rd.getScope();
+        if (scope == null) {
+            return null;
+        }
+        try {
+            MolangValue value = BINDING_VALUES.computeIfAbsent(binding, MolangValue::new);
+            String name = value.getObject(scope).asString();
+            return name == null || name.isBlank() ? null : name;
+        } catch (RuntimeException e) {
+            return null;
+        }
+    }
+
+    /** {@code binding} 表达式按源码缓存（编译缓存另有一层，这里省掉每帧的 MolangValue 分配）。 */
+    private static final Map<String, MolangValue> BINDING_VALUES = new java.util.concurrent.ConcurrentHashMap<>();
+
+    private static int holderBoneId(Model holderModel, @Nullable String name) {
+        if (name == null || name.isBlank()) {
+            return -1;
+        }
+        int id = GlobalBoneIdHandler.get(name);
+        return holderModel.allBones().containsKey(id) ? id : -1;
     }
 
     public static void clearEntity(LivingEntity entity) {

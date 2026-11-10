@@ -39,7 +39,9 @@ import org.joml.Matrix4f;
 import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -452,9 +454,45 @@ public final class EntityRenderOrchestrator {
         ModelRuntimeData tickedInfos = data.tickedInfos() != null ? data.tickedInfos() : ModelRuntimeData.EMPTY;
         int light = data.packedLight();
 
-        HeadItemRenderer.render(data, holder, model, tickedInfos, modelRoot, light);
-        ArmorAttachmentRenderer.render(data, holder, model, tickedInfos, modelRoot, light);
+        // 盔甲槽若存在 attachable 定义，就走基岩版挂载语义（逐骨骼 binding/同名绑定），
+        // 并让「头部物品」与「vanilla 人形盔甲」两条回退路径跳过该槽，避免双画。
+        Set<EquipmentSlot> attachableSlots = renderSlotAttachables(data, holder, model, tickedInfos, modelRoot, light);
+
+        HeadItemRenderer.render(data, holder, model, tickedInfos, modelRoot, light, attachableSlots);
+        ArmorAttachmentRenderer.render(data, holder, model, tickedInfos, modelRoot, light, attachableSlots);
         HandItemRenderer.render(data, holder, model, tickedInfos, modelRoot, light);
+    }
+
+    /** 有 attachable 定义的盔甲槽（人形四槽；BODY 槽狼铠不在范围内）。 */
+    private static final EquipmentSlot[] ATTACHABLE_SLOTS = {
+            EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS, EquipmentSlot.FEET
+    };
+
+    /**
+     * 渲染盔甲槽的 attachable，返回已由 attachable 接管（回退路径需跳过）的槽位集合。
+     * attachable 只 tick 不渲染的旧行为在萌化实体上是空缺：原版 {@code HumanoidArmorLayer}
+     * 被 cancel 后没有别的层会画它。
+     */
+    private static Set<EquipmentSlot> renderSlotAttachables(SimpleRenderAction<?> data, LivingEntity holder,
+                                                            Model model, ModelRuntimeData tickedInfos,
+                                                            Matrix4f modelRoot, int light) {
+        Set<EquipmentSlot> handled = null;
+        for (EquipmentSlot slot : ATTACHABLE_SLOTS) {
+            if (holder.getItemBySlot(slot).isEmpty()) {
+                continue;
+            }
+            var rd = AttachableItemRenderSetup.getOrPrepare(holder, slot, false);
+            if (rd == null) {
+                continue;
+            }
+            AttachableItemRenderSetup.renderAttachableBound(rd, holder, model, tickedInfos, modelRoot,
+                    data.multiBufferSource(), light, data.overlay());
+            if (handled == null) {
+                handled = EnumSet.noneOf(EquipmentSlot.class);
+            }
+            handled.add(slot);
+        }
+        return handled == null ? Set.of() : handled;
     }
 
     /** 双手/盔甲槽全空时不做任何挂载物工作（绝大多数实体走这条短路）。 */
