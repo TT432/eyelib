@@ -37,10 +37,12 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import org.joml.Matrix4f;
+import org.joml.Matrix4fc;
 import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.EnumSet;
+import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -274,6 +276,24 @@ public final class EntityRenderOrchestrator {
         return new EntityTickResult(entity, tickedInfos, effects);
     }
 
+    /**
+     * 同帧同姿态去重：一帧内同一实体只提交一次「相同实体根位姿」。
+     *
+     * <p>为什么需要：26.1 的 {@code LevelRenderState.entityRenderStates} 只在 {@code renderLevel}
+     * 末尾 {@code reset()}，而一次渲染帧里 {@code extractLevel} 可能被调用多次（NeoForge 渲染阶段、
+     * 调试/录制路径等），列表于是累积同一实体的多份 render state；{@code submitEntities} 会把同一实体
+     * 以**同一姿态**提交多次。CarryOn 的第三人称路径也会在同一帧用同一矩阵再提交一次。
+     *
+     * <p>重复提交除白耗 GPU 外，还会让附属挂载物（盔甲/手持物）被画多份——一旦某一份的本体几何因
+     * 延迟提交窗口/烘焙跳过而没有画出来，屏幕上就只剩「多出来的盔甲副本」，而本体的另一份照常可见，
+     * 正是「本体正常、多一份甲、甲随时间移动」的现象。
+     *
+     * <p>命中时按「已渲染」返回：调用方据此取消 vanilla 渲染，否则重复状态会退回 vanilla 再画一次。
+     * 只记录**成功提交过本体几何**的姿态，避免把首帧烘焙未就绪的失败当成已渲染而丢实体。
+     */
+    private static final Map<Entity, Long> FRAME_RENDERED_POSES = new IdentityHashMap<>();
+    private static long FRAME_RENDERED_POSES_FRAME = Long.MIN_VALUE;
+
     static boolean renderEntityFromParams(RenderEntityParams params) {
         try {
             LivingEntity entity = (LivingEntity) params.entity();
@@ -284,17 +304,58 @@ public final class EntityRenderOrchestrator {
             // 必须在这里补 setup + tick，否则只能画到 NBT 里带出来的静态组件。
             ensureDetachedEntityReady(entity, cap, params.partialTick());
 
-            return SimpleRenderAction.builder(params.multiBufferSource(), params.sink(), params.poseStack(), cap, params.partialTick())
+            long poseHash = poseHash(params.poseStack().last().pose());
+            Long previous = renderedPoseThisFrame(entity);
+            if (previous != null && previous == poseHash) {
+                return true;
+            }
+
+            boolean rendered = SimpleRenderAction.builder(params.multiBufferSource(), params.sink(), params.poseStack(), cap, params.partialTick())
                     .entity(entity)
                     .animation(cap.getAnimationComponent())
                     .overlay(params.overlay())
                     .light(params.packedLight())
                     .build()
                     .render();
+            if (rendered) {
+                FRAME_RENDERED_POSES.put(entity, poseHash);
+            }
+            return rendered;
         } catch (Throwable t) {
             RenderDiagnostics.recordError(t);
             throw t;
         }
+    }
+
+    /** 取出本帧已渲染姿态记录；跨帧时先清空（帧号由 {@link ClientEntitySetup#frame()} 推进）。 */
+    private static @Nullable Long renderedPoseThisFrame(Entity entity) {
+        long frame = ClientEntitySetup.frame();
+        if (frame != FRAME_RENDERED_POSES_FRAME) {
+            FRAME_RENDERED_POSES.clear();
+            FRAME_RENDERED_POSES_FRAME = frame;
+        }
+        return FRAME_RENDERED_POSES.get(entity);
+    }
+
+    /**
+     * 实体根位姿的廉价指纹（相机相对平移 + 旋转/缩放前三个基向量）。
+     * 同一帧内两次提交若指纹相同，说明是同一实体在同一姿态下的重复提交。
+     */
+    private static long poseHash(Matrix4fc pose) {
+        long hash = 17;
+        hash = hash * 31 + Float.floatToIntBits(pose.m30());
+        hash = hash * 31 + Float.floatToIntBits(pose.m31());
+        hash = hash * 31 + Float.floatToIntBits(pose.m32());
+        hash = hash * 31 + Float.floatToIntBits(pose.m00());
+        hash = hash * 31 + Float.floatToIntBits(pose.m01());
+        hash = hash * 31 + Float.floatToIntBits(pose.m02());
+        hash = hash * 31 + Float.floatToIntBits(pose.m10());
+        hash = hash * 31 + Float.floatToIntBits(pose.m11());
+        hash = hash * 31 + Float.floatToIntBits(pose.m12());
+        hash = hash * 31 + Float.floatToIntBits(pose.m20());
+        hash = hash * 31 + Float.floatToIntBits(pose.m21());
+        hash = hash * 31 + Float.floatToIntBits(pose.m22());
+        return hash;
     }
 
     /**
