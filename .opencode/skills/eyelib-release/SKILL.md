@@ -329,3 +329,27 @@ Portal 要求每个文件带 `.md5` 与 `.sha1`；mavenLocal 发布**不生成**
     （快照 `work/release_21135/cf-files-page.txt`）。
   - 本次脚本：`work/release_21135/{cf_upload.py, cf_wait_verify.py, cf_changelog.md, cf_ids.json}`。
 - 联动：dokimobs 0.3.14 依赖本版本（`eyelib_version=21.1.35`）。
+
+## 发布记录（21.1.39，2026-11-11）
+
+内容：CarryOn 兼容。① 同一帧内「实体身份 + 实体根位姿」相同的重复提交只渲染一次（26.1 的
+`LevelRenderState.entityRenderStates` 只在 `renderLevel` 末尾 reset，一帧内多次 extract 会累积同一实体的多份状态；
+CarryOn 第一人称 main/offhand 各提交一次），命中按已渲染返回以免退回 vanilla 再画；② 所有活体 render state 改为按
+`extractEntity` 登记的**身份**解析实体（原先按「类型 + ±0.5 格坐标」反查，同格同类型生物会全部解析到同一实体）。
+
+- **本次只发 CurseForge**（用户指定发布仅到 CurseForge）；Maven Central 未发，待用户确认后补。
+- 代码：PR #52（`fix/armor-extra-render` → `feat/armor-attachable-slots`，#51 合并后即可合入 `master`）。
+- 前置：`clientsmoke` bump 21.1.39（提交 `479b41f`，已推 `TT432/clientsmoke` main；本次顺带补推了此前漏推的 21.1.36 提交）。
+- 三节点 `compileJava` / `:test` / `:nullawayMain` 全绿（`work/gates_21139.log`）；`~/.m2/.../21.1.39+<node>/` 各 10 个文件齐全。
+- CurseForge（displayName 去扩展名）：
+
+  | 节点 | fileId |
+  | --- | --- |
+  | `21.1.39+1.20.1-forge` | 9554648 |
+  | `21.1.39+1.21.1-neoforge` | 9554649 |
+  | `21.1.39+26.1.2-neoforge` | 9554652 |
+
+  - 三节点串行上传约 77 s（Python/requests 直连 legacy Upload API，未触发 Cloudflare）；
+    16:13:50 / 16:17:57 / 16:22:04 轮询仍 `0/3` → 16:26:12 `files/all` 三文件全部可见（约 12.5 分钟）。
+  - 本次脚本与页面快照：`work/release_21139/{cf_upload.py, cf_wait_verify.py, cf_changelog.md, cf_ids.json, cf-files-page.txt}`。
+- 联动：dokimobs 0.3.15 依赖本版本（`eyelib_version=21.1.39`）。
