@@ -1,6 +1,7 @@
 package io.github.tt432.eyelib.importer.entity;
 
 import com.mojang.serialization.Codec;
+import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.eyelib.importer.addon.BedrockResourceValue;
@@ -36,8 +37,54 @@ public record BrClientEntity(
         Optional<BrClientEntityScripts> scripts,
         Optional<BedrockResourceValue.ObjectValue> spawn_egg,
         Map<String, String> item,
-        boolean enable_attachables
+        Toggles toggles
 ) {
+    /**
+     * 基岩版 client entity description 的四个装备渲染开关（官方文档语义，见
+     * {@link io.github.tt432.eyelib.client.entity.AttachablePolicy}）。
+     * <p>
+     * 单独成 record 的原因：description 的可选字段已达 DFU {@code RecordCodecBuilder.group} 的上限
+     * （16 个），再平铺四个字段无法组装 codec；嵌套后仍读同一层 JSON 的四个平铺键。
+     */
+    public record Toggles(
+            boolean enable_attachables,
+            boolean hide_armor,
+            boolean held_item_ignores_lighting,
+            MolangValue held_item_scale
+    ) {
+        /** 全缺省：不渲染 attachable、不藏甲、手持物按光照、缩放 1.0。 */
+        public static final Toggles DEFAULT = new Toggles(false, false, false, MolangValue.ONE);
+
+        public static final MapCodec<Toggles> CODEC = RecordCodecBuilder.mapCodec(ins -> ins.group(
+                Codec.BOOL.optionalFieldOf("enable_attachables", false).forGetter(Toggles::enable_attachables),
+                Codec.BOOL.optionalFieldOf("hide_armor", false).forGetter(Toggles::hide_armor),
+                Codec.BOOL.optionalFieldOf("held_item_ignores_lighting", false)
+                      .forGetter(Toggles::held_item_ignores_lighting),
+                // Bedrock：Molang 表达式，缺省 1.0，必须解析为 > 0（<=0 由 AttachablePolicy 回落 1.0）
+                MolangValue.CODEC.optionalFieldOf("held_item_scale", MolangValue.ONE)
+                                 .forGetter(Toggles::held_item_scale)
+        ).apply(ins, Toggles::new));
+    }
+
+    /** {@code enable_attachables}：能否渲染 attachable（盔甲与武器）。 */
+    public boolean enable_attachables() {
+        return toggles.enable_attachables();
+    }
+
+    /** {@code hide_armor}：只压盔甲，覆盖 {@code enable_attachables} 的盔甲部分。 */
+    public boolean hide_armor() {
+        return toggles.hide_armor();
+    }
+
+    /** {@code held_item_ignores_lighting}：手持物是否全亮渲染。 */
+    public boolean held_item_ignores_lighting() {
+        return toggles.held_item_ignores_lighting();
+    }
+
+    /** {@code held_item_scale}：手持物缩放的 Molang 表达式（缺省 1.0）。 */
+    public MolangValue held_item_scale() {
+        return toggles.held_item_scale();
+    }
     private static final Codec<BedrockResourceValue.ObjectValue> OBJECT_VALUE_CODEC = ImporterCodecUtil.JSON_ELEMENT_CODEC.comapFlatMap(
             jsonElement -> {
                 BedrockResourceValue value = BedrockResourceValue.fromJsonElement(jsonElement);
@@ -157,7 +204,7 @@ public record BrClientEntity(
             Optional<BrClientEntityScripts> scripts
     ) {
         this(identifier, Optional.empty(), materials, textures, geometry, animations, List.of(), particle_effects, sound_effects,
-                render_controllers, Map.of(), scripts, Optional.empty(), Map.of(), false);
+                render_controllers, Map.of(), scripts, Optional.empty(), Map.of(), Toggles.DEFAULT);
     }
 
     private static Codec<BrClientEntity> wrapDescription(String rootField) {
@@ -178,15 +225,18 @@ public record BrClientEntity(
                                 BrClientEntityScripts.CODEC.optionalFieldOf("scripts").forGetter(BrClientEntity::scripts),
                                 OBJECT_VALUE_CODEC.optionalFieldOf("spawn_egg").forGetter(BrClientEntity::spawn_egg),
                                 ITEM_FIELD_CODEC.optionalFieldOf("item", Map.of()).forGetter(BrClientEntity::item),
-                                Codec.BOOL.optionalFieldOf("enable_attachables", false).forGetter(BrClientEntity::enable_attachables)
+                                // 装备渲染的四个开关整体作为一层：description 的可选字段数已到
+                                // RecordCodecBuilder.group 上限，且它们语义耦合（hide_armor 覆盖
+                                // enable_attachables），单独成 record 后仍读同一层 JSON 的平铺键。
+                                Toggles.CODEC.forGetter(BrClientEntity::toggles)
                         ).apply(ins2, (identifier, minEngineVersion, materials, textures, geometry, animations,
                                        animationControllers, particleEffects, soundEffects, renderControllerRefs,
-                                       explicitConditions, scripts, spawnEgg, item, enableAttachables) ->
+                                       explicitConditions, scripts, spawnEgg, item, toggles) ->
                                 new BrClientEntity(identifier, minEngineVersion, materials, textures, geometry,
                                         animations, animationControllers, particleEffects, soundEffects,
                                         splitNames(renderControllerRefs),
                                         mergeConditions(renderControllerRefs, explicitConditions),
-                                        scripts, spawnEgg, item, enableAttachables))).fieldOf("description").forGetter(o -> o)
+                                        scripts, spawnEgg, item, toggles))).fieldOf("description").forGetter(o -> o)
                 ).apply(ins1, o -> o)).fieldOf(rootField).forGetter(o -> o)
         ).apply(ins, o -> o));
     }

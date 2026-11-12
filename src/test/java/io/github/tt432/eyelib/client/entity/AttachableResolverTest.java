@@ -171,7 +171,7 @@ class AttachableResolverTest {
                 Optional.empty(),
                 Optional.empty(),
                 item,
-                enableAttachables
-        );
+                new BrClientEntity.Toggles(enableAttachables, false, false,
+                        io.github.tt432.eyelib.molang.MolangValue.ONE));
     }
 }

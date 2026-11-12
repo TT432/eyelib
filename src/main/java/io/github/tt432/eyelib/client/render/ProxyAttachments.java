@@ -1,6 +1,8 @@
 package io.github.tt432.eyelib.client.render;
 
 import io.github.tt432.eyelib.animation.ModelRuntimeData;
+import io.github.tt432.eyelib.client.entity.AttachablePolicy;
+import io.github.tt432.eyelib.importer.entity.BrClientEntity;
 import io.github.tt432.eyelib.model.GlobalBoneIdHandler;
 import io.github.tt432.eyelib.model.Model;
 import net.minecraft.world.entity.EquipmentSlot;
@@ -60,8 +62,14 @@ public final class ProxyAttachments {
     static int render(SimpleRenderAction<?> action, LivingEntity holder, Model model, ModelRuntimeData tickedInfos,
                       Matrix4f modelRoot, int light, Set<EquipmentSlot> attachableSlots) {
         int drawn = 0;
+        // 与真实 attachable 共用同一份准入策略：代理不是「另一套渲染」，只是「同一套装备渲染的
+        // 原版几何来源」。enable_attachables 关 → 全部不画；hide_armor 只压盔甲/头盔（武器照常）。
+        BrClientEntity holderCe = AttachablePolicy.clientEntityOf(holder);
         for (ProxyAttachable proxy : ALL) {
             if (attachableSlots.contains(proxy.slot()) || !proxy.manages(holder)) {
+                continue;
+            }
+            if (!AttachablePolicy.allows(holderCe, proxy.kind() == ProxyAttachable.Kind.ARMOR_PIECE)) {
                 continue;
             }
             // 挂载目标缺失的槽位不画、也不计入「画了挂载物」：没有任何几何被提交

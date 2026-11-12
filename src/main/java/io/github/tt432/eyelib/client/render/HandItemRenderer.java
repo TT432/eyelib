@@ -5,6 +5,10 @@ import com.mojang.math.Axis;
 import io.github.tt432.eyelib.animation.ModelPoseTransforms;
 import io.github.tt432.eyelib.animation.ModelRuntimeData;
 import io.github.tt432.eyelib.bridge.client.render.adapter.RenderPorts;
+import io.github.tt432.eyelib.capability.RenderData;
+import io.github.tt432.eyelib.client.entity.AttachablePolicy;
+import io.github.tt432.eyelib.importer.entity.BrClientEntity;
+import io.github.tt432.eyelib.molang.MolangScope;
 import io.github.tt432.eyelib.model.Model;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.EquipmentSlot;
@@ -13,6 +17,7 @@ import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import org.joml.Matrix4f;
+import org.jspecify.annotations.Nullable;
 
 /**
  * 手持物（主手/副手物品与 attachable）渲染簇，由 {@link ProxyAttachments} 的
@@ -58,6 +63,11 @@ final class HandItemRenderer {
         if (item.isEmpty()) {
             return false;
         }
+        // 手持物专有的两个 client entity 开关（与真实 attachable 手持物共用同一求值）：
+        // held_item_ignores_lighting → 全亮；held_item_scale → Molang 缩放（<=0 回落 1.0）
+        BrClientEntity holderCe = AttachablePolicy.clientEntityOf(holder);
+        int itemLight = AttachablePolicy.heldItemLight(holderCe, light);
+        float itemScale = AttachablePolicy.heldItemScale(holderCe, holderScope(holder));
         int boneId = proxy.resolveBindTarget(model);
         if (boneId < 0) {
             return false;
@@ -74,17 +84,26 @@ final class HandItemRenderer {
         PoseStack poseStack = RenderPorts.get().renderSystemPort().createPoseStackFromMatrix(frame.get());
         var pivot = bindBone.pivot();
         poseStack.translate(pivot.x(), pivot.y(), pivot.z());
+        if (itemScale != 1F) {
+            poseStack.scale(itemScale, itemScale, itemScale);
+        }
 
         var attachable = AttachableItemRenderSetup.getOrPrepare(holder, hand, false);
         if (attachable != null) {
-            AttachableItemRenderSetup.renderAttachable(attachable, poseStack, action.multiBufferSource(), holder, light,
-                    OverlayTexture.NO_OVERLAY);
+            AttachableItemRenderSetup.renderAttachable(attachable, poseStack, action.multiBufferSource(), holder,
+                    itemLight, OverlayTexture.NO_OVERLAY);
             return true;
         }
 
         poseStack.mulPose(Axis.XP.rotationDegrees(-90.0F));
         RenderPorts.get().renderSystemPort()
-                .renderItemDirect(holder, item, displayContext, offhand, poseStack, action.sink(), light);
+                .renderItemDirect(holder, item, displayContext, offhand, poseStack, action.sink(), itemLight);
         return true;
+    }
+
+    /** holder 的 Molang 作用域（`held_item_scale` 求值用）；未托管实体返回 null。 */
+    private static @Nullable MolangScope holderScope(LivingEntity holder) {
+        var rd = RenderData.peekComponent(holder);
+        return rd == null ? null : rd.getScope();
     }
 }
