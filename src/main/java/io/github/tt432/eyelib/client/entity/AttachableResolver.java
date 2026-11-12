@@ -8,6 +8,7 @@ import io.github.tt432.eyelib.molang.MolangScope;
 import io.github.tt432.eyelib.molang.MolangValue;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 import org.jspecify.annotations.Nullable;
@@ -34,8 +35,27 @@ public final class AttachableResolver {
     private static volatile long indexGeneration = -1;
     private static volatile Map<String, List<Entry>> index = Map.of();
 
+    /**
+     * 按手持物解析 attachable（不区分槽位，按「非盔甲」语义做准入判定）。
+     * 已知槽位时请用 {@link #resolve(LivingEntity, ItemStack, EquipmentSlot)}——盔甲槽要额外受
+     * {@code hide_armor} 约束。
+     */
     @Nullable
     public static BrClientEntity resolve(LivingEntity holder, ItemStack stack) {
+        return resolve(holder, stack, null);
+    }
+
+    /**
+     * 解析 attachable，并按 {@link AttachablePolicy} 做准入判定。
+     * <p>
+     * 真实 attachable 与代理 attachable（原版盔甲/手持物回退）共用同一判定，避免两条路径对同一份
+     * client entity 数据给出不同结果：盔甲槽物品受 {@code enable_attachables && !hide_armor}，
+     * 其余物品只受 {@code enable_attachables}。
+     *
+     * @param slot 槽位；{@code null} 表示未知（按非盔甲处理）
+     */
+    @Nullable
+    public static BrClientEntity resolve(LivingEntity holder, ItemStack stack, @Nullable EquipmentSlot slot) {
         if (stack.isEmpty() || AttachableManager.INSTANCE.all().isEmpty()) {
             return null;
         }
@@ -48,7 +68,8 @@ public final class AttachableResolver {
         RenderData<?> renderData = RenderData.getComponent(holder);
         renderData.ensureOwner(holder);
 
-        if (!isAttachableEnabled(renderData.getClientEntityComponent().getClientEntity())) {
+        BrClientEntity holderCe = renderData.getClientEntityComponent().getClientEntity();
+        if (!AttachablePolicy.allows(holderCe, AttachablePolicy.isArmorStack(holder, slot, stack))) {
             return null;
         }
 
@@ -56,11 +77,12 @@ public final class AttachableResolver {
     }
 
     /**
-     * 判断 holder 的 client entity 是否允许 attachable。
+     * 判断 holder 的 client entity 是否允许 attachable（不含 {@code hide_armor} 的盔甲细分；
+     * 装备渲染一律走 {@link #resolve(LivingEntity, ItemStack, EquipmentSlot)}）。
      * holder 无 client entity 定义（vanilla 实体）时默认允许。
      */
     static boolean isAttachableEnabled(@Nullable BrClientEntity holderCe) {
-        return holderCe == null || holderCe.enable_attachables();
+        return AttachablePolicy.allowsAttachables(holderCe);
     }
 
     @Nullable

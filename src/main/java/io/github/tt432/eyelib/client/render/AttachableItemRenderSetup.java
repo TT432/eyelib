@@ -59,7 +59,8 @@ public final class AttachableItemRenderSetup {
     @Nullable
     public static RenderData<ItemStack> getOrPrepare(LivingEntity entity, EquipmentSlot slot, boolean isFirstPerson) {
         ItemStack item = entity.getItemBySlot(slot);
-        BrClientEntity attachable = AttachableResolver.resolve(entity, item);
+        // 盔甲槽额外受 hide_armor 约束（与代理 attachable 共用 AttachablePolicy）
+        BrClientEntity attachable = AttachableResolver.resolve(entity, item, slot);
         if (attachable == null) {
             invalidate(entity, slot);
             return null;
@@ -339,12 +340,16 @@ public final class AttachableItemRenderSetup {
     /** {@code binding} 表达式按源码缓存（编译缓存另有一层，这里省掉每帧的 MolangValue 分配）。 */
     private static final Map<String, MolangValue> BINDING_VALUES = new java.util.concurrent.ConcurrentHashMap<>();
 
+    /**
+     * 挂载目标解析：与代理 attachable 共用同一条候选链实现（{@link ProxyAttachable#resolveChain}）。
+     * 真实 attachable 的 {@code binding} 求值结果 / 同名骨骼在这里退化成「单元素链」，
+     * 于是「目标缺失就不画」的语义只有一份实现。
+     */
     private static int holderBoneId(Model holderModel, @Nullable String name) {
         if (name == null || name.isBlank()) {
             return -1;
         }
-        int id = GlobalBoneIdHandler.get(name);
-        return holderModel.allBones().containsKey(id) ? id : -1;
+        return ProxyAttachable.resolveChain(holderModel, java.util.List.of(name));
     }
 
     public static void clearEntity(LivingEntity entity) {

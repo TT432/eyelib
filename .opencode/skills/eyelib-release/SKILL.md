@@ -329,3 +329,57 @@ Portal 要求每个文件带 `.md5` 与 `.sha1`；mavenLocal 发布**不生成**
     （快照 `work/release_21135/cf-files-page.txt`）。
   - 本次脚本：`work/release_21135/{cf_upload.py, cf_wait_verify.py, cf_changelog.md, cf_ids.json}`。
 - 联动：dokimobs 0.3.14 依赖本版本（`eyelib_version=21.1.35`）。
+
+## 发布记录（21.1.39，2026-11-11）
+
+内容：CarryOn 兼容。① 同一帧内「实体身份 + 实体根位姿」相同的重复提交只渲染一次（26.1 的
+`LevelRenderState.entityRenderStates` 只在 `renderLevel` 末尾 reset，一帧内多次 extract 会累积同一实体的多份状态；
+CarryOn 第一人称 main/offhand 各提交一次），命中按已渲染返回以免退回 vanilla 再画；② 所有活体 render state 改为按
+`extractEntity` 登记的**身份**解析实体（原先按「类型 + ±0.5 格坐标」反查，同格同类型生物会全部解析到同一实体）。
+
+- **本次只发 CurseForge**（用户指定发布仅到 CurseForge）；Maven Central 未发，待用户确认后补。
+- 代码：PR #52（`fix/armor-extra-render` → `feat/armor-attachable-slots`，#51 合并后即可合入 `master`）。
+- 前置：`clientsmoke` bump 21.1.39（提交 `479b41f`，已推 `TT432/clientsmoke` main；本次顺带补推了此前漏推的 21.1.36 提交）。
+- 三节点 `compileJava` / `:test` / `:nullawayMain` 全绿（`work/gates_21139.log`）；`~/.m2/.../21.1.39+<node>/` 各 10 个文件齐全。
+- CurseForge（displayName 去扩展名）：
+
+  | 节点 | fileId |
+  | --- | --- |
+  | `21.1.39+1.20.1-forge` | 9554648 |
+  | `21.1.39+1.21.1-neoforge` | 9554649 |
+  | `21.1.39+26.1.2-neoforge` | 9554652 |
+
+  - 三节点串行上传约 77 s（Python/requests 直连 legacy Upload API，未触发 Cloudflare）；
+    16:13:50 / 16:17:57 / 16:22:04 轮询仍 `0/3` → 16:26:12 `files/all` 三文件全部可见（约 12.5 分钟）。
+  - 本次脚本与页面快照：`work/release_21139/{cf_upload.py, cf_wait_verify.py, cf_changelog.md, cf_ids.json, cf-files-page.txt}`。
+- 联动：dokimobs 0.3.15 依赖本版本（`eyelib_version=21.1.39`）。
+
+## 发布记录（21.1.41，2026-11-12）
+
+内容：装备渲染四个 client entity 开关（`enable_attachables` / `hide_armor` / `held_item_ignores_lighting` /
+`held_item_scale`）+ 代理 attachable 与真实 attachable 同构化。**21.1.40（代理 attachable 收敛）未单独发 CF，
+其改动一并随本版入版。**
+
+- 代码：PR #52（`fix/armor-extra-render` → `feat/armor-attachable-slots`）；三节点 `compile` CI 全绿
+  （1.20.1 2m28s / 1.21.1 56s / 26.1.2 1m18s），`Codacy` fail 属非必需门禁（`mergeStateStatus=UNSTABLE`、
+  `mergeable=MERGEABLE`）。PR #51（`feat/armor-attachable-slots` → `master`）仍未合并，本轮按惯例从分支发版。
+- **CI 首跑秒败的坑复现**：`compile` 三节点 6–8s 失败，原因是 clientsmoke gitlink 指向远端不存在的
+  `8d342c6`（本地 `clientsmoke` main 领先 origin/main 两个提交）。补 `git -C clientsmoke push origin main`
+  （`479b41f..8d342c6`）后 `gh run rerun <id> --failed` 通过——与本 skill 步骤 1.2 记录一致。
+- 门槛：三节点 `compileJava` / `:test` / `:nullawayMain` 全绿（`BUILD SUCCESSFUL in 2m47s`）；
+  `publishMavenJavaPublicationToMavenLocal` 三节点成功（jar 真实重建，`eyelib-21.1.41+1.20.1-forge.jar`
+  sha256 `8bcc4ba5…` → `4681b209…`；发布前 m2 里的 jar 早于 HEAD 提交 2 分钟，必须重发）。
+- CurseForge（displayName 去扩展名）：
+
+  | 节点 | fileId |
+  | --- | --- |
+  | `21.1.41+1.20.1-forge` | 9575636 |
+  | `21.1.41+1.21.1-neoforge` | 9575657 |
+  | `21.1.41+26.1.2-neoforge` | 9575677 |
+
+  - 三节点串行上传约 79 s（Python/requests 直连 legacy Upload API，未触发 Cloudflare）；
+    23:28:54 首轮轮询 `0/3` → **23:42:26 三文件全部可见**（约 14 分钟）。
+  - 本次脚本与页面快照：`work/release_21141/{cf_upload.py, cf_wait_verify.py, cf_changelog.md,
+    cf_ids.json, cf-files-page.txt, publish_local.log}`。
+- Maven Central：本版**未发**（用户未要求；21.1.39 同样只发 CurseForge），待确认后补。
+- 联动：dokimobs 0.3.16 依赖本版本（`eyelib_version=21.1.41`）。

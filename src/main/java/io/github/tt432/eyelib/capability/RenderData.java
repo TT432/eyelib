@@ -60,6 +60,15 @@ public class RenderData<T> {
         return (RenderData<T>) DataAttachmentHelper.getOrCreate(AttachableDataTypes.RENDER_DATA.get(), entity);
     }
 
+    /**
+     * 只读取已存在的组件，**不创建**：未托管的实体（原版实体、掉落物等）返回 {@code null}。
+     * 渲染期的只读查询（如 {@link io.github.tt432.eyelib.client.entity.AttachablePolicy}）必须用它，
+     * 否则会给每个查询过的实体落盘一份空组件。
+     */
+    public static @Nullable RenderData<?> peekComponent(Entity entity) {
+        return DataAttachmentHelper.getOrNull(AttachableDataTypes.RENDER_DATA.get(), entity);
+    }
+
     @Nullable
     private T owner;
     @Nullable

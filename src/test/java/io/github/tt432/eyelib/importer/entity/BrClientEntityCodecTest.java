@@ -1,5 +1,7 @@
 package io.github.tt432.eyelib.importer.entity;
 
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.mojang.serialization.JsonOps;
 import io.github.tt432.eyelib.TestCodecUtil;
@@ -260,7 +262,7 @@ class BrClientEntityCodecTest {
                 Optional.empty(),
                 Optional.empty(),
                 Map.of(),
-                false);
+                BrClientEntity.Toggles.DEFAULT);
 
         assertEquals(particleEffects.keySet().stream().toList(),
                 entity.particle_effects().keySet().stream().toList());
@@ -272,5 +274,81 @@ class BrClientEntityCodecTest {
                 BrClientEntity.CODEC.parse(JsonOps.INSTANCE,
                         TestCodecUtil.unwrap(BrClientEntity.CODEC.encodeStart(JsonOps.INSTANCE, entity))));
         assertEquals(entity, decoded);
+    }
+
+    @Test
+    void parsesEquipmentRenderToggles() {
+        String json = """
+                {
+                  "minecraft:client_entity": {
+                    "description": {
+                      "identifier": "eyelib:test_toggles",
+                      "geometry": { "default": "geometry.test" },
+                      "enable_attachables": true,
+                      "hide_armor": true,
+                      "held_item_ignores_lighting": true,
+                      "held_item_scale": "2.0"
+                    }
+                  }
+                }
+                """;
+
+        BrClientEntity entity = TestCodecUtil.unwrap(
+                BrClientEntity.CODEC.parse(JsonOps.INSTANCE, JsonParser.parseString(json)));
+
+        assertTrue(entity.enable_attachables());
+        assertTrue(entity.hide_armor());
+        assertTrue(entity.held_item_ignores_lighting());
+        assertEquals(2.0F, entity.held_item_scale().eval(new io.github.tt432.eyelib.molang.MolangScope()), 1e-6F);
+        // 四个开关透传给渲染策略，不改变其它字段
+        assertEquals("geometry.test", entity.geometry().get("default"));
+    }
+
+    @Test
+    void equipmentRenderTogglesDefaultWhenAbsent() {
+        String json = """
+                {
+                  "minecraft:client_entity": {
+                    "description": {
+                      "identifier": "eyelib:test_toggles_default",
+                      "geometry": { "default": "geometry.test" }
+                    }
+                  }
+                }
+                """;
+
+        BrClientEntity entity = TestCodecUtil.unwrap(
+                BrClientEntity.CODEC.parse(JsonOps.INSTANCE, JsonParser.parseString(json)));
+
+        assertFalse(entity.enable_attachables());
+        assertFalse(entity.hide_armor());
+        assertFalse(entity.held_item_ignores_lighting());
+        assertEquals(1.0F, entity.held_item_scale().eval(new io.github.tt432.eyelib.molang.MolangScope()), 1e-6F);
+    }
+
+    @Test
+    void absentEquipmentRenderTogglesStayAbsentAfterEncode() {
+        String json = """
+                {
+                  "minecraft:client_entity": {
+                    "description": {
+                      "identifier": "eyelib:test_toggles_roundtrip",
+                      "geometry": { "default": "geometry.test" }
+                    }
+                  }
+                }
+                """;
+
+        BrClientEntity entity = TestCodecUtil.unwrap(
+                BrClientEntity.CODEC.parse(JsonOps.INSTANCE, JsonParser.parseString(json)));
+        JsonElement encoded = TestCodecUtil.unwrap(BrClientEntity.CODEC.encodeStart(JsonOps.INSTANCE, entity));
+        JsonObject description = encoded.getAsJsonObject().getAsJsonObject("minecraft:client_entity")
+                                        .getAsJsonObject("description");
+
+        // 导出不得凭空写入缺省开关（否则整包资源往返会污染所有 client entity JSON）
+        assertFalse(description.has("enable_attachables"), description.toString());
+        assertFalse(description.has("hide_armor"), description.toString());
+        assertFalse(description.has("held_item_ignores_lighting"), description.toString());
+        assertFalse(description.has("held_item_scale"), description.toString());
     }
 }

@@ -181,3 +181,112 @@ charged creeper 的基础贴图数组与 armor RC 的 `part_visibility`，写死
 **未改变的行为**：没有 attachable 定义的物品（如原版铁甲）仍走 §2.2 的 vanilla 人形盔甲路径，
 外观与 21.1.34 一致；手持 attachable 仍走 item 骨骼帧路径（本次未迁移）。
 
+### 5.6 原版装备渲染收敛为「代理 attachable」（2026-11-12，21.1.40）
+
+**触发**：用户报告「僵尸村民手持物品没有显示」，并要求「把原版渲染分别用一个代理 attachable 管理，
+对每个模型检查 attach 目标是否存在」。盘点结论：§2.2/§2.3 的三条原版回退路径（头部物品 / 人形盔甲 /
+手持物）是三个各自硬编码的渲染器，槽位归属靠调用方手写、挂载目标（持有者骨骼名）各自隐式约定；
+`HandItemRenderer` 只认 `rightitem`/`leftitem`，模型缺骨骼时静默返回，无从发现。
+
+**决策**：新增 `ProxyAttachable` + `ProxyAttachments`（application 层，`client/render/`），把每一类原版
+装备渲染表达成与 `minecraft:attachable` 同形的**声明**：
+
+| 声明字段 | 语义 |
+|---|---|
+| `identifier` | 稳定 id（`eyelib:held_item_main` 等），审计/诊断用 |
+| `slot` | 管理的 `EquipmentSlot`（HEAD 槽由「头部物品」与「头盔」两条代理按「是否盔甲物品」分流） |
+| `kind` | 几何来源：`HELD_ITEM` / `HEAD_ITEM` / `ARMOR_PIECE` |
+| `bindTargets` | 候选链列表，按序取第一个存在于持有者模型的骨骼；全缺失 = 不绘制（基岩语义，无原点兜底） |
+
+`ProxyAttachments.render` 是槽位归属的唯一裁决点，顺序复刻 vanilla（头部物品 → 盔甲 CHEST/LEGS/FEET/HEAD
+→ 副手 → 主手）；真实 `minecraft:attachable` 命中的槽位整条跳过（挂载定义优先于原版回退，不会双画）。
+三个渲染器改为**单槽**入口（`render(action, holder, model, tickedInfos, modelRoot, proxy, light)`），
+绑定骨骼由代理声明解析，不再各自硬编码名字。
+
+**手持物候选链**：`rightitem`/`leftitem`（基岩规范挂点）→ `righthand`/`lefthand` → `righthandlocator`/
+`lefthandlocator`。链内只放「手」级别骨骼：手臂/前臂 pivot 在肩/肘，拿它当挂点会把物品摆到关节上
+（所以**不**包含 `*forearm`、`*handxia` 这类关节骨）。
+
+**审计入口**：`ProxyAttachments.audit(Model)` 逐代理输出「候选链 → 解析到的骨骼 / MISSING」，
+`ProxyAttachmentsTest` 固定了三件事：命中 `rightitem`、沿链兜底到 `righthand`/`righthandlocator`、
+只有肩/肘骨骼时报 MISSING（不允许兜底）。
+
+**诊断计数**（`EntityRenderOrchestrator` getter，dev 用）：`getDuplicateSuppressedCount()`
+（同帧同姿态重复提交被丢弃的次数）、`getAttachmentWithoutBodyCount()`
+（画了挂载物但本体一帧内没提交几何的帧数；正常恒 0）。
+
+**数据侧配套（dokimobs）**：`minecraft:zombie_villager` / `minecraft:villager` 的 15 个职业模型补
+`rightitem`/`leftitem` 空骨骼，`zombie`/`husk`/`stray` 补镜像的 `leftitem`。**必须两个村民实体一起补**：
+`geometry.unskilled`… 等 14 个几何名在两个条目里同名重复，而 `ModelManager` 全局按名注册（后写覆盖），
+只补一方会解析到另一方的旧副本（实测只补 zombie_villager 时运行时仍是 70 根骨骼、无 rightitem）。
+
+**验证**：三节点 `compileJava`/`:test`/`:nullawayMain` 全绿；1.20.1 / 1.21.1 / 26.1.2 实机 A/B
+（主手清空 vs 主手石头 + 副手铁剑）：空手无物品、装备后石头出现在拳内、剑在副手；26.1.2 计数
+`dup=0`、`attNoBody=0`（130 只活体实体的场景，连续 8.7 万次实体渲染）。详见 dokimobs
+`docs/bbmodel-pipeline.md` 同日小节。
+
+**资源路径约定**（本轮踩坑记录）：所有资源加载器都继承 `BrResourcesLoader`，实际扫描
+`assets/<命名空间>/eyelib/<directory>/`——attachable 定义在 `assets/<ns>/eyelib/attachables/*.json`
+（不是 `assets/<ns>/attachables/`），models/render_controllers/entity/animations 同理。
+
+**未覆盖 / 仍缺失**：`bbmodel:pillager`、`bbmodel:blaze` 的主手无手部骨骼（掠夺者的弩是烘焙几何）；
+`villager` 的原版语义是交叉双臂持物，本实现按「手内持物」渲染；`armor_feet` 在 sheep/guardian/enderman
+与 `armor_legs` 在无 `body` 骨骼的模型上仍不绘制（结构性缺口，见审计表）。
+
+### 5.7 四个装备渲染开关 + 代理/真实 attachable 的同构化（2026-11-12，21.1.41）
+
+**触发**：用户追问「基岩版是不是有一个 attachable 渲染开关」并要求「代理 attachable 不应该和真实的
+attachable 有差别，四个字段都实现一下」。
+
+官方文档（bedrock.dev *Entities* / Microsoft Learn「Client Entity Documentation」）给出四个
+`minecraft:client_entity.description` 字段：
+
+| 字段 | 文档语义 | 本库实现 |
+|---|---|---|
+| `enable_attachables` | 「allows the entity to render armor and weapons」——装备渲染总开关，缺省 false | `AttachablePolicy.allowsAttachables` |
+| `hide_armor` | 「armor … should be hidden … This overrides the rendering settings specified by 'enable_attachables'」——只压盔甲 | `AttachablePolicy.allowsArmor` = `allowsAttachables && !hide_armor` |
+| `held_item_ignores_lighting` | 手持物是否全亮 | `AttachablePolicy.heldItemLight` → `FULL_BRIGHT` |
+| `held_item_scale` | Molang 缩放手持物，缺省 1.0，必须解析为 > 0 | `AttachablePolicy.heldItemScale`（<=0/非有限/求值异常/无作用域 → 1.0） |
+
+**同构化（回答「代理与真实 attachable 不应有差别」）**——三条路径被收敛到同一组函数：
+
+1. **准入**：`AttachableResolver.resolve(holder, stack, slot)` 是装备渲染的唯一准入点，内部走
+   `AttachablePolicy.allows(holderCe, isArmorStack(holder, slot, stack))`。盔甲槽物品受
+   `enable_attachables && !hide_armor`，其余物品（手持物/头饰/非盔甲头部物品）只受 `enable_attachables`。
+   真实 attachable 的四处调用（`AttachableItemRenderSetup.getOrPrepare`、`HumanoidArmorLayerMixin`、
+   `ItemInHandRendererMixin`、Molang 查询）与代理 attachable（`ProxyAttachments.render` 的同一判定）
+   因此**不可能**对同一份数据给出不同结果。
+2. **挂载点**：真实 attachable 的 `binding` 求值结果 / 同名骨骼在 `AttachableItemRenderSetup.holderBoneId`
+   里退化成「单元素候选链」，直接调用 `ProxyAttachable.resolveChain`；代理的多候选链也走它。
+   「目标缺失就不画」只有一份实现。
+3. **槽位归属**：`ProxyAttachments.render` 仍是唯一裁决点，真实 attachable 命中的槽整条跳过（不双画）。
+
+**实现细节**
+
+- `BrClientEntity` 的可选字段已到 DFU `RecordCodecBuilder.group` 上限（16），四个开关收进嵌套
+  record `BrClientEntity.Toggles(enable_attachables, hide_armor, held_item_ignores_lighting, held_item_scale)`
+  （读同一层 JSON 的四个平铺键，编码时缺省不写回——`absentEquipmentRenderTogglesStayAbsentAfterEncode`
+  固定了这条，避免导出污染所有 client entity JSON）；对外仍保留四个同名访问器。
+- `RenderData.peekComponent(entity)`（只读、不创建）供渲染期只读查询；旧 `getComponent` 会
+  `getOrCreate`，只读路径必须避免给未托管实体落盘空组件。
+- `held_item_scale` 在 `HandItemRenderer` 里作用于两条分支（真实 attachable 模型 / 原版物品模型），
+  在 `translate(pivot)` 之后施加，即绕挂载点缩放。
+
+**验证（26.1.2 实机，dev 包内逐字段改写 cospack 的 description）**
+
+| 字段 | 期望 | 实测 |
+|---|---|---|
+| `hide_armor: true`（zombie） | 无盔甲、剑可见 | 铁盔/胸甲消失，铁剑仍在拳内 |
+| `enable_attachables: false`（husk） | 盔甲与武器都不画 | 同帧对照：旁边 skeleton（默认 true）有铁盔+胸甲+剑，husk 两者皆无 |
+| `held_item_ignores_lighting: true`（drowned，午夜无夜视） | 剑亮、身体暗 | 剑呈亮白，对照 zombie 的剑暗 |
+| `held_item_scale: "3.0"`（drowned） | 剑明显变大 | 同帧对照：drowned 的剑比 zombie 的长约 3 倍 |
+
+截图：`versions/26.1.2/run/debug_shots/screenshots/{toggle_hide_armor_zombie,toggle_ab_husk_vs_skeleton,final_dark_pair}.png`
+（dokimobs 侧同名记录见 `docs/bbmodel-pipeline.md`）。
+
+**踩坑记录**：改 cospack 里的 description 做验证时，任何一次 `processResources`/`assemble` 都会把
+`build/resources` 覆盖回源码版本——dev 验证必须「构建 → 改 build/resources → 启动 → 截图」，
+中途重跑构建会让开关静默失效（本轮先在 stray 上浪费了数轮实机排查）。
+
+**未覆盖**：`enable_attachables` 对首人称玩家自身手持 attachable 的影响（玩家无 client entity 定义，
+按「默认允许」处理）；`held_item_scale` 对第一人称 attachable 渲染的影响。
