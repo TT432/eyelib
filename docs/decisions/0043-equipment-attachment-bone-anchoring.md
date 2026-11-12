@@ -181,3 +181,54 @@ charged creeper 的基础贴图数组与 armor RC 的 `part_visibility`，写死
 **未改变的行为**：没有 attachable 定义的物品（如原版铁甲）仍走 §2.2 的 vanilla 人形盔甲路径，
 外观与 21.1.34 一致；手持 attachable 仍走 item 骨骼帧路径（本次未迁移）。
 
+### 5.6 原版装备渲染收敛为「代理 attachable」（2026-11-12，21.1.40）
+
+**触发**：用户报告「僵尸村民手持物品没有显示」，并要求「把原版渲染分别用一个代理 attachable 管理，
+对每个模型检查 attach 目标是否存在」。盘点结论：§2.2/§2.3 的三条原版回退路径（头部物品 / 人形盔甲 /
+手持物）是三个各自硬编码的渲染器，槽位归属靠调用方手写、挂载目标（持有者骨骼名）各自隐式约定；
+`HandItemRenderer` 只认 `rightitem`/`leftitem`，模型缺骨骼时静默返回，无从发现。
+
+**决策**：新增 `ProxyAttachable` + `ProxyAttachments`（application 层，`client/render/`），把每一类原版
+装备渲染表达成与 `minecraft:attachable` 同形的**声明**：
+
+| 声明字段 | 语义 |
+|---|---|
+| `identifier` | 稳定 id（`eyelib:held_item_main` 等），审计/诊断用 |
+| `slot` | 管理的 `EquipmentSlot`（HEAD 槽由「头部物品」与「头盔」两条代理按「是否盔甲物品」分流） |
+| `kind` | 几何来源：`HELD_ITEM` / `HEAD_ITEM` / `ARMOR_PIECE` |
+| `bindTargets` | 候选链列表，按序取第一个存在于持有者模型的骨骼；全缺失 = 不绘制（基岩语义，无原点兜底） |
+
+`ProxyAttachments.render` 是槽位归属的唯一裁决点，顺序复刻 vanilla（头部物品 → 盔甲 CHEST/LEGS/FEET/HEAD
+→ 副手 → 主手）；真实 `minecraft:attachable` 命中的槽位整条跳过（挂载定义优先于原版回退，不会双画）。
+三个渲染器改为**单槽**入口（`render(action, holder, model, tickedInfos, modelRoot, proxy, light)`），
+绑定骨骼由代理声明解析，不再各自硬编码名字。
+
+**手持物候选链**：`rightitem`/`leftitem`（基岩规范挂点）→ `righthand`/`lefthand` → `righthandlocator`/
+`lefthandlocator`。链内只放「手」级别骨骼：手臂/前臂 pivot 在肩/肘，拿它当挂点会把物品摆到关节上
+（所以**不**包含 `*forearm`、`*handxia` 这类关节骨）。
+
+**审计入口**：`ProxyAttachments.audit(Model)` 逐代理输出「候选链 → 解析到的骨骼 / MISSING」，
+`ProxyAttachmentsTest` 固定了三件事：命中 `rightitem`、沿链兜底到 `righthand`/`righthandlocator`、
+只有肩/肘骨骼时报 MISSING（不允许兜底）。
+
+**诊断计数**（`EntityRenderOrchestrator` getter，dev 用）：`getDuplicateSuppressedCount()`
+（同帧同姿态重复提交被丢弃的次数）、`getAttachmentWithoutBodyCount()`
+（画了挂载物但本体一帧内没提交几何的帧数；正常恒 0）。
+
+**数据侧配套（dokimobs）**：`minecraft:zombie_villager` / `minecraft:villager` 的 15 个职业模型补
+`rightitem`/`leftitem` 空骨骼，`zombie`/`husk`/`stray` 补镜像的 `leftitem`。**必须两个村民实体一起补**：
+`geometry.unskilled`… 等 14 个几何名在两个条目里同名重复，而 `ModelManager` 全局按名注册（后写覆盖），
+只补一方会解析到另一方的旧副本（实测只补 zombie_villager 时运行时仍是 70 根骨骼、无 rightitem）。
+
+**验证**：三节点 `compileJava`/`:test`/`:nullawayMain` 全绿；1.20.1 / 1.21.1 / 26.1.2 实机 A/B
+（主手清空 vs 主手石头 + 副手铁剑）：空手无物品、装备后石头出现在拳内、剑在副手；26.1.2 计数
+`dup=0`、`attNoBody=0`（130 只活体实体的场景，连续 8.7 万次实体渲染）。详见 dokimobs
+`docs/bbmodel-pipeline.md` 同日小节。
+
+**资源路径约定**（本轮踩坑记录）：所有资源加载器都继承 `BrResourcesLoader`，实际扫描
+`assets/<命名空间>/eyelib/<directory>/`——attachable 定义在 `assets/<ns>/eyelib/attachables/*.json`
+（不是 `assets/<ns>/attachables/`），models/render_controllers/entity/animations 同理。
+
+**未覆盖 / 仍缺失**：`bbmodel:pillager`、`bbmodel:blaze` 的主手无手部骨骼（掠夺者的弩是烘焙几何）；
+`villager` 的原版语义是交叉双臂持物，本实现按「手内持物」渲染；`armor_feet` 在 sheep/guardian/enderman
+与 `armor_legs` 在无 `body` 骨骼的模型上仍不绘制（结构性缺口，见审计表）。

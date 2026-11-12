@@ -12,6 +12,10 @@ final class RenderDiagnostics {
     private static volatile int renderCount = 0;
     private static volatile int errorCount = 0;
     private static volatile @Nullable String lastError = null;
+    /** 同帧同姿态重复提交被丢弃的次数（26.1 render state 累积 / CarryOn 重复提交的度量）。 */
+    private static volatile int duplicateSuppressedCount = 0;
+    /** 「画了挂载物（盔甲/手持物）但本体一帧内没有提交几何」的帧数。 */
+    private static volatile int attachmentWithoutBodyCount = 0;
 
     private RenderDiagnostics() {
     }
@@ -29,6 +33,29 @@ final class RenderDiagnostics {
             t.printStackTrace(new java.io.PrintWriter(sw));
             lastError = sw.toString();
         }
+    }
+
+    /** 记一次「同帧同姿态重复提交」被抑制（26.1 的 render state 累积会重复提交同一实体）。 */
+    static void recordDuplicateSuppressed() {
+        duplicateSuppressedCount++;
+    }
+
+    /**
+     * 记一次「挂载物画了、本体没提交」：该帧本体由原版层补画，屏幕上是「本体 + 多一份甲」。
+     * 正常为 0；非 0 说明挂载物应先确认本体一定会提交。
+     */
+    static void recordAttachmentWithoutBody() {
+        attachmentWithoutBodyCount++;
+    }
+
+    /** 同帧同姿态重复提交被抑制的累计次数，dev 诊断用。 */
+    static int getDuplicateSuppressedCount() {
+        return duplicateSuppressedCount;
+    }
+
+    /** 「画了挂载物但本体未提交」的累计帧数，dev 诊断用。 */
+    static int getAttachmentWithoutBodyCount() {
+        return attachmentWithoutBodyCount;
     }
 
     /** Cumulative successful Eyelib entity renders, exposed for dev diagnostics. */
@@ -51,5 +78,7 @@ final class RenderDiagnostics {
         renderCount = 0;
         errorCount = 0;
         lastError = null;
+        duplicateSuppressedCount = 0;
+        attachmentWithoutBodyCount = 0;
     }
 }

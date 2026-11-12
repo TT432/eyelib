@@ -88,6 +88,16 @@ public final class EntityRenderOrchestrator {
         return RenderDiagnostics.getLastError();
     }
 
+    /** Same-frame same-pose duplicate submissions suppressed, exposed for dev diagnostics. */
+    public static int getDuplicateSuppressedCount() {
+        return RenderDiagnostics.getDuplicateSuppressedCount();
+    }
+
+    /** Frames where attachments were drawn although no body geometry was submitted. */
+    public static int getAttachmentWithoutBodyCount() {
+        return RenderDiagnostics.getAttachmentWithoutBodyCount();
+    }
+
     /** Resets dev-only render diagnostics before an isolated measurement. */
     public static void resetDiagnostics() {
         RenderDiagnostics.reset();
@@ -307,6 +317,7 @@ public final class EntityRenderOrchestrator {
             long poseHash = poseHash(params.poseStack().last().pose());
             Long previous = renderedPoseThisFrame(entity);
             if (previous != null && previous == poseHash) {
+                RenderDiagnostics.recordDuplicateSuppressed();
                 return true;
             }
 
@@ -487,7 +498,7 @@ public final class EntityRenderOrchestrator {
         Matrix4f[] leashEntityPose = {null};
         // 挂载物（盔甲/手持物）必须在模型几何提交之前渲染：26.1 的 submit 节点在几何 writer 内
         // 已不再接收新内容；骨骼帧只依赖「模型 + 本帧动画采样 + 模型根位姿」，与几何提交无关。
-        renderAttachments(data, components);
+        int attachmentDraws = renderAttachments(data, components);
         boolean rendered = components.stream()
                                                                        .filter(mc -> mc.readyForRendering() || (mc.getSerializableInfo() != null && mc.getSerializableInfo()
                                                                                                                                                       .texture() != null))
@@ -577,6 +588,10 @@ public final class EntityRenderOrchestrator {
         if (rendered) {
             // 栓绳：每个实体一次，放在模型几何之后（与原版 MobRenderer.render 的顺序一致）。
             LeashRenderer.render(data, leashModel[0], data.tickedInfos(), basePose, leashEntityPose[0]);
+        } else if (attachmentDraws > 0) {
+            // 挂载物已画、本体一帧内没有提交几何：这一帧原版层会补画本体（含原版盔甲），
+            // 屏幕上是「本体 + 多一份甲」。正常路径不该出现，计入诊断以便定位。
+            RenderDiagnostics.recordAttachmentWithoutBody();
         }
         return rendered;
     }
@@ -587,13 +602,13 @@ public final class EntityRenderOrchestrator {
      * 骨骼帧从模型根位姿累积；根位姿复刻 {@link ClientEntitySetup#setupEntityClientEntityData} 的
      * 实体位姿（脚本缩放/幼体缩放/身体朝向），因此挂载物与模型同姿。
      */
-    private static void renderAttachments(SimpleRenderAction<?> data, List<ModelComponent> components) {
+    private static int renderAttachments(SimpleRenderAction<?> data, List<ModelComponent> components) {
         if (!(data.entity() instanceof LivingEntity holder) || !hasEquipment(holder)) {
-            return;
+            return 0;
         }
         Model model = attachmentModel(components);
         if (model == null) {
-            return;
+            return 0;
         }
 
         PoseStack poseStack = RenderPorts.get().renderSystemPort()
@@ -607,9 +622,10 @@ public final class EntityRenderOrchestrator {
         // 并让「头部物品」与「vanilla 人形盔甲」两条回退路径跳过该槽，避免双画。
         Set<EquipmentSlot> attachableSlots = renderSlotAttachables(data, holder, model, tickedInfos, modelRoot, light);
 
-        HeadItemRenderer.render(data, holder, model, tickedInfos, modelRoot, light, attachableSlots);
-        ArmorAttachmentRenderer.render(data, holder, model, tickedInfos, modelRoot, light, attachableSlots);
-        HandItemRenderer.render(data, holder, model, tickedInfos, modelRoot, light);
+        // 原版装备渲染（头部物品 / 人形盔甲 / 手持物）统一由代理 attachable 编排：
+        // 槽位归属与挂载目标（持有者骨骼名）在 ProxyAttachments 里声明一次，
+        // 挂载目标缺失可用 ProxyAttachments.audit(model) 逐模型核对。
+        return ProxyAttachments.render(data, holder, model, tickedInfos, modelRoot, light, attachableSlots);
     }
 
     /** 有 attachable 定义的盔甲槽（人形四槽；BODY 槽狼铠不在范围内）。 */

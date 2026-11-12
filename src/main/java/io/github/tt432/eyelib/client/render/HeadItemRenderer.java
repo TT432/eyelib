@@ -5,17 +5,15 @@ import com.mojang.math.Axis;
 import io.github.tt432.eyelib.animation.ModelPoseTransforms;
 import io.github.tt432.eyelib.animation.ModelRuntimeData;
 import io.github.tt432.eyelib.bridge.client.render.adapter.RenderPorts;
-import io.github.tt432.eyelib.model.GlobalBoneIdHandler;
 import io.github.tt432.eyelib.model.Model;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import org.joml.Matrix4f;
 
-import java.util.Set;
-
 /**
- * head 槽物品渲染（vanilla {@code CustomHeadLayer} 的非盔甲分支）。
+ * head 槽非盔甲物品渲染（vanilla {@code CustomHeadLayer} 的非盔甲分支），由
+ * {@link ProxyAttachments} 的 {@code eyelib:head_item} 代理驱动。
  * <p>
  * eyelib 取消 {@code LivingEntityRenderer} 后，原版 CustomHeadLayer 不再执行；而
  * {@link ArmorAttachmentRenderer} 只处理人形盔甲。掠夺者的不祥旗帜是放在 HEAD 槽的
@@ -24,12 +22,11 @@ import java.util.Set;
  * <p>
  * 几何/变换与 vanilla 一致：head 骨骼帧 → 颈部 pivot → vanilla 模型空间
  * {@code scale(-1,-1,1)} → {@code CustomHeadLayer.translateToHead}（下移 0.25、绕 Y 180°、
- * 0.625 缩放）。盔甲物品跳过（由 ArmorAttachmentRenderer 画），避免双画。
+ * 0.625 缩放）。盔甲物品由 {@code eyelib:armor_head} 代理处理（HEAD 槽按物品类型分流，不会双画）。
  *
  * @author TT432
  */
 final class HeadItemRenderer {
-    private static final int head = GlobalBoneIdHandler.get("head");
 
     private HeadItemRenderer() {
     }
@@ -37,27 +34,23 @@ final class HeadItemRenderer {
     /**
      * 每实体每帧一次，必须在模型几何提交之前（26.1 的 submit 节点在几何 writer 内不能新增）。
      */
-    static void render(SimpleRenderAction<?> action, LivingEntity holder, Model model, ModelRuntimeData tickedInfos,
-                       Matrix4f modelRoot, int light, Set<net.minecraft.world.entity.EquipmentSlot> attachableSlots) {
-        if (attachableSlots.contains(net.minecraft.world.entity.EquipmentSlot.HEAD)) {
-            // 该槽已有 attachable 接管，头部物品路径不画（避免双画）
-            return;
-        }
-        ItemStack stack = holder.getItemBySlot(net.minecraft.world.entity.EquipmentSlot.HEAD);
+    static boolean render(SimpleRenderAction<?> action, LivingEntity holder, Model model, ModelRuntimeData tickedInfos,
+                          Matrix4f modelRoot, ProxyAttachable proxy, int light) {
+        ItemStack stack = holder.getItemBySlot(proxy.slot());
         if (stack.isEmpty()) {
-            return;
+            return false;
         }
-        if (RenderPorts.get().renderSystemPort()
-                .isArmorItem(stack, net.minecraft.world.entity.EquipmentSlot.HEAD)) {
-            return;
+        int boneId = proxy.resolveBindTarget(model);
+        if (boneId < 0) {
+            return false;
         }
-        Model.Bone bindBone = model.allBones().get(head);
+        Model.Bone bindBone = model.allBones().get(boneId);
         if (bindBone == null) {
-            return;
+            return false;
         }
-        var frame = ModelPoseTransforms.resolveBonePose(model, tickedInfos, head, modelRoot);
+        var frame = ModelPoseTransforms.resolveBonePose(model, tickedInfos, boneId, modelRoot);
         if (frame.isEmpty()) {
-            return;
+            return false;
         }
 
         PoseStack poseStack = RenderPorts.get().renderSystemPort().createPoseStackFromMatrix(frame.get());
@@ -72,6 +65,6 @@ final class HeadItemRenderer {
 
         RenderPorts.get().renderSystemPort()
                 .renderItemDirect(holder, stack, ItemDisplayContext.HEAD, false, poseStack, action.sink(), light);
+        return true;
     }
-
 }

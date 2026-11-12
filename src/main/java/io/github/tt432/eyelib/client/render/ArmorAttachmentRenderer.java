@@ -35,11 +35,6 @@ import java.util.Map;
  * @author TT432
  */
 final class ArmorAttachmentRenderer {
-    /** 与 vanilla {@code LivingEntityRenderer} 的盔甲层顺序一致。 */
-    private static final EquipmentSlot[] SLOTS = {
-            EquipmentSlot.CHEST, EquipmentSlot.LEGS, EquipmentSlot.FEET, EquipmentSlot.HEAD
-    };
-
     /** 盔甲是 cutout + 双面可见（vanilla {@code armorCutoutNoCull}）。 */
     private static final PortRenderPass PASS = PortRenderPass.of(PortRenderPass.Transparency.ALPHA_TEST, true);
 
@@ -58,49 +53,47 @@ final class ArmorAttachmentRenderer {
     }
 
     /**
-     * 每实体每帧一次（与 {@link HandItemRenderer} 同一调用点，先于手持物），必须在模型几何提交之前。
+     * 单个盔甲槽（由 {@link ProxyAttachments} 的 {@code eyelib:armor_*} 代理驱动）。
+     * 每实体每帧每槽一次，必须在模型几何提交之前。
+     * <p>
+     * 一个槽的多份部件（胸甲 = 躯干 + 双臂、护腿 = 躯干 + 双腿）逐部件按名绑定，各自取持有者同名骨骼帧。
      *
      * @param modelRoot 模型根位姿（已含实体位姿；模型 Y 翻转由 {@link ModelPoseTransforms} 施加）
      */
-    static void render(SimpleRenderAction<?> action, LivingEntity holder, Model model, ModelRuntimeData tickedInfos,
-                       Matrix4f modelRoot, int light, java.util.Set<EquipmentSlot> attachableSlots) {
+    static int render(SimpleRenderAction<?> action, LivingEntity holder, Model model, ModelRuntimeData tickedInfos,
+                      Matrix4f modelRoot, ProxyAttachable proxy, int light) {
         var port = RenderPorts.get().renderSystemPort();
-        if (!hasAnyArmor(holder)) {
-            return;
-        }
+        int emitted = 0;
+        EquipmentSlot slot = proxy.slot();
         MultiBufferSource bufferSource = action.multiBufferSource();
         int overlay = action.overlay();
-        for (EquipmentSlot slot : SLOTS) {
-            if (attachableSlots.contains(slot)) {
-                // 该槽由 attachable 接管
+        List<EntityRenderPorts.RenderSystemPort.ArmorRenderPiece> pieces = port.armorPieces(holder, slot);
+        for (var piece : pieces) {
+            RenderBone bone = resolveBone(model, piece.part());
+            if (bone == null) {
                 continue;
             }
-            List<EntityRenderPorts.RenderSystemPort.ArmorRenderPiece> pieces = port.armorPieces(holder, slot);
-            for (var piece : pieces) {
-                RenderBone bone = resolveBone(model, piece.part());
-                if (bone == null) {
-                    continue;
-                }
-                var frame = ModelPoseTransforms.resolveBonePose(model, tickedInfos, bone.boneId(), modelRoot);
-                if (frame.isEmpty()) {
-                    continue;
-                }
-                var renderType = MaterialPort.toRenderType(PASS, piece.texture());
-                if (renderType == null) {
-                    continue;
-                }
-
-                PoseStack poseStack = port.createPoseStackFromMatrix(frame.get());
-                // vanilla 的 body 盔甲部件原点在颈部（与 head 骨骼同高）；而多数萌化模型的
-                // body 骨骼 pivot 在腰部（skeleton 1.114 vs head 1.889，villager 1.063 vs 1.8…），
-                // 直接按 body pivot 摆放会把胸甲/护腿整体下移约 0.6~0.8 格。
-                // 仍在 body 骨骼帧内（继承躯干旋转/动画），只把锚点换成 head pivot。
-                var pivot = "body".equals(piece.part()) ? neckPivot(model, bone) : bone.pivot();
-                poseStack.translate(pivot.x(), pivot.y(), pivot.z());
-                poseStack.scale(-1.0F, -1.0F, 1.0F);
-                piece.emit(poseStack.last(), bufferSource.getBuffer(renderType), light, overlay);
+            var frame = ModelPoseTransforms.resolveBonePose(model, tickedInfos, bone.boneId(), modelRoot);
+            if (frame.isEmpty()) {
+                continue;
             }
+            var renderType = MaterialPort.toRenderType(PASS, piece.texture());
+            if (renderType == null) {
+                continue;
+            }
+
+            PoseStack poseStack = port.createPoseStackFromMatrix(frame.get());
+            // vanilla 的 body 盔甲部件原点在颈部（与 head 骨骼同高）；而多数萌化模型的
+            // body 骨骼 pivot 在腰部（skeleton 1.114 vs head 1.889，villager 1.063 vs 1.8…），
+            // 直接按 body pivot 摆放会把胸甲/护腿整体下移约 0.6~0.8 格。
+            // 仍在 body 骨骼帧内（继承躯干旋转/动画），只把锚点换成 head pivot。
+            var pivot = "body".equals(piece.part()) ? neckPivot(model, bone) : bone.pivot();
+            poseStack.translate(pivot.x(), pivot.y(), pivot.z());
+            poseStack.scale(-1.0F, -1.0F, 1.0F);
+            piece.emit(poseStack.last(), bufferSource.getBuffer(renderType), light, overlay);
+            emitted++;
         }
+        return emitted;
     }
 
     /** 躯干部件的锚点：模型有 head 骨骼时用其 pivot（颈部），否则退回 body pivot。 */
@@ -127,13 +120,4 @@ final class ArmorAttachmentRenderer {
         return null;
     }
 
-    /** 无任何盔甲时提前返回，避免每帧为全部实体做骨骼/纹理解析。 */
-    private static boolean hasAnyArmor(LivingEntity holder) {
-        for (EquipmentSlot slot : SLOTS) {
-            if (!holder.getItemBySlot(slot).isEmpty()) {
-                return true;
-            }
-        }
-        return false;
-    }
 }
