@@ -1,5 +1,5 @@
 /**
- * 生物展示场地程序化生成。
+ * 开发期诊断工具：性能基准、模型预览与每帧绘制统计。
  */
 @NullMarked
 package io.github.tt432.eyelib.debug;

@@ -14,7 +14,7 @@
 | `eyelib.capability` | 与 attachment 相关的能力注册和数据。 |
 | `eyelib.client` | Client runtime: rendering, models, animations, particles, loaders, managers, and dev-oriented screens. |
 | `eyelib.common` | 共享的行为/运行时逻辑和确定性运行时更新辅助。 |
-| `eyelib.debug` | 生物展示场地程序化生成。 |
+| `eyelib.debug` | 开发期诊断工具：性能基准、模型预览与每帧绘制统计。 |
 | `eyelib.importer` | 导入器/数据格式模块：Bedrock 资源导入、数据格式编解码、解析、附加包发现及标准化。 |
 | `eyelib.material` | 材质模块：Bedrock 材质定义与继承解析、纯数据 GL 状态枚举、渲染状态快照与材质渲染工具 （GL 常量的实际下发在 bridge）。 |
 | `eyelib.mixin` | 共享的 Mixin 配置和技术性 Sponge Mixin 连线。 |
