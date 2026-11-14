@@ -421,6 +421,48 @@
           "B9fbc6ba93319e083"
         ],
         "locked": false
+      },
+      {
+        "id": "C5",
+        "scope": "root/eyelib-调试与渲染诊断/common-pitfalls",
+        "modality": "must",
+        "predicate": "26.1.2 新增 F3 条目用 DebugScreenEntry + RegisterDebugEntriesEvent（该版本没有 CustomizeGuiOverlayEvent.DebugText）",
+        "guard": "26.1.2 接入 F3 调试文本时",
+        "spans": [
+          "B51136f186b79bb82"
+        ],
+        "locked": false
+      },
+      {
+        "id": "C6",
+        "scope": "root/eyelib-调试与渲染诊断/common-pitfalls",
+        "modality": "must",
+        "predicate": "26.1.2 modded debug entry 注册后默认 still NEVER：需在首帧且 debug-profile.json 不存在时调用 debugEntries.loadProfile(DEFAULT) 让其进入 overlay",
+        "guard": "26.1.2 注册 modded debug entry 后",
+        "spans": [
+          "Bdabb636df0f4f99f"
+        ],
+        "locked": false
+      },
+      {
+        "id": "C7",
+        "scope": "root/eyelib-调试与渲染诊断/common-pitfalls",
+        "modality": "must_not",
+        "predicate": "RenderType 名字统计禁止用 renderType.toString()（1.20.1 CompositeRenderType 返回带完整状态的长串），用 @Accessor(\"name\") 读 RenderStateShard.name",
+        "spans": [
+          "B8f782fd2fd45176c"
+        ],
+        "locked": false
+      },
+      {
+        "id": "C8",
+        "scope": "root/eyelib-调试与渲染诊断/common-pitfalls",
+        "modality": "must",
+        "predicate": "RenderType draw 计数注入点：1.20.1 注入 RenderType.end 并判 builder.building()，1.21.1/26.1.2 注入 RenderType.draw(MeshData)；帧边界用 TickEvent.RenderTickEvent.START（1.20.1）或 RenderFrameEvent.Pre（1.21.1/26.1.2）",
+        "spans": [
+          "B4715c9e36b8bc0f5"
+        ],
+        "locked": false
       }
     ],
     "workflow": [
@@ -1379,10 +1421,15 @@
     "Beb3c85362cf2a7cc": "- `/eval`（mcmcp_execute）脚本本体直接在 **Render thread** 上同步执行（ScriptEvalService → BlockableEventLoop.doRunTask）。",
     "B61af6a40d15002fe": "- 禁止在 eval 体内 `minecraft.execute(...)` 后用 `CountDownLatch` 等阻塞原语等待任务完成——execute 的任务排在同一渲染线程，阻塞等待让渲染线程永久 park，自死锁，只能 mcmcp_close。",
     "B9c7d15bfd4670469": "- UI/屏幕操作直接同步写在 eval 体内，不要绕道 execute。",
-    "B9fbc6ba93319e083": "- 超过 HTTP 超时（10s）的重操作：脚本仍在渲染线程继续跑完，后续 eval 读取其写下的状态即可。"
+    "B9fbc6ba93319e083": "- 超过 HTTP 超时（10s）的重操作：脚本仍在渲染线程继续跑完，后续 eval 读取其写下的状态即可。",
+    "B95d6acc1b786c0db": "## F3 调试条目的三版本接入",
+    "B51136f186b79bb82": "- 1.20.1 / 1.21.1 用 `CustomizeGuiOverlayEvent.DebugText.getLeft()` 追加 F3 左列文本（1.20.1 由 ForgeGui post、1.21.1 由 DebugScreenOverlay post）；26.1.2 没有该事件，必须实现 `DebugScreenEntry` 并在 `RegisterDebugEntriesEvent` 里注册。",
+    "Bdabb636df0f4f99f": "- 26.1.2 的 `DebugScreenEntryList` 在 `Minecraft` 构造里（创建序号早于 `ClientHooks.initClientHooks`）按 profile 建好，而 `DebugScreenEntries.PROFILES` 要等 `RegisterDebugEntriesEvent` post 完成后才合并 modded 条目。因此在注册事件里调 `includeInProfile` 不足以让条目出现在 F3；还必须在首帧（`RenderFrameEvent.Pre`）检测 `debug-profile.json` 不存在时调用 `debugEntries.loadProfile(DEFAULT)`，已存在则尊重玩家配置。",
+    "B8f782fd2fd45176c": "- 按 RenderType 名字统计时不要用 `renderType.toString()`：1.20.1 的 `CompositeRenderType` 把它重写成带完整状态（含纹理）的超长串，同类型不同纹理会各占一行。用 `@Accessor(\"name\")` 读 `RenderStateShard.name`（26.1.2 的 `RenderType.name` 同理）。",
+    "B4715c9e36b8bc0f5": "- 统计 RenderType 实际 draw 次数：1.20.1 注入 `RenderType.end`（需判 `builder.building()`），1.21.1 / 26.1.2 注入 `RenderType.draw(MeshData)`；帧边界用 1.20.1 的 `TickEvent.RenderTickEvent.START`、1.21.1 / 26.1.2 的 `RenderFrameEvent.Pre`。"
   },
   "stats": {
-    "patches": 3,
+    "patches": 4,
     "repacks": 0,
     "lastRepackAt": "2026-08-13T09:01:43.054Z",
     "totalSavedTokens": 0
@@ -1405,9 +1452,15 @@
       "operation": "EXTEND",
       "summary": "EXTEND: +4 rules, +0 workflow, +0 tools, +0 fields",
       "savingTokens": 0
+    },
+    {
+      "ts": "2026-11-14T12:55:05.933Z",
+      "operation": "EXTEND",
+      "summary": "EXTEND: +4 added, ~0 refined, -0 removed",
+      "savingTokens": 0
     }
   ],
   "createdAt": "2026-08-13T09:01:43.054Z",
-  "updatedAt": "2026-08-18T19:44:34.613Z",
+  "updatedAt": "2026-11-14T12:55:05.963Z",
   "frontMatterRaw": "---\nname: eyelib-debug\ndescription: Eyelib 客户端调试——mcmcp 拓展启动客户端、/eval 执行代码、渲染诊断 Phase、实体操作。Use when debugging rendering, executing /eval code, or diagnosing entity issues.\nlicense: MIT\ncompatibility: opencode\nmetadata:\n  author: https://github.com/TT432\n  version: \"1.0.0\"\n  tags: eyelib, debug, mcp, eval, rendering\n  related-skills: eyelib, eyelib-build, eyelib-renderdoc, eyelib-clientsmoke, mcmcp\n---"
 }

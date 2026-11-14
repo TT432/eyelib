@@ -30,6 +30,13 @@
     //?}
   ],
   "client": [
+    //? if <26.1 {
+    "client.RenderTypeDrawCounterMixin",
+    "client.RenderStateShardNameAccessor",
+    //?} else {
+    "client.RenderTypeDrawCounterMixin26",
+    "client.RenderTypeNameAccessor26",
+    //?}
     //? if legacy {
     "client.TextureColorGameRendererMixin",
     "client.MobRendererLeashMixin",
