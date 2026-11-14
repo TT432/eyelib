@@ -45,17 +45,7 @@ final class BrControllerExecutor {
         data.owner().currentTick(ticks);
 
         if (!initialTick) {
-            for (Map.Entry<String, io.github.tt432.eyelib.molang.MolangValue> entry : currState.transitions().entrySet()) {
-                if (entry.getValue().evalAsBool(scope)) {
-                    BrAcStateDefinition nextState = controller.states().get(entry.getKey());
-                    if (nextState == null) break;
-                    BrAcStateDefinition switchedState = switchState(controller, ticks, scope, data, animations, nextState);
-                    if (switchedState != null) {
-                        currState = switchedState;
-                        break;
-                    }
-                }
-            }
+            currState = takeTransition(controller, ticks, scope, data, animations, currState);
         }
 
         scope.getHostContext().put(HostRoles.AC_STATE_DEFINITION, currState);
@@ -72,6 +62,23 @@ final class BrControllerExecutor {
                 effects.particles.add(nested.particles());
             }
         }
+    }
+
+    /**
+     * 按序判定 {@code currState} 的 transitions，切换到首个条件成立且切换成功的状态；均不成立时保持 {@code currState}。
+     */
+    private static BrAcStateDefinition takeTransition(BrAnimationController controller, float ticks, MolangScope scope,
+                                                      BrAnimationController.Data data, Map<String, String> animations,
+                                                      BrAcStateDefinition currState) {
+        for (Map.Entry<String, io.github.tt432.eyelib.molang.MolangValue> entry : currState.transitions().entrySet()) {
+            if (entry.getValue().evalAsBool(scope)) {
+                BrAcStateDefinition nextState = controller.states().get(entry.getKey());
+                if (nextState == null) break;
+                BrAcStateDefinition switchedState = switchState(controller, ticks, scope, data, animations, nextState);
+                if (switchedState != null) return switchedState;
+            }
+        }
+        return currState;
     }
 
     @Nullable

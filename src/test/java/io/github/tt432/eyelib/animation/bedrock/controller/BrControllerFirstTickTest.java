@@ -20,11 +20,11 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  * 控制器首次 tick（尚无当前状态）只进入初始状态，transitions 从下一帧起判定；首次 tick 晚于实体首帧时同样如此。
  * Bedrock 实测（1.21.x 客户端原生帧日志，铁傀儡）：一个每帧在两状态间翻转、on_exit 写 {@code v.x = q.anim_time} 的控制器，
  * 在其首次 tick 的帧上不执行 on_exit，下一帧才执行。
- *
- * @author TT432
  */
+@SuppressWarnings("PMD.LawOfDemeter")
 class BrControllerFirstTickTest {
     private static final float FRAME = 1F / 60;
+    private static final String VARIANT_AT = "v.variant_at";
 
     @AfterEach
     void tearDown() {
@@ -45,9 +45,9 @@ class BrControllerFirstTickTest {
         Map<String, String> aliases = Map.of();
 
         tick(controller, data, scope, aliases, 0);
-        assertEquals(-1F, new MolangValue("v.variant_at").eval(scope), "首次 tick 只进入初始状态");
+        assertEquals(-1F, new MolangValue(VARIANT_AT).eval(scope), "首次 tick 只进入初始状态");
         tick(controller, data, scope, aliases, 1);
-        assertEquals(1F, new MolangValue("v.variant_at").eval(scope), "下一帧才判定 transitions");
+        assertEquals(1F, new MolangValue(VARIANT_AT).eval(scope), "下一帧才判定 transitions");
     }
 
     @Test
@@ -67,9 +67,9 @@ class BrControllerFirstTickTest {
         Map<String, String> aliases = Map.of("child", "controller.test.first_tick.child");
 
         tick(parent, data, scope, aliases, 0);
-        assertEquals(-1F, new MolangValue("v.variant_at").eval(scope));
+        assertEquals(-1F, new MolangValue(VARIANT_AT).eval(scope));
         tick(parent, data, scope, aliases, 1);
-        assertEquals(1F, new MolangValue("v.variant_at").eval(scope));
+        assertEquals(1F, new MolangValue(VARIANT_AT).eval(scope));
     }
 
     @Test

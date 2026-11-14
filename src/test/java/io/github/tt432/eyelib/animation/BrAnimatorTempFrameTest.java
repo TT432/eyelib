@@ -21,10 +21,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * temp.* 的生命周期是整个实体动画帧，而非单个表达式。
  * Bedrock 实测（1.21.x 客户端原生帧日志，铁傀儡）：物理剪辑的 anim_time_update 读到的 t.x / t.z
  * 来自同帧更早的 pre_animation 与另一剪辑。帧开始时清空一次；帧外（如 render controller）每个表达式仍从空 temp 开始。
- *
- * @author TT432
  */
+@SuppressWarnings("PMD.LawOfDemeter")
 class BrAnimatorTempFrameTest {
+    private static final String TEMP_A = "t.a";
+
     @AfterEach
     void tearDown() {
         AnimationRegistries.animation().clear();
@@ -81,16 +82,16 @@ class BrAnimatorTempFrameTest {
         new MolangValue("t.a = 1;").eval(scope);
 
         scope.holdTempVariables(); // 最外层：帧开始清空一次
-        assertEquals(0F, new MolangValue("t.a").eval(scope));
+        assertEquals(0F, new MolangValue(TEMP_A).eval(scope));
         new MolangValue("t.a = 2;").eval(scope);
         scope.holdTempVariables(); // 嵌套：不清空
-        assertEquals(2F, new MolangValue("t.a").eval(scope));
+        assertEquals(2F, new MolangValue(TEMP_A).eval(scope));
         scope.releaseTempVariables();
         assertTrue(scope.tempVariablesHeld());
-        assertEquals(2F, new MolangValue("t.a").eval(scope));
+        assertEquals(2F, new MolangValue(TEMP_A).eval(scope));
         scope.releaseTempVariables();
         assertFalse(scope.tempVariablesHeld());
-        assertEquals(0F, new MolangValue("t.a").eval(scope));
+        assertEquals(0F, new MolangValue(TEMP_A).eval(scope));
     }
 
     /**

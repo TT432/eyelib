@@ -41,6 +41,11 @@ public final class MolangScope {
      */
     /** 宿主变更纪元：任一 store 变更自增，memo 条目纪元错位即重解析（避免 clear+回填竞态提供陈旧值）。 */
     private volatile long hostMutationEpoch;
+    /**
+     * temp 持有计数（可嵌套）：> 0 时 {@code MolangValue#getObject} 不再逐次清空 temp.*。
+     * 实体 scope 由其动画帧所在线程独占，无需原子计数。
+     */
+    private int tempHolds;
     private static final boolean ROLE_MEMO_ENABLED =
             Boolean.parseBoolean(System.getProperty("eyelib.molang.roleMemo", "true"));
     /** memo 中的「解析为空」标记（真实宿主值不会等于此实例）。 */
@@ -403,18 +408,15 @@ public final class MolangScope {
         tempKeys.clear();
     }
 
-    // temp 持有计数（可嵌套）：> 0 时 MolangValue#getObject 不再逐次清空 temp.*。
-    // 实体 scope 由其动画帧所在线程独占，无需原子计数。
-    private int tempHolds;
-
     /**
      * 开始持有 {@code temp.*}：实体动画帧（{@code BrAnimator#tickAnimation}）内 pre_animation、animate 权重、
      * 控制器脚本与剪辑脚本共用同一组 temp，与 Bedrock 一致。最外层持有在帧开始时清空一次 temp；可嵌套。
      */
     public void holdTempVariables() {
-        if (tempHolds++ == 0) {
+        if (tempHolds == 0) {
             clearTempVariables();
         }
+        tempHolds++;
     }
 
     /** 结束一次 {@link #holdTempVariables()}；最外层释放后，每个表达式重新从空 temp 开始。 */
