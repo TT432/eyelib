@@ -34,6 +34,9 @@ final class BrControllerExecutor {
         data.owner().currentAnimations(animations);
 
         var currState = data.getCurrState();
+        // Bedrock 实测：控制器首次 tick 只进入初始状态，transitions 从下一帧起才判定
+        // （首次 tick 晚于实体首帧时同样如此，如嵌套控制器所在状态后来才进入）。
+        boolean initialTick = currState == null;
         if (currState == null) currState = switchState(controller, ticks, scope, data, animations, controller.initialState());
         if (currState == null) return;
 
@@ -41,14 +44,16 @@ final class BrControllerExecutor {
         scope.getHostContext().put(HostRoles.ANIMATION_CONTROLLER, controller);
         data.owner().currentTick(ticks);
 
-        for (Map.Entry<String, io.github.tt432.eyelib.molang.MolangValue> entry : currState.transitions().entrySet()) {
-            if (entry.getValue().evalAsBool(scope)) {
-                BrAcStateDefinition nextState = controller.states().get(entry.getKey());
-                if (nextState == null) break;
-                BrAcStateDefinition switchedState = switchState(controller, ticks, scope, data, animations, nextState);
-                if (switchedState != null) {
-                    currState = switchedState;
-                    break;
+        if (!initialTick) {
+            for (Map.Entry<String, io.github.tt432.eyelib.molang.MolangValue> entry : currState.transitions().entrySet()) {
+                if (entry.getValue().evalAsBool(scope)) {
+                    BrAcStateDefinition nextState = controller.states().get(entry.getKey());
+                    if (nextState == null) break;
+                    BrAcStateDefinition switchedState = switchState(controller, ticks, scope, data, animations, nextState);
+                    if (switchedState != null) {
+                        currState = switchedState;
+                        break;
+                    }
                 }
             }
         }

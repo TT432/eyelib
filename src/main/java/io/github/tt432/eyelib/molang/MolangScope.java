@@ -388,8 +388,9 @@ public final class MolangScope {
     }
 
     /**
-     * 清空本层全部 {@code temp.*} 变量。Bedrock 语义：temp 是单次表达式求值的草稿区，
-     * 跨求值不保留。求值入口（{@code MolangValue#getObject}）每次调用前执行本方法；
+     * 清空本层全部 {@code temp.*} 变量。Bedrock 语义：帧外（如 render controller）temp 是单次表达式求值的草稿区，
+     * 跨求值不保留；求值入口（{@code MolangValue#getObject}）在未持有 temp 时每次调用前执行本方法。
+     * 实体动画帧内的 temp 生命周期见 {@link #holdTempVariables()}。
      * variable.* 与 host context 不受影响。仅清本层，不动 parent 链。
      */
     public void clearTempVariables() {
@@ -400,6 +401,32 @@ public final class MolangScope {
         }
         tempKeys.forEach(cache::remove);
         tempKeys.clear();
+    }
+
+    // temp 持有计数（可嵌套）：> 0 时 MolangValue#getObject 不再逐次清空 temp.*。
+    // 实体 scope 由其动画帧所在线程独占，无需原子计数。
+    private int tempHolds;
+
+    /**
+     * 开始持有 {@code temp.*}：实体动画帧（{@code BrAnimator#tickAnimation}）内 pre_animation、animate 权重、
+     * 控制器脚本与剪辑脚本共用同一组 temp，与 Bedrock 一致。最外层持有在帧开始时清空一次 temp；可嵌套。
+     */
+    public void holdTempVariables() {
+        if (tempHolds++ == 0) {
+            clearTempVariables();
+        }
+    }
+
+    /** 结束一次 {@link #holdTempVariables()}；最外层释放后，每个表达式重新从空 temp 开始。 */
+    public void releaseTempVariables() {
+        if (tempHolds > 0) {
+            tempHolds--;
+        }
+    }
+
+    /** 是否处于实体动画帧内（temp 跨表达式保留）。 */
+    public boolean tempVariablesHeld() {
+        return tempHolds > 0;
     }
 
     // molang `this` 绑定：关键帧语境下恒为标量 float，走专用字段避免每轴 Map 写入与装箱。
