@@ -42,6 +42,9 @@ public final class BrAnimator {
         infos.bindBones(bindBones);
         scope.getHostContext().put(HostRoles.MODEL_RUNTIME_DATA, infos);
         scope.getHostContext().put(HostRoles.ANIMATION_EFFECTS, effects);
+        // Bedrock 实测：temp.* 在整个实体动画帧内共享（pre_animation、animate 权重、控制器与剪辑脚本），
+        // 帧开始时清空一次；帧外仍按单表达式清空。
+        scope.holdTempVariables();
         try {
             var serializableInfo = component.getSerializableInfo();
             if (serializableInfo == null) {
@@ -62,6 +65,7 @@ public final class BrAnimator {
             effects.commitDeferred();
             return infos;
         } finally {
+            scope.releaseTempVariables();
             scope.getHostContext().remove(HostRoles.ANIMATION_EFFECTS);
             scope.getHostContext().remove(HostRoles.MODEL_RUNTIME_DATA);
         }
