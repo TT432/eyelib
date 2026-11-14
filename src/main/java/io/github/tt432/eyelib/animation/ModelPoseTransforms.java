@@ -51,6 +51,14 @@ public final class ModelPoseTransforms {
     }
 
     /**
+     * 模型根位姿（Java 实体空间）→ 基岩模型空间（绕 Y 180°）。
+     * 挂载物若不绑定到任何骨骼（attachable 里的游离骨骼），就以这个位姿作为它的根。
+     */
+    public static Matrix4f bedrockRootPose(Matrix4fc rootPose) {
+        return new Matrix4f(rootPose).rotateY(MODEL_Y_ROTATION);
+    }
+
+    /**
      * 解析单个骨骼的累积位姿：模型根位姿 → 骨骼链（与模型渲染同一条变换链，含模型 Y 翻转）。
      * 挂载物（手持物/盔甲）用它取得「基岩版骨骼帧」，骨骼不存在时返回空。
      */

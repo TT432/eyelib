@@ -1,6 +1,7 @@
 package io.github.tt432.eyelib.client.render;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import io.github.tt432.eyelib.animation.AnimationComponent;
 import io.github.tt432.eyelib.animation.AnimationEffects;
 import io.github.tt432.eyelib.animation.BrAnimator;
 import io.github.tt432.eyelib.animation.ModelRuntimeData;
@@ -39,7 +40,12 @@ import org.joml.Matrix4f;
 import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.UUID;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -99,6 +105,21 @@ public final class EntityRenderOrchestrator {
     private static Stream<Entity> entities() {
         net.minecraft.client.multiplayer.ClientLevel level = getInstance().level;
         return level != null ? StreamSupport.stream(level.entitiesForRendering().spliterator(), false) : Stream.empty();
+    }
+
+    /**
+     * off-level 实体的跨帧动画状态缓存（按实体 UUID）。CarryOn 之类的模组每次渲染都用
+     * {@code EntityType.create(NBT)} 新建一个不入世界的假实体，动画播放状态随实例重建清零，
+     * 表现为被抱起的生物姿态完全静止（render controller 已按帧求值，但动画时间轴永远是 0）。
+     * 假实体的 UUID 来自 NBT，跨帧稳定，用它把上一帧的 {@link AnimationComponent} 状态接回来。
+     * 访问序 LRU + 帧龄淘汰，避免长期持有已放下的生物。
+     */
+    private static final Map<UUID, DetachedAnimationState> DETACHED_ANIMATION_STATES =
+            new LinkedHashMap<>(16, 0.75f, true);
+    private static final int DETACHED_STATE_LIMIT = 32;
+    private static final long DETACHED_STATE_MAX_AGE = 40;
+
+    private record DetachedAnimationState(AnimationComponent component, long frame) {
     }
 
     private static final FramePipeline PIPELINE = new FramePipeline(List.of(
@@ -259,6 +280,10 @@ public final class EntityRenderOrchestrator {
             var cap = RenderData.getComponent(entity);
             if (!cap.isUseBuiltInRenderSystem()) return false;
 
+            // off-level 实体（CarryOn 等用不入世界的 NBT 假实体渲染）不在管道遍历范围内，
+            // 必须在这里补 setup + tick，否则只能画到 NBT 里带出来的静态组件。
+            ensureDetachedEntityReady(entity, cap, params.partialTick());
+
             return SimpleRenderAction.builder(params.multiBufferSource(), params.sink(), params.poseStack(), cap, params.partialTick())
                     .entity(entity)
                     .animation(cap.getAnimationComponent())
@@ -269,6 +294,71 @@ public final class EntityRenderOrchestrator {
         } catch (Throwable t) {
             RenderDiagnostics.recordError(t);
             throw t;
+        }
+    }
+
+    /**
+     * 渲染入口给「不在世界里的实体」补一帧与 {@code SetupStage}/{@code TickStage} 等价的处理。
+     *
+     * <p>为什么需要：管线每帧只遍历 {@code level.entitiesForRendering()}，而 CarryOn 这类模组用
+     * {@code EntityType.create(NBT)} 造**不加入世界**的假实体来渲染被抱起的生物（且每次渲染都新建）。
+     * 这种实体拿不到 setup，{@code render_controllers}（part_visibility / 模型选择）与动画采样全部缺失，
+     * 于是只画得出 NBT 里序列化的静态组件：本应被 RC 隐藏的部件会露出来（例：萌化苦力怕的 TNT 部件），
+     * 姿态停在 rest。
+     *
+     * <p>只对 off-level 实体生效（世界实体由管线处理）；同一帧内重复渲染去重
+     * （{@code RenderControllerComponent.setupFrameStamp}）。
+     *
+     * <p>假实体每帧新建 ⇒ 动画播放状态没有跨帧身份（{@code query.anim_time} 恒 0、控制器状态机每帧重置），
+     * 因此按实体 UUID（NBT 里稳定）缓存上一帧的 {@link AnimationComponent} 并 {@code adoptFrom} 接回，
+     * 再 tick —— 否则 RC 正常但姿态永远静止。
+     */
+    private static void ensureDetachedEntityReady(LivingEntity entity, RenderData<?> cap, float partialTick) {
+        var level = getInstance().level;
+        if (level == null || level.getEntity(entity.getId()) == entity) {
+            return;
+        }
+        if (cap.getRenderControllerComponent().setupFrameStamp() == ClientEntitySetup.frame()) {
+            return;
+        }
+
+        var animation = cap.getAnimationComponent();
+        var uuid = entity.getUUID();
+        var cached = DETACHED_ANIMATION_STATES.get(uuid);
+        if (cached != null) {
+            // 先接回上一帧的播放状态，setup 随后因 serializableInfo 等值短路，不会把状态重置
+            animation.adoptFrom(cached.component());
+        }
+
+        setup(entity).forEach(Runnable::run);
+        // 没有基岩模型组件的实体（未受管类型）不需要动画/RC 采样，直接回落到原版渲染
+        if (cap.getClientEntityComponent().getClientEntity() == null) {
+            return;
+        }
+
+        var deferred = new ArrayList<Runnable>();
+        tickEntity(entity, new FramePlan(partialTick, 0, 0, 0), deferred);
+        deferred.forEach(Runnable::run);
+
+        AttachableItemRenderSetup.tickForEntity(entity, partialTick);
+
+        DETACHED_ANIMATION_STATES.put(uuid, new DetachedAnimationState(animation, ClientEntitySetup.frame()));
+        pruneDetachedAnimationStates();
+    }
+
+    /** 淘汰超过帧龄上限与容量上限的 off-level 动画状态（CarryOn 放下生物后不再更新）。 */
+    private static void pruneDetachedAnimationStates() {
+        long frame = ClientEntitySetup.frame();
+        var iterator = DETACHED_ANIMATION_STATES.entrySet().iterator();
+        while (iterator.hasNext()) {
+            if (frame - iterator.next().getValue().frame() > DETACHED_STATE_MAX_AGE) {
+                iterator.remove();
+            }
+        }
+        while (DETACHED_ANIMATION_STATES.size() > DETACHED_STATE_LIMIT) {
+            var eldest = DETACHED_ANIMATION_STATES.entrySet().iterator();
+            eldest.next();
+            eldest.remove();
         }
     }
 
@@ -452,9 +542,45 @@ public final class EntityRenderOrchestrator {
         ModelRuntimeData tickedInfos = data.tickedInfos() != null ? data.tickedInfos() : ModelRuntimeData.EMPTY;
         int light = data.packedLight();
 
-        HeadItemRenderer.render(data, holder, model, tickedInfos, modelRoot, light);
-        ArmorAttachmentRenderer.render(data, holder, model, tickedInfos, modelRoot, light);
+        // 盔甲槽若存在 attachable 定义，就走基岩版挂载语义（逐骨骼 binding/同名绑定），
+        // 并让「头部物品」与「vanilla 人形盔甲」两条回退路径跳过该槽，避免双画。
+        Set<EquipmentSlot> attachableSlots = renderSlotAttachables(data, holder, model, tickedInfos, modelRoot, light);
+
+        HeadItemRenderer.render(data, holder, model, tickedInfos, modelRoot, light, attachableSlots);
+        ArmorAttachmentRenderer.render(data, holder, model, tickedInfos, modelRoot, light, attachableSlots);
         HandItemRenderer.render(data, holder, model, tickedInfos, modelRoot, light);
+    }
+
+    /** 有 attachable 定义的盔甲槽（人形四槽；BODY 槽狼铠不在范围内）。 */
+    private static final EquipmentSlot[] ATTACHABLE_SLOTS = {
+            EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS, EquipmentSlot.FEET
+    };
+
+    /**
+     * 渲染盔甲槽的 attachable，返回已由 attachable 接管（回退路径需跳过）的槽位集合。
+     * attachable 只 tick 不渲染的旧行为在萌化实体上是空缺：原版 {@code HumanoidArmorLayer}
+     * 被 cancel 后没有别的层会画它。
+     */
+    private static Set<EquipmentSlot> renderSlotAttachables(SimpleRenderAction<?> data, LivingEntity holder,
+                                                            Model model, ModelRuntimeData tickedInfos,
+                                                            Matrix4f modelRoot, int light) {
+        Set<EquipmentSlot> handled = null;
+        for (EquipmentSlot slot : ATTACHABLE_SLOTS) {
+            if (holder.getItemBySlot(slot).isEmpty()) {
+                continue;
+            }
+            var rd = AttachableItemRenderSetup.getOrPrepare(holder, slot, false);
+            if (rd == null) {
+                continue;
+            }
+            AttachableItemRenderSetup.renderAttachableBound(rd, holder, model, tickedInfos, modelRoot,
+                    data.multiBufferSource(), light, data.overlay());
+            if (handled == null) {
+                handled = EnumSet.noneOf(EquipmentSlot.class);
+            }
+            handled.add(slot);
+        }
+        return handled == null ? Set.of() : handled;
     }
 
     /** 双手/盔甲槽全空时不做任何挂载物工作（绝大多数实体走这条短路）。 */

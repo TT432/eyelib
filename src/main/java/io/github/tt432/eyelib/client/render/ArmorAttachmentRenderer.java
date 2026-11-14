@@ -63,7 +63,7 @@ final class ArmorAttachmentRenderer {
      * @param modelRoot 模型根位姿（已含实体位姿；模型 Y 翻转由 {@link ModelPoseTransforms} 施加）
      */
     static void render(SimpleRenderAction<?> action, LivingEntity holder, Model model, ModelRuntimeData tickedInfos,
-                       Matrix4f modelRoot, int light) {
+                       Matrix4f modelRoot, int light, java.util.Set<EquipmentSlot> attachableSlots) {
         var port = RenderPorts.get().renderSystemPort();
         if (!hasAnyArmor(holder)) {
             return;
@@ -71,6 +71,10 @@ final class ArmorAttachmentRenderer {
         MultiBufferSource bufferSource = action.multiBufferSource();
         int overlay = action.overlay();
         for (EquipmentSlot slot : SLOTS) {
+            if (attachableSlots.contains(slot)) {
+                // 该槽由 attachable 接管
+                continue;
+            }
             List<EntityRenderPorts.RenderSystemPort.ArmorRenderPiece> pieces = port.armorPieces(holder, slot);
             for (var piece : pieces) {
                 RenderBone bone = resolveBone(model, piece.part());

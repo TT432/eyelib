@@ -73,6 +73,14 @@ public final class NgSkinningManager {
     private static boolean warnedRingFull;
     private static boolean warnedLeftover;
 
+    /**
+     * 当前帧是否处于 {@code LevelRenderer} 的「实体提交 → 阶段 flush」窗口内。
+     * 只有窗口内提交的蒙皮绘制才保证会被 {@code AfterOpaqueFeatures}/{@code AfterTranslucentFeatures} 刷出；
+     * 窗口外（如第一人称手持 pass：CarryOn 在 {@code RenderHandEvent} 里 submit 被抱起的实体）提交的记录
+     * 没有后续 flush，会被帧首当作泄漏丢弃 → 画面里完全没有模型。窗口外一律回退经典 CPU 路径。
+     */
+    private static boolean stageWindowOpen;
+
     private NgSkinningManager() {
     }
 
@@ -87,6 +95,11 @@ public final class NgSkinningManager {
     /** DeferredRenderSink 入口：创建一次提交的蒙皮会话；关闭时返回 null（走经典路径）。 */
     public static @Nullable NgSkinningSession createSession(RenderType routingType, Identifier texture) {
         if (!ENABLED) {
+            return null;
+        }
+        // 阶段窗口外（第一人称手持 pass 等）创建的会话没有阶段 flush 兜底，绘制记录会被丢弃：
+        // 窗口外让 writer 直接写顶点进 vanilla 批次，由同一 pass 的 renderAllFeatures 绘出。
+        if (!stageWindowOpen && RenderSystem.outputColorTextureOverride == null) {
             return null;
         }
         // Iris/Oculus 光影激活期间禁用 GPU 蒙皮（与 1.21.1 LegacySkinningManager 同款回退）：
@@ -215,6 +228,7 @@ public final class NgSkinningManager {
 
     @SubscribeEvent
     public static void onFramePre(RenderFrameEvent.Pre event) {
+        stageWindowOpen = true;
         ringOffset = 0;
         if (paletteRing != null) {
             paletteRing.rotate();
@@ -239,6 +253,15 @@ public final class NgSkinningManager {
     @SubscribeEvent
     public static void onAfterTranslucentFeatures(RenderLevelStageEvent.AfterTranslucentFeatures event) {
         flush(TRANSLUCENT_DRAWS, event.getModelViewMatrix());
+    }
+
+    /**
+     * 阶段窗口在关卡渲染结束后关闭（此后是手持 pass）：任何在此之后提交的蒙皮绘制都不再有 flush，
+     * 见 {@link #createSession}。即使某些帧没有半透明阶段事件，这里也保证窗口不会延续到手持 pass。
+     */
+    @SubscribeEvent
+    public static void onAfterLevel(RenderLevelStageEvent.AfterLevel event) {
+        stageWindowOpen = false;
     }
 
     private static void flush(List<NgSkinningSession> records, Matrix4fc modelView) {

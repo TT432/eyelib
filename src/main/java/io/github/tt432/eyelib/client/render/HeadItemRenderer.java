@@ -12,6 +12,8 @@ import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import org.joml.Matrix4f;
 
+import java.util.Set;
+
 /**
  * head 槽物品渲染（vanilla {@code CustomHeadLayer} 的非盔甲分支）。
  * <p>
@@ -36,7 +38,11 @@ final class HeadItemRenderer {
      * 每实体每帧一次，必须在模型几何提交之前（26.1 的 submit 节点在几何 writer 内不能新增）。
      */
     static void render(SimpleRenderAction<?> action, LivingEntity holder, Model model, ModelRuntimeData tickedInfos,
-                       Matrix4f modelRoot, int light) {
+                       Matrix4f modelRoot, int light, Set<net.minecraft.world.entity.EquipmentSlot> attachableSlots) {
+        if (attachableSlots.contains(net.minecraft.world.entity.EquipmentSlot.HEAD)) {
+            // 该槽已有 attachable 接管，头部物品路径不画（避免双画）
+            return;
+        }
         ItemStack stack = holder.getItemBySlot(net.minecraft.world.entity.EquipmentSlot.HEAD);
         if (stack.isEmpty()) {
             return;
