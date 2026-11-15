@@ -6,6 +6,7 @@ import io.github.tt432.eyelib.client.entity.AttachableResolver;
 import io.github.tt432.eyelib.client.manager.AttachableManager;
 import io.github.tt432.eyelib.client.render.AttachableItemRenderSetup;
 import io.github.tt432.eyelib.importer.entity.BrClientEntity;
+import io.github.tt432.eyelib.model.GlobalBoneIdHandler;
 import net.minecraft.client.Minecraft;
 //? if <1.20.6 {
 import net.minecraftforge.common.MinecraftForge;
@@ -58,7 +59,39 @@ public class AttachableSmoke {
 
         verifyHandAttachable(player);
         verifyArmorAttachable(player);
+        verifyBindingEvaluation(player);
         verifyLeaveEventClearsAttachableCache(player);
+    }
+
+    /**
+     * {@code binding} 必须按当前 {@code context.item_slot} 求值出持有者骨骼名——
+     * 这是盔甲/手持 attachable 的挂点来源，写死或未求值都会让挂载物落到错误骨骼上。
+     */
+    private static void verifyBindingEvaluation(Player player) {
+        ItemStack stick = new ItemStack(Items.STICK);
+        player.getInventory().setItem(0, stick);
+        RenderData<ItemStack> rd = AttachableItemRenderSetup.getOrPrepare(player, InteractionHand.MAIN_HAND, false);
+        if (rd == null) {
+            throw new AssertionError("RenderData not created for binding probe");
+        }
+        for (var mc : rd.getModelComponents()) {
+            var model = mc.getModel();
+            if (model == null) {
+                continue;
+            }
+            for (var bone : model.allBones().values()) {
+                if (bone.binding() == null || bone.binding().isBlank()) {
+                    continue;
+                }
+                String target = AttachableItemRenderSetup.bindingTargetName(rd, bone);
+                LOGGER.info("[AttachableSmoke] bone {} binding -> {}", GlobalBoneIdHandler.get(bone.id()), target);
+                if (!"rightitem".equalsIgnoreCase(target)) {
+                    throw new AssertionError("binding resolved to '" + target + "', expected rightitem");
+                }
+                return;
+            }
+        }
+        throw new AssertionError("test fixture geometry has no bone with binding");
     }
 
     private static void verifyHandAttachable(Player player) {

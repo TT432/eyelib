@@ -11,15 +11,19 @@ import java.util.Map;
 import java.util.WeakHashMap;
 
 /**
- * 26.1 render-state 路径的「渲染状态 → 实体」映射，仅供**不在 level 中**的实体使用。
+ * 26.1 render-state 路径的「渲染状态 → 实体」映射。
  * <p>
- * 26.1 的 {@code RenderLivingEvent} 不再携带实体，eyelib 只能按类型+坐标在
- * {@code level.entitiesForRendering()} 里反查。CarryOn 等模组会从 NBT 造一个**不加入世界**的
- * 假实体，用 {@code EntityRenderDispatcher.extractEntity} + {@code submit} 渲染——坐标反查永远
- * 找不到它，doki 模型因此退回原版模型（抱起萌化生物后变成 vanilla 外观）。
- * <p>
+ * 26.1 的 {@code RenderLivingEvent} 不再携带实体。原实现只能按类型+坐标在
+ * {@code level.entitiesForRendering()} 里反查，有两个失效场景：
+ * <ul>
+ *   <li>CarryOn 等模组用 {@code EntityType.create(NBT)} 造一个**不加入世界**的假实体，
+ *       坐标反查永远找不到它（抱起萌化生物后一度退回 vanilla 外观）；</li>
+ *   <li>两只同类型生物同格时，反查会把多份 render state 解析到同一个实体，导致该实体的模型与
+ *       盔甲被画到每一份 state 的位置上（「多出一份本体/甲」）。</li>
+ * </ul>
  * {@code EntityRenderDispatcher.extractEntity} 每次调用 {@code createRenderState} 都返回新对象，
- * 所以 state 身份可以安全作为键；只登记 level 反查不到的实体，正常世界实体不进入本表。
+ * 所以 state 身份可以安全作为键。
+ * <p>
  * 弱键 + 弱值避免留住实体/渲染状态。
  *
  * @author TT432
