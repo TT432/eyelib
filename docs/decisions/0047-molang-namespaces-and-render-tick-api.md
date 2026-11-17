@@ -59,6 +59,7 @@ BakeState bakeState(RenderData<?> cap, @Nullable RenderHost)
 
 ## 4. 验证
 
-- 单测：`MolangNamespacesTest`（最长前缀/后注册优先/大小写/注销/epoch）、`MolangNamespaceContractTest`（静态路径、编译产物站点、scope 覆盖优先、命名空间优先于静态绑定、miss 回落）、`MolangMappingTreeDottedNamespaceTest`、`MolangCallableDiscoveryRoleContractTest`（新增「无注解歧义跳过」）；烘焙侧由 `BakeState` 真值表与 `bakeTargets` 枚举断言覆盖（`PassTierTest` 同批）。
+- 单测：`MolangNamespacesTest`（最长前缀/后注册优先/大小写/注销/epoch）、`MolangNamespaceContractTest`（静态路径、编译产物站点、scope 覆盖优先、命名空间优先于静态绑定、miss 回落）、`MolangMappingTreeDottedNamespaceTest`、`MolangCallableDiscoveryRoleContractTest`（新增「无注解歧义跳过」）。
+- **未验证（显式收窄）**：`tickRenderData`/`bakeTargets`/`bakeState` 只做了三节点编译与 m4mod 编译验证，**没有**等价测（同一 `RenderData` 的管线 tick 与公开 tick 逐值比对）与 `BakeState` 真值表单测；`RenderDataTick` 的抽取以「语句逐行搬移 + 变量注入改为共享方法」保证等价，属代码审阅级证据，需实机（特效首帧尖刺、`query.owner.*` 求值）补证。
 - 三节点 `mcmcp_build` / `mcmcp_test`；`ArchitectureTest` 零新增冻结。
 - 运行时：m4mod 特效首帧尖刺（观测 `bakeState` 从 PENDING 到 BAKED 的帧数）、`query.owner.*` 在宠物动画中求值正确。

@@ -86,6 +86,6 @@ AttachmentRegistry.register(source) → Registration(AutoCloseable)
 ## 4. 验证
 
 - 三节点 `mcmcp_build` / `mcmcp_nullaway` / `mcmcp_test`（含 `ProxyAttachmentsTest`、`AttachablePolicyTest`、`ArchitectureTest`）。
-- 单测：`AttachmentAnchorTest`（骨骼链兜底、locator 缺失、`locatorFamily` 前缀语义、`modelRoot` 空间）、`RenderResultTest`、`AttachmentRegistryTest`、`RenderHostTest`。
-- 运行时：`getSkipCount(MISSING_HOST)==0`（迁移后），`getAttachmentWithoutBodyCount()==0`，`getAttachmentDeclarationDroppedCount()==0`，`getAttachmentSourceErrorCount()==0`；clientsmoke 断言 `renderResult().rootPose()` 与 sink 首个 submit 的矩阵逐元素相等。
-- 实机：三节点装备（铁剑 + 全套铁甲 + 头部物品）外观与 ADR-0043 §5 一致；motions4 的首饰/乘客/携带宠物 A/B 与迁移前逐帧一致。
+- 单测（`AttachmentApiTest`）：骨骼链兜底与全缺失不兜底、`locator` 缺失 → 空、`locatorFamily` 前缀语义（含 `pet2`）、`modelRoot` 的 Y 180° 空间、`AttachmentRegistry` 注册/注销幂等、`RenderResult` 的跳过原因与位姿携带。
+- 编译与静态闸门：三节点 `compileJava`、`:1.20.1/:1.21.1/:26.1.2` 的 `test`（含 `ProxyAttachmentsTest`/`AttachablePolicyTest`/ArchUnit/Stonecutter 注释约束）、`nullawayMain`、`clientsmoke` 12/12。
+- **未验证（显式收窄）**：① `getSkipCount(MISSING_HOST)`/`getAttachmentDeclarationDroppedCount()` 的实际计数需要带真实装备与外部声明的运行场景，本次只验证了编译与既有 smoke；② m4mod 侧的首饰/乘客/携带宠物像素级 A/B **未启动客户端**（m4mod 只做了编译验证），因此「与迁移前逐帧一致」仍是待实机确认项；③ 26.1 的延迟提交下 `rootPose` 语义未实机核对。

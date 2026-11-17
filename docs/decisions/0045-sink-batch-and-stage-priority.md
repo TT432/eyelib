@@ -64,6 +64,5 @@ enum SkinningSupport { AVAILABLE, OFF_BY_FLAG, NO_ENGINE_PATH, SHADER_PACK_ACTIV
 ## 4. 验证
 
 - 单测：`PassTierTest`（全部 `Transparency` 成员 + `passTier()` 的 null 归 OPAQUE）、`RenderStageSubscriberRegistryTest` 新增 `priorityOrdersDispatch` / `samePriorityIsStableByClassName`（既有 6 个用例不改）、`BatchPolicy` 值语义。
-- 三节点 `mcmcp_build` / `test`；26.1 上确认 `openBatch(MERGE).stats().draws() == 0`。
-- 运行时：`F3` 的 RenderType draw 计数（`RenderTypeDrawStats`）在批次前后同名类型从 N 降到 1；`skinningSupport` 在 Iris 下返回 `SHADER_PACK_ACTIVE`。
-- 实机：作物/核心合批前后画面一致；启用 `MERGE` 的装备场景需确认盔甲半透明叠序。
+- 三节点 `mcmcp_build` / `test` 全绿（含 `PassTierTest`、`BatchPolicyTest`、`BatchScopeTest`、`RenderStageSubscriberRegistryTest` 新增两例）。
+- **未验证（显式收窄）**：① `openBatch(MERGE)` 的实际 draw 数与像素等价（1.21.1 作物场景、`BatchStats.draws`）**未实机测量**；② 26.1 `stats().draws()==0` 与 `skinningSupport` 的 `OUTSIDE_STAGE_WINDOW` 返回值**未实机打印**；③ 1.20.1 分桶关闭路径按 sources jar 签名实现，**未在 1.20.1 实机跑过合批**；④ `MERGE` 改变 vanilla 通道与合并几何相对次序后的半透明叠序未实机确认。
