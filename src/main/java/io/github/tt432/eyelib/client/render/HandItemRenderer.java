@@ -49,10 +49,17 @@ final class HandItemRenderer {
      * 单个手持槽（主手或副手）。必须在模型几何提交之前调用（26.1 的 submit 节点在几何 writer 内
      * 已不能接收新内容）。
      *
-     * @param modelRoot 模型根位姿（已含实体位姿；模型 Y 翻转由 {@link ModelPoseTransforms} 施加）
+     * @param frame 本帧上下文（模型根位姿已含实体位姿；模型 Y 翻转由 {@link ModelPoseTransforms} 施加）
      */
-    static boolean render(SimpleRenderAction<?> action, LivingEntity holder, Model model, ModelRuntimeData tickedInfos,
-                          Matrix4f modelRoot, ProxyAttachable proxy, int light) {
+    static boolean render(SimpleRenderAction<?> action, RenderFrame frame, LivingEntity holder,
+                          ProxyAttachable proxy) {
+        Model model = frame.primaryModel();
+        if (model == null) {
+            return false;
+        }
+        ModelRuntimeData tickedInfos = frame.tickedInfos();
+        Matrix4f modelRoot = frame.rootPose();
+        int light = frame.light();
         boolean offhand = proxy.slot() == EquipmentSlot.OFFHAND;
         InteractionHand hand = offhand ? InteractionHand.OFF_HAND : InteractionHand.MAIN_HAND;
         ItemDisplayContext displayContext = offhand
@@ -76,12 +83,12 @@ final class HandItemRenderer {
         if (bindBone == null) {
             return false;
         }
-        var frame = ModelPoseTransforms.resolveBonePose(model, tickedInfos, boneId, modelRoot);
-        if (frame.isEmpty()) {
+        var boneFrame = ModelPoseTransforms.resolveBonePose(model, tickedInfos, boneId, modelRoot);
+        if (boneFrame.isEmpty()) {
             return false;
         }
 
-        PoseStack poseStack = RenderPorts.get().renderSystemPort().createPoseStackFromMatrix(frame.get());
+        PoseStack poseStack = RenderPorts.get().renderSystemPort().createPoseStackFromMatrix(boneFrame.get());
         var pivot = bindBone.pivot();
         poseStack.translate(pivot.x(), pivot.y(), pivot.z());
         if (itemScale != 1F) {

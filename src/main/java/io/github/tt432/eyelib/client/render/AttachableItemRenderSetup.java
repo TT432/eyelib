@@ -88,7 +88,8 @@ public final class AttachableItemRenderSetup {
             io.github.tt432.eyelib.bridge.molang.MolangBuiltInQuery.markAttached(scope);
         }
 
-        rd.getClientEntityComponent().setClientEntity(attachable);
+        // 按物品键解析出的实例：固定实例绑定（不参与注册表代际失效），与 G5 的二分约定一致
+        rd.getClientEntityComponent().bindInstance(attachable);
         // 执行 setupClientEntity 返回的同步动作（含 clamped texture upload 等），
         // 否则 alphatest 材质的 clamped 纹理不会被上传，导致显示为紫色 MissingTexture 方块。
         EntityRenderOrchestrator.setupClientEntity(attachable, rd).forEach(Runnable::run);
@@ -179,7 +180,7 @@ public final class AttachableItemRenderSetup {
         }
 
         var sorted = new java.util.ArrayList<>(rd.getModelComponents());
-        sorted.sort(java.util.Comparator.comparingInt(EntityRenderOrchestrator::passOrder));
+        sorted.sort(java.util.Comparator.comparingInt(modelComponent -> modelComponent.passTier().order()));
         for (ModelComponent mc : sorted) {
             if (!mc.readyForRendering()) continue;
 
@@ -229,7 +230,7 @@ public final class AttachableItemRenderSetup {
         Matrix4f unboundRoot = ModelPoseTransforms.bedrockRootPose(holderRoot);
 
         var sorted = new java.util.ArrayList<>(rd.getModelComponents());
-        sorted.sort(java.util.Comparator.comparingInt(EntityRenderOrchestrator::passOrder));
+        sorted.sort(java.util.Comparator.comparingInt(modelComponent -> modelComponent.passTier().order()));
         for (ModelComponent mc : sorted) {
             if (!mc.readyForRendering()) {
                 continue;

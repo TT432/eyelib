@@ -218,7 +218,7 @@ public record RenderControllerEntry(
         final String geometryName = geometryResult;
         PortResourceLocation meshTexture = renderControllerSlot
                 .meshTexture(geometryName, modelVersion,
-                             () -> Optional.ofNullable(resolveMeshTexture(models, entity, geometryName)))
+                             () -> Optional.ofNullable(MeshTextures.resolve(models, entity, geometryName)))
                 .orElse(null);
 
         // 每组骨骼先解析各自的图层纹理列表（texture.material 注入依赖组材质）
@@ -289,32 +289,6 @@ public record RenderControllerEntry(
                 word &= word - 1;
             }
         }
-    }
-
-    /**
-     * 解析 texture_meshes 的体素化贴图：仅在当前 RC 选中的几何上收集 texture_mesh 短名，经实体纹理表解析。
-     * 仅当所有 mesh 解析到同一路径时返回该路径；无 mesh 或多路径时返回 null（回退组件图层贴图）。
-     */
-    private static @org.jspecify.annotations.Nullable PortResourceLocation resolveMeshTexture(Collection<Model> models, BrClientEntity entity, String geometryName) {
-        String resolved = null;
-        for (Model model : models) {
-            if (model == null || !model.name().equals(geometryName)) continue;
-            for (var boneEntry : model.allBones().int2ObjectEntrySet()) {
-                for (Model.TextureMesh tm : boneEntry.getValue().textureMeshes()) {
-                    String path = entity.textures().get(tm.texture());
-                    if (path == null) {
-                        path = entity.textures().get("default");
-                    }
-                    if (path == null) continue;
-                    if (resolved == null) {
-                        resolved = path;
-                    } else if (!resolved.equals(path)) {
-                        return null;
-                    }
-                }
-            }
-        }
-        return resolved == null ? null : PortResourceLocation.parse(resolved);
     }
 
     /**
