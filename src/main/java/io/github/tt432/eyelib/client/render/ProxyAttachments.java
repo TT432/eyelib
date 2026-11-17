@@ -1,13 +1,12 @@
 package io.github.tt432.eyelib.client.render;
 
-import io.github.tt432.eyelib.animation.ModelRuntimeData;
+import io.github.tt432.eyelib.capability.component.ModelComponent;
 import io.github.tt432.eyelib.client.entity.AttachablePolicy;
 import io.github.tt432.eyelib.importer.entity.BrClientEntity;
 import io.github.tt432.eyelib.model.GlobalBoneIdHandler;
 import io.github.tt432.eyelib.model.Model;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
-import org.joml.Matrix4f;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,6 +20,11 @@ import java.util.Set;
  * <p>
  * 某个槽若存在真正的 {@code minecraft:attachable} 定义（{@link AttachableResolver} 命中 item 键），
  * 该槽整条跳过——挂载定义优先于原版回退，两条路径不会再同时画一份（历史缺陷："盔甲被画两次"）。
+ * <p>
+ * 关于「声明」：代理的槽位归属与挂载目标仍由本类声明（{@link ProxyAttachable}），但**执行**统一走
+ * {@link AttachmentStage} 的挂载循环——外部自定义挂载（饰品/乘客/携带宠物）与内置代理共用同一份
+ * 去重、异常隔离与「锚点缺失即不绘制」语义（G3）。内置代理的锚点在各自 renderer 内解析，
+ * 因此使用 {@link AttachmentAnchor#selfAnchored()}。
  * <p>
  * 已知语义差异（不是 bug，是数据缺口，用 {@link #audit(Model)} 逐模型核对）：
  * 模型没有可用挂载骨骼时该装备不绘制（基岩版语义），因此某些萌化模型上不会出现手持物/胸甲。
@@ -55,16 +59,20 @@ public final class ProxyAttachments {
     );
 
     /**
-     * 每实体每帧一次（先于模型几何提交）。
+     * 生成代理的挂载声明（每实体每帧一次，先于模型几何提交）。
+     * <p>
+     * 只返回本帧**应当绘制**的代理：槽位真实 attachable 已接管、物品为空、策略禁止的槽位都不产生声明——
+     * 这样下游看到的就是真实裁决结果。声明与实际绘制分段数由 {@link AttachmentStage} 统一执行，
+     * 只有真正画出几何的槽位才计入 {@link RenderFrame#handledSlots()}。
      *
      * @param attachableSlots 已由真实 {@code minecraft:attachable} 定义接管的槽位（这些槽不再走代理）
      */
-    static int render(SimpleRenderAction<?> action, LivingEntity holder, Model model, ModelRuntimeData tickedInfos,
-                      Matrix4f modelRoot, int light, Set<EquipmentSlot> attachableSlots) {
-        int drawn = 0;
+    static List<SlotDeclaration> declarations(SimpleRenderAction<?> action, RenderFrame frame,
+                                              LivingEntity holder, Set<EquipmentSlot> attachableSlots) {
         // 与真实 attachable 共用同一份准入策略：代理不是「另一套渲染」，只是「同一套装备渲染的
         // 原版几何来源」。enable_attachables 关 → 全部不画；hide_armor 只压盔甲/头盔（武器照常）。
         BrClientEntity holderCe = AttachablePolicy.clientEntityOf(holder);
+        List<SlotDeclaration> declarations = new ArrayList<>(ALL.size());
         for (ProxyAttachable proxy : ALL) {
             if (attachableSlots.contains(proxy.slot()) || !proxy.manages(holder)) {
                 continue;
@@ -72,18 +80,22 @@ public final class ProxyAttachments {
             if (!AttachablePolicy.allows(holderCe, proxy.kind() == ProxyAttachable.Kind.ARMOR_PIECE)) {
                 continue;
             }
-            // 挂载目标缺失的槽位不画、也不计入「画了挂载物」：没有任何几何被提交
-            int drawnByProxy = switch (proxy.kind()) {
-                case HELD_ITEM -> HandItemRenderer.render(action, holder, model, tickedInfos, modelRoot, proxy, light)
-                        ? 1 : 0;
-                case HEAD_ITEM -> HeadItemRenderer.render(action, holder, model, tickedInfos, modelRoot, proxy, light)
-                        ? 1 : 0;
-                case ARMOR_PIECE -> ArmorAttachmentRenderer.render(action, holder, model, tickedInfos, modelRoot, proxy,
-                        light);
+            AttachmentDraw draw = switch (proxy.kind()) {
+                case HELD_ITEM -> (fr, pose, anchorName) ->
+                        HandItemRenderer.render(action, fr, holder, proxy) ? 1 : 0;
+                case HEAD_ITEM -> (fr, pose, anchorName) ->
+                        HeadItemRenderer.render(action, fr, holder, proxy) ? 1 : 0;
+                case ARMOR_PIECE -> (fr, pose, anchorName) ->
+                        ArmorAttachmentRenderer.render(action, fr, holder, proxy);
             };
-            drawn += drawnByProxy;
+            declarations.add(new SlotDeclaration(proxy.slot(),
+                    new AttachmentDeclaration(proxy.identifier(), AttachmentAnchor.selfAnchored(), draw)));
         }
-        return drawn;
+        return declarations;
+    }
+
+    /** 代理声明与它管理的槽位（槽位用于在真正画出几何后标记 {@link RenderFrame#handledSlots()}）。 */
+    record SlotDeclaration(EquipmentSlot slot, AttachmentDeclaration declaration) {
     }
 
     /**
@@ -109,5 +121,40 @@ public final class ProxyAttachments {
                               + (missing ? " (MISSING)" : ""));
         }
         return lines;
+    }
+
+    /**
+     * 挂载物用的模型：同一实体的各渲染组件共享骨骼位姿，取骨骼最多的组件（基础模型，
+     * 覆盖层/发光层的骨骼是其子集）即可解析全部挂载点。
+     */
+    static @org.jspecify.annotations.Nullable Model attachmentModel(List<ModelComponent> components) {
+        Model model = null;
+        int best = -1;
+        for (ModelComponent component : components) {
+            // 只跟已就绪的组件走：模型尚未烘焙时不能只画装备不画身体
+            if (!component.readyForRendering()) {
+                continue;
+            }
+            Model candidate = component.getModel();
+            if (candidate == null) {
+                continue;
+            }
+            int boneCount = candidate.allBones().size();
+            if (boneCount > best) {
+                best = boneCount;
+                model = candidate;
+            }
+        }
+        return model;
+    }
+
+    /** 双手/盔甲槽全空时不做任何挂载物工作（绝大多数实体走这条短路）。 */
+    static boolean hasEquipment(LivingEntity holder) {
+        return !holder.getMainHandItem().isEmpty()
+                || !holder.getOffhandItem().isEmpty()
+                || !holder.getItemBySlot(EquipmentSlot.HEAD).isEmpty()
+                || !holder.getItemBySlot(EquipmentSlot.CHEST).isEmpty()
+                || !holder.getItemBySlot(EquipmentSlot.LEGS).isEmpty()
+                || !holder.getItemBySlot(EquipmentSlot.FEET).isEmpty();
     }
 }

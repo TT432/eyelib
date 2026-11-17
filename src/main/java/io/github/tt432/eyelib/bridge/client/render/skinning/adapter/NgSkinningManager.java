@@ -13,6 +13,7 @@ import com.mojang.blaze3d.textures.GpuSampler;
 import com.mojang.blaze3d.textures.GpuTextureView;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import io.github.tt432.eyelib.bridge.client.render.bake.BakedModel;
+import io.github.tt432.eyelib.bridge.client.render.SkinningSupport;
 import io.github.tt432.eyelib.bridge.event.ManagerEntryChangedEventPublisher;
 import io.github.tt432.eyelib.bridge.event.ManagerReplacedEventPublisher;
 import net.minecraft.client.Minecraft;
@@ -115,6 +116,28 @@ public final class NgSkinningManager {
         }
         installInvalidationHooks();
         return new NgSkinningSession(routingType, texture);
+    }
+
+    /**
+     * 蒙皮可用性查询：镜像 {@link #createSession(RenderType, Identifier)} 的每条 null 出口
+     * （不建会话、不改状态、不打日志），供 {@code RenderSink#skinningSupport} 在提交前判断。
+     *
+     * <p>{@link SkinningSupport#AVAILABLE} 只是必要条件：模型维度仍可能拒绝
+     * （{@code geometry} 返回 null：全零顶点等），writer 必须保留 CPU 回退。
+     *
+     * @return 可用性
+     */
+    public static SkinningSupport support() {
+        if (!ENABLED) {
+            return SkinningSupport.OFF_BY_FLAG;
+        }
+        if (!stageWindowOpen && RenderSystem.outputColorTextureOverride == null) {
+            return SkinningSupport.OUTSIDE_STAGE_WINDOW;
+        }
+        if (io.github.tt432.eyelib.bridge.client.compat.oculus.OculusCompat.shaderPackActive()) {
+            return SkinningSupport.SHADER_PACK_ACTIVE;
+        }
+        return SkinningSupport.AVAILABLE;
     }
 
     /** 几何缓存（按 BakedModel 实例身份；模型失效时整体清空）。 */

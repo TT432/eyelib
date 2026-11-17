@@ -9,6 +9,7 @@ import io.github.tt432.eyelib.bridge.client.render.bake.BakedModel;
 import io.github.tt432.eyelib.bridge.client.compat.oculus.OculusCompat;
 import io.github.tt432.eyelib.bridge.event.ManagerEntryChangedEventPublisher;
 import io.github.tt432.eyelib.bridge.event.ManagerReplacedEventPublisher;
+import io.github.tt432.eyelib.bridge.client.render.SkinningSupport;
 import io.github.tt432.eyelib.bridge.material.ResourceLocationBridge;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.RenderType;
@@ -179,6 +180,43 @@ public final class LegacySkinningManager {
         }
         installInvalidationHooks();
         return new LegacySkinningSession(routingType, variant);
+    }
+
+    /**
+     * 蒙皮可用性查询：镜像 {@link #createSession(RenderType)} 的每条 null 出口（不建会话、不改状态、
+     * 不打日志），供 {@code RenderSink#skinningSupport} 在提交前判断。
+     *
+     * <p>{@link SkinningSupport#AVAILABLE} 只是必要条件：模型维度仍可能拒绝（顶点全零、
+     * VS 路径超骨骼上限、几何缓存负缓存等），writer 必须保留 CPU 回退。
+     *
+     * @param routingType routing RenderType（必须与 {@code createSession} 用同一实例查询：
+     *                    {@code VARIANTS} 是 IdentityHashMap）
+     * @return 可用性
+     */
+    public static SkinningSupport support(RenderType routingType) {
+        if (!ENABLED || mode == Mode.OFF) {
+            return SkinningSupport.OFF_BY_FLAG;
+        }
+        if (!USER_FORCED_MODE && OculusCompat.shaderPackActive()) {
+            return SkinningSupport.SHADER_PACK_ACTIVE;
+        }
+        int variant;
+        synchronized (VARIANTS) {
+            Integer v = VARIANTS.get(routingType);
+            if (v == null || v < 0) {
+                return SkinningSupport.PASS_NOT_SKINNABLE;
+            }
+            variant = v;
+        }
+        ShaderInstance[] shaders = mode == Mode.COMPUTE ? COMPUTE_SHADERS : VS_SHADERS;
+        // 越界变体 createSession 会抛异常；查询侧按「不可蒙皮」处理，绝不误报 AVAILABLE。
+        if (variant >= shaders.length || shaders[variant] == null) {
+            return SkinningSupport.NO_ENGINE_PATH; // 资源重载窗口期：着色器尚未注册
+        }
+        if (mode == Mode.COMPUTE && batchProgram == null) {
+            return SkinningSupport.NO_ENGINE_PATH;
+        }
+        return SkinningSupport.AVAILABLE;
     }
 
     /**

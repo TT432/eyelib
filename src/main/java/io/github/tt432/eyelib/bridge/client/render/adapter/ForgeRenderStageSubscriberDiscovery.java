@@ -1,6 +1,7 @@
 package io.github.tt432.eyelib.bridge.client.render.adapter;
 
 import io.github.tt432.eyelib.util.event.api.OnRenderStage;
+import io.github.tt432.eyelib.util.event.api.RenderStagePriority;
 import io.github.tt432.eyelib.util.event.api.RenderStageSubscriberDiscovery;
 //? if <1.20.6 {
 import net.minecraftforge.fml.ModList;
@@ -50,7 +51,7 @@ public final class ForgeRenderStageSubscriberDiscovery implements RenderStageSub
 
                     Class<?> clazz = Class.forName(className);
                     MethodHandle handle = LOOKUP.findStatic(clazz, methodName, SIGNATURE);
-                    entries.add(new RenderStageSubscriber(clazz, methodName, handle));
+                    entries.add(new RenderStageSubscriber(clazz, methodName, handle, readPriority(annotationData)));
                 } catch (ReflectiveOperationException | LinkageError e) {
                     LOGGER.error("[RenderStage] Failed to load: {}", memberName, e);
                 }
@@ -58,6 +59,15 @@ public final class ForgeRenderStageSubscriberDiscovery implements RenderStageSub
         }
 
         return entries;
+    }
+
+    /**
+     * 读注解的 {@code priority} 属性。注解属性的默认值不会被 ASM 预扫描写入
+     * {@code annotationData}，因此缺失即回落到 {@link RenderStagePriority#CORE}。
+     */
+    private static int readPriority(ModFileScanData.AnnotationData annotationData) {
+        Object rawPriority = annotationData.annotationData().get("priority");
+        return rawPriority instanceof Integer priority ? priority : RenderStagePriority.CORE;
     }
 
     private static String stripDescriptor(String memberName) {

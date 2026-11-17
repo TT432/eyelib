@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -63,6 +64,16 @@ class MolangCallableDiscoveryRoleContractTest {
         assertTrue(exception.getMessage().contains("host parameter role ambiguity"));
     }
 
+    @Test
+    void callableDiscoverySkipsUnannotatedMethodWithAmbiguousRoles() {
+        // 无 @MolangFunction 的方法角色无法确定时不再中断整棵树装配，只跳过该方法
+        MolangMappingTree.setupMolangMappingTree(() -> java.util.List.of(entry(SkippedHelperMapping.class)));
+
+        assertNull(MolangMappingRegistries.mappingTree().findMethod("query.ambiguous_helper"));
+        // 同类中角色可解析的无注解方法仍按方法名注册（历史语义不变）
+        assertNotNull(MolangMappingRegistries.mappingTree().findMethod("query.plain"));
+    }
+
     private static MolangMappingDiscovery.MolangMappingClassEntry entry(Class<?> mappingClass) {
         MolangMapping mapping = mappingClass.getAnnotation(MolangMapping.class);
         assertNotNull(mapping);
@@ -93,6 +104,17 @@ class MolangCallableDiscoveryRoleContractTest {
         @MolangFunction("ambiguous_receiver")
         public static float ambiguous(FirstHost first, SecondHost second, float value) {
             return first.scale() + second.scale() + value;
+        }
+    }
+
+    @MolangMapping("query")
+    public static final class SkippedHelperMapping {
+        public static float ambiguous_helper(FirstHost first, SecondHost second, float value) {
+            return first.scale() + second.scale() + value;
+        }
+
+        public static float plain(float value) {
+            return value;
         }
     }
 

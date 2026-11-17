@@ -34,20 +34,17 @@ import io.github.tt432.eyelib.material.port.PortRenderPass;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import io.github.tt432.eyelib.util.event.api.OnRenderStage;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import org.joml.Matrix4f;
 import org.joml.Matrix4fc;
 import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.EnumSet;
 import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -103,6 +100,74 @@ public final class EntityRenderOrchestrator {
         RenderDiagnostics.reset();
     }
 
+    /** 指定跳过原因的累计次数（缺失宿主/scope 未初始化/未烘焙等），dev 诊断用。 */
+    public static int getSkipCount(RenderSkipReason reason) {
+        return RenderDiagnostics.getSkipCount(reason);
+    }
+
+    /** 首个跳过的现场描述（含调用方帧），{@code null} 表示从未跳过。 */
+    public static @Nullable String getLastSkipDetail() {
+        return RenderDiagnostics.getLastSkipDetail();
+    }
+
+    /** 同帧同 identifier 的挂载声明被丢弃次数，dev 诊断用。 */
+    public static int getAttachmentDeclarationDroppedCount() {
+        return RenderDiagnostics.getAttachmentDeclarationDroppedCount();
+    }
+
+    /** 挂载声明源/单条声明抛错被隔离的累计次数，dev 诊断用。 */
+    public static int getAttachmentSourceErrorCount() {
+        return RenderDiagnostics.getAttachmentSourceErrorCount();
+    }
+
+    /**
+     * 单实体每帧动画 tick（G8）：与渲染管线的 {@code TickStage} 共用同一实现。
+     * <p>
+     * 前置条件：{@code cap} 已初始化（{@code init}/{@code ensureOwner}），且渲染线程单线程调用。
+     * 宿主取 {@code cap.getOwner()}（是实体时）——饰品/特效等数据自持的 {@code RenderData} 请用
+     * {@link #tickRenderData(RenderData, RenderHost, float)} 显式传渲染宿主。
+     * <p>
+     * 不做实体级引导（按宿主类型 id 重解析 clientEntity、RC 条件重估触发的组件重建）：
+     * 那会把数据自身的 clientEntity 冲成宿主实体的定义。
+     */
+    public static RenderTickResult tickRenderData(RenderData<?> cap, float partialTick) {
+        Entity owner = cap.getOwner() instanceof Entity entity ? entity : null;
+        return RenderDataTick.tick(cap, owner, partialTick, false, RenderDataTick.immediate());
+    }
+
+    /** 单实体每帧动画 tick，显式指定渲染宿主（无实体锚定渲染传 {@link RenderHost#anchor}）。 */
+    public static RenderTickResult tickRenderData(RenderData<?> cap, RenderHost host, float partialTick) {
+        return RenderDataTick.tick(cap, host.entity(), partialTick, false, RenderDataTick.immediate());
+    }
+
+    /** 静态可推断的烘焙预热目标（超集）；配合 {@link #warmBakeTargets} 使用。 */
+    public static List<BakeTarget> bakeTargets(@Nullable BrClientEntity clientEntity) {
+        return clientEntity == null ? List.of() : RenderBake.enumerate(clientEntity);
+    }
+
+    /** 后台预热给定目标（不触碰 GL）；返回提交数。 */
+    public static int warmBakeTargets(List<BakeTarget> targets) {
+        for (BakeTarget target : targets) {
+            RenderBake.warmAsync(target);
+        }
+        return targets.size();
+    }
+
+    /** 按活组件预热（精确键，含 colorMask / clamped / meshTexture 派生）。 */
+    public static int warmRenderData(RenderData<?> cap, @Nullable RenderHost host) {
+        return RenderBake.warmData(host == null ? null : host.entity(), cap);
+    }
+
+    /** 活组件的烘焙就绪状态（含派生键）；{@link BakeState#PENDING} 表示本帧会被 {@code skipIfUnbaked} 跳过。 */
+    public static BakeState bakeState(RenderData<?> cap, @Nullable RenderHost host) {
+        return RenderBake.dataState(host == null ? null : host.entity(), cap);
+    }
+
+    /** 测试用：覆盖渲染跳过严格度判定（{@code DEFAULT} 恢复按环境判定）。 */
+    public static void setStrictOverrideForTest(RenderDiagnostics.Strictness strictness) {
+        RenderDiagnostics.setStrictOverrideForTest(strictness);
+    }
+
     /** Initializes a detached dev-scene entity before it enters the render-only benchmark loop. */
     public static void prepareDetachedEntity(Entity entity) {
         if (entity instanceof LivingEntity living) {
@@ -140,7 +205,7 @@ public final class EntityRenderOrchestrator {
             new TickStage()
     ));
 
-    @OnRenderStage
+    @OnRenderStage(priority = io.github.tt432.eyelib.util.event.api.RenderStagePriority.CORE)
     public static void onRenderStage(float partialTick, double camX, double camY, double camZ) {
         ClientEntitySetup.beginFrame();
         PIPELINE.run(new FramePlan(partialTick, camX, camY, camZ));
@@ -184,7 +249,7 @@ public final class EntityRenderOrchestrator {
             // Opt19：逐实体 tick（molang 求值+动画采样）跨实体并行；
             // GPU 操作（NativeImage 下载/上传）与粒子回放收集为 deferred，join 后按实体序回放。
             ParallelStageExecutor.forEachEntity(all,
-                    (entity, deferred) -> tickEntity(entity, plan, deferred),
+                    (entity, deferred) -> RenderDataTick.tickEntity(entity, plan.partialTick(), deferred),
                     (result, deferred) -> {
                         if (result != null) {
                             plan.tickResults().add(result);
@@ -202,88 +267,6 @@ public final class EntityRenderOrchestrator {
                 AttachableItemRenderSetup.tickForEntity(entity, plan.partialTick());
             }
         }
-    }
-
-    /**
-     * 逐实体 tick 主体（Opt19：worker 线程执行）。仅读写该实体私有状态
-     * （RenderData/scope/组件）；共享状态安全性见 ParallelStageExecutor 线程模型。
-     * deferred 收集必须在渲染线程执行的动作（GPU 纹理操作、粒子回放、组件重建效果），
-     * 串行模式下由执行器在每实体 merge 时立即回放——与旧 inline 语义同帧同序。
-     */
-    private static @Nullable EntityTickResult tickEntity(Entity e, FramePlan plan, List<Runnable> deferred) {
-        var cap = RenderData.getComponent(e);
-
-        if (!(e instanceof LivingEntity entity) || cap == null) {
-            return null;
-        }
-        cap.ensureOwner(entity);
-
-        MolangScope scope = cap.getScope();
-        if (scope == null) {
-            return null;
-        }
-
-        ClientEntitySetup.setupSyncedBehaviorContext(entity, scope);
-
-        // 动画状态/时间轴音效（switchState 与 BrAnimationEntryDefinition 的 sound 回调）
-        // 依赖 PORT_ENTITY 宿主角色提供播放坐标；fromCached 保持幂等写短路。
-        scope.getHostContext().put(io.github.tt432.eyelib.molang.mapping.api.HostRoles.PORT_ENTITY,
-                io.github.tt432.eyelib.bridge.molang.EntityPort.fromCached(entity));
-
-        ClientEntityComponent clientEntityComponent = cap.getClientEntityComponent();
-
-        // addon 卸载/换包后注册表代际变化：按 id 重新解析 clientEntity，
-        // 管理器中已无此 id 时回落 vanilla（else 分支清空组件与 RC 状态）
-        if (clientEntityComponent.isStale(ClientEntityManager.INSTANCE.generation())) {
-            deferred.addAll(ClientEntitySetup.setupClientEntity(entity, cap));
-        }
-
-        AnimationEffects effects = new AnimationEffects();
-        scope.set("variable.partial_tick", plan.partialTick());
-        scope.set("variable.attack_time", ((float) entity.swingTime) / entity.getCurrentSwingDuration());
-
-        // 粒子操作入队，join 后渲染线程回放（DeferredAnimationParticleSpawner 语义）
-        DeferredAnimationParticleSpawner spawner =
-                new DeferredAnimationParticleSpawner(ParticlePort.getSpawnAdapter());
-        scope.getHostContext()
-             .put(HostRoles.ANIMATION_PARTICLE_SPAWNER, spawner);
-
-        ModelRuntimeData tickedInfos;
-        if (cap.getAnimationComponent().getSerializableInfo() != null) {
-            tickedInfos = BrAnimator.tickAnimation(cap.getAnimationComponent(), scope, effects,
-                    (ClientTickPort.getTick() + plan.partialTick()) / 20, () -> {
-                        if (clientEntityComponent.getClientEntity() != null) {
-                            clientEntityComponent.getClientEntity().scripts().ifPresent(scripts -> {
-                                scripts.pre_animation().eval(scope);
-                            });
-                        }
-                    }, cap.bindBones(), cap.flipAnimation());
-        } else {
-            tickedInfos = ModelRuntimeData.EMPTY;
-        }
-        cap.getAnimationComponent().tickedInfos = tickedInfos;
-        cap.getAnimationComponent().effects = effects;
-        // setup 重建遗弃粒子的兜底清理（见 AnimationComponent.pollOrphanedParticles）：
-        // remove 经延迟 spawner 入队，与其他粒子操作同帧按序回放
-        for (var particle : cap.getAnimationComponent().pollOrphanedParticles()) {
-            spawner.remove(particle.particleUUID());
-        }
-        if (!spawner.isEmpty()) {
-            deferred.add(spawner::drain);
-        }
-
-        // RC 条件动态重估：条件翻转时重建组件（BE 语义为逐帧评估）。
-        // 本帧 SetupStage 已做过完整 setup（含条件求值与掩码写入）的实体跳过——
-        // 同帧内 scope 状态对条件求值无中间变化，重估必然命中同一掩码。
-        var ce = clientEntityComponent.getClientEntity();
-        if (ce != null && !ce.renderControllerConditions().isEmpty()
-                && cap.getRenderControllerComponent().setupFrameStamp() != ClientEntitySetup.frame()
-                && ClientEntitySetup.evalConditionMask(ce, scope)
-                   != cap.getRenderControllerComponent().conditionMask()) {
-            deferred.addAll(ClientEntitySetup.setupClientEntity(ce, cap));
-        }
-
-        return new EntityTickResult(entity, tickedInfos, effects);
     }
 
     /**
@@ -322,7 +305,7 @@ public final class EntityRenderOrchestrator {
             }
 
             boolean rendered = SimpleRenderAction.builder(params.multiBufferSource(), params.sink(), params.poseStack(), cap, params.partialTick())
-                    .entity(entity)
+                    .host(RenderHost.of(entity))
                     .animation(cap.getAnimationComponent())
                     .overlay(params.overlay())
                     .light(params.packedLight())
@@ -409,7 +392,7 @@ public final class EntityRenderOrchestrator {
         }
 
         var deferred = new ArrayList<Runnable>();
-        tickEntity(entity, new FramePlan(partialTick, 0, 0, 0), deferred);
+        RenderDataTick.tickEntity(entity, partialTick, deferred);
         deferred.forEach(Runnable::run);
 
         AttachableItemRenderSetup.tickForEntity(entity, partialTick);
@@ -439,27 +422,59 @@ public final class EntityRenderOrchestrator {
     }
 
     static <T> boolean renderEntity(SimpleRenderAction<T> data) {
-        var entity = data.entity();
-        if (entity == null) {
-            return false;
-        }
-        var cap = data.renderData();
+        return renderEntityResult(data).drawn();
+    }
 
-        cap.ensureOwner(entity);
-
-        if (cap.getScope() == null) {
-            return false;
+    /** {@code render()} 的完整产物版本（G2）：根位姿、提交段数与跳过原因。 */
+    static <T> RenderResult renderEntityResult(SimpleRenderAction<T> data) {
+        RenderSkipReason skip = prepare(data, true);
+        if (skip != null) {
+            return RenderResult.skipped(skip);
         }
-        ClientEntitySetup.setupExtraMolang(entity, cap.getScope(), data.partialTick());
-        if (entity instanceof LivingEntity livingEntity) {
-            ClientEntitySetup.setupSyncedBehaviorContext(livingEntity, cap.getScope());
-        }
-
-        boolean rendered = data.animationNotNull() && renderComponents(data);
-        if (rendered) {
+        RenderResult result = drawComponents(data);
+        if (result.drawn()) {
             RenderDiagnostics.recordSuccess();
         }
-        return rendered;
+        return result;
+    }
+
+    /**
+     * 每帧准备的唯一入口（{@code render()} 与 {@code renderComponents()} 共用，G1）。
+     * <p>
+     * 与历史行为的差异：owner 只在**未绑定**时初始化（借用实体画挂载物的调用方不会再把数据自身
+     * 的作用域冲掉）；缺失宿主不再静默 return false，而是诊断 + 开发环境抛错。
+     *
+     * @param requireAnimation {@code render()} 路径要求调用方已提供动画采样；{@code renderComponents()} 不要求
+     * @return null 表示准备完成；非 null 为跳过原因（已在严格模式下抛出）
+     */
+    private static @Nullable RenderSkipReason prepare(SimpleRenderAction<?> data, boolean requireAnimation) {
+        RenderHost host = data.host();
+        if (host == null) {
+            return skip(RenderSkipReason.MISSING_HOST,
+                    "SimpleRenderAction.host 为 null（非实体锚定渲染请用 RenderHost.anchor(...)）");
+        }
+        RenderData<?> cap = data.renderData();
+        host.bindOwner(cap);
+        MolangScope scope = cap.getScope();
+        if (scope == null) {
+            return skip(RenderSkipReason.SCOPE_UNINITIALIZED,
+                    "RenderData 的 molang 作用域未初始化（未 init/ensureOwner）：" + host.owner().getClass().getName());
+        }
+        if (requireAnimation && !data.animationNotNull()) {
+            return skip(RenderSkipReason.ANIMATION_MISSING, "tickedInfos/effects 为 null");
+        }
+        host.applySubmitVariables(scope, data.partialTick());
+        host.applyBehaviorContext(scope);
+        return null;
+    }
+
+    /** 记录跳过；开发环境直接抛出（生产/未知环境只计数 + 一次 WARN）。 */
+    private static RenderSkipReason skip(RenderSkipReason reason, String detail) {
+        RenderDiagnostics.recordSkip(reason, detail);
+        if (RenderDiagnostics.isStrict()) {
+            throw new IllegalStateException("[Eyelib] 模型渲染被跳过：" + reason + " —— " + detail);
+        }
+        return reason;
     }
 
     @SuppressWarnings("unchecked")
@@ -468,231 +483,154 @@ public final class EntityRenderOrchestrator {
     }
 
     /**
-     * 渲染顺序分档：BE 的材质系统按材质类型排序（不透明/cutout 先画，半透明/加法/发光后画），
-     * 否则后画的不透明 pass 会以深度覆盖先画的发光/加法 pass（如 A&S 蜘蛛眼睛被身体盖住）。
+     * 渲染模型组件。
+     * <p>
+     * 与 {@link #renderEntityResult} 共用同一「每帧准备」与根位姿实现，因此方块锚定/自定义宿主渲染
+     * 也能拿到 {@code variable.partial_tick}/{@code variable.attack_time}（历史缺陷：走
+     * {@code renderComponents} 的作物/核心渲染动画缺子帧插值、{@code attack_time} 恒 0）。
+     *
+     * @return 渲染产物（根位姿、提交段数、跳过原因）
      */
-    static int passOrder(ModelComponent mc) {
-        var texture = mc.getTexture();
-        if (texture == null) {
-            // 无纹理组件没有材质 pass 可查，与不透明同档（原行为：getRenderType 返回 null → 0）
-            return 0;
+    public static <T> RenderResult renderComponents(SimpleRenderAction<T> data) {
+        RenderSkipReason skip = prepare(data, false);
+        if (skip != null) {
+            return RenderResult.skipped(skip);
         }
-        var pass = mc.getRenderType(texture);
-        if (pass == null) {
-            return 0;
-        }
-        return switch (pass.transparency()) {
-            case SOLID, ALPHA_TEST -> 0;
-            case TRANSLUCENT, TRANSLUCENT_EMISSIVE, ADDITIVE -> 1;
-        };
+        return drawComponents(data);
     }
 
-    public static <T> boolean renderComponents(SimpleRenderAction<T> data) {
+    private static <T> RenderResult drawComponents(SimpleRenderAction<T> data) {
         var components = new ArrayList<>(data.renderData().getModelComponents());
-        components.sort(java.util.Comparator.comparingInt(EntityRenderOrchestrator::passOrder));
+        components.sort(java.util.Comparator.comparingInt(modelComponent -> modelComponent.passTier().order()));
+
+        // 根位姿只算一次：挂载阶段、内置装备与 RenderResult 共用同一矩阵（G2/G3 的一致性前提）。
+        Matrix4f entityPose = new Matrix4f(data.poseStack().last().pose());
+        PoseStack rootScratch = RenderPorts.get().renderSystemPort().createPoseStackFromMatrix(entityPose);
+        applyRootPose(data, rootScratch);
+        Matrix4f rootPose = new Matrix4f(rootScratch.last().pose());
+
+        List<ModelComponent> renderable = new ArrayList<>(components.size());
+        for (ModelComponent modelComponent : components) {
+            if (modelComponent.readyForRendering() || (modelComponent.getSerializableInfo() != null
+                    && modelComponent.getSerializableInfo().texture() != null)) {
+                renderable.add(modelComponent);
+            }
+        }
+        if (renderable.isEmpty()) {
+            return RenderResult.skipped(components.isEmpty() ? RenderSkipReason.NO_COMPONENTS : RenderSkipReason.NOT_READY,
+                    entityPose, rootPose);
+        }
+
+        // 挂载物（盔甲/手持物/外部声明）必须在模型几何提交之前：26.1 的 submit 节点在几何 writer 内
+        // 已不再接收新内容；骨骼帧只依赖「模型 + 本帧动画采样 + 模型根位姿」，与几何提交无关。
+        RenderFrame frame = AttachmentStage.createFrame(data, components, entityPose, rootPose, true);
+        int attachmentDraws = AttachmentStage.run(data, frame);
+
         boolean[] carriedBlockRendered = {false};
-        // 栓绳锚点需要「实体根位姿」与「施加脚本缩放/身体朝向后的根位姿」：
-        // 前者在 setupEntityClientEntityData 之前取，后者取一次即可（所有组件共享同一实体位姿）。
-        Matrix4f basePose = new Matrix4f(data.poseStack().last().pose());
+        // 栓绳锚点需要「实体根位姿」与「施加脚本缩放/身体朝向后的根位姿」：前者即 entityPose，
+        // 后者即 rootPose（本帧已算好，不再逐组件重算）。
         Model[] leashModel = {null};
         Matrix4f[] leashEntityPose = {null};
-        // 挂载物（盔甲/手持物）必须在模型几何提交之前渲染：26.1 的 submit 节点在几何 writer 内
-        // 已不再接收新内容；骨骼帧只依赖「模型 + 本帧动画采样 + 模型根位姿」，与几何提交无关。
-        int attachmentDraws = renderAttachments(data, components);
-        boolean rendered = components.stream()
-                                                                       .filter(mc -> mc.readyForRendering() || (mc.getSerializableInfo() != null && mc.getSerializableInfo()
-                                                                                                                                                      .texture() != null))
-                                                                       .mapToLong(modelComponent -> {
-                                                                           var model = modelComponent.getModel();
-                                                                           if (model == null) {
-                                                                               return 0;
-                                                                           }
+        int submittedPasses = 0;
+        int warmedUp = 0;
+        int drawnComponents = 0;
+        var entity = data.entity();
+        var tickedInfos = frame.tickedInfos();
+        for (ModelComponent modelComponent : renderable) {
+            var model = modelComponent.getModel();
+            if (model == null) {
+                continue;
+            }
 
-                                                                           var poseStack = data.poseStack();
-                                                                           poseStack.pushPose();
+            var poseStack = data.poseStack();
+            poseStack.pushPose();
 
-                                                                           var tickedInfos = data.tickedInfos();
-                                                                           if (tickedInfos == null) {
-                                                                               tickedInfos = ModelRuntimeData.EMPTY;
-                                                                           }
-                                                                           var effects = data.effects();
-                                                                           if (effects == null) {
-                                                                               effects = new AnimationEffects();
-                                                                           }
-                                                                           var entity = data.entity();
-                                                                           if (entity == null) {
-                                                                               poseStack.popPose();
-                                                                               return 0;
-                                                                           }
+            // 模型根位姿：与 RenderResult.rootPose / 挂载阶段同一条实现（宿主的 applyRootPose）。
+            applyRootPose(data, poseStack);
 
-                                                                           ClientEntitySetup.setupEntityClientEntityData(data);
+            // 优先选带 Bedrock `lead` locator 的模型：同一实体的多个渲染组件
+            // （发光/羊毛覆盖层）共享骨骼位姿，但只有基础模型一定带 locator。
+            if (leashEntityPose[0] == null
+                    || (!LeashRenderer.hasLead(leashModel[0]) && LeashRenderer.hasLead(model))) {
+                leashModel[0] = model;
+                leashEntityPose[0] = new Matrix4f(poseStack.last().pose());
+            }
 
-                                                                           // 优先选带 Bedrock `lead` locator 的模型：同一实体的多个渲染组件
-                                                                           // （发光/羊毛覆盖层）共享骨骼位姿，但只有基础模型一定带 locator。
-                                                                           if (leashEntityPose[0] == null
-                                                                                   || (!LeashRenderer.hasLead(leashModel[0]) && LeashRenderer.hasLead(model))) {
-                                                                               leashModel[0] = model;
-                                                                               leashEntityPose[0] = new Matrix4f(poseStack.last().pose());
-                                                                           }
+            // 解析最终 renderPass+texture（含 colorMask 替换），不含 consumer；
+            // consumer 由 RenderSink 在回调中提供（立即: bufferSource.getBuffer; 延迟: submitCustomGeometry 回调）。
+            RenderOutputs.RenderOutput output = RenderOutputs.resolve(entity, modelComponent);
 
-                                                                           // 解析最终 renderPass+texture（含 colorMask 替换），不含 consumer；
-                                                                           // consumer 由 RenderSink 在回调中提供（立即: bufferSource.getBuffer; 延迟: submitCustomGeometry 回调）。
-                                                                           RenderOutput output = resolveOutput(data, modelComponent);
-                                                                           ModelRuntimeData finalTickedInfos = tickedInfos;
+            // 搬运方块：在实体 submit 阶段同步提交一次（26.1 的 collector 在
+            // renderAllFeatures 之后不再接收新的方块模型，不能延迟到挂载物渲染里）。
+            if (entity != null && !carriedBlockRendered[0]
+                    && CarriedBlockRenderer.render(entity, poseStack, model, tickedInfos,
+                    data.packedLight(), data.sink())) {
+                carriedBlockRendered[0] = true;
+            }
 
-                                                                           // 搬运方块：在实体 submit 阶段同步提交一次（26.1 的 collector 在
-                                                                           // renderAllFeatures 之后不再接收新的方块模型，不能延迟到挂载物渲染里）。
-                                                                           if (!carriedBlockRendered[0]
-                                                                                   && CarriedBlockRenderer.render(entity, poseStack, model,
-                                                                                   finalTickedInfos, data.packedLight(), data.sink())) {
-                                                                               carriedBlockRendered[0] = true;
-                                                                           }
+            // skipIfUnbaked（特效等瞬发内容）：模型烘焙未就绪时跳过本帧绘制并提交
+            // 后台预热，消除渲染线程上的首烘尖刺（实测单帧 40-80ms）；
+            // 预热失败（CPU 纹理源缺失）时放行原同步烘焙路径。
+            if (output != null && data.skipIfUnbaked()) {
+                var warmMesh = modelComponent.getMeshTexture() != null
+                        ? modelComponent.getMeshTexture() : output.texture();
+                // 门控与预热共用 RenderBake 的三态：PENDING = 已提交预热并跳过本帧，
+                // UNAVAILABLE = 后台烘不出来（CPU 纹理源缺失），必须放行同步烘焙。
+                switch (RenderBake.state(model, output.isSolid(), output.texture(), warmMesh)) {
+                    case PENDING -> {
+                        RenderBake.warmAsync(model, output.texture(), warmMesh);
+                        poseStack.popPose();
+                        warmedUp++;
+                        continue;
+                    }
+                    case BAKED, UNAVAILABLE -> {
+                    }
+                }
+            }
+            if (output != null) {
+                RenderOutputs.RenderOutput resolved = output;
+                data.sink().submit(resolved.renderPass(), resolved.texture(), poseStack, (pose, consumer, skinning) -> {
+                    // 用 sink 捕获的 pose 快照重建 PoseStack：延迟实现(>=26.1)的回调在 renderAllFeatures
+                    // 阶段执行，此时原 poseStack 已被 popPose，必须用快照而非 data.poseStack()。
+                    PoseStack capturedPose = RenderPorts.get().renderSystemPort().createPoseStackFromMatrix(pose.pose());
+                    RenderParams renderParams = buildRenderParams(capturedPose, data, modelComponent, resolved, consumer, skinning);
+                    RenderHelper renderHelper = RenderHelper.start()
+                            .render(renderParams, model, cast(tickedInfos));
+                });
+                data.sink().flush();
+                submittedPasses++;
+            } else {
+                // 无有效 renderPass：仍收集 locator（consumer=null 时 visitor 跳过顶点写入）
+                RenderParams renderParams = buildRenderParams(data.poseStack(), data, modelComponent, null, null, null);
+                RenderHelper renderHelper = RenderHelper.start()
+                        .render(renderParams, model, cast(tickedInfos));
+            }
 
-                                                                           // skipIfUnbaked（特效等瞬发内容）：模型烘焙未就绪时跳过本帧绘制并提交
-                                                                           // 后台预热，消除渲染线程上的首烘尖刺（实测单帧 40-80ms）；
-                                                                           // 预热失败（CPU 纹理源缺失）时放行原同步烘焙路径。
-                                                                           if (output != null && data.skipIfUnbaked()) {
-                                                                               var warmMesh = modelComponent.getMeshTexture() != null
-                                                                                       ? modelComponent.getMeshTexture() : output.texture();
-                                                                               var mcTexture = io.github.tt432.eyelib.bridge.material.ResourceLocationBridge.toMc(output.texture());
-                                                                               var mcMesh = io.github.tt432.eyelib.bridge.material.ResourceLocationBridge.toMc(warmMesh);
-                                                                               if (io.github.tt432.eyelib.bridge.client.render.bake.ModelBakePort.twoSidePeekBakedModel(model, output.isSolid(), mcTexture, mcMesh) == null
-                                                                                       && !io.github.tt432.eyelib.bridge.client.render.bake.ModelBakePort.twoSideWarmFailed(model, mcTexture, mcMesh)) {
-                                                                                   io.github.tt432.eyelib.bridge.client.render.bake.ModelBakePort.twoSideWarmAsync(model, mcTexture, mcMesh);
-                                                                                   poseStack.popPose();
-                                                                                   return 0;
-                                                                               }
-                                                                           }
-                                                                           if (output != null) {
-                                                                               data.sink().submit(output.renderPass(), output.texture(), poseStack, (pose, consumer, skinning) -> {
-                                                                                   // 用 sink 捕获的 pose 快照重建 PoseStack：延迟实现(>=26.1)的回调在 renderAllFeatures
-                                                                                   // 阶段执行，此时原 poseStack 已被 popPose，必须用快照而非 data.poseStack()。
-                                                                                   PoseStack capturedPose = RenderPorts.get().renderSystemPort().createPoseStackFromMatrix(pose.pose());
-                                                                                   RenderParams renderParams = buildRenderParams(capturedPose, data, modelComponent, output, consumer, skinning);
-                                                                                   RenderHelper renderHelper = RenderHelper.start()
-                                                                                           .render(renderParams, model, cast(finalTickedInfos));
-                                                                               });
-                                                                               data.sink().flush();
-                                                                           } else {
-                                                                               // 无有效 renderPass：仍收集 locator（consumer=null 时 visitor 跳过顶点写入）
-                                                                                RenderParams renderParams = buildRenderParams(data.poseStack(), data, modelComponent, null, null, null);
-                                                                               RenderHelper renderHelper = RenderHelper.start()
-                                                                                       .render(renderParams, model, cast(finalTickedInfos));
-                                                                           }
+            poseStack.popPose();
+            drawnComponents++;
+        }
 
-                                                                           poseStack.popPose();
-
-                                                                           return 1;
-                                                                       })
-                                                                       .sum() > 0;
-        if (rendered) {
+        if (drawnComponents > 0) {
             // 栓绳：每个实体一次，放在模型几何之后（与原版 MobRenderer.render 的顺序一致）。
-            LeashRenderer.render(data, leashModel[0], data.tickedInfos(), basePose, leashEntityPose[0]);
-        } else if (attachmentDraws > 0) {
+            LeashRenderer.render(data, leashModel[0], tickedInfos, entityPose, leashEntityPose[0]);
+            return RenderResult.drawn(entityPose, rootPose, submittedPasses, drawnComponents, attachmentDraws);
+        }
+        if (attachmentDraws > 0) {
             // 挂载物已画、本体一帧内没有提交几何：这一帧原版层会补画本体（含原版盔甲），
             // 屏幕上是「本体 + 多一份甲」。正常路径不该出现，计入诊断以便定位。
             RenderDiagnostics.recordAttachmentWithoutBody();
         }
-        return rendered;
+        return RenderResult.skipped(warmedUp > 0 ? RenderSkipReason.NOT_BAKED : RenderSkipReason.NOT_READY,
+                entityPose, rootPose);
     }
 
-    /**
-     * 挂载物渲染入口（每实体每帧一次，先于模型几何提交）。
-     * 顺序与 vanilla {@code LivingEntityRenderer.render} 一致：先 head 槽物品层，再盔甲层，再手持层。
-     * 骨骼帧从模型根位姿累积；根位姿复刻 {@link ClientEntitySetup#setupEntityClientEntityData} 的
-     * 实体位姿（脚本缩放/幼体缩放/身体朝向），因此挂载物与模型同姿。
-     */
-    private static int renderAttachments(SimpleRenderAction<?> data, List<ModelComponent> components) {
-        if (!(data.entity() instanceof LivingEntity holder) || !hasEquipment(holder)) {
-            return 0;
+    /** 施加宿主模型根位姿（与挂载阶段/结果同一条实现，禁止在此另写一套幼体/朝向逻辑）。 */
+    private static void applyRootPose(SimpleRenderAction<?> data, PoseStack poseStack) {
+        RenderHost host = data.host();
+        if (host == null) {
+            return;
         }
-        Model model = attachmentModel(components);
-        if (model == null) {
-            return 0;
-        }
-
-        PoseStack poseStack = RenderPorts.get().renderSystemPort()
-                .createPoseStackFromMatrix(data.poseStack().last().pose());
-        ClientEntitySetup.setupEntityClientEntityData(data.withPoseStack(poseStack));
-        Matrix4f modelRoot = new Matrix4f(poseStack.last().pose());
-        ModelRuntimeData tickedInfos = data.tickedInfos() != null ? data.tickedInfos() : ModelRuntimeData.EMPTY;
-        int light = data.packedLight();
-
-        // 盔甲槽若存在 attachable 定义，就走基岩版挂载语义（逐骨骼 binding/同名绑定），
-        // 并让「头部物品」与「vanilla 人形盔甲」两条回退路径跳过该槽，避免双画。
-        Set<EquipmentSlot> attachableSlots = renderSlotAttachables(data, holder, model, tickedInfos, modelRoot, light);
-
-        // 原版装备渲染（头部物品 / 人形盔甲 / 手持物）统一由代理 attachable 编排：
-        // 槽位归属与挂载目标（持有者骨骼名）在 ProxyAttachments 里声明一次，
-        // 挂载目标缺失可用 ProxyAttachments.audit(model) 逐模型核对。
-        return ProxyAttachments.render(data, holder, model, tickedInfos, modelRoot, light, attachableSlots);
-    }
-
-    /** 有 attachable 定义的盔甲槽（人形四槽；BODY 槽狼铠不在范围内）。 */
-    private static final EquipmentSlot[] ATTACHABLE_SLOTS = {
-            EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS, EquipmentSlot.FEET
-    };
-
-    /**
-     * 渲染盔甲槽的 attachable，返回已由 attachable 接管（回退路径需跳过）的槽位集合。
-     * attachable 只 tick 不渲染的旧行为在萌化实体上是空缺：原版 {@code HumanoidArmorLayer}
-     * 被 cancel 后没有别的层会画它。
-     */
-    private static Set<EquipmentSlot> renderSlotAttachables(SimpleRenderAction<?> data, LivingEntity holder,
-                                                            Model model, ModelRuntimeData tickedInfos,
-                                                            Matrix4f modelRoot, int light) {
-        Set<EquipmentSlot> handled = null;
-        for (EquipmentSlot slot : ATTACHABLE_SLOTS) {
-            if (holder.getItemBySlot(slot).isEmpty()) {
-                continue;
-            }
-            var rd = AttachableItemRenderSetup.getOrPrepare(holder, slot, false);
-            if (rd == null) {
-                continue;
-            }
-            AttachableItemRenderSetup.renderAttachableBound(rd, holder, model, tickedInfos, modelRoot,
-                    data.multiBufferSource(), light, data.overlay());
-            if (handled == null) {
-                handled = EnumSet.noneOf(EquipmentSlot.class);
-            }
-            handled.add(slot);
-        }
-        return handled == null ? Set.of() : handled;
-    }
-
-    /** 双手/盔甲槽全空时不做任何挂载物工作（绝大多数实体走这条短路）。 */
-    private static boolean hasEquipment(LivingEntity holder) {
-        return !holder.getMainHandItem().isEmpty()
-                || !holder.getOffhandItem().isEmpty()
-                || !holder.getItemBySlot(EquipmentSlot.HEAD).isEmpty()
-                || !holder.getItemBySlot(EquipmentSlot.CHEST).isEmpty()
-                || !holder.getItemBySlot(EquipmentSlot.LEGS).isEmpty()
-                || !holder.getItemBySlot(EquipmentSlot.FEET).isEmpty();
-    }
-
-    /**
-     * 挂载物用的模型：同一实体的各渲染组件共享骨骼位姿，取骨骼最多的组件（基础模型，
-     * 覆盖层/发光层的骨骼是其子集）即可解析全部挂载点。
-     */
-    private static @Nullable Model attachmentModel(List<ModelComponent> components) {
-        Model model = null;
-        int best = -1;
-        for (ModelComponent component : components) {
-            // 只跟已就绪的组件走：模型尚未烘焙时不能只画装备不画身体
-            if (!component.readyForRendering()) {
-                continue;
-            }
-            Model candidate = component.getModel();
-            if (candidate == null) {
-                continue;
-            }
-            int boneCount = candidate.allBones().size();
-            if (boneCount > best) {
-                best = boneCount;
-                model = candidate;
-            }
-        }
-        return model;
+        host.applyRootPose(poseStack, data.renderData(), data.partialTick(), data.applyEntityPose());
     }
 
     /** 解析实体类型 id 并装配 clientEntity 组件（实现见 {@link ClientEntitySetup}）。 */
@@ -703,6 +641,17 @@ public final class EntityRenderOrchestrator {
     /** 按实体类型 id 装配 clientEntity 组件（实现见 {@link ClientEntitySetup}）。 */
     public static List<Runnable> setupClientEntity(String entityId, RenderData<?> cap) {
         return ClientEntitySetup.setupClientEntity(entityId, cap);
+    }
+
+    /**
+     * 按**当前绑定**装配组件：不改绑定、不重新解析。
+     * <p>
+     * 这是「已知绑定方式」的调用方（{@code bindById} 之后、或 {@code bindInstance} 之后）应使用的入口：
+     * 过去下游只能传回 {@code getClientEntity()} 对象，这让「自动解析」与「固定实例」的区分被迫依赖
+     * 引用相等推断（G5 的根因之一）。
+     */
+    public static List<Runnable> setupClientEntity(RenderData<?> cap) {
+        return ClientEntitySetup.setupClientEntity(cap);
     }
 
     /**
@@ -719,44 +668,10 @@ public final class EntityRenderOrchestrator {
     }
 
     /**
-     * 解析 ModelComponent 最终的 (renderPass, texture, isSolid)，含 colorMask 替换。
-     * 不涉及 VertexConsumer——consumer 由 RenderSink 回调提供。
-     * 返回 null 表示无有效渲染 pass。
-     */
-    private static @Nullable RenderOutput resolveOutput(SimpleRenderAction<?> data, ModelComponent modelComponent) {
-        io.github.tt432.eyelib.util.PortResourceLocation texture = modelComponent.getTexture();
-        if (texture == null) {
-            return null;
-        }
-        PortRenderPass renderPass = modelComponent.getRenderType(texture);
-        boolean isSolid = modelComponent.isSolid();
-
-        if (modelComponent.usesColorMask()) {
-            float[] color = RenderPorts.get().renderSystemPort().getEntityTintColor(data.entity());
-            if (color != null) {
-                io.github.tt432.eyelib.util.PortResourceLocation colorMaskTexture =
-                        io.github.tt432.eyelib.bridge.client.render.texture.NativeImagePort.colorMaskTexture(texture, color);
-                if (colorMaskTexture != null) {
-                    PortRenderPass colorMaskPass = modelComponent.getRenderType(colorMaskTexture);
-                    if (colorMaskPass != null) {
-                        texture = colorMaskTexture;
-                        renderPass = colorMaskPass;
-                    }
-                }
-            }
-        }
-
-        if (renderPass == null) {
-            return null;
-        }
-        return new RenderOutput(renderPass, texture, isSolid);
-    }
-
-    /**
      * 用 sink 回调提供的 consumer 构造 RenderParams。output 为 null 时构造无渲染（consumer=null）的 params。
      */
     private static RenderParams buildRenderParams(PoseStack poseStack, SimpleRenderAction<?> data, ModelComponent modelComponent,
-                                                  @Nullable RenderOutput output, @Nullable VertexConsumer consumer,
+                                                  RenderOutputs.@Nullable RenderOutput output, @Nullable VertexConsumer consumer,
                                                   @Nullable SkinningSession skinning) {
         RenderParams.Builder builder = output != null
                 ? RenderParams.builder(poseStack, output.renderPass(), output.isSolid(), output.texture(), consumer)
@@ -772,10 +687,4 @@ public final class EntityRenderOrchestrator {
                 .build();
     }
 
-    private record RenderOutput(
-            PortRenderPass renderPass,
-            io.github.tt432.eyelib.util.PortResourceLocation texture,
-            boolean isSolid
-    ) {
-    }
 }

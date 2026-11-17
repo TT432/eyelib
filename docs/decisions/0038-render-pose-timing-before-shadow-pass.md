@@ -48,6 +48,9 @@ ENTITY shadow=false     ← 主渲染用本帧姿态
 ## 后果
 
 - `@OnRenderStage` 契约从“渲染阶段事件”改为“帧渲染前”；契约不变（方法签名不变），时机语义更早。
+- 同一次 `dispatch` 内的订阅顺序由 `@OnRenderStage(priority = ...)`（锚点见 `RenderStagePriority`）决定：
+  数值小的先执行，同优先级按（声明类全名，方法名）排序，与 mod 装载顺序无关。
+  该属性只重排 dispatch 内顺序，不改变本 ADR 的“每帧一次、早于 shadow pass”时机。
 - 该时刻 `GameRenderer.renderLevel` 尚未执行 `Camera.setup`，`getMainCamera()` 的位置是上一帧的。
   该坐标仅用于 `SetupStage` 的 `shouldRender` 距离剔除；动画本身不依赖相机位置，
   相机查询类 molang 允许一帧滞后（与原本 `AFTER_SKY` 的当帧值相比是唯一可观察差异）。

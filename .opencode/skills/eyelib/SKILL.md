@@ -49,6 +49,13 @@ Eyelib Forge 模组开发总索引——项目概览、Skill 导航、跨域约�
 | molang 包重构协调 | `molang-refactor-supervisor` |
 | 运行时状态探索 | `progressive-exploration` |
 | 测试策略选择 | `testing` |
+嵌入下游渲染的公开面（ADR-0044～0047）：`RenderHost`（实体/锚定/自定义作用域宿主）、
+`SimpleRenderAction#renderResult()`（根位姿/提交段数/跳过原因）、`AttachmentRegistry` +
+`AttachmentDeclaration`（饰品/乘客/自定义挂载的声明式插槽，库内代理与外部同一条绘制循环）、
+`RenderSink#openBatch`（批次作用域/合批策略/蒙皮可用性）、`ClientEntityComponent#bindById|bindInstance`、
+`ClientEntityTogglesDefaults`、`MolangNamespaces`、`EntityRenderOrchestrator#tickRenderData|bakeTargets`、
+`@OnRenderStage(priority=…)`。
+
 文档导航：`docs/README.md`
 系统架构总览：`docs/concepts/architecture.md`
 ECS ComponentStore 模式：`docs/concepts/ecs-architecture.md`

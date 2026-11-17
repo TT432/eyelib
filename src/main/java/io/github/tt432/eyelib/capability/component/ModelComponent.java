@@ -6,6 +6,7 @@ import io.github.tt432.eyelib.material.render.EntityRenderTypeData;
 import io.github.tt432.eyelib.material.material.BrMaterialEntry;
 import io.github.tt432.eyelib.material.material.BrMaterialResolver;
 import io.github.tt432.eyelib.material.material.ResolvedBrMaterial;
+import io.github.tt432.eyelib.material.port.PassTier;
 import io.github.tt432.eyelib.material.port.PortRenderPass;
 import io.github.tt432.eyelib.util.PortResourceLocation;
 import io.github.tt432.eyelib.model.Model;
@@ -98,6 +99,21 @@ public class ModelComponent {
                     : RenderTypeResolver.resolve(texture, entry, matMap);
         }
         return resolveFallback(info.renderType()).factory().apply(texture);
+    }
+
+    /**
+     * 绘制档位：等价旧 {@code EntityRenderOrchestrator.passOrder}——
+     * 无纹理或该纹理解析不出材质 pass 时按 {@link PassTier#OPAQUE} 处理（与旧行为一致：
+     * 没有材质 pass 可查的组件与不透明同档），否则取 pass 的 {@link PortRenderPass#tier()}。
+     *
+     * @return 组件绘制档位
+     */
+    public PassTier passTier() {
+        PortResourceLocation texture = getTexture();
+        if (texture == null) {
+            return PassTier.OPAQUE;
+        }
+        return PassTier.of(getRenderType(texture));
     }
 
     public boolean isSolid() {

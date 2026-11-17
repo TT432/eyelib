@@ -123,7 +123,9 @@ public class MolangMappingTree {
 
     public void addNode(String name, MolangClass actualClass) {
         invalidateResolutionCaches();
-        String[] split = name.split("\\\\.");
+        // 必须与 findNode 一致按点分段：否则 addNode("query.owner", X) 会建成单段节点，
+        // findNode("query") 永远找不到它，点分命名空间无法被树形态表达。
+        String[] split = name.split("\\.");
 
         Node last = toplevelNode;
 
@@ -192,19 +194,45 @@ public class MolangMappingTree {
     }
 
     private @Nullable FieldData findFieldUncached(String name) {
-        int i = name.indexOf(".");
-        String fieldName;
-        String scopeName;
-        if (i != -1) {
-            scopeName = name.substring(0, i).toLowerCase(Locale.ROOT);
-            fieldName = name.substring(i + 1);
-        } else {
-            scopeName = "";
-            fieldName = name;
+        return probeMember(name, (node, member) -> node.cachedFields.get(member));
+    }
+
+    /**
+     * 节点成员探测：按点分名逐段加深根路径，探测「当前节点 + 剩余成员名」。
+     *
+     * <p>顺序保证向后兼容：先把首段当根、其余整段（可再含点）当成员名探测一次
+     * （历史语义），未命中才逐段加深根路径。这样 {@code addNode("query.owner", X)}
+     * 注册的成员可按 {@code query.owner.<fn>} 访问，而旧式「成员名自带点」的注册仍优先。
+     */
+    private <T> @Nullable T probeMember(String name, NodeMemberProbe<T> probe) {
+        int dot = name.indexOf('.');
+        if (dot == -1) {
+            // 无点分：成员挂在 "" 根下（addNode("") 的约定）
+            Node root = toplevelNode.children.get("");
+            return root == null ? null : probe.probe(root, name);
         }
 
-        Node node = findNode(scopeName);
-        return node == null ? null : node.cachedFields.get(fieldName);
+        Node current = toplevelNode.children.get(name.substring(0, dot).toLowerCase(Locale.ROOT));
+        if (current == null) {
+            return null;
+        }
+
+        @Nullable T found = probe.probe(current, name.substring(dot + 1));
+        int nextDot = name.indexOf('.', dot + 1);
+        while (found == null && nextDot != -1) {
+            current = current.children.get(name.substring(dot + 1, nextDot).toLowerCase(Locale.ROOT));
+            if (current == null) {
+                return null;
+            }
+            found = probe.probe(current, name.substring(nextDot + 1));
+            dot = nextDot;
+            nextDot = name.indexOf('.', dot + 1);
+        }
+        return found;
+    }
+
+    private interface NodeMemberProbe<T> {
+        @Nullable T probe(Node node, String member);
     }
 
     public record MethodData(
@@ -237,32 +265,8 @@ public class MolangMappingTree {
     }
 
     private @Nullable MethodData findMethodUncached(String name) {
-        int i = name.indexOf(".");
-
-        String methodName;
-        String scopeName;
-
-        if (i != -1) {
-            scopeName = name.substring(0, i).toLowerCase(Locale.ROOT);
-            methodName = name.substring(i + 1);
-        } else {
-            scopeName = "";
-            methodName = name;
-        }
-
-        Node node = findNode(scopeName);
-
-        if (node == null) {
-            return null;
-        }
-
-        var functionInfo = node.actualFunctions.get(methodName);
-
-        if (functionInfo != null) {
-            return new MethodData(functionInfo);
-        }
-
-        return null;
+        List<FunctionInfo> functionInfos = probeMember(name, (node, member) -> node.actualFunctions.get(member));
+        return functionInfos == null ? null : new MethodData(functionInfos);
     }
 
     private @Nullable Node findNode(String name) {

@@ -16,11 +16,23 @@ public interface RenderStageSubscriberDiscovery {
      * @param declaringClass 声明方法的类
      * @param methodName      方法名
      * @param handle          方法句柄（签名 {@code void(float, double, double, double)}）
+     * @param priority        调度优先级，数值小的先执行（见 {@link RenderStagePriority}）
      */
     record RenderStageSubscriber(
             Class<?> declaringClass,
             String methodName,
-            MethodHandle handle
+            MethodHandle handle,
+            int priority
     ) {
+        /**
+         * 兼容构造：未指定优先级时按 {@link RenderStagePriority#CORE}（主管道档）处理。
+         *
+         * @param declaringClass 声明方法的类
+         * @param methodName      方法名
+         * @param handle          方法句柄（签名 {@code void(float, double, double, double)}）
+         */
+        public RenderStageSubscriber(Class<?> declaringClass, String methodName, MethodHandle handle) {
+            this(declaringClass, methodName, handle, RenderStagePriority.CORE);
+        }
     }
 }

@@ -2,7 +2,6 @@ package io.github.tt432.eyelib.client.render;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import io.github.tt432.eyelib.animation.ModelPoseTransforms;
-import io.github.tt432.eyelib.animation.ModelRuntimeData;
 import io.github.tt432.eyelib.bridge.client.adapter.EntityRenderPorts;
 import io.github.tt432.eyelib.bridge.client.render.adapter.RenderPorts;
 import io.github.tt432.eyelib.bridge.material.MaterialPort;
@@ -13,7 +12,7 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import org.jspecify.annotations.Nullable;
-import org.joml.Matrix4f;
+import org.joml.Matrix4fc;
 import org.joml.Vector3fc;
 
 import java.util.List;
@@ -58,10 +57,17 @@ final class ArmorAttachmentRenderer {
      * <p>
      * 一个槽的多份部件（胸甲 = 躯干 + 双臂、护腿 = 躯干 + 双腿）逐部件按名绑定，各自取持有者同名骨骼帧。
      *
-     * @param modelRoot 模型根位姿（已含实体位姿；模型 Y 翻转由 {@link ModelPoseTransforms} 施加）
+     * @param frame 本帧上下文（模型根位姿已含实体位姿；模型 Y 翻转由 {@link ModelPoseTransforms} 施加）
      */
-    static int render(SimpleRenderAction<?> action, LivingEntity holder, Model model, ModelRuntimeData tickedInfos,
-                      Matrix4f modelRoot, ProxyAttachable proxy, int light) {
+    static int render(SimpleRenderAction<?> action, RenderFrame frame, LivingEntity holder,
+                      ProxyAttachable proxy) {
+        Model model = frame.primaryModel();
+        if (model == null) {
+            return 0;
+        }
+        var tickedInfos = frame.tickedInfos();
+        Matrix4fc modelRoot = frame.rootPose();
+        int light = frame.light();
         var port = RenderPorts.get().renderSystemPort();
         int emitted = 0;
         EquipmentSlot slot = proxy.slot();
@@ -73,8 +79,8 @@ final class ArmorAttachmentRenderer {
             if (bone == null) {
                 continue;
             }
-            var frame = ModelPoseTransforms.resolveBonePose(model, tickedInfos, bone.boneId(), modelRoot);
-            if (frame.isEmpty()) {
+            var boneFrame = ModelPoseTransforms.resolveBonePose(model, tickedInfos, bone.boneId(), modelRoot);
+            if (boneFrame.isEmpty()) {
                 continue;
             }
             var renderType = MaterialPort.toRenderType(PASS, piece.texture());
@@ -82,7 +88,7 @@ final class ArmorAttachmentRenderer {
                 continue;
             }
 
-            PoseStack poseStack = port.createPoseStackFromMatrix(frame.get());
+            PoseStack poseStack = port.createPoseStackFromMatrix(boneFrame.get());
             // vanilla 的 body 盔甲部件原点在颈部（与 head 骨骼同高）；而多数萌化模型的
             // body 骨骼 pivot 在腰部（skeleton 1.114 vs head 1.889，villager 1.063 vs 1.8…），
             // 直接按 body pivot 摆放会把胸甲/护腿整体下移约 0.6~0.8 格。
