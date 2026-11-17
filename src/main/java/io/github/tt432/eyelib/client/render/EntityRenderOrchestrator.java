@@ -684,6 +684,7 @@ public final class EntityRenderOrchestrator {
                 .tintColor(modelComponent.getRcColor())
                 .meshTexture(modelComponent.getMeshTexture())
                 .skinning(skinning)
+                .staticPose(data.renderData().getAnimationComponent().staticPose())
                 .build();
     }
 

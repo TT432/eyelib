@@ -41,4 +41,35 @@ public interface SkinningSession {
 
     /** 标记骨骼本次可见（其索引区间进入绘制集）。 */
     void markVisible(int boneId);
+
+    /**
+     * 静态实例通道入口（ADR-0048）：本次提交的模型没有任何动画姿态，几何为 bind 姿态常量。
+     * <p>
+     * 实现返回 true 时调用方<b>不再写顶点</b>、也不再调用 {@link #appendBone}/{@link #markVisible}：
+     * 绘制数据只有实例级 root 位姿 + tint/overlay/light + 可见性分段，由实现方在 writer 结束后
+     * 以实例化（≤26.1）或逐 draw uniform（26.1.2）接管。
+     * <p>
+     * 默认实现返回 false（该实现没有静态通道），调用方按 {@link #begin} 走常规蒙皮。
+     *
+     * @param bakedModel     烘焙几何（摊平后即为静态网格）
+     * @param model          bind 骨骼树（摊平需要骨骼链 bind 变换；与 bakedModel 同源）
+     * @param rootPose       提交时的实体根位姿（与蒙皮 palette 中的根姿态同空间）
+     * @param rootNormal     与 rootPose 同源的法线阵
+     * @param partVisibility 骨骼 id → 是否可见（缺省可见）
+     * @param tintColor      实体色调（null = 白色）
+     * @param overlay        packed overlay 坐标
+     * @param light          packed light 坐标
+     * @return true = 本次走静态实例通道；false = 回退常规路径
+     */
+    default boolean beginStatic(BakedModel bakedModel, io.github.tt432.eyelib.model.Model model,
+                                org.joml.Matrix4fc rootPose, org.joml.Matrix3fc rootNormal,
+                                it.unimi.dsi.fastutil.ints.Int2BooleanOpenHashMap partVisibility,
+                                float @Nullable [] tintColor, int overlay, int light) {
+        return false;
+    }
+
+    /** 本次会话是否已进入静态实例通道（{@link #beginStatic} 返回 true）。 */
+    default boolean isStatic() {
+        return false;
+    }
 }

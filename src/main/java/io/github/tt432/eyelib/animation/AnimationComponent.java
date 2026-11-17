@@ -100,6 +100,17 @@ public class AnimationComponent {
         setup(info.animations(), info.animate());
     }
 
+    /**
+     * 定义级静态姿态：无序列化信息，或动画表与表达式表均为空。
+     * <p>
+     * 命中时本组件不可能写出任何 {@link ModelRuntimeData} entry，渲染端可跳过逐骨骼扫描直接走
+     * 静态实例路径（ADR-0048）；未命中仍需逐帧判定（动画可能当前未播放）。
+     */
+    public boolean staticPose() {
+        AnimationComponentInfo info = serializableInfo;
+        return info == null || (info.animations().isEmpty() && getAnimate().isEmpty());
+    }
+
     public static void onManagerEntryChanged(String managerName, String entryName) {
         if (!AnimationLookup.managerName().equals(managerName)) {
             return;

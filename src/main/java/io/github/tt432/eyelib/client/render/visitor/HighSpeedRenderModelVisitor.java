@@ -19,20 +19,41 @@ import org.jspecify.annotations.Nullable;
 public class HighSpeedRenderModelVisitor extends ModelVisitor {
     @Override
     public void visitPreModel(RenderParams params, ModelVisitContext context, ModelRuntimeData infos, Model model) {
+        // 根位姿必须在 push + 模型 Y 翻转之前取样：静态实例的几何已含 bind 骨骼链与 180°，
+        // 实例矩阵就是这一步的 pose（与蒙皮 palette 的根姿态同空间）。
+        PoseStack.Pose rootPose = params.poseStack().last();
         super.visitPreModel(params, context, infos, model);
 
         if (!context.contains("BackedModel")) {
             throw new RuntimeException("can't use HighSpeedRenderModelVisitor without BackedModel");
         }
-        // C1 GPU 蒙皮（ADR-0032）：会话存在且 begin 接受 → 本次渲染走调色板采集，
-        // 经典 transformPos/顶点写入整体跳过；begin 拒绝（骨骼超限/容量不足）→ 经典路径。
+        // C1 GPU 蒙皮（ADR-0032）+ C2 静态实例（ADR-0048）：
+        // 静态判定 = 定义级静态 或 本帧没有任何骨骼 entry；命中且会话支持 → 实例通道，顶点写入整体跳过。
         SkinningSession skinning = params.skinning();
-        if (skinning != null) {
-            BakedModel bakedModel = context.get("BackedModel");
-            if (bakedModel != null && skinning.begin(bakedModel, params.tintColor(), params.overlay(), params.light())) {
-                context.put("SkinningSession", skinning);
-            }
+        if (skinning == null) {
+            return;
         }
+        BakedModel bakedModel = context.get("BackedModel");
+        if (bakedModel == null) {
+            return;
+        }
+        if (staticInstancesAllowed()
+                && (params.staticPose() || !infos.hasAnyEntry(model.allBones().keySet()))
+                && skinning.beginStatic(bakedModel, model, rootPose.pose(), rootPose.normal(),
+                        params.partVisibility(), params.tintColor(), params.overlay(), params.light())) {
+            context.put("SkinningSession", skinning);
+            context.put("StaticSkinning", Boolean.TRUE);
+            return;
+        }
+        // 静态通道拒绝（几何不可摊平/路径不支持）→ 常规蒙皮；begin 拒绝 → 经典 CPU 路径。
+        if (skinning.begin(bakedModel, params.tintColor(), params.overlay(), params.light())) {
+            context.put("SkinningSession", skinning);
+        }
+    }
+
+    /** 静态实例通道是否可用；AR 渲染器持有自己的静态 mesh，覆盖为 false。 */
+    protected boolean staticInstancesAllowed() {
+        return true;
     }
 
     @Override
@@ -41,6 +62,11 @@ public class HighSpeedRenderModelVisitor extends ModelVisitor {
         poseStack.pushPose();
 
         applyBoneTranslate(context, poseStack, bone, cast(data));
+
+        if (context.contains("StaticSkinning")) {
+            // 位姿仍要推进：复合 visitor 的 locator 收集依赖同一条骨骼链；此处不写 palette/顶点。
+            return;
+        }
 
         var bakedModel = context.<BakedModel>get("BackedModel");
         if (bakedModel == null) {

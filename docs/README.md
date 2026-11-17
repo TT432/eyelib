@@ -103,6 +103,7 @@
 | 0045 | 渲染 sink 批次作用域与阶段订阅优先级契约（G4/G9） | Implemented (2026-11-17) |
 | 0046 | client entity 绑定语义二分与解码规范化钩子（G5/G6） | Implemented (2026-11-17) |
 | 0047 | molang 命名空间委派与单实体渲染 tick / 烘焙预热 API（G7/G8） | Implemented (2026-11-17) |
+| 0048 | 非动画 ClientEntity 的静态实例化渲染（摊平几何 + 逐实例 root 位姿） | Implemented (2026-11-17) |
 
 ## 核心原则
 

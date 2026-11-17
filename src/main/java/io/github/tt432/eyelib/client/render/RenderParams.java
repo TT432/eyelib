@@ -34,20 +34,21 @@ public record RenderParams(
         Int2BooleanOpenHashMap partVisibility,
         float @Nullable [] tintColor,
         @Nullable PortResourceLocation meshTexture,
-        @Nullable SkinningSession skinning
+        @Nullable SkinningSession skinning,
+        boolean staticPose
 ) {
     public static RenderParams noRender() {
         var poseStack = new PoseStack();
         return new RenderParams(
                 null, poseStack.last(), poseStack, null, null, false,
-                null, 0, OverlayTexture.NO_OVERLAY, new Int2BooleanOpenHashMap(), null, null, null
+                null, 0, OverlayTexture.NO_OVERLAY, new Int2BooleanOpenHashMap(), null, null, null, false
         );
     }
 
     public static RenderParams noRender(PoseStack poseStack) {
         return new RenderParams(
                 null, poseStack.last(), poseStack, null, null, false,
-                null, 0, OverlayTexture.NO_OVERLAY, new Int2BooleanOpenHashMap(), null, null, null
+                null, 0, OverlayTexture.NO_OVERLAY, new Int2BooleanOpenHashMap(), null, null, null, false
         );
     }
 
@@ -102,6 +103,7 @@ public record RenderParams(
         private PortResourceLocation meshTexture = null;
         @Nullable
         private SkinningSession skinning = null;
+        private boolean staticPose = false;
 
         public Builder(PoseStack.Pose pose0, PoseStack poseStack, @Nullable PortRenderPass renderPass, boolean isSolid, @Nullable PortResourceLocation texture, @Nullable VertexConsumer consumer) {
             this.pose0 = pose0;
@@ -146,6 +148,12 @@ public record RenderParams(
             return this;
         }
 
+        /** 定义级静态姿态（ADR-0048）；逐帧判定由 visitor 用动画采样补充。 */
+        public Builder staticPose(boolean staticPose) {
+            this.staticPose = staticPose;
+            return this;
+        }
+
         public Builder colorMaskTexture(MultiBufferSource multiBufferSource, ModelComponent modelComponent, float[] color) {
             if (texture == null) {
                 return this;
@@ -167,7 +175,7 @@ public record RenderParams(
         }
 
         public RenderParams build() {
-            return new RenderParams(renderTarget, pose0, poseStack, renderPass, texture, isSolid, consumer, light, overlay, partVisibility, tintColor, meshTexture, skinning);
+            return new RenderParams(renderTarget, pose0, poseStack, renderPass, texture, isSolid, consumer, light, overlay, partVisibility, tintColor, meshTexture, skinning, staticPose);
         }
     }
 }

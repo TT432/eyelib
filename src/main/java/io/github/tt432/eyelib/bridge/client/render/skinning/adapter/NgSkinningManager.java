@@ -58,7 +58,9 @@ public final class NgSkinningManager {
     private static final int RING_CAPACITY = 8 << 20;
 
     private static final IdentityHashMap<BakedModel, SkinnedGeometry> GEOMETRIES = new IdentityHashMap<>();
+    private static final IdentityHashMap<BakedModel, NgStaticGeometry> STATIC_GEOMETRIES = new IdentityHashMap<>();
     private static final IdentityHashMap<RenderPipeline, RenderPipeline> PIPELINES = new IdentityHashMap<>();
+    private static final IdentityHashMap<RenderPipeline, RenderPipeline> STATIC_PIPELINES = new IdentityHashMap<>();
     private static final List<NgSkinningSession> SOLID_DRAWS = new ArrayList<>();
     private static final List<NgSkinningSession> TRANSLUCENT_DRAWS = new ArrayList<>();
     private static final Vector4f WHITE = new Vector4f(1.0F, 1.0F, 1.0F, 1.0F);
@@ -164,6 +166,30 @@ public final class NgSkinningManager {
         return created;
     }
 
+    /** 静态实例几何缓存（ADR-0048，按 BakedModel 身份；bind 骨骼树来自同一模型的 {@code Model}）。 */
+    static @Nullable NgStaticGeometry staticGeometry(io.github.tt432.eyelib.model.Model model, BakedModel baked) {
+        synchronized (STATIC_GEOMETRIES) {
+            NgStaticGeometry cached = STATIC_GEOMETRIES.get(baked);
+            if (cached != null) {
+                return cached;
+            }
+            if (STATIC_GEOMETRIES.containsKey(baked)) {
+                return null; // 负缓存
+            }
+        }
+        NgStaticGeometry created = NgStaticGeometry.create(model, baked);
+        synchronized (STATIC_GEOMETRIES) {
+            NgStaticGeometry raced = STATIC_GEOMETRIES.putIfAbsent(baked, created);
+            if (raced != null) {
+                if (created != null) {
+                    created.close();
+                }
+                return raced;
+            }
+        }
+        return created;
+    }
+
     /** 蒙皮管线派生：routing 管线（材质状态单一事实源）换蒙皮 VS + 蒙皮顶点格式 + BonePalette UBO。 */
     static RenderPipeline derivePipeline(RenderPipeline routing) {
         synchronized (PIPELINES) {
@@ -173,6 +199,21 @@ public final class NgSkinningManager {
                     .withVertexFormat(SkinnedGeometry.FORMAT, VertexFormat.Mode.TRIANGLES)
                     .withUniform("BonePalette", UniformType.UNIFORM_BUFFER)
                     .withShaderDefine("MAX_BONES", SkinningLayout.MAX_BONES)
+                    .build());
+        }
+    }
+
+    /**
+     * 静态实例管线派生（ADR-0048）：routing 管线换静态 VS + Position/UV0/Normal 顶点格式 +
+     * {@code InstanceTransform} UBO；无 BonePalette，无 compute。
+     */
+    static RenderPipeline deriveStaticPipeline(RenderPipeline routing) {
+        synchronized (STATIC_PIPELINES) {
+            return STATIC_PIPELINES.computeIfAbsent(routing, p -> p.toBuilder()
+                    .withLocation(Identifier.parse("eyelib:static/" + Integer.toHexString(System.identityHashCode(p))))
+                    .withVertexShader(Identifier.parse("eyelib:core/entity_static"))
+                    .withVertexFormat(NgStaticGeometry.FORMAT, VertexFormat.Mode.TRIANGLES)
+                    .withUniform("InstanceTransform", UniformType.UNIFORM_BUFFER)
                     .build());
         }
     }
@@ -338,18 +379,21 @@ public final class NgSkinningManager {
             GpuTextureView lightmapView = mc.gameRenderer.lightmap();
             // vanilla chunk 渲染同构（ChunkSectionsToRender.renderGroup）：一次 drawMultipleIndexed
             // 提交组内全部实体/可见区间，per-draw 经 uniformUploaderConsumer 绑定各自 palette slice
-            List<RenderPass.Draw<GpuBufferSlice>> draws = new ArrayList<>(records.size());
-            for (int k = i; k < j; k++) {
-                NgSkinningSession rec = records.get(k);
-                SkinnedGeometry geo = rec.geometry();
-                GpuBufferSlice palette = rec.paletteSlice();
-                int[] ranges = rec.ranges();
-                for (int r = 0; r < ranges.length; r += 2) {
-                    draws.add(new RenderPass.Draw<>(0, geo.vertexBuffer(), geo.indexBuffer(),
-                            VertexFormat.IndexType.INT, ranges[r], ranges[r + 1], 0,
-                            (unused, uploader) -> uploader.upload("BonePalette", palette)));
+            boolean staticGroup = records.get(i).isStatic();
+            List<RenderPass.Draw<GpuBufferSlice>> draws = new ArrayList<>(staticGroup ? 0 : records.size());
+            if (!staticGroup) {
+                for (int k = i; k < j; k++) {
+                    NgSkinningSession rec = records.get(k);
+                    SkinnedGeometry geo = rec.geometry();
+                    GpuBufferSlice palette = rec.paletteSlice();
+                    int[] ranges = rec.ranges();
+                    for (int r = 0; r < ranges.length; r += 2) {
+                        draws.add(new RenderPass.Draw<>(0, geo.vertexBuffer(), geo.indexBuffer(),
+                                VertexFormat.IndexType.INT, ranges[r], ranges[r + 1], 0,
+                                (unused, uploader) -> uploader.upload("BonePalette", palette)));
+                    }
+                    // 同一实体的多个区间共享其 palette slice：闭包按 Draw 捕获（uniformArgument 不被 uploader 使用，占位传 dynamicTransforms 满足 @NonNull 契约）
                 }
-                // 同一实体的多个区间共享其 palette slice：闭包按 Draw 捕获（uniformArgument 不被 uploader 使用，占位传 dynamicTransforms 满足 @NonNull 契约）
             }
             try (RenderPass pass = encoder.createRenderPass(() -> "eyelib skinned entities",
                     color, OptionalInt.empty(), depth, OptionalDouble.empty())) {
@@ -357,7 +401,26 @@ public final class NgSkinningManager {
                 RenderSystem.bindDefaultUniforms(pass);
                 pass.setUniform("DynamicTransforms", dynamicTransforms);
                 bindSamplers(pass, pipeline, textureView, textureSampler, overlayView, lightmapView);
-                pass.drawMultipleIndexed(draws, null, null, PALETTE_DYNAMIC_UNIFORMS, dynamicTransforms);
+                if (records.get(i).isStatic()) {
+                    // 静态实例（ADR-0048）：同一几何多次 draw，逐实例上传 160B InstanceTransform UBO。
+                    NgStaticGeometry bound = null;
+                    for (int k = i; k < j; k++) {
+                        NgSkinningSession rec = records.get(k);
+                        NgStaticGeometry geo = rec.staticGeometry();
+                        if (geo != bound) {
+                            pass.setVertexBuffer(0, geo.vertexBuffer());
+                            bound = geo;
+                        }
+                        GpuBufferSlice instance = rec.paletteSlice();
+                        int[] ranges = rec.ranges();
+                        pass.setUniform("InstanceTransform", instance);
+                        for (int r = 0; r < ranges.length; r += 2) {
+                            pass.draw(ranges[r], ranges[r + 1]);
+                        }
+                    }
+                } else {
+                    pass.drawMultipleIndexed(draws, null, null, PALETTE_DYNAMIC_UNIFORMS, dynamicTransforms);
+                }
             }
             i = j;
         }
@@ -400,6 +463,14 @@ public final class NgSkinningManager {
         synchronized (GEOMETRIES) {
             GEOMETRIES.values().forEach(SkinnedGeometry::close);
             GEOMETRIES.clear();
+        }
+        synchronized (STATIC_GEOMETRIES) {
+            STATIC_GEOMETRIES.values().forEach(geo -> {
+                if (geo != null) {
+                    geo.close();
+                }
+            });
+            STATIC_GEOMETRIES.clear();
         }
     }
 }

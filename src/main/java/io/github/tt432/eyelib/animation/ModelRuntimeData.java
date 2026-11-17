@@ -113,6 +113,21 @@ public final class ModelRuntimeData {
     }
 
     /**
+     * 给定骨骼集合中是否有任一根本帧被动画写入。
+     * <p>
+     * 静态实体判定用：全部无 entry ⇒ 每骨骼世界矩阵 = 根位姿 × bind 常量，几何可摊平为静态网格
+     * （ADR-0048）。越界 id 与负 id 按 {@link #entryAt(int)} 语义处理。
+     */
+    public boolean hasAnyEntry(it.unimi.dsi.fastutil.ints.IntSet boneIds) {
+        for (var it = boneIds.iterator(); it.hasNext(); ) {
+            if (entryAt(it.nextInt()) != null) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
      * 读取 Entry；未注册（无动画）的骨骼返回共享的 {@link #IDENTITY} 零值实例，不分配。
      * 返回值仅可读取；需要写入请用 {@link #getData(int)}。
      */

@@ -33,6 +33,8 @@ Eyelib 客户端调试：用 mcmcp 拓展启动 MC 客户端、/eval 执行 Java
   - [when 26.1.2 注册 modded debug entry 后] 26.1.2 modded debug entry 注册后默认 still NEVER：需在首帧且 debug-profile.json 不存在时调用 debugEntries.loadProfile(DEFAULT) 让其进入 overlay
   - NEVER RenderType 名字统计禁止用 renderType.toString()（1.20.1 CompositeRenderType 返回带完整状态的长串），用 @Accessor("name") 读 RenderStateShard.name
   - RenderType draw 计数注入点：1.20.1 注入 RenderType.end 并判 builder.building()，1.21.1/26.1.2 注入 RenderType.draw(MeshData)；帧边界用 TickEvent.RenderTickEvent.START（1.20.1）或 RenderFrameEvent.Pre（1.21.1/26.1.2）
+  - [when 26.1.2 自定义 VertexFormat] 顶点格式体积必须是 4 的倍数（`VertexFormat.Builder.build` 直接抛 "Vertex size must be a multiple of 4"）；vanilla `VertexFormatElement.NORMAL` 是 byte×3，float 法线必须自建 `VertexFormatElement.register(..., Type.FLOAT, false, 3)`，否则 Position+UV0+NORMAL 只有 23B
+  - [when 26.1.2 用 `RenderPass.draw(firstVertex, count)`] 绘制前必须 `pass.setVertexBuffer(0, geo.vertexBuffer())`，否则 "Vertex format contains elements but vertex buffer at slot 0 is null"；`drawMultipleIndexed` 例外（每个 `Draw` 自带 vertex/index buffer）
 - When /eval 语法:
   - /eval 只传方法体，不包 Object run(...) { }；服务端自动包装并注入 Minecraft minecraft、LocalPlayer player、ClientLevel level 三参数，直接使用、不要重新声明。
   - PREFER AIDebugServer 使用 JDK 自带编译器（非 Janino），支持完整 Java 语法：var、lambda、Map.of()、while、多行 if return 均可。
