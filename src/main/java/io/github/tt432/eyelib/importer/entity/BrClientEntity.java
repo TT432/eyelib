@@ -11,7 +11,9 @@ import io.github.tt432.eyelib.molang.MolangValue;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Function;
 
 import com.mojang.datafixers.util.Either;
 
@@ -52,18 +54,36 @@ public record BrClientEntity(
             boolean held_item_ignores_lighting,
             MolangValue held_item_scale
     ) {
-        /** 全缺省：不渲染 attachable、不藏甲、手持物按光照、缩放 1.0。 */
+        /**
+         * 出厂全缺省（字面值，不随 {@link ClientEntityTogglesDefaults} 的注册变化）：
+         * 不渲染 attachable、不藏甲、手持物按光照、缩放 1.0。
+         */
         public static final Toggles DEFAULT = new Toggles(false, false, false, MolangValue.ONE);
 
         public static final MapCodec<Toggles> CODEC = RecordCodecBuilder.mapCodec(ins -> ins.group(
-                Codec.BOOL.optionalFieldOf("enable_attachables", false).forGetter(Toggles::enable_attachables),
-                Codec.BOOL.optionalFieldOf("hide_armor", false).forGetter(Toggles::hide_armor),
-                Codec.BOOL.optionalFieldOf("held_item_ignores_lighting", false)
-                      .forGetter(Toggles::held_item_ignores_lighting),
+                dynamicDefault(ClientEntityTogglesDefaults.ENABLE_ATTACHABLES, Codec.BOOL)
+                        .forGetter(Toggles::enable_attachables),
+                dynamicDefault(ClientEntityTogglesDefaults.HIDE_ARMOR, Codec.BOOL)
+                        .forGetter(Toggles::hide_armor),
+                dynamicDefault(ClientEntityTogglesDefaults.HELD_ITEM_IGNORES_LIGHTING, Codec.BOOL)
+                        .forGetter(Toggles::held_item_ignores_lighting),
                 // Bedrock：Molang 表达式，缺省 1.0，必须解析为 > 0（<=0 由 AttachablePolicy 回落 1.0）
-                MolangValue.CODEC.optionalFieldOf("held_item_scale", MolangValue.ONE)
-                                 .forGetter(Toggles::held_item_scale)
+                dynamicDefault(ClientEntityTogglesDefaults.HELD_ITEM_SCALE, MolangValue.CODEC)
+                        .forGetter(Toggles::held_item_scale)
         ).apply(ins, Toggles::new));
+
+        /**
+         * 动态缺省字段：解码缺键取 {@link ClientEntityTogglesDefaults#of} 的当前值，
+         * 编码时「值等于当前缺省」即省略该键——与 DFU {@code optionalFieldOf(name, literalDefault)}
+         * 语义同构，但缺省值在每次编解码时重新读取，因此能被 {@code ClientEntityTogglesDefaults} 覆盖。
+         */
+        private static <T> MapCodec<T> dynamicDefault(ClientEntityTogglesDefaults.Field<T> field, Codec<T> codec) {
+            return codec.optionalFieldOf(field.jsonName())
+                        .xmap(o -> o.orElseGet(() -> ClientEntityTogglesDefaults.of(field)),
+                                v -> Objects.equals(v, ClientEntityTogglesDefaults.of(field))
+                                        ? Optional.empty()
+                                        : Optional.of(v));
+        }
     }
 
     /** {@code enable_attachables}：能否渲染 attachable（盔甲与武器）。 */
@@ -164,8 +184,23 @@ public record BrClientEntity(
             }
     );
 
-    public static final Codec<BrClientEntity> CODEC = wrapDescription("minecraft:client_entity");
-    public static final Codec<BrClientEntity> ATTACHABLE_CODEC = wrapDescription("minecraft:attachable");
+    /** 未归一化的原始 codec：仅内部使用（{@link #CODEC} / {@link #ATTACHABLE_CODEC} 是唯一的对外解码口）。 */
+    private static final Codec<BrClientEntity> RAW_CODEC = wrapDescription("minecraft:client_entity");
+    private static final Codec<BrClientEntity> RAW_ATTACHABLE_CODEC = wrapDescription("minecraft:attachable");
+
+    public static final Codec<BrClientEntity> CODEC = normalized(RAW_CODEC);
+    public static final Codec<BrClientEntity> ATTACHABLE_CODEC = normalized(RAW_ATTACHABLE_CODEC);
+
+    /**
+     * 在解码方向接入 {@link BrClientEntityNormalizations}：所有解码入口（资源包 loader、addon
+     * loader/聚合、GUI 导入、nodegraph 预览）都直接用下面两个公开常量，因此归一化是单点收口，
+     * 无需逐入口改调用。编码方向恒等（{@link Function#identity()}），导出 JSON 不受影响。
+     */
+    private static Codec<BrClientEntity> normalized(Codec<BrClientEntity> raw) {
+        return raw.comapFlatMap(
+                decoded -> DataResult.success(BrClientEntityNormalizations.apply(decoded)),
+                Function.identity());
+    }
 
     public BrClientEntity {
         min_engine_version = min_engine_version == null ? Optional.empty() : min_engine_version;
@@ -192,6 +227,7 @@ public record BrClientEntity(
         return java.util.Collections.unmodifiableMap(new java.util.LinkedHashMap<>(source));
     }
 
+    /** 便捷构造器：装备渲染开关取 {@link ClientEntityTogglesDefaults#effective()} 的当前缺省值。 */
     public BrClientEntity(
             String identifier,
             Map<String, String> materials,
@@ -204,7 +240,7 @@ public record BrClientEntity(
             Optional<BrClientEntityScripts> scripts
     ) {
         this(identifier, Optional.empty(), materials, textures, geometry, animations, List.of(), particle_effects, sound_effects,
-                render_controllers, Map.of(), scripts, Optional.empty(), Map.of(), Toggles.DEFAULT);
+                render_controllers, Map.of(), scripts, Optional.empty(), Map.of(), ClientEntityTogglesDefaults.effective());
     }
 
     private static Codec<BrClientEntity> wrapDescription(String rootField) {
