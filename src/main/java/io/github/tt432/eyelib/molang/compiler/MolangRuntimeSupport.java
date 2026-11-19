@@ -7,6 +7,7 @@ import io.github.tt432.eyelib.molang.mapping.api.MolangMappingTree;
 import io.github.tt432.eyelib.molang.mapping.api.MolangMappingTree.FunctionInfo;
 import io.github.tt432.eyelib.molang.mapping.api.MolangMappingTree.FunctionParameterRole;
 import io.github.tt432.eyelib.molang.mapping.api.MolangMappingTree.VisibleArgumentKind;
+import io.github.tt432.eyelib.molang.mapping.api.MolangNamespaces;
 import io.github.tt432.eyelib.molang.port.ArrowHostInstaller;
 import io.github.tt432.eyelib.molang.type.MolangArray;
 import io.github.tt432.eyelib.molang.type.MolangFloat;
@@ -558,6 +559,13 @@ public final class MolangRuntimeSupport {
             }
         }
 
+        // 顺序契约：scope 覆盖（上面）→ 动态命名空间 → 注册表零参绑定。不得反转：
+        // scope 覆盖必须能遮蔽命名空间（MolangMemberSiteContractTest 固定了该语义）。
+        MolangObject namespaced = resolveNamespacedMember(scope, dottedName);
+        if (namespaced != null) {
+            return namespaced;
+        }
+
         ZeroArgBinding binding = zeroArgBinding(dottedName, hasHostContext(scope));
         return switch (binding.kind) {
             case ZeroArgBinding.KIND_FIELD -> invokeZeroArgField(binding);
@@ -568,6 +576,26 @@ public final class MolangRuntimeSupport {
         };
     }
 
+    /**
+     * 动态命名空间查找的唯一出口：{@link #resolveMemberAccess} 与
+     * {@link MemberSite#resolve(MolangScope)} 都经它取值，禁止各自复制匹配逻辑。
+     *
+     * <p>调用方必须先用 scope 覆盖遮蔽，再调用本方法，最后才回落到注册表零参绑定。
+     * 调用形态（{@code query.owner.health()} → {@link #resolveCall}）本期不经过本方法。
+     *
+     * @return 命名空间命中值；无注册/无命中/提供者本次不可用时为 {@code null}
+     */
+    private static @Nullable MolangObject resolveNamespacedMember(MolangScope scope, String dottedName) {
+        return MolangNamespaces.resolve(scope, dottedName);
+    }
+
+    /**
+     * 调用形态解析（{@code query.owner.health()}）。
+     *
+     * <p>限制：本期只把动态命名空间接入成员访问（{@link #resolveMemberAccess} /
+     * {@link MemberSite#resolve(MolangScope)}）。调用形态仍只查静态映射树与 scope 兜底，
+     * 因此命名空间提供的成员只能以属性形态（{@code query.owner.health}）访问。
+     */
     public static MolangObject resolveCall(MolangScope scope, String methodName, MolangObject[] argValues) {
         if (scope == null || methodName == null || methodName.isBlank()) {
             return MolangNull.INSTANCE;
@@ -919,6 +947,12 @@ public final class MolangRuntimeSupport {
                 if (!(scopeValue instanceof MolangNull)) {
                     return scopeValue;
                 }
+            }
+            // 编译产物内联的解析路径：命名空间必须与 resolveMemberAccess 同序接入，
+            // 否则同一表达式「编译前/后」取值不一致。
+            MolangObject namespaced = resolveNamespacedMember(scope, name);
+            if (namespaced != null) {
+                return namespaced;
             }
             ZeroArgBinding selected;
             if (ZERO_ARG_BINDING_ENABLED) {

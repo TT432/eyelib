@@ -100,6 +100,17 @@ public class AnimationComponent {
         setup(info.animations(), info.animate());
     }
 
+    /**
+     * 定义级静态姿态：无序列化信息，或动画表与表达式表均为空。
+     * <p>
+     * 命中时本组件不可能写出任何 {@link ModelRuntimeData} entry，渲染端可跳过逐骨骼扫描直接走
+     * 静态实例路径（ADR-0048）；未命中仍需逐帧判定（动画可能当前未播放）。
+     */
+    public boolean staticPose() {
+        AnimationComponentInfo info = serializableInfo;
+        return info == null || (info.animations().isEmpty() && getAnimate().isEmpty());
+    }
+
     public static void onManagerEntryChanged(String managerName, String entryName) {
         if (!AnimationLookup.managerName().equals(managerName)) {
             return;
@@ -194,5 +205,27 @@ public class AnimationComponent {
             var data = s.createData();
             animationData.put(s.name(), data);
         }
+    }
+
+    /**
+     * 承接另一个组件实例的动画运行时状态（{@code animate}/{@code animationData}/{@code effects}/{@code tickedInfos}）。
+     *
+     * <p>用途：off-level 实体（CarryOn 等模组每次渲染都 {@code EntityType.create(NBT)} 新建一个不入世界的
+     * 假实体）没有跨帧身份，动画播放状态（{@code BrAnimationPlaybackState} 的 animTime/deltaTime、
+     * 动画控制器的状态机）会随实例重建而清零 —— 表现是被抱起的生物姿态完全静止。
+     * 渲染入口按实体 UUID 缓存上一帧的组件，本方法把状态接回来，随后 {@link #setup} 因
+     * {@code serializableInfo} 与新入参等值而短路，动画继续从上一帧的时间轴推进。
+     */
+    public void adoptFrom(AnimationComponent other) {
+        this.serializableInfo = other.serializableInfo;
+        this.lastSetupAnimations = other.lastSetupAnimations;
+        this.lastSetupAnimate = other.lastSetupAnimate;
+        this.animate.clear();
+        this.animate.putAll(other.animate);
+        this.orphanedParticles.addAll(drainParticles());
+        this.animationData.clear();
+        this.animationData.putAll(other.animationData);
+        this.effects = other.effects;
+        this.tickedInfos = other.tickedInfos;
     }
 }

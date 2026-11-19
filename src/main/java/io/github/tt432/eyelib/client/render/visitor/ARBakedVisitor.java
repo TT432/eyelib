@@ -11,6 +11,12 @@ import io.github.tt432.eyelib.model.Model;
  * @author TT432
  */
 public class ARBakedVisitor extends HighSpeedRenderModelVisitor {
+    /** AR 渲染器持有自己的静态 mesh（AcceleratedBakedBoneRenderer），不参与静态实例通道。 */
+    @Override
+    protected boolean staticInstancesAllowed() {
+        return false;
+    }
+
     @Override
     public void visitPreBone(RenderParams renderParams, ModelVisitContext context, Model.Bone bone, ModelRuntimeData data) {
         PoseStack poseStack = renderParams.poseStack();

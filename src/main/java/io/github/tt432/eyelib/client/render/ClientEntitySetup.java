@@ -1,5 +1,6 @@
 package io.github.tt432.eyelib.client.render;
 
+import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import io.github.tt432.eyelib.behavior.SyncedBehaviorState;
 import io.github.tt432.eyelib.bridge.attachment.dataattach.mc.DataAttachmentHelper;
@@ -30,7 +31,6 @@ import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 /**
  * 实体渲染 setup 装配簇（clientEntity 解析/组件重建/scope 上下文注入），
@@ -41,15 +41,6 @@ import java.util.Map;
 final class ClientEntitySetup {
     private static final HostRole<MolangEntityContextView> MOLANG_ENTITY_CONTEXT =
             HostRole.of("molang_entity_context", MolangEntityContextView.class);
-
-    /**
-     * BE 重命名实体的 JE 类型别名：BE 村与掠夺更新把 villager/zombie_villager 重命名为 *_v2，
-     * 资源包（如 A&S）只注册新名；JE 1.20.1 实体类型仍是旧名，查表时回退别名。
-     */
-    private static final Map<String, String> JE_TO_BE_ENTITY_ALIAS = Map.of(
-            "minecraft:villager", "minecraft:villager_v2",
-            "minecraft:zombie_villager", "minecraft:zombie_villager_v2"
-    );
 
     /** 渲染帧序号，由 {@link EntityRenderOrchestrator#onRenderStage} 每帧递增；用于同帧内 setup/tick 去重。 */
     private static long frameCounter = 0;
@@ -73,14 +64,22 @@ final class ClientEntitySetup {
         return setupClientEntity(entity, cap);
     }
 
-    static <T> void setupEntityClientEntityData(SimpleRenderAction<T> data) {
-        var cap = data.renderData();
+    /**
+     * 模型根位姿的唯一实现（脚本缩放 / 幼体缩放 / 睡眠位移 / 身体朝向）。
+     * <p>
+     * 没有 client entity 定义的宿主保持恒等（与历史行为一致：原版实体不施加任何模型根变换）；
+     * {@code living} 为 null 表示非实体宿主或调用方关闭了实体姿态，此时仍施加脚本缩放
+     * （{@code scripts.scale} 属于客户端实体数据，与宿主是否有实体无关）。
+     *
+     * @param living 施加幼体缩放与身体朝向/睡眠位移的实体；为 null 时只施加脚本缩放
+     */
+    static void applyRootPose(PoseStack poseStack, RenderData<?> cap,
+                              @Nullable LivingEntity living, float partialTick) {
         var clientEntity = cap.getClientEntityComponent().getClientEntity();
-        var poseStack = data.poseStack();
 
         if (clientEntity == null) return;
 
-        LivingEntity livingEntity = data.applyEntityPose() && data.entity() instanceof LivingEntity living ? living : null;
+        LivingEntity livingEntity = living;
 
         // vanilla 在 RenderLivingEvent.Pre 之前只施加了实体位置平移（无旋转/缩放），
         // 因此这里必须自行复刻 vanilla LivingEntityRenderer 的睡眠变换：
@@ -118,23 +117,35 @@ final class ClientEntitySetup {
             if (sleepingBed != null) {
                 poseStack.mulPose(Axis.YP.rotationDegrees(-sleepingBed.toYRot() + 180F));
             } else {
-                float yBodyRot = Mth.rotLerp(data.partialTick(), livingEntity.yBodyRotO, livingEntity.yBodyRot);
+                float yBodyRot = Mth.rotLerp(partialTick, livingEntity.yBodyRotO, livingEntity.yBodyRot);
                 poseStack.mulPose(Axis.YP.rotationDegrees(-yBodyRot));
             }
         }
     }
 
-    static void setupExtraMolang(Entity entity, MolangScope scope, float partialTick) {
-        EngineEntityVariables.bind(entity, scope);
-
+    /** 逐帧 tick 期变量（与管线 TickStage 同语义）：子帧插值与挥击进度。 */
+    static void applyTickVariables(@Nullable Entity entity, MolangScope scope, float partialTick) {
         scope.set("variable.partial_tick", partialTick);
         if (entity instanceof LivingEntity livingEntity)
             scope.set("variable.attack_time", ((float) livingEntity.swingTime) / livingEntity.getCurrentSwingDuration());
     }
 
-    static void setupSyncedBehaviorContext(LivingEntity entity, MolangScope scope) {
+    /** 提交期变量 = tick 期变量 + 宿主引擎变量（{@code query.*} 的引擎侧投影）。 */
+    static void applySubmitVariables(@Nullable Entity entity, MolangScope scope, float partialTick) {
+        if (entity != null) {
+            EngineEntityVariables.bind(entity, scope);
+        }
+        applyTickVariables(entity, scope, partialTick);
+    }
+
+    /** 同步行为状态注入；无实体宿主清掉残留（避免上一帧/上一宿主的 variant 泄漏）。 */
+    static void applyBehaviorContext(@Nullable Entity entity, MolangScope scope) {
+        if (!(entity instanceof LivingEntity livingEntity)) {
+            scope.getHostContext().remove(MOLANG_ENTITY_CONTEXT);
+            return;
+        }
         SyncedBehaviorState synced = DataAttachmentHelper.getOrNull(
-                DataAttachmentPort.syncedBehaviorState(), entity);
+                DataAttachmentPort.syncedBehaviorState(), livingEntity);
         if (synced == null) {
             scope.getHostContext().remove(MOLANG_ENTITY_CONTEXT);
             return;
@@ -154,38 +165,47 @@ final class ClientEntitySetup {
         return setupClientEntity(entityId, cap);
     }
 
+    /**
+     * 按实体类型 id 装配（自动解析绑定）。
+     * <p>
+     * 只对 {@link ClientEntityComponent.BindingKind#AUTO_BY_ID} 生效：固定实例绑定不会被「宿主类型 id」
+     * 重写（历史缺陷：String 重载在 stale 时覆盖外部显式设置的实例，表现为「首次特效不渲染、
+     * 第二次同 id 才生效」）。
+     */
     static List<Runnable> setupClientEntity(String entityId, RenderData<?> cap) {
-        ClientEntityComponent clientEntityComponent = cap.getClientEntityComponent();
-        long generation = ClientEntityManager.INSTANCE.generation();
-
-        // 注册表代际变化（addon 卸载/换包/mod 重注册）时重新解析：
-        // 解析结果为 null 也会记录代际——vanilla 实体不再每次 setup 都查表，
-        // 已卸载 addon 的实体回落 vanilla 渲染。
-        if (clientEntityComponent.isStale(generation)) {
-            BrClientEntity clientEntity = ClientEntityManager.INSTANCE.get(entityId.toString());
-            if (clientEntity == null) {
-                String alias = JE_TO_BE_ENTITY_ALIAS.get(entityId.toString());
-                if (alias != null) {
-                    clientEntity = ClientEntityManager.INSTANCE.get(alias);
-                }
+        ClientEntityComponent component = cap.getClientEntityComponent();
+        long generation = ClientEntityManager.generation();
+        if (component.bindingKind() == ClientEntityComponent.BindingKind.AUTO_BY_ID) {
+            if (component.boundId() == null) {
+                component.bindById(entityId);
             }
-            clientEntityComponent.setClientEntity(clientEntity);
-            clientEntityComponent.markResolvedFrom(generation);
+            if (component.needsRebind(generation)) {
+                String boundId = component.boundId();
+                component.applyResolved(boundId == null ? null : ClientEntityManager.byId(boundId), generation);
+            }
         }
-
-        return setupClientEntity(clientEntityComponent.getClientEntity(), cap);
+        return apply(cap);
     }
 
+    /** 按显式实例装配（引用变化时转为固定实例绑定；{@code null} 表示「保持现状」）。 */
     static List<Runnable> setupClientEntity(@Nullable BrClientEntity clientEntity, RenderData<?> cap) {
+        ClientEntityComponent component = cap.getClientEntityComponent();
+        if (clientEntity != null && component.getClientEntity() != clientEntity) {
+            component.bindInstance(clientEntity);
+        }
+        return apply(cap);
+    }
+
+    /** 按当前绑定装配（不改绑定、不重新解析）：由绑定方在需要时驱动。 */
+    static List<Runnable> setupClientEntity(RenderData<?> cap) {
+        return apply(cap);
+    }
+
+    /** 组件装配主体：RC 重建 / 静态 scope 注入 / 动画 setup / 回落原版。 */
+    private static List<Runnable> apply(RenderData<?> cap) {
         ClientEntityComponent clientEntityComponent = cap.getClientEntityComponent();
         RenderControllerComponent renderControllerComponent = cap.getRenderControllerComponent();
         List<Runnable> syncedActions = new ArrayList<>();
-        // 引用不同才视为「外部显式指定」：setClientEntity 标记 externallySet，
-        // 不参与注册表代际失效；资源重载后由外部持有者负责重设新实例。
-        // 每帧把当前 ce 传回的重 setup 调用方（RC 条件重估等）引用相等，不触碰该标记。
-        if (clientEntity != null && clientEntityComponent.getClientEntity() != clientEntity) {
-            clientEntityComponent.setClientEntity(clientEntity);
-        }
 
         boolean clientEntityChanged = clientEntityComponent.consumeChanged();
         BrClientEntity appliedClientEntity = clientEntityComponent.getClientEntity();

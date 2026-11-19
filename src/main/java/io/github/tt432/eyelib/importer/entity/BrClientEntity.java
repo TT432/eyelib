@@ -1,6 +1,7 @@
 package io.github.tt432.eyelib.importer.entity;
 
 import com.mojang.serialization.Codec;
+import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.eyelib.importer.addon.BedrockResourceValue;
@@ -10,7 +11,9 @@ import io.github.tt432.eyelib.molang.MolangValue;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Function;
 
 import com.mojang.datafixers.util.Either;
 
@@ -36,8 +39,72 @@ public record BrClientEntity(
         Optional<BrClientEntityScripts> scripts,
         Optional<BedrockResourceValue.ObjectValue> spawn_egg,
         Map<String, String> item,
-        boolean enable_attachables
+        Toggles toggles
 ) {
+    /**
+     * 基岩版 client entity description 的四个装备渲染开关（官方文档语义，见
+     * {@link io.github.tt432.eyelib.client.entity.AttachablePolicy}）。
+     * <p>
+     * 单独成 record 的原因：description 的可选字段已达 DFU {@code RecordCodecBuilder.group} 的上限
+     * （16 个），再平铺四个字段无法组装 codec；嵌套后仍读同一层 JSON 的四个平铺键。
+     */
+    public record Toggles(
+            boolean enable_attachables,
+            boolean hide_armor,
+            boolean held_item_ignores_lighting,
+            MolangValue held_item_scale
+    ) {
+        /**
+         * 出厂全缺省（字面值，不随 {@link ClientEntityTogglesDefaults} 的注册变化）：
+         * 不渲染 attachable、不藏甲、手持物按光照、缩放 1.0。
+         */
+        public static final Toggles DEFAULT = new Toggles(false, false, false, MolangValue.ONE);
+
+        public static final MapCodec<Toggles> CODEC = RecordCodecBuilder.mapCodec(ins -> ins.group(
+                dynamicDefault(ClientEntityTogglesDefaults.ENABLE_ATTACHABLES, Codec.BOOL)
+                        .forGetter(Toggles::enable_attachables),
+                dynamicDefault(ClientEntityTogglesDefaults.HIDE_ARMOR, Codec.BOOL)
+                        .forGetter(Toggles::hide_armor),
+                dynamicDefault(ClientEntityTogglesDefaults.HELD_ITEM_IGNORES_LIGHTING, Codec.BOOL)
+                        .forGetter(Toggles::held_item_ignores_lighting),
+                // Bedrock：Molang 表达式，缺省 1.0，必须解析为 > 0（<=0 由 AttachablePolicy 回落 1.0）
+                dynamicDefault(ClientEntityTogglesDefaults.HELD_ITEM_SCALE, MolangValue.CODEC)
+                        .forGetter(Toggles::held_item_scale)
+        ).apply(ins, Toggles::new));
+
+        /**
+         * 动态缺省字段：解码缺键取 {@link ClientEntityTogglesDefaults#of} 的当前值，
+         * 编码时「值等于当前缺省」即省略该键——与 DFU {@code optionalFieldOf(name, literalDefault)}
+         * 语义同构，但缺省值在每次编解码时重新读取，因此能被 {@code ClientEntityTogglesDefaults} 覆盖。
+         */
+        private static <T> MapCodec<T> dynamicDefault(ClientEntityTogglesDefaults.Field<T> field, Codec<T> codec) {
+            return codec.optionalFieldOf(field.jsonName())
+                        .xmap(o -> o.orElseGet(() -> ClientEntityTogglesDefaults.of(field)),
+                                v -> Objects.equals(v, ClientEntityTogglesDefaults.of(field))
+                                        ? Optional.empty()
+                                        : Optional.of(v));
+        }
+    }
+
+    /** {@code enable_attachables}：能否渲染 attachable（盔甲与武器）。 */
+    public boolean enable_attachables() {
+        return toggles.enable_attachables();
+    }
+
+    /** {@code hide_armor}：只压盔甲，覆盖 {@code enable_attachables} 的盔甲部分。 */
+    public boolean hide_armor() {
+        return toggles.hide_armor();
+    }
+
+    /** {@code held_item_ignores_lighting}：手持物是否全亮渲染。 */
+    public boolean held_item_ignores_lighting() {
+        return toggles.held_item_ignores_lighting();
+    }
+
+    /** {@code held_item_scale}：手持物缩放的 Molang 表达式（缺省 1.0）。 */
+    public MolangValue held_item_scale() {
+        return toggles.held_item_scale();
+    }
     private static final Codec<BedrockResourceValue.ObjectValue> OBJECT_VALUE_CODEC = ImporterCodecUtil.JSON_ELEMENT_CODEC.comapFlatMap(
             jsonElement -> {
                 BedrockResourceValue value = BedrockResourceValue.fromJsonElement(jsonElement);
@@ -117,8 +184,23 @@ public record BrClientEntity(
             }
     );
 
-    public static final Codec<BrClientEntity> CODEC = wrapDescription("minecraft:client_entity");
-    public static final Codec<BrClientEntity> ATTACHABLE_CODEC = wrapDescription("minecraft:attachable");
+    /** 未归一化的原始 codec：仅内部使用（{@link #CODEC} / {@link #ATTACHABLE_CODEC} 是唯一的对外解码口）。 */
+    private static final Codec<BrClientEntity> RAW_CODEC = wrapDescription("minecraft:client_entity");
+    private static final Codec<BrClientEntity> RAW_ATTACHABLE_CODEC = wrapDescription("minecraft:attachable");
+
+    public static final Codec<BrClientEntity> CODEC = normalized(RAW_CODEC);
+    public static final Codec<BrClientEntity> ATTACHABLE_CODEC = normalized(RAW_ATTACHABLE_CODEC);
+
+    /**
+     * 在解码方向接入 {@link BrClientEntityNormalizations}：所有解码入口（资源包 loader、addon
+     * loader/聚合、GUI 导入、nodegraph 预览）都直接用下面两个公开常量，因此归一化是单点收口，
+     * 无需逐入口改调用。编码方向恒等（{@link Function#identity()}），导出 JSON 不受影响。
+     */
+    private static Codec<BrClientEntity> normalized(Codec<BrClientEntity> raw) {
+        return raw.comapFlatMap(
+                decoded -> DataResult.success(BrClientEntityNormalizations.apply(decoded)),
+                Function.identity());
+    }
 
     public BrClientEntity {
         min_engine_version = min_engine_version == null ? Optional.empty() : min_engine_version;
@@ -145,6 +227,7 @@ public record BrClientEntity(
         return java.util.Collections.unmodifiableMap(new java.util.LinkedHashMap<>(source));
     }
 
+    /** 便捷构造器：装备渲染开关取 {@link ClientEntityTogglesDefaults#effective()} 的当前缺省值。 */
     public BrClientEntity(
             String identifier,
             Map<String, String> materials,
@@ -157,7 +240,7 @@ public record BrClientEntity(
             Optional<BrClientEntityScripts> scripts
     ) {
         this(identifier, Optional.empty(), materials, textures, geometry, animations, List.of(), particle_effects, sound_effects,
-                render_controllers, Map.of(), scripts, Optional.empty(), Map.of(), false);
+                render_controllers, Map.of(), scripts, Optional.empty(), Map.of(), ClientEntityTogglesDefaults.effective());
     }
 
     private static Codec<BrClientEntity> wrapDescription(String rootField) {
@@ -178,15 +261,18 @@ public record BrClientEntity(
                                 BrClientEntityScripts.CODEC.optionalFieldOf("scripts").forGetter(BrClientEntity::scripts),
                                 OBJECT_VALUE_CODEC.optionalFieldOf("spawn_egg").forGetter(BrClientEntity::spawn_egg),
                                 ITEM_FIELD_CODEC.optionalFieldOf("item", Map.of()).forGetter(BrClientEntity::item),
-                                Codec.BOOL.optionalFieldOf("enable_attachables", false).forGetter(BrClientEntity::enable_attachables)
+                                // 装备渲染的四个开关整体作为一层：description 的可选字段数已到
+                                // RecordCodecBuilder.group 上限，且它们语义耦合（hide_armor 覆盖
+                                // enable_attachables），单独成 record 后仍读同一层 JSON 的平铺键。
+                                Toggles.CODEC.forGetter(BrClientEntity::toggles)
                         ).apply(ins2, (identifier, minEngineVersion, materials, textures, geometry, animations,
                                        animationControllers, particleEffects, soundEffects, renderControllerRefs,
-                                       explicitConditions, scripts, spawnEgg, item, enableAttachables) ->
+                                       explicitConditions, scripts, spawnEgg, item, toggles) ->
                                 new BrClientEntity(identifier, minEngineVersion, materials, textures, geometry,
                                         animations, animationControllers, particleEffects, soundEffects,
                                         splitNames(renderControllerRefs),
                                         mergeConditions(renderControllerRefs, explicitConditions),
-                                        scripts, spawnEgg, item, enableAttachables))).fieldOf("description").forGetter(o -> o)
+                                        scripts, spawnEgg, item, toggles))).fieldOf("description").forGetter(o -> o)
                 ).apply(ins1, o -> o)).fieldOf(rootField).forGetter(o -> o)
         ).apply(ins, o -> o));
     }

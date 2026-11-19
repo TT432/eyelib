@@ -15,6 +15,7 @@
 | 行为规格（测试 oracle） | [specs/](specs/) |
 | 模型动画的摄像机朝向查询 | [specs/molang-render-camera.md](specs/molang-render-camera.md) |
 | Bedrock 差距分析 | [gap-analysis/](gap-analysis/) |
+| 下游消费方集成缺口（motions4 视角） | [gap-analysis/downstream-consumer-gaps.md](gap-analysis/downstream-consumer-gaps.md) |
 | 六边形架构 Port 清单与提取进度 | [architecture/domain-module-map.md](architecture/domain-module-map.md) |
 | Molang 重构路线图 | [molang/ROADMAP.md](molang/ROADMAP.md) |
 | Bedrock JE/BE 复刻对比方法 | [concepts/bedrock-parity-investigation.md](concepts/bedrock-parity-investigation.md) |
@@ -97,7 +98,12 @@
 | 0040 | 实体材质默认光照模型改为 LIGHTMAP_ONLY——26.1 方向光根修 | Accepted (2026-11-04) |
 | 0041 | 26.1 自定义实体 pipeline 按 ShaderKey 精确登记——光影下不透明实体消失 | Accepted (2026-11-05) |
 | 0042 | 实体 pass 状态的单一权威（alpha test / 深度写 / cull） | Accepted (2026-11-06) |
-| 0043 | 装备挂载抽象——item 骨骼锚点与 body-part 骨骼绑定（手持物 + 盔甲） | Accepted (2026-11-08) |
+| 0043 | 装备挂载抽象——item 骨骼锚点与 body-part 骨骼绑定（手持物 + 盔甲） | Accepted (2026-11-08)；挂载执行迁入声明式插槽见 0044 |
+| 0044 | 可嵌入渲染 API——宿主抽象、渲染产物与外部挂载声明（G1–G3） | Implemented (2026-11-17) |
+| 0045 | 渲染 sink 批次作用域与阶段订阅优先级契约（G4/G9） | Implemented (2026-11-17) |
+| 0046 | client entity 绑定语义二分与解码规范化钩子（G5/G6） | Implemented (2026-11-17) |
+| 0047 | molang 命名空间委派与单实体渲染 tick / 烘焙预热 API（G7/G8） | Implemented (2026-11-17) |
+| 0048 | 非动画 ClientEntity 的静态实例化渲染（摊平几何 + 逐实例 root 位姿） | Implemented (2026-11-17) |
 
 ## 核心原则
 

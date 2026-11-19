@@ -33,6 +33,10 @@ public final class NgSkinningSession implements SkinningSession {
     private int @Nullable [] ranges;
     private boolean active;
 
+    private @Nullable NgStaticGeometry staticGeometry;
+    private int @Nullable [] staticRanges;
+    private boolean staticMode;
+
     NgSkinningSession(RenderType routingType, Identifier texture) {
         this.routingType = routingType;
         this.texture = texture;
@@ -72,6 +76,62 @@ public final class NgSkinningSession implements SkinningSession {
     }
 
     @Override
+    public boolean beginStatic(BakedModel bakedModel, io.github.tt432.eyelib.model.Model model,
+                               org.joml.Matrix4fc rootPose, org.joml.Matrix3fc rootNormal,
+                               it.unimi.dsi.fastutil.ints.Int2BooleanOpenHashMap partVisibility,
+                               float @Nullable [] tintColor, int overlay, int light) {
+        NgStaticGeometry geo = NgSkinningManager.staticGeometry(model, bakedModel);
+        if (geo == null) {
+            return false;
+        }
+        int offset = NgSkinningManager.acquirePalette(NgStaticGeometry.BLOCK_SIZE);
+        if (offset < 0) {
+            return false;
+        }
+        BitSet visibleSlots = new BitSet(geo.slotCount());
+        for (int slot = 0; slot < geo.slotCount(); slot++) {
+            if (partVisibility.getOrDefault(geo.boneId(slot), true)) {
+                visibleSlots.set(slot);
+            }
+        }
+        this.staticGeometry = geo;
+        this.staticRanges = geo.ranges(visibleSlots);
+        this.paletteOffset = offset;
+
+        // std140：vec4 tint / ivec2 overlay / ivec2 light / mat4 pose / mat4 normal
+        float r = 1.0F, g = 1.0F, b = 1.0F, a = 1.0F;
+        if (tintColor != null) {
+            r = Math.max(0, Math.min(1, tintColor[0]));
+            g = Math.max(0, Math.min(1, tintColor[1]));
+            b = Math.max(0, Math.min(1, tintColor[2]));
+            a = Math.max(0, Math.min(1, tintColor[3]));
+        }
+        ByteBuffer buf = NgSkinningManager.paletteStaging();
+        buf.putFloat(offset + NgStaticGeometry.OFF_TINT, r);
+        buf.putFloat(offset + NgStaticGeometry.OFF_TINT + 4, g);
+        buf.putFloat(offset + NgStaticGeometry.OFF_TINT + 8, b);
+        buf.putFloat(offset + NgStaticGeometry.OFF_TINT + 12, a);
+        buf.putInt(offset + NgStaticGeometry.OFF_OVERLAY, overlay & 0xFFFF);
+        buf.putInt(offset + NgStaticGeometry.OFF_OVERLAY + 4, overlay >>> 16);
+        buf.putInt(offset + NgStaticGeometry.OFF_LIGHT, light & 0xFFFF);
+        buf.putInt(offset + NgStaticGeometry.OFF_LIGHT + 4, light >>> 16);
+        rootPose.get(offset + NgStaticGeometry.OFF_POSE, buf);
+        int base = offset + NgStaticGeometry.OFF_NORMAL;
+        buf.putFloat(base, rootNormal.m00()).putFloat(base + 4, rootNormal.m01())
+                .putFloat(base + 8, rootNormal.m02()).putFloat(base + 12, 0.0F);
+        buf.putFloat(base + 16, rootNormal.m10()).putFloat(base + 20, rootNormal.m11())
+                .putFloat(base + 24, rootNormal.m12()).putFloat(base + 28, 0.0F);
+        buf.putFloat(base + 32, rootNormal.m20()).putFloat(base + 36, rootNormal.m21())
+                .putFloat(base + 40, rootNormal.m22()).putFloat(base + 44, 0.0F);
+        buf.putFloat(base + 48, 0.0F).putFloat(base + 52, 0.0F)
+                .putFloat(base + 56, 0.0F).putFloat(base + 60, 0.0F);
+
+        this.active = true;
+        this.staticMode = true;
+        return true;
+    }
+
+    @Override
     public void appendBone(int boneId, Matrix4f pose, Matrix3f normal) {
         if (!active || geometry == null || paletteOffset < 0) {
             return;
@@ -106,6 +166,19 @@ public final class NgSkinningSession implements SkinningSession {
 
     /** writer 正常结束：关闭映射、算出可见区间、交给管理器排期。 */
     public void finish() {
+        if (staticMode) {
+            NgStaticGeometry geo = staticGeometry;
+            if (!active || geo == null || paletteOffset < 0 || staticRanges == null) {
+                return;
+            }
+            if (staticRanges.length == 0) {
+                return; // 全骨骼不可见：无 draw（uniform block 浪费一个，可忽略）
+            }
+            ranges = staticRanges;
+            paletteSlice = NgSkinningManager.paletteSlice(paletteOffset, NgStaticGeometry.BLOCK_SIZE);
+            NgSkinningManager.submitDraw(this);
+            return;
+        }
         if (!active || geometry == null || paletteOffset < 0 || visible == null) {
             return;
         }
@@ -121,10 +194,14 @@ public final class NgSkinningSession implements SkinningSession {
     public void discard() {
         active = false;
         paletteOffset = -1;
+        staticMode = false;
+        staticRanges = null;
     }
 
     RenderPipeline pipeline() {
-        return NgSkinningManager.derivePipeline(routingType.pipeline());
+        return staticMode
+                ? NgSkinningManager.deriveStaticPipeline(routingType.pipeline())
+                : NgSkinningManager.derivePipeline(routingType.pipeline());
     }
 
     Identifier texture() {
@@ -140,6 +217,19 @@ public final class NgSkinningSession implements SkinningSession {
             throw new IllegalStateException("session not begun");
         }
         return geometry;
+    }
+
+    @Override
+    public boolean isStatic() {
+        return staticMode;
+    }
+
+    NgStaticGeometry staticGeometry() {
+        var geo = staticGeometry;
+        if (geo == null) {
+            throw new IllegalStateException("session not begun (static)");
+        }
+        return geo;
     }
 
     GpuBufferSlice paletteSlice() {

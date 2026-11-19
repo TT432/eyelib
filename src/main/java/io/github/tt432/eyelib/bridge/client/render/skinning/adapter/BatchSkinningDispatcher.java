@@ -1,6 +1,7 @@
 //? if <26.1 {
 package io.github.tt432.eyelib.bridge.client.render.skinning.adapter;
 
+import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.platform.Window;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.BufferUploader;
@@ -9,12 +10,18 @@ import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.ShaderInstance;
 import org.jspecify.annotations.Nullable;
 import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL15;
+import org.lwjgl.opengl.GL30;
+import org.lwjgl.opengl.GL31;
+import org.lwjgl.opengl.GL43;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.FloatBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -40,6 +47,12 @@ final class BatchSkinningDispatcher {
     /** meta 填充 scratch（渲染线程单线程使用，drain 内复用零分配）；后 3 个 int 恒为 0（对齐填充）。 */
     private static final float[] META_FLOAT_SCRATCH = new float[8];
     private static final int[] META_INT_SCRATCH = new int[6];
+
+    /** 静态实例 SSBO 的绑定槽（0-3 已由 compute dispatch 使用，4 留给静态绘制）。 */
+    private static final int STATIC_INSTANCE_BINDING = 4;
+    private static int staticInstanceBuffer;
+    private static int staticInstanceCapacity;
+    private static @Nullable ByteBuffer staticInstanceStaging;
 
     private BatchSkinningDispatcher() {
     }
@@ -72,17 +85,26 @@ final class BatchSkinningDispatcher {
         }
         try {
             BatchSkinningProgram program = LegacySkinningManager.batchProgram();
-            if (program == null) {
-                return; // 重载窗口期：丢一帧（finally 释放暂存）
-            }
 
             // 1. 分组计数（RenderType 首见顺序）。每帧 distinct RenderType/几何数量小（个位数~数十），
             // 线性扫描引用比较即可——IdentityHashMap 逐 drain 分配 + put 探针 JFR 实证占渲染线程 ~8.5%。
             List<Group> groups = new ArrayList<>();
+            List<StaticBatch> statics = new ArrayList<>();
             int totalMats = 0;
             int totalVertices = 0;
             int totalEntities = 0;
+            int totalInstances = 0;
             for (LegacySkinningSession session : PENDING) {
+                if (session.isStatic()) {
+                    // C2 静态实例（ADR-0048）：无 palette/meta/compute，
+                    // 按 (几何, RenderType, 变体, 可见分段) 归并成一批实例。
+                    staticBatch(statics, session).sessions.add(session);
+                    totalInstances++;
+                    continue;
+                }
+                if (program == null) {
+                    continue; // 重载窗口期：蒙皮会话丢弃一帧，静态实例仍可绘制
+                }
                 if (!(session.geometry() instanceof ComputeSkinnedGeometry geometry)) {
                     continue; // 几何类型与模式不匹配（路径切换竞态）：丢弃
                 }
@@ -117,10 +139,12 @@ final class BatchSkinningDispatcher {
                 totalMats += geometry.slotCount() * 2;
                 totalEntities++;
             }
-            if (groups.isEmpty()) {
+            if (groups.isEmpty() && statics.isEmpty()) {
                 return;
             }
 
+            // 蒙皮相只在有会话且 compute 程序可用时执行；静态实例与之独立（无 compute/palette）。
+            if (program != null && !groups.isEmpty()) {
             // 2. 上传 palette/meta：布局与填充单遍融合（基址内联推导，无逐实体 ArrayList 分配）。
             // palette 用绝对下标批量拷贝（FloatBuffer.put(index, float[], …) 是 Unsafe 块拷贝）；
             // 逐 float putFloat 循环 JFR 实证占渲染线程 ~25%（fbo n384 全部内联进 drain 帧）
@@ -198,6 +222,13 @@ final class BatchSkinningDispatcher {
                     routingType.clearRenderState();
                 }
             }
+            }
+
+            // 6. 静态实例相（ADR-0048）：一次 SSBO 上传 + 每批逐可见分段 instanced draw。
+            //    排在蒙皮组之后：同 RenderType 内 opaque 顺序无关；translucent 与 C1 同相位（不做逐实体排序）。
+            if (!statics.isEmpty()) {
+                drawStatic(statics, totalInstances);
+            }
         } finally {
             releaseAll();
         }
@@ -208,6 +239,108 @@ final class BatchSkinningDispatcher {
             session.releaseArrays();
         }
         PENDING.clear();
+    }
+
+    /** 归并静态实例到批：键 = (几何, RenderType, 变体, 可见分段)。批数量级为 模型×材质×可见模式，线性扫描足够。 */
+    private static StaticBatch staticBatch(List<StaticBatch> batches, LegacySkinningSession session) {
+        LegacyStaticGeometry geometry = session.staticGeometry();
+        RenderType routingType = session.routingType();
+        int variant = session.variant();
+        int[] ranges = session.staticRanges();
+        for (int i = 0; i < batches.size(); i++) {
+            StaticBatch candidate = batches.get(i);
+            if (candidate.geometry == geometry && candidate.routingType == routingType
+                    && candidate.variant == variant && Arrays.equals(candidate.ranges, ranges)) {
+                return candidate;
+            }
+        }
+        StaticBatch batch = new StaticBatch(geometry, routingType, variant, ranges);
+        batches.add(batch);
+        return batch;
+    }
+
+    /** 静态实例绘制：一次实例 SSBO 上传，每批按自己的可见分段 glDrawArraysInstanced。 */
+    private static void drawStatic(List<StaticBatch> batches, int totalInstances) {
+        if (totalInstances <= 0) {
+            return;
+        }
+        int bytes = totalInstances * LegacyStaticGeometry.INSTANCE_STRIDE;
+        ByteBuffer staging = staticStaging(bytes);
+        java.nio.FloatBuffer floats = staging.asFloatBuffer();
+        int floatBase = 0;
+        for (StaticBatch batch : batches) {
+            batch.firstInstance = floatBase / LegacySkinningSession.STATIC_INSTANCE_FLOATS;
+            for (LegacySkinningSession session : batch.sessions) {
+                floats.put(floatBase, session.staticInstance(), 0, LegacySkinningSession.STATIC_INSTANCE_FLOATS);
+                floatBase += LegacySkinningSession.STATIC_INSTANCE_FLOATS;
+            }
+        }
+        if (staticInstanceBuffer == 0) {
+            staticInstanceBuffer = GlStateManager._glGenBuffers();
+        }
+        GlStateManager._glBindBuffer(GL43.GL_SHADER_STORAGE_BUFFER, staticInstanceBuffer);
+        GL15.glBufferData(GL43.GL_SHADER_STORAGE_BUFFER,
+                (long) staticInstanceCapacity * LegacyStaticGeometry.INSTANCE_STRIDE, GL15.GL_STREAM_DRAW);
+        GL15.glBufferSubData(GL43.GL_SHADER_STORAGE_BUFFER, 0L, staging.duplicate().position(0).limit(bytes));
+        GlStateManager._glBindBuffer(GL43.GL_SHADER_STORAGE_BUFFER, 0);
+
+        for (StaticBatch batch : batches) {
+            ShaderInstance shader = LegacySkinningManager.staticShader(batch.variant);
+            if (shader == null) {
+                continue; // 重载窗口期：丢一帧
+            }
+            int count = batch.sessions.size();
+            int offset = batch.firstInstance * LegacyStaticGeometry.INSTANCE_STRIDE;
+            RenderType routingType = batch.routingType;
+            routingType.setupRenderState();
+            try {
+                setVanillaUniforms(shader);
+                shader.apply();
+                BufferUploader.invalidate();
+                GL30.glBindBufferRange(GL43.GL_SHADER_STORAGE_BUFFER, STATIC_INSTANCE_BINDING,
+                        staticInstanceBuffer, offset, (long) count * LegacyStaticGeometry.INSTANCE_STRIDE);
+                GlStateManager._glBindVertexArray(batch.geometry.vao());
+                int[] ranges = batch.ranges;
+                for (int r = 0; r < ranges.length; r += 2) {
+                    GL31.glDrawArraysInstanced(GL11.GL_TRIANGLES, ranges[r], ranges[r + 1], count);
+                }
+                BatchSkinningProgram.unbindVao();
+                BufferUploader.invalidate();
+                shader.clear();
+            } finally {
+                routingType.clearRenderState();
+            }
+        }
+    }
+
+    /** 实例 SSBO 的 CPU 暂存（direct LE），按需倍增。 */
+    private static ByteBuffer staticStaging(int needed) {
+        ByteBuffer buf = staticInstanceStaging;
+        if (buf == null || buf.capacity() < needed) {
+            int capacity = Math.max(needed, 1 << 12);
+            buf = ByteBuffer.allocateDirect(capacity).order(ByteOrder.LITTLE_ENDIAN);
+            staticInstanceStaging = buf;
+            staticInstanceCapacity = capacity / LegacyStaticGeometry.INSTANCE_STRIDE;
+        }
+        buf.clear();
+        return buf;
+    }
+
+    /** 一批静态实例：同几何 + 同 RenderType + 同可见分段。 */
+    private static final class StaticBatch {
+        final LegacyStaticGeometry geometry;
+        final RenderType routingType;
+        final int variant;
+        final int[] ranges;
+        final List<LegacySkinningSession> sessions = new ArrayList<>();
+        int firstInstance;
+
+        StaticBatch(LegacyStaticGeometry geometry, RenderType routingType, int variant, int[] ranges) {
+            this.geometry = geometry;
+            this.routingType = routingType;
+            this.variant = variant;
+            this.ranges = ranges;
+        }
     }
 
     /** 暂存缓冲（direct LE），按需倍增增长；返回清空后的写就绪缓冲。 */

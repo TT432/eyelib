@@ -149,6 +149,10 @@ import org.jspecify.annotations.NullMarked;
 - **游戏重启**: 通过 debug HTTP `/eval` → `minecraft.stop()` 关闭运行中的客户端,切勿从 shell `kill` java 进程。
 - **游戏启动**: `mcmcp_launch`（读取项目根 `.mcmcp`，经 `AI_DEBUG_PORT` 环境变量向客户端传调试端口，默认 25999）。启动前检查该端口是否空闲；若被占用，先 `mcmcp_close` 关闭旧实例。调试 HTTP 服务器由 clientsmoke mod 内的 AIDebugServer 提供，仅在配置 `ai_debug_port` 时开启。
 - **自动化禁止抢前台**（用户禁令 2026-09-26）：任何桌面自动化不得 SetCursorPos/mouse_event 移动用户真实鼠标、不得抢前台焦点。允许的非侵入路径：PostMessage/WM_* 消息投递、UIA InvokePattern、直接运行程序生成的命令行（如 PCL 的 LatestLaunch.bat）。游戏窗口弹出属用户请求行为的固有结果，但自动化过程不得额外抢占。
+- **收尾禁止停在分支上**（用户约束 2026-11-15）：任务收尾（交付、汇报、等待用户决策）时工作区必须切回 `master`，禁止让 checkout 停留在功能/发版分支，也禁止停在 detached HEAD。分支是工作态，`master` 是交付态。收尾切分支前若有未提交改动，先汇报再切，不得用 `checkout -f` 静默丢弃。
+- **提交与 PR 分离**（用户约束 2026-11-15）：提交与 PR 是两个独立动作。**任何修改都必须提交**，不把改动留在工作区；**PR 仅在用户明确要求时发起**。发起 PR 时，把当前所有尚未 PR 的 commit 一并 PR，不做「只挑本次任务 commit」的额外区分。
+- **禁止自行新建分支**（用户纠正 2026-11-15）：分支只在用户要求的 PR 流程中临时创建，合并后立即本地删除；不得为隔离改动自行开分支，不得让分支长期滞留未合并功能。功能散落多处是禁止状态——合并进 `master` 是默认动作。
+- **不得为「工作区干净」回退状态**（用户纠正 2026-11-15）：`git status` 干净不是交付目标。子模块/依赖 pin 与主线指针不一致时，先判断哪一侧是当前开发基线的真实状态（本例 master gitlink 落后于未合并的 21.1.41 线，把 `clientsmoke` checkout 到旧 pin 等于把框架降级回 21.1.34）；不一致本身作为待合并事项报告，禁止靠 checkout 旧 pin 消除 `M` 标记。
 - **远端提交标准流程**（2026-10-13 实证）：`master` 受 GitHub 保护规则，要求 3 个必需状态检查（Codacy Static Code Analysis + compile 1.20.1 / 1.21.1 / 26.1.2），**禁止直推**；仓库未开启 GitHub auto-merge（`enablePullRequestAutoMerge` 拒绝）。**Codacy Static Code Analysis 失败可直接忽略**（用户决策 2026-10-14，PR #30）：Codacy 告警不阻断合并，compile 三节点全绿即可继续。标准流程：
     1. 本地在 `master` 完成提交后 `git checkout -b <type>/<topic>` 建分支（避免直推被拒后返工）
     2. `git push -u origin <branch>` → `gh pr create --base master`

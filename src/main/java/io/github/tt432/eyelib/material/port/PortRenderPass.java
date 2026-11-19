@@ -16,6 +16,22 @@ public interface PortRenderPass {
     boolean disableCulling();
 
     /**
+     * 绘制档位：由 {@link Transparency} 唯一决定——{@code SOLID}/{@code ALPHA_TEST} 为
+     * {@link PassTier#OPAQUE}，其余（半透明/发光/加法）为 {@link PassTier#BLEND}。
+     *
+     * <p>switch 穷举全部枚举成员、不写 default：{@link Transparency} 新增成员时编译期报错，
+     * 强制显式决定新成员的档位。
+     *
+     * @return 该 pass 的绘制档位
+     */
+    default PassTier tier() {
+        return switch (transparency()) {
+            case SOLID, ALPHA_TEST -> PassTier.OPAQUE;
+            case TRANSLUCENT, TRANSLUCENT_EMISSIVE, ADDITIVE -> PassTier.BLEND;
+        };
+    }
+
+    /**
      * 获取 PortRenderPass 实例。10 种 (transparency × culling) 组合为共享规范实例，
      * 消除渲染热路径每帧的匿名类分配；实例间按值相等。
      *

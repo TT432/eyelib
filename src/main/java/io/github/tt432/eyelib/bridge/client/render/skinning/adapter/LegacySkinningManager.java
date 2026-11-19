@@ -9,6 +9,7 @@ import io.github.tt432.eyelib.bridge.client.render.bake.BakedModel;
 import io.github.tt432.eyelib.bridge.client.compat.oculus.OculusCompat;
 import io.github.tt432.eyelib.bridge.event.ManagerEntryChangedEventPublisher;
 import io.github.tt432.eyelib.bridge.event.ManagerReplacedEventPublisher;
+import io.github.tt432.eyelib.bridge.client.render.SkinningSupport;
 import io.github.tt432.eyelib.bridge.material.ResourceLocationBridge;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.RenderType;
@@ -100,6 +101,12 @@ public final class LegacySkinningManager {
             "entity_skinned_batch_translucent",
             "entity_skinned_batch_emissive"
     };
+    private static final String[] STATIC_SHADER_NAMES = {
+            "entity_static_batch",
+            "entity_static_batch_solid",
+            "entity_static_batch_translucent",
+            "entity_static_batch_emissive"
+    };
     //?} else {
     private static final String[] VS_SHADER_NAMES = {
             "entity_skinned_legacy_121",
@@ -113,6 +120,12 @@ public final class LegacySkinningManager {
             "entity_skinned_batch_121_translucent",
             "entity_skinned_batch_emissive_121"
     };
+    private static final String[] STATIC_SHADER_NAMES = {
+            "entity_static_batch_121",
+            "entity_static_batch_121_solid",
+            "entity_static_batch_121_translucent",
+            "entity_static_batch_emissive_121"
+    };
     //?}
 
     /** GL_MAX_VERTEX_UNIFORM_COMPONENTS（GL 3.2 spec 下限 1024；96 骨骼×2 矩阵+vanilla 套装需 ~3136）。 */
@@ -121,8 +134,11 @@ public final class LegacySkinningManager {
 
     private static final ShaderInstance[] VS_SHADERS = new ShaderInstance[VS_SHADER_NAMES.length];
     private static final ShaderInstance[] COMPUTE_SHADERS = new ShaderInstance[COMPUTE_SHADER_NAMES.length];
+    private static final ShaderInstance[] STATIC_SHADERS = new ShaderInstance[STATIC_SHADER_NAMES.length];
     private static final IdentityHashMap<RenderType, Integer> VARIANTS = new IdentityHashMap<>();
     private static final IdentityHashMap<BakedModel, LegacyGpuGeometry> GEOMETRIES = new IdentityHashMap<>();
+    /** 静态实例几何（ADR-0048）；null 值 = 负缓存（模型不可摊平）。 */
+    private static final IdentityHashMap<BakedModel, LegacyStaticGeometry> STATIC_GEOMETRIES = new IdentityHashMap<>();
     private static final Deque<float[]> ARRAY_POOL = new ArrayDeque<>();
     private static @Nullable BatchSkinningProgram batchProgram;
     private static Mode mode = Mode.OFF;
@@ -182,6 +198,43 @@ public final class LegacySkinningManager {
     }
 
     /**
+     * 蒙皮可用性查询：镜像 {@link #createSession(RenderType)} 的每条 null 出口（不建会话、不改状态、
+     * 不打日志），供 {@code RenderSink#skinningSupport} 在提交前判断。
+     *
+     * <p>{@link SkinningSupport#AVAILABLE} 只是必要条件：模型维度仍可能拒绝（顶点全零、
+     * VS 路径超骨骼上限、几何缓存负缓存等），writer 必须保留 CPU 回退。
+     *
+     * @param routingType routing RenderType（必须与 {@code createSession} 用同一实例查询：
+     *                    {@code VARIANTS} 是 IdentityHashMap）
+     * @return 可用性
+     */
+    public static SkinningSupport support(RenderType routingType) {
+        if (!ENABLED || mode == Mode.OFF) {
+            return SkinningSupport.OFF_BY_FLAG;
+        }
+        if (!USER_FORCED_MODE && OculusCompat.shaderPackActive()) {
+            return SkinningSupport.SHADER_PACK_ACTIVE;
+        }
+        int variant;
+        synchronized (VARIANTS) {
+            Integer v = VARIANTS.get(routingType);
+            if (v == null || v < 0) {
+                return SkinningSupport.PASS_NOT_SKINNABLE;
+            }
+            variant = v;
+        }
+        ShaderInstance[] shaders = mode == Mode.COMPUTE ? COMPUTE_SHADERS : VS_SHADERS;
+        // 越界变体 createSession 会抛异常；查询侧按「不可蒙皮」处理，绝不误报 AVAILABLE。
+        if (variant >= shaders.length || shaders[variant] == null) {
+            return SkinningSupport.NO_ENGINE_PATH; // 资源重载窗口期：着色器尚未注册
+        }
+        if (mode == Mode.COMPUTE && batchProgram == null) {
+            return SkinningSupport.NO_ENGINE_PATH;
+        }
+        return SkinningSupport.AVAILABLE;
+    }
+
+    /**
      * 几何缓存（按 BakedModel 实例身份；模型失效时整体清空）。渲染线程调用。
      * null 值 = 负缓存（该模型在当前路径下不可蒙皮：全零顶点，或 VS 路径超骨骼上限），
      * 避免此类模型每帧每组件重跑 {@code SkinningGeometryPacker.planSlots}（排序 + 分配）。
@@ -205,6 +258,29 @@ public final class LegacySkinningManager {
                 return GEOMETRIES.get(model);
             }
             GEOMETRIES.put(model, created);
+        }
+        return created;
+    }
+
+    /**
+     * 静态实例几何缓存（ADR-0048，按 BakedModel 身份；bind 骨骼树来自同一模型的 {@code Model}）。
+     * null 值 = 负缓存（零顶点/摊平失败），调用方回退常规路径。
+     */
+    static @Nullable LegacyStaticGeometry staticGeometry(io.github.tt432.eyelib.model.Model model, BakedModel baked) {
+        synchronized (STATIC_GEOMETRIES) {
+            if (STATIC_GEOMETRIES.containsKey(baked)) {
+                return STATIC_GEOMETRIES.get(baked);
+            }
+        }
+        LegacyStaticGeometry created = LegacyStaticGeometry.create(model, baked);
+        synchronized (STATIC_GEOMETRIES) {
+            if (STATIC_GEOMETRIES.containsKey(baked)) {
+                if (created != null) {
+                    created.close();
+                }
+                return STATIC_GEOMETRIES.get(baked);
+            }
+            STATIC_GEOMETRIES.put(baked, created);
         }
         return created;
     }
@@ -239,6 +315,7 @@ public final class LegacySkinningManager {
         // 重载清理：vanilla 负责关闭旧 ShaderInstance；compute 程序与着色器引用自行回收
         java.util.Arrays.fill(VS_SHADERS, null);
         java.util.Arrays.fill(COMPUTE_SHADERS, null);
+        java.util.Arrays.fill(STATIC_SHADERS, null);
         if (batchProgram != null) {
             batchProgram.close();
             batchProgram = null;
@@ -264,6 +341,7 @@ public final class LegacySkinningManager {
                 LOGGER.error("[skinning] {} 路径着色器初始化失败，尝试降级", selected, e);
                 java.util.Arrays.fill(VS_SHADERS, null);
                 java.util.Arrays.fill(COMPUTE_SHADERS, null);
+                java.util.Arrays.fill(STATIC_SHADERS, null);
                 if (batchProgram != null) {
                     batchProgram.close();
                     batchProgram = null;
@@ -291,6 +369,16 @@ public final class LegacySkinningManager {
                     ResourceLocationBridge.fromParts("eyelib", names[i]), format),
                     shader -> target[idx] = shader);
         }
+        if (targetMode == Mode.COMPUTE) {
+            // 静态实例通道只在 compute 合批模式启用（ADR-0048）；顶点格式只有 Position/UV0/Normal，
+            // 实例数据走 SSBO，ShaderInstance 的属性绑定表因此很短。
+            for (int i = 0; i < STATIC_SHADER_NAMES.length; i++) {
+                final int idx = i;
+                event.registerShader(new ShaderInstance(event.getResourceProvider(),
+                        ResourceLocationBridge.fromParts("eyelib", STATIC_SHADER_NAMES[i]), LegacyStaticGeometry.FORMAT),
+                        shader -> STATIC_SHADERS[idx] = shader);
+            }
+        }
     }
 
     /** 路径选择：master 开关外，compute 需 GL≥4.6（用户需求阈值），VS 需调色板 uniform 容量。 */
@@ -317,9 +405,16 @@ public final class LegacySkinningManager {
     public static void draw(LegacySkinningSession session) {
         if (mode == Mode.COMPUTE) {
             BatchSkinningDispatcher.submit(session);
+        } else if (session.isStatic()) {
+            session.discard(); // 静态通道只在 compute 模式建立；VS 模式不应出现，防御性丢弃
         } else {
             vsDraw(session);
         }
+    }
+
+    /** 静态实例着色器（compute 模式；重载窗口期为 null）。 */
+    static @Nullable ShaderInstance staticShader(int variant) {
+        return STATIC_SHADERS[variant];
     }
 
     /** 合批程序（compute 路径；重载窗口期为 null）。 */

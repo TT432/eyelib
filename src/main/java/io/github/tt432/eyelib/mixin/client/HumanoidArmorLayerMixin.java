@@ -41,7 +41,7 @@ public abstract class HumanoidArmorLayerMixin {
             return;
         }
 
-        BrClientEntity attachable = AttachableResolver.resolve(entity, item);
+        BrClientEntity attachable = AttachableResolver.resolve(entity, item, slot);
         if (attachable == null) {
             return;
         }

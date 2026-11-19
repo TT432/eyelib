@@ -4,6 +4,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.invoke.MethodHandle;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
@@ -47,13 +50,33 @@ public final class RenderStageRegistries {
 
         private final CopyOnWriteArrayList<MethodHandle> handles = new CopyOnWriteArrayList<>();
 
+        /**
+         * 同优先级内按（声明类全名，方法名）排序：跨 mod 装载顺序无关、跨运行稳定，
+         * 使「同优先级」不再是「发现顺序」这种无契约行为。
+         */
+        private static final Comparator<RenderStageSubscriberDiscovery.RenderStageSubscriber> ORDER =
+                Comparator.<RenderStageSubscriberDiscovery.RenderStageSubscriber>comparingInt(
+                                RenderStageSubscriberDiscovery.RenderStageSubscriber::priority)
+                        .thenComparing(subscriber -> subscriber.declaringClass().getName())
+                        .thenComparing(RenderStageSubscriberDiscovery.RenderStageSubscriber::methodName);
+
         @Override
         public void setup(RenderStageSubscriberDiscovery discovery) {
+            List<RenderStageSubscriberDiscovery.RenderStageSubscriber> subscribers =
+                    new ArrayList<>(discovery.discover());
+            subscribers.sort(ORDER);
+
             handles.clear();
-            for (RenderStageSubscriberDiscovery.RenderStageSubscriber subscriber : discovery.discover()) {
+            for (RenderStageSubscriberDiscovery.RenderStageSubscriber subscriber : subscribers) {
                 handles.add(subscriber.handle());
             }
             LOGGER.info("[RenderStage] {} subscriber(s) registered", handles.size());
+            if (LOGGER.isDebugEnabled()) {
+                for (RenderStageSubscriberDiscovery.RenderStageSubscriber subscriber : subscribers) {
+                    LOGGER.debug("[RenderStage] order: {}#{} (priority={})",
+                            subscriber.declaringClass().getName(), subscriber.methodName(), subscriber.priority());
+                }
+            }
         }
 
         @Override

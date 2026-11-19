@@ -235,12 +235,12 @@ class ArchitectureTest {
      * Java enum 类：超类为 {@code java.lang.Enum}。
      * enum 是常量定义，不是服务实现，规则 8 不要求 enum 变 interface。
      */
+    /**
+     * 枚举谓词。用 {@link JavaClass#isEnum()}（ArchUnit 自己的定义）而非手写「直接父类 == java.lang.Enum」：
+     * 后者在枚举的父类未被解析时不成立，导致「排除 enum」的规则说明与实际行为不一致（2026-11-17 修复）。
+     */
     private static final DescribedPredicate<JavaClass> ENUM_CLASSES =
-            DescribedPredicate.<JavaClass>describe("enum",
-                    jc -> jc.getSuperclass()
-                            .map(sc -> sc.getName())
-                            .filter("java.lang.Enum"::equals)
-                            .isPresent());
+            DescribedPredicate.<JavaClass>describe("enum", JavaClass::isEnum);
 
     /**
      * 超类为 Minecraft 平台类（{@code net.minecraft..}）的 bridge 类。
