@@ -136,6 +136,7 @@ final class WorldBenchmarkWorkload implements BenchmarkWorkload {
         if (minecraft.player == null) {
             return;
         }
+        BenchmarkStaticBinder.stripLevel(minecraft);
         minecraft.player.setPos(CAMERA_X, CAMERA_Y, CAMERA_Z);
         minecraft.player.setDeltaMovement(0.0, 0.0, 0.0);
         minecraft.player.setYRot(180.0F);

@@ -25,6 +25,7 @@
 | 渲染系统 GPU 化调研（可行边界 + 分阶段路线图） | [research/2026-08-26-render-gpu-offload.md](research/2026-08-26-render-gpu-offload.md) |
 | C1 GPU 蒙皮 26.1.2 结果（正确性通过、性能中性） | [perf/c1-gpu-skinning-26.1.2.md](perf/c1-gpu-skinning-26.1.2.md) |
 | C1 GPU 蒙皮 ≤26.1 结果（1.20.1/1.21.1，正确性通过、性能中性） | [perf/c1-gpu-skinning-legacy.md](perf/c1-gpu-skinning-legacy.md) |
+| C2 静态实例化结果（非动画实体，三版本 rw_p50 降 11–27%） | [perf/c2-static-entity-instancing.md](perf/c2-static-entity-instancing.md) |
 | Wintersky 移植与集成（as-is 移植 ADR-0034 / 集成设计 ADR-0035） | [concepts/wintersky-integration.md](concepts/wintersky-integration.md) |
 | Snowstorm 编辑器游戏内复刻（完整复刻设计 ADR-0036） | [concepts/snowstorm-editor-port.md](concepts/snowstorm-editor-port.md) |
 

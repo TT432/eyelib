@@ -80,6 +80,9 @@ public final class NgSkinningSession implements SkinningSession {
                                org.joml.Matrix4fc rootPose, org.joml.Matrix3fc rootNormal,
                                it.unimi.dsi.fastutil.ints.Int2BooleanOpenHashMap partVisibility,
                                float @Nullable [] tintColor, int overlay, int light) {
+        if (!NgSkinningManager.staticInstancesEnabled()) {
+            return false;
+        }
         NgStaticGeometry geo = NgSkinningManager.staticGeometry(model, bakedModel);
         if (geo == null) {
             return false;

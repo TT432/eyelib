@@ -67,6 +67,22 @@ cmd /c gradlew.bat ^
 | `eyelib.benchmark.fboSize` | `512` | FBO 边长 |
 | `eyelib.benchmark.maxSamples` | `2000000` | 每场景帧缓冲容量，满则失败 |
 | `eyelib.benchmark.autoExit` | `true` | 完成后关闭客户端 |
+| `eyelib.benchmark.staticEntities` | `false` | 把场景实体绑定为去掉 `animations`/`animation_controllers` 的 client entity 副本，使渲染走非动画静态通道（ADR-0048） |
+| `eyelib.staticInstances` | `true` | 静态实例通道开关；`false` 回退 C1 GPU 蒙皮（ADR-0048 A/B 对照） |
+
+非动画实体（C2/ADR-0048）的三种对照口径：
+
+```bat
+:: C2 静态实例
+cmd /c gradlew.bat -Deyelib.benchmark.staticEntities=true ^
+  -Deyelib.benchmark.modes=fbo,world -Deyelib.benchmark.counts=64,192 :1.20.1:runClientBenchmark
+:: C1 GPU 蒙皮（静态实例关闭，同一场景）
+cmd /c gradlew.bat -Deyelib.benchmark.staticEntities=true -Deyelib.staticInstances=false ^
+  -Deyelib.benchmark.modes=fbo,world -Deyelib.benchmark.counts=64,192 :1.20.1:runClientBenchmark
+:: 经典 CPU 蒙皮（无 GPU 路径）
+cmd /c gradlew.bat -Deyelib.benchmark.staticEntities=true -Deyelib.gpuSkinning=false ^
+  -Deyelib.benchmark.modes=fbo,world -Deyelib.benchmark.counts=64,192 :1.20.1:runClientBenchmark
+```
 
 混合场景示例（默认 4 种实体、总数 96，比当前单实体最大阶梯 64 高 50%）：
 

@@ -163,6 +163,8 @@ if (isLegacyForge) {
                 systemProperty 'eyelib.benchmark.enabled', 'true'
                 systemProperty 'eyelib.gpuSkinning', benchmarkProperty('eyelib.gpuSkinning', 'true')
                 systemProperty 'eyelib.gpuSkinning.mode', benchmarkProperty('eyelib.gpuSkinning.mode', 'auto')
+                systemProperty 'eyelib.staticInstances', benchmarkProperty('eyelib.staticInstances', 'true')
+                systemProperty 'eyelib.benchmark.staticEntities', benchmarkProperty('eyelib.benchmark.staticEntities', 'false')
                 systemProperty 'eyelib.molang.zeroArgBinding', benchmarkProperty('eyelib.molang.zeroArgBinding', 'true')
                 systemProperty 'eyelib.molang.exactInvoker', benchmarkProperty('eyelib.molang.exactInvoker', 'true')
                 systemProperty 'eyelib.molang.shapeCache', benchmarkProperty('eyelib.molang.shapeCache', 'true')
@@ -276,6 +278,8 @@ if (isLegacyForge) {
                 systemProperty 'eyelib.benchmark.enabled', 'true'
                 systemProperty 'eyelib.gpuSkinning', benchmarkProperty('eyelib.gpuSkinning', 'true')
                 systemProperty 'eyelib.gpuSkinning.mode', benchmarkProperty('eyelib.gpuSkinning.mode', 'auto')
+                systemProperty 'eyelib.staticInstances', benchmarkProperty('eyelib.staticInstances', 'true')
+                systemProperty 'eyelib.benchmark.staticEntities', benchmarkProperty('eyelib.benchmark.staticEntities', 'false')
                 systemProperty 'eyelib.molang.shapeCache', benchmarkProperty('eyelib.molang.shapeCache', 'true')
                 systemProperty 'eyelib.molang.roleMemo', benchmarkProperty('eyelib.molang.roleMemo', 'true')
                 systemProperty 'eyelib.anim.sampleOpt', benchmarkProperty('eyelib.anim.sampleOpt', 'true')

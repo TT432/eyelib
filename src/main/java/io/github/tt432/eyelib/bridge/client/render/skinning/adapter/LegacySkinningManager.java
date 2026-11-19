@@ -62,6 +62,8 @@ import net.neoforged.neoforge.client.event.RegisterShadersEvent;
 public final class LegacySkinningManager {
     private static final Logger LOGGER = LoggerFactory.getLogger(LegacySkinningManager.class);
     private static final boolean ENABLED = Boolean.parseBoolean(System.getProperty("eyelib.gpuSkinning", "true"));
+    /** 静态实例通道开关（ADR-0048）：默认开启；{@code -Deyelib.staticInstances=false} 关闭后回退 C1。 */
+    private static final boolean STATIC_INSTANCES = !"false".equalsIgnoreCase(System.getProperty("eyelib.staticInstances", "true"));
     /** 用户显式强制 GPU 路径（基准对照用）；此时 Oculus 光影兼容回退不介入。 */
     private static final boolean USER_FORCED_MODE = Mode.requested() != null;
     /** 蒙皮路径；{@code -Deyelib.gpuSkinning.mode} 控制（auto = compute 优先，VS 兜底）。 */
@@ -150,6 +152,11 @@ public final class LegacySkinningManager {
 
     public static boolean enabled() {
         return ENABLED;
+    }
+
+    /** 静态实例通道是否启用（{@code -Deyelib.staticInstances=false} 关闭，用于 A/B 基准）。 */
+    public static boolean staticInstancesEnabled() {
+        return STATIC_INSTANCES;
     }
 
     public static Mode mode() {
