@@ -38,6 +38,30 @@ Bedrock addon 纹理使用 alpha=3 的 faint 像素做边缘抗锯齿，Bedrock 
 
 emissive 一并 clamp 的原因：BE 发光着色器不丢弃低 alpha（alpha 是发光掩码），而 MC entityTranslucent 着色器在 alpha<0.1 时 discard（A&S 蜘蛛红眼 alpha 仅 1-10 会整体消失）。
 
+### 派生纹理的只读读取与按需物化（21.1.42，2026-11-20「赛博马赛克」根因）
+
+症状：多人服务器首次进入时，部分萌化实体整只采样紫黑缺省图（"赛博马赛克"）；单人正常，切光影/进一次单人再回服后恢复。
+
+机理（实机栈 + `TextureManager.byPath` 转储实证，1.21.1 专用服务器 + quickPlay 复现）：
+
+1. 烘焙（`ModelBakeInfo.downloadTexture`）在实体首帧就请求 `clamped/<base>` 的像素，而该键此刻尚未生成；
+2. 旧 `NativeImageIO.download` 走 vanilla `TextureManager.getTexture(key)`：未命中即 `new SimpleTexture(key)` 并 register，资源里没有这个派生键 → 加载失败 → **byPath 被永久写成 MissingTexture**（vanilla 只在资源重载时清除）；
+3. `clampedTexture()` 的存在性检查 `eyelib$hasTexture` 用 `byPath.containsKey`，把缺省图占位当成"已生成" → 派生纹理永不创建 → 该实体永久紫黑。
+
+修复（三条互相独立、缺一即可复现）：
+
+- `NativeImageIO.download` 改为**只读**：经 `EyelibTextureManagerAccess#eyelib$peekTexture` 查 byPath，未命中绝不注册；随后按 `loadFromResource`（vanilla/pack 纹理）→ `deriveFromBase`（`clamped/`=基图 alpha 二值化、`_color_mask/<hex>/`=基图颜色掩码）就地产出像素，都拿不到才返回 null 交调用方重试。
+- `eyelib$hasTexture` 排除 MissingTexture 占位（`minecraft:missingno`）。
+- `TextureManagerMixin#getTexture` 注入在派生键未注册/为占位时 **按需物化**（`NativeImageIO.materializeDerivedTexture`），使绘制路径（`RenderStateShard` → getTexture）不再把缺省图写进 byPath：绘制、烘焙、GUI 三条消费路径从此看到同一份内容，不再依赖渲染控制器预热动作的排队先后。
+
+验证凭据（1.21.1 dev 客户端 + `gradlew :1.21.1:runServer` 专用服务器，quickPlayMultiplayer 直连＝用户场景）：
+
+- 修复前：日志 `Failed to load texture: minecraft:clamped/textures/entity/gsl/{spider,skeleton,zombie,creeper}/…png`，`byPath` 4 个派生键为 MissingTexture，蜘蛛近景整只紫黑（`work/repro_spider.png`）。
+- 修复后：零 `Failed to load texture`，`byPath` 派生键全部 `DynamicTexture`（`derived=4/0`），同一召唤场景蜘蛛/村民/苦力怕/羊/蜘蛛全部正常（`work/fixed2.png`、`work/fixed3.png`）；单人 `enter_world` 同样零失败（`derived=4/0`）。
+- 三版本 `compileJava` 通过（1.20.1 / 1.21.1 / 26.1.2），仅 1.21.1 做了实机视觉验证。
+
+排查手法沉淀：多人专属渲染问题可本地起专用服务器复现——`gradlew :<v>:prepareServerRun :<v>:createServerLaunchScript`，把 `runServer.cmd` 的 `cd` 改到独立 server 目录（`eula.txt`/`server.properties`/`mods` 只放服务端需要的 jar），客户端用 `--quickPlayMultiplayer 127.0.0.1:25565` 进服（本机网络屏蔽 Mojang blocklist 时，从客户端 classpath 去掉 `blocklist-1.0.10.jar` 即可绕过 `ServerNameResolver` 静态初始化失败）。
+
 ### 材质判定
 
 `flagsOf(materialName)` → `MaterialFlags(multitexture, alphatest, emissive, colorMask)`，基于 MaterialManager 材质解析链上的 defines/states 推导（如 ALPHA_TEST / USE_EMISSIVE / USE_ONLY_EMISSIVE / USE_COLOR_MASK），结果按 matMap 引用缓存。

@@ -72,6 +72,10 @@ compute 路径再逐顶点写出 80B 的蒙皮结果。对**没有任何动画�
 - 26.1.2 实机：静态通道生效（`STATIC_GEOMETRIES=6`）并正确渲染绑定姿态；CPU 对照
   （`-Deyelib.gpuSkinning=false` 重启）因跨会话相机/时间漂移无法逐像素对齐，几何与位姿目检一致——
   26.1 特有代码（UBO 布局、管线派生、draw）以实机可见正确性与共享打包器单测为准。
+- 基准（`docs/perf/c2-static-entity-instancing.md`，A&S 牛，64/192 实体，fbo + world）：相对 C1 的
+  `render_work_p50` 降低 1.20.1 12–27%（相对经典 CPU 蒙皮 34–42%）、1.21.1 13–20%、26.1.2 11–36%；
+  26.1 无实例合批，收益来自消除 compute 与上传。三档之间只有静态开关不同，差值远超本机 ±5% 噪声，
+  因此差值本身即是静态通道生效的行为证据。
 - 验证中发现并修复的 26.1 缺陷：① `VertexFormat` 用 vanilla `NORMAL`（byte×3）导致顶点体积
   23B 非 4 对齐 → 换 FLOAT×3 自定义元素（32B）；② `RenderPass.draw` 需要先
   `setVertexBuffer(0, …)`，否则 draw 时顶点缓冲为 null。

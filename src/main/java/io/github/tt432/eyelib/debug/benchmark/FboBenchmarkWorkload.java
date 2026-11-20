@@ -54,6 +54,7 @@ final class FboBenchmarkWorkload implements BenchmarkWorkload {
                 entity.setPos(0.0, 0.0, 0.0);
                 entity.tickCount = 20 + entityIndex;
                 EntityRenderOrchestrator.prepareDetachedEntity(entity);
+                BenchmarkStaticBinder.stripEntity(entity);
                 entities.add(entity);
                 entityIndex++;
             }

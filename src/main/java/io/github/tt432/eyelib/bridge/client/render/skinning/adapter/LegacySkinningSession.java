@@ -87,7 +87,8 @@ public final class LegacySkinningSession implements SkinningSession {
                                it.unimi.dsi.fastutil.ints.Int2BooleanOpenHashMap partVisibility,
                                float @Nullable [] tintColor, int overlay, int light) {
         // 实例化绘制只在 compute 合批模式实现（GL≥4.6）；VS 模式保持逐实体 palette 路径。
-        if (LegacySkinningManager.mode() != LegacySkinningManager.Mode.COMPUTE) {
+        if (LegacySkinningManager.mode() != LegacySkinningManager.Mode.COMPUTE
+                || !LegacySkinningManager.staticInstancesEnabled()) {
             return false;
         }
         LegacyStaticGeometry geo = LegacySkinningManager.staticGeometry(model, bakedModel);

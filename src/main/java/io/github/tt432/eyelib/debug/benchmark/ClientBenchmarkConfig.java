@@ -21,6 +21,14 @@ public final class ClientBenchmarkConfig {
         return boolProperty("eyelib.benchmark.autoExit", true);
     }
 
+    /**
+     * 把场景实体的 client entity 替换为「去掉 animations / animation_controllers」的副本（ADR-0048 静态通道基准）。
+     * 默认关闭，避免改变既有 baseline；测 C2 时显式开启。
+     */
+    public static boolean staticEntities() {
+        return boolProperty("eyelib.benchmark.staticEntities", false);
+    }
+
     public static String worldName() {
         return stringProperty("eyelib.benchmark.worldName", "EyelibBenchmark");
     }

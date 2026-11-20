@@ -55,6 +55,8 @@ import java.util.OptionalInt;
 public final class NgSkinningManager {
     private static final Logger LOGGER = LoggerFactory.getLogger(NgSkinningManager.class);
     private static final boolean ENABLED = Boolean.parseBoolean(System.getProperty("eyelib.gpuSkinning", "true"));
+    /** 静态实例通道开关（ADR-0048）：默认开启；{@code -Deyelib.staticInstances=false} 关闭后回退 C1。 */
+    private static final boolean STATIC_INSTANCES = !"false".equalsIgnoreCase(System.getProperty("eyelib.staticInstances", "true"));
     private static final int RING_CAPACITY = 8 << 20;
 
     private static final IdentityHashMap<BakedModel, SkinnedGeometry> GEOMETRIES = new IdentityHashMap<>();
@@ -89,6 +91,11 @@ public final class NgSkinningManager {
 
     public static boolean enabled() {
         return ENABLED;
+    }
+
+    /** 静态实例通道是否启用（{@code -Deyelib.staticInstances=false} 关闭，用于 A/B 基准）。 */
+    public static boolean staticInstancesEnabled() {
+        return STATIC_INSTANCES;
     }
 
     /** 光影激活回退提示只打一次，避免每帧刷屏。 */
