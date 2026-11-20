@@ -383,3 +383,29 @@ CarryOn 第一人称 main/offhand 各提交一次），命中按已渲染返回�
     cf_ids.json, cf-files-page.txt, publish_local.log}`。
 - Maven Central：本版**未发**（用户未要求；21.1.39 同样只发 CurseForge），待确认后补。
 - 联动：dokimobs 0.3.16 依赖本版本（`eyelib_version=21.1.41`）。
+
+## 发布记录（21.1.42，2026-11-20）
+
+内容：运行期派生纹理（`clamped/`、`_color_mask/`）不再被缺省图固化——修复多人服务器首次进入时实体整只采样
+16×16 紫黑缺省图（"赛博马赛克"）。三处互补：`NativeImageIO.download` 改只读 + 基图就地派生；
+`TextureManager.getTexture` 注入按需物化派生纹理；`hasTexture` 排除 `minecraft:missingno` 占位。
+详见 `docs/concepts/alpha-clamp-two-path.md`「派生纹理的只读读取与按需物化」。
+
+- **本次只发 CurseForge**（用户指定），未发 Maven Central。
+- 代码：PR #56（`fix/derived-texture-materialize` → `master`），merge commit `b4601120`；
+  CI `compile 1.20.1/1.21.1/26.1.2` 全绿（2m24s / 1m0s / 1m26s），Codacy fail 属非必需门禁（按用户决策忽略）。
+- 前置：`clientsmoke` bump 21.1.42（提交 `c811170`，已推送 `TT432/clientsmoke` main）。
+- 门槛：三节点 `:test` 全绿（含 ArchUnit 闸门，`BUILD SUCCESSFUL in 2m 44s`，`work/gates_21142.log`）；
+  `publishMavenJavaPublicationToMavenLocal` 三节点各 10 文件齐全。
+- CurseForge（displayName 去扩展名）：
+
+  | 节点 | fileId |
+  | --- | --- |
+  | `21.1.42+1.20.1-forge` | 9716078 |
+  | `21.1.42+1.21.1-neoforge` | 9716091 |
+  | `21.1.42+26.1.2-neoforge` | 9716107 |
+
+  - 21:35 开始上传（三节点串行约 4 分钟）→ 21:41:34 / 21:45:50 轮询 `0/3` → **21:54:04 三文件全部可见**
+    （约 12.5 分钟，快照 `work/release_21142/cf-files-page.txt`）。
+  - 本次脚本：`work/release_21142/{cf_upload.py, cf_wait_verify.py, cf_changelog.md, cf_ids.json}`。
+- 联动：dokimobs 0.3.18 依赖本版本（`eyelib_version=21.1.42`）。
