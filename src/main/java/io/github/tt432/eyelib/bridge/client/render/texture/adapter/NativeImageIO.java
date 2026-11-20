@@ -2,14 +2,15 @@ package io.github.tt432.eyelib.bridge.client.render.texture.adapter;
 
 import com.mojang.blaze3d.platform.NativeImage;
 import io.github.tt432.eyelib.bridge.client.render.texture.EyelibTextureManagerAccess;
+import io.github.tt432.eyelib.bridge.material.ResourceLocationBridge;
 import io.github.tt432.eyelib.importer.model.importer.ImportedImageData;
+import io.github.tt432.eyelib.util.PortResourceLocation;
 import io.github.tt432.eyelib.util.color.ColorEncodings;
 import lombok.experimental.UtilityClass;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.AbstractTexture;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 //? if <26.1 {
-import net.minecraft.client.renderer.texture.MissingTextureAtlasSprite;
 import net.minecraft.resources.ResourceLocation;
 //?} else {
 import net.minecraft.resources.Identifier;
@@ -85,11 +86,15 @@ public class NativeImageIO {
     //?} else {
     public <R> R download(Identifier texture, Function<NativeImage, R> imageFunction) {
     //?}
+        // 只读查询（不注册、不加载）：vanilla getTexture 对未命中的键 new SimpleTexture(path)
+        // 并 register，而运行期派生纹理（clamped/、_color_mask/）在资源里并不存在 → byPath 被
+        // 永久写成 MissingTexture（仅资源重载才清除）。像素读取一旦走该路径，派生纹理随即被判为
+        // 「已存在」而永不创建，整只实体采样紫黑缺省图（2026-11-20 赛博马赛克根因）。
+        AbstractTexture registered = peekTexture(texture.toString());
         // C6'：eyelib 基图由 upload() 注册为 DynamicTexture，其 CPU 侧像素常驻（仅 close 释放，
         // 1.20.1/1.21.1/26.1.2 三版本源码实证）——直接用其像素，避免 glGetTexImage
         // 同步读回造成的 GPU 管线停顿。调用方一律经 copyImage 深拷贝后使用，就地像素只读。
-        // 非 DynamicTexture（vanilla/pack 纹理、缺失纹理）走原有回退路径，行为不变。
-        if (Minecraft.getInstance().getTextureManager().getTexture(texture) instanceof DynamicTexture dynamicTexture) {
+        if (registered instanceof DynamicTexture dynamicTexture) {
             NativeImage pixels = dynamicTexture.getPixels();
             //? if <26.1 {
             if (pixels != null) {
@@ -100,17 +105,19 @@ public class NativeImageIO {
                 return imageFunction.apply(pixels);
             }
         }
-        //? if <26.1 {
-        // 缺失纹理（16x16 紫黑棋盘）不是有效像素源：若在此继续走 GPU 读回，调用方
-        // （clamped/_color_mask 派生、导出）会把"基图暂时未就绪"固化为永久紫黑内容。
-        // 返回 null 由调用方走重试/回退路径。
-        if (Minecraft.getInstance().getTextureManager().getTexture(texture)
-                == MissingTextureAtlasSprite.getTexture()) {
-            return null;
+        if (registered == null || registered == missingTexture()) {
+            // 未注册 / 缺省占位（含「基图暂时未就绪」）：先按资源文件解码（vanilla/pack 纹理），
+            // 再按基图派生（clamped/、_color_mask/<hex>/），都没有则返回 null 由调用方重试。
+            // 绝不在此注册任何纹理，否则缺省图会被固化（见方法开头注释）。
+            NativeImage fromResource = loadFromResource(texture);
+            if (fromResource != null) {
+                return imageFunction.apply(fromResource);
+            }
+            NativeImage derived = deriveFromBase(texture.toString());
+            return derived == null ? null : imageFunction.apply(derived);
         }
-        //?}
         //? if <26.1 {
-        Minecraft.getInstance().getTextureManager().getTexture(texture).bind();
+        registered.bind();
 
         int[] width = new int[1];
         int[] height = new int[1];
@@ -127,19 +134,7 @@ public class NativeImageIO {
         return null;
         //?} else {
         try {
-            var resourceOpt = Minecraft.getInstance().getResourceManager().getResource(texture);
-            if (resourceOpt.isPresent()) {
-                try (InputStream is = resourceOpt.get().open()) {
-                    return imageFunction.apply(load(is));
-                }
-            }
-        } catch (IOException e) {
-            // fall through
-        }
-
-        try {
-            AbstractTexture abstractTexture = Minecraft.getInstance().getTextureManager().getTexture(texture);
-            var gpuTexture = abstractTexture.getTexture();
+            var gpuTexture = registered.getTexture();
             if (gpuTexture instanceof GlTexture glTexture) {
                 NativeImage image = readBackTexture(glTexture.glId(), glTexture.getWidth(0), glTexture.getHeight(0));
                 return imageFunction.apply(image);
@@ -149,6 +144,118 @@ public class NativeImageIO {
 
         return null;
         //?}
+    }
+
+    @Nullable
+    private AbstractTexture peekTexture(String namespacedPath) {
+        return Minecraft.getInstance().getTextureManager() instanceof EyelibTextureManagerAccess access
+                ? access.eyelib$peekTexture(namespacedPath)
+                : null;
+    }
+
+    /** byPath 中缺失纹理占位（{@code minecraft:missingno}）的对象；无占位时 null。 */
+    @Nullable
+    private AbstractTexture missingTexture() {
+        return peekTexture("minecraft:missingno");
+    }
+
+    @Nullable
+    //? if <26.1 {
+    private NativeImage loadFromResource(ResourceLocation texture) {
+    //?} else {
+    private NativeImage loadFromResource(Identifier texture) {
+    //?}
+        try {
+            var resourceOpt = Minecraft.getInstance().getResourceManager().getResource(texture);
+            if (resourceOpt.isPresent()) {
+                try (InputStream is = resourceOpt.get().open()) {
+                    return load(is);
+                }
+            }
+        } catch (IOException e) {
+            // fall through
+        }
+        return null;
+    }
+
+    private static final String DERIVED_CLAMPED_PREFIX = "clamped/";
+    private static final String DERIVED_COLOR_MASK_PREFIX = "_color_mask/";
+
+    /**
+     * 运行期派生键的像素来源 = 基图像素 + 同款变换（{@code clamped/} = alpha 二值化，
+     * {@code _color_mask/<hex>/} = 颜色掩码）。纹理尚未生成时就地派生，语义与已生成纹理一致，
+     * 且不产生任何 TextureManager 副作用。
+     *
+     * @return 新分配的像素（所有权移交调用方）；基图不可得或非派生键时 {@code null}
+     */
+    /**
+     * 按需物化运行期派生纹理（{@code clamped/}、{@code _color_mask/}）：基图 + 同款变换 → 注册 DynamicTexture。
+     * <p>
+     * 供 {@code TextureManager.getTexture} 注入在「派生键未注册」时即时补齐，
+     * 使绘制、烘焙、GUI 三条消费路径看到同一份内容，不需要等渲染控制器的预热动作排到队。
+     *
+     * @return 物化后的纹理；基图尚不可得时 {@code null}（调用方按缺省走，下一帧重试）
+     */
+    @Nullable
+    public AbstractTexture materializeDerivedTexture(String textureKey) {
+        NativeImage image = deriveFromBase(textureKey);
+        if (image == null) {
+            return null;
+        }
+        upload(textureKey, image);
+        return peekTexture(textureKey);
+    }
+
+    @Nullable
+    public NativeImage deriveFromBase(String textureKey) {
+        PortResourceLocation port = PortResourceLocation.parse(textureKey);
+        String path = port.path();
+        if (path.startsWith(DERIVED_CLAMPED_PREFIX)) {
+            NativeImage image = downloadBasePixels(port, path.substring(DERIVED_CLAMPED_PREFIX.length()));
+            if (image != null) {
+                clampAlphaToBinary(image);
+            }
+            return image;
+        }
+        if (path.startsWith(DERIVED_COLOR_MASK_PREFIX)) {
+            String rest = path.substring(DERIVED_COLOR_MASK_PREFIX.length());
+            int slash = rest.indexOf('/');
+            if (slash <= 0) {
+                return null;
+            }
+            float[] color = parseColorKey(rest.substring(0, slash));
+            if (color == null) {
+                return null;
+            }
+            NativeImage image = downloadBasePixels(port, rest.substring(slash + 1));
+            if (image != null) {
+                applyColorMask(image, color);
+            }
+            return image;
+        }
+        return null;
+    }
+
+    @Nullable
+    private NativeImage downloadBasePixels(PortResourceLocation derived, String basePath) {
+        return download(ResourceLocationBridge.toMc(PortResourceLocation.of(derived.namespace(), basePath)),
+                        NativeImageIO::copyImage);
+    }
+
+    /** 解析派生键里的 {@code %02x%02x%02x} 颜色段（与 {@link #colorKey} 同格式）。 */
+    @Nullable
+    private float[] parseColorKey(String hex) {
+        if (hex.length() != 6) {
+            return null;
+        }
+        try {
+            return new float[]{
+                    Integer.parseInt(hex.substring(0, 2), 16) / 255.0F,
+                    Integer.parseInt(hex.substring(2, 4), 16) / 255.0F,
+                    Integer.parseInt(hex.substring(4, 6), 16) / 255.0F};
+        } catch (NumberFormatException e) {
+            return null;
+        }
     }
 
     //? if >=26.1 {

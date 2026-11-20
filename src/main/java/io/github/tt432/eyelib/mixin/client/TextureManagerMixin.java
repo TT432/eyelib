@@ -9,11 +9,11 @@ import net.minecraft.client.renderer.texture.AbstractTexture;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.client.renderer.texture.TextureManager;
 //? if <26.1 {
-import net.minecraft.client.renderer.texture.MissingTextureAtlasSprite;
 import net.minecraft.resources.ResourceLocation;
 //?} else {
 import net.minecraft.resources.Identifier;
 //?}
+import org.jspecify.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -28,11 +28,19 @@ import java.util.Map;
  * <p>
  * 当 {@link TextureManager#getTexture} 查询纹理时，先查询 {@link AddonTextureRegistry}。
  * 命中则创建 {@link DynamicTexture} 并注册到 byPath，使 .tga 纹理与 .png 一样透明加载。
+ * <p>
+ * 同时兜住 eyelib 的运行期派生纹理（{@code clamped/}、{@code _color_mask/}）：这些键在资源里
+ * 并不存在，vanilla {@code getTexture} 未命中会注册 SimpleTexture 并因加载失败把 byPath 写成
+ * 缺省图（仅资源重载才清除）。派生纹理必须在此按需物化，否则绘制先于预热动作时会永久紫黑
+ * （2026-11-20「赛博马赛克」根因）。
  *
  * @author TT432
  */
 @Mixin(TextureManager.class)
 public abstract class TextureManagerMixin implements EyelibTextureManagerAccess {
+
+    /** MC 缺省纹理注册位置（26.1 编译期无 {@code MissingTextureAtlasSprite}，用字面量）。 */
+    private static final String EYELIB_MISSING_TEXTURE_ID = "minecraft:missingno";
 
     /**
      * 驱逐 byPath 中路径匹配的 DynamicTexture（close 释放 GL 后移除）。
@@ -50,6 +58,33 @@ public abstract class TextureManagerMixin implements EyelibTextureManagerAccess 
         });
     }
 
+    /**
+     * byPath 是否已持有可用纹理（含 eyelib 上传的派生纹理）。
+     * 缺省图占位不算「持有」：vanilla {@code getTexture} 未命中即把 byPath 写成它
+     * （仅资源重载时清除），若当成存在，派生纹理会被判为已生成而永不创建
+     * → 整只实体采样紫黑缺省图（2026-11-20 赛博马赛克根因之一）。
+     * 须在主线程调用（byPath 非线程安全）。
+     */
+    @Override
+    public boolean eyelib$hasTexture(String namespacedPath) {
+        return eyelib$isUsableTexture(this.byPath.get(ResourceLocationBridge.parseMc(namespacedPath)));
+    }
+
+    /**
+     * 只读查询，不注册、不加载。像素读取路径（烘焙/导出）必须先经此判断，
+     * 避免 vanilla getTexture 为运行期派生纹理注册注定失败的 SimpleTexture。
+     */
+    @Nullable
+    @Override
+    public AbstractTexture eyelib$peekTexture(String namespacedPath) {
+        return this.byPath.get(ResourceLocationBridge.parseMc(namespacedPath));
+    }
+
+    /** 已注册且不是缺省图占位。 */
+    private boolean eyelib$isUsableTexture(@Nullable AbstractTexture texture) {
+        return texture != null && texture != this.byPath.get(ResourceLocationBridge.parseMc(EYELIB_MISSING_TEXTURE_ID));
+    }
+
     //? if <26.1 {
     @Shadow
     @SuppressWarnings("NullAway")
@@ -58,19 +93,16 @@ public abstract class TextureManagerMixin implements EyelibTextureManagerAccess 
     @Shadow
     public abstract void register(ResourceLocation path, AbstractTexture texture);
 
-    @Override
-    public boolean eyelib$hasTexture(String namespacedPath) {
-        return byPath.containsKey(ResourceLocationBridge.parseMc(namespacedPath));
-    }
-
     @Inject(
             method = "getTexture(Lnet/minecraft/resources/ResourceLocation;)Lnet/minecraft/client/renderer/texture/AbstractTexture;",
             at = @At("HEAD"),
             cancellable = true
     )
     private void eyelib$addonTexture(ResourceLocation path, CallbackInfoReturnable<AbstractTexture> cir) {
-        AbstractTexture existing = this.byPath.get(path);
-        if (existing != null && existing != MissingTextureAtlasSprite.getTexture()) {
+        if (eyelib$isUsableTexture(this.byPath.get(path))) {
+            return;
+        }
+        if (eyelib$materializeDerived(path.toString(), path.getPath(), cir)) {
             return;
         }
 
@@ -105,18 +137,16 @@ public abstract class TextureManagerMixin implements EyelibTextureManagerAccess 
     @Shadow
     public abstract void register(Identifier path, AbstractTexture texture);
 
-    @Override
-    public boolean eyelib$hasTexture(String namespacedPath) {
-        return byPath.containsKey(ResourceLocationBridge.parseMc(namespacedPath));
-    }
-
     @Inject(
             method = "getTexture(Lnet/minecraft/resources/Identifier;)Lnet/minecraft/client/renderer/texture/AbstractTexture;",
             at = @At("HEAD"),
             cancellable = true
     )
     private void eyelib$addonTexture(Identifier path, CallbackInfoReturnable<AbstractTexture> cir) {
-        if (this.byPath.get(path) != null) {
+        if (eyelib$isUsableTexture(this.byPath.get(path))) {
+            return;
+        }
+        if (eyelib$materializeDerived(path.toString(), path.getPath(), cir)) {
             return;
         }
 
@@ -141,4 +171,21 @@ public abstract class TextureManagerMixin implements EyelibTextureManagerAccess 
         }
     }
     //?}
+
+    /**
+     * 运行期派生纹理按需物化（基图 + clamped/_color_mask 变换）。
+     * 基图尚不可得时返回 false，交给 vanilla 走原路径（下一帧本钩子再次尝试，可自愈）。
+     */
+    private boolean eyelib$materializeDerived(String namespacedPath, String path,
+                                              CallbackInfoReturnable<AbstractTexture> cir) {
+        if (!NativeImageIO.isEyelibDerivedTexturePath(path)) {
+            return false;
+        }
+        AbstractTexture materialized = NativeImageIO.materializeDerivedTexture(namespacedPath);
+        if (materialized == null) {
+            return false;
+        }
+        cir.setReturnValue(materialized);
+        return true;
+    }
 }

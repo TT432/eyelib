@@ -1,5 +1,8 @@
 package io.github.tt432.eyelib.bridge.client.render.texture;
 
+import net.minecraft.client.renderer.texture.AbstractTexture;
+import org.jspecify.annotations.Nullable;
+
 import java.util.function.Predicate;
 
 /**
@@ -27,7 +30,25 @@ public interface EyelibTextureManagerAccess {
      * 新键的派生纹理永不入队 → MissingTexture 永久紫黑。
      * 须在主线程调用（byPath 非线程安全）。
      *
+     * <p>「持有」不包含 MissingTexture 占位：vanilla {@code getTexture} 未命中时会
+     * {@code new SimpleTexture(path)} 并 register，资源不存在则 byPath 被写成
+     * MissingTexture（仅资源重载时清除）。把占位当成存在，派生纹理会被判为已生成
+     * 而永不创建（2026-11-20 赛博马赛克根因之一）。
+     *
      * @param namespacedPath 形如 "namespace:path" 的完整纹理路径
      */
     boolean eyelib$hasTexture(String namespacedPath);
+
+    /**
+     * 只读查询 byPath（不注册、不加载、无副作用）。
+     * vanilla {@code getTexture} 会在未命中时注册 SimpleTexture，对运行期派生纹理
+     * （clamped/、_color_mask/，资源中不存在）等于把 byPath 永久写成 MissingTexture。
+     * 读取像素（烘焙/导出）必须先经本方法判断，未注册时按「无像素」处理。
+     * 须在主线程调用（byPath 非线程安全）。
+     *
+     * @param namespacedPath 形如 "namespace:path" 的完整纹理路径
+     * @return 已注册的纹理对象；未注册返回 {@code null}
+     */
+    @Nullable
+    AbstractTexture eyelib$peekTexture(String namespacedPath);
 }
