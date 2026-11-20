@@ -34,6 +34,9 @@ final class BrControllerExecutor {
         data.owner().currentAnimations(animations);
 
         var currState = data.getCurrState();
+        // Bedrock 实测：控制器首次 tick 只进入初始状态，transitions 从下一帧起才判定
+        // （首次 tick 晚于实体首帧时同样如此，如嵌套控制器所在状态后来才进入）。
+        boolean initialTick = currState == null;
         if (currState == null) currState = switchState(controller, ticks, scope, data, animations, controller.initialState());
         if (currState == null) return;
 
@@ -41,16 +44,8 @@ final class BrControllerExecutor {
         scope.getHostContext().put(HostRoles.ANIMATION_CONTROLLER, controller);
         data.owner().currentTick(ticks);
 
-        for (Map.Entry<String, io.github.tt432.eyelib.molang.MolangValue> entry : currState.transitions().entrySet()) {
-            if (entry.getValue().evalAsBool(scope)) {
-                BrAcStateDefinition nextState = controller.states().get(entry.getKey());
-                if (nextState == null) break;
-                BrAcStateDefinition switchedState = switchState(controller, ticks, scope, data, animations, nextState);
-                if (switchedState != null) {
-                    currState = switchedState;
-                    break;
-                }
-            }
+        if (!initialTick) {
+            currState = takeTransition(controller, ticks, scope, data, animations, currState);
         }
 
         scope.getHostContext().put(HostRoles.AC_STATE_DEFINITION, currState);
@@ -67,6 +62,23 @@ final class BrControllerExecutor {
                 effects.particles.add(nested.particles());
             }
         }
+    }
+
+    /**
+     * 按序判定 {@code currState} 的 transitions，切换到首个条件成立且切换成功的状态；均不成立时保持 {@code currState}。
+     */
+    private static BrAcStateDefinition takeTransition(BrAnimationController controller, float ticks, MolangScope scope,
+                                                      BrAnimationController.Data data, Map<String, String> animations,
+                                                      BrAcStateDefinition currState) {
+        for (Map.Entry<String, io.github.tt432.eyelib.molang.MolangValue> entry : currState.transitions().entrySet()) {
+            if (entry.getValue().evalAsBool(scope)) {
+                BrAcStateDefinition nextState = controller.states().get(entry.getKey());
+                if (nextState == null) break;
+                BrAcStateDefinition switchedState = switchState(controller, ticks, scope, data, animations, nextState);
+                if (switchedState != null) return switchedState;
+            }
+        }
+        return currState;
     }
 
     @Nullable
